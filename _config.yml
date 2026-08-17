@@ -1,0 +1,4 @@
+title: Jekyll Playground
+theme: minima
+plugins:
+  - jekyll-feed
