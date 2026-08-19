@@ -33,7 +33,7 @@ layout: null
       {% for post in site.posts %}
       <a href="{{ site.baseurl }}/viewer.html?post={{ post.url | relative_url }}" class="pen-card">
         <div class="preview-box">
-          <iframe src="{{ post.url | relative_url }}"></iframe>
+          <iframe src="{{ post.url | relative_url }}" loading="lazy"></iframe>
         </div>
         <div class="card-body">
           <div class="card-header">
