@@ -29,21 +29,16 @@ layout: null
   <div class="container">
     <div class="pen-grid">
 
-      <!-- Vòng lặp tự động lấy tất cả bài viết trong thư mục _posts -->
+      <!-- Jekyll tự động quét toàn bộ bài viết trong _posts/ -->
       {% for post in site.posts %}
-      <a href="/viewer.html?post={{ post.url }}" class="pen-card">
+      <a href="{{ site.baseurl }}/viewer.html?post={{ post.url | relative_url }}" class="pen-card">
         <div class="preview-box">
-          <iframe src="{{ post.url }}"></iframe>
+          <iframe src="{{ post.url | relative_url }}"></iframe>
         </div>
         <div class="card-body">
           <div class="card-header">
             <h3 class="pen-title">{{ post.title }}</h3>
             <span class="more-btn">•••</span>
-          </div>
-          <div class="card-footer">
-            <button class="stat-btn">❤️ 0</button>
-            <button class="stat-btn">💬 0</button>
-            <button class="stat-btn">👁️ 0</button>
           </div>
         </div>
       </a>
