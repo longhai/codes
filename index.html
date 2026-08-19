@@ -3,34 +3,172 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Danh sách bài viết</title>
+  <title>Danh sách Pens - Giao diện CodePen</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 40px 20px; }
-    .container { max-width: 900px; margin: 0 auto; }
-    h1 { margin-bottom: 24px; color: #333; }
-    .post-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-    .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-decoration: none; color: inherit; display: block; transition: transform 0.2s; }
-    .card:hover { transform: translateY(-4px); }
-    .card h3 { margin: 0 0 10px 0; color: #007bff; }
-    .card p { margin: 0; color: #666; font-size: 14px; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #131417; /* Màu nền tối kiểu CodePen */
+      color: #ffffff;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Grid layout chứa các card */
+    .pen-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+    }
+
+    /* Khung Card chính */
+    .pen-card {
+      background-color: #1e1f26;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      text-decoration: none;
+      color: inherit;
+    }
+    .pen-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+
+    /* Khu vực hiển thị Live Preview hoặc Ảnh Thumbnail */
+    .preview-box {
+      width: 100%;
+      height: 200px;
+      background-color: #2c2d30;
+      position: relative;
+      overflow: hidden;
+    }
+    .preview-box iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      pointer-events: none; /* Vô hiệu hóa cuộn/bấm bên trong card preview */
+    }
+
+    /* Phần chân Card chứa Tiêu đề & Thông số */
+    .card-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .pen-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .more-btn {
+      color: #717790;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    /* Thanh tương tác (Thích, Bình luận, Lượt xem) */
+    .card-footer {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .stat-btn {
+      background-color: #2c2d30;
+      border: none;
+      color: #9b9dad;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .stat-btn:hover {
+      background-color: #3b3d45;
+      color: #fff;
+    }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h1>Danh sách demo HTML</h1>
-    
-    <div class="post-grid">
-      <!-- Link bài viết được dẫn thông qua viewer.html -->
-      <a href="viewer.html?post=posts/bai-viet-1.html" class="card">
-        <h3>Bài viết 01: VnExpress Demo</h3>
-        <p>Xem giao diện bài viết tích hợp menu ẩn hiện trên PC & Mobile.</p>
+    <div class="pen-grid">
+
+      <!-- CARD 1 -->
+      <a href="viewer.html?post=posts/bai-viet-1.html" class="pen-card">
+        <div class="preview-box">
+          <!-- Nhúng trực tiếp file HTML để xem trước nội dung -->
+          <iframe src="posts/bai-viet-1.html"></iframe>
+        </div>
+        <div class="card-body">
+          <div class="card-header">
+            <h3 class="pen-title">Coder & Decoder</h3>
+            <span class="more-btn">•••</span>
+          </div>
+          <div class="card-footer">
+            <button class="stat-btn">❤️ 0</button>
+            <button class="stat-btn">💬 0</button>
+            <button class="stat-btn">👁️ 0</button>
+          </div>
+        </div>
       </a>
 
-      <a href="viewer.html?post=posts/bai-viet-2.html" class="card">
-        <h3>Bài viết 02: Mẫu giao diện khác</h3>
-        <p>Mô tả ngắn gọn về bài viết số 2.</p>
+      <!-- CARD 2 -->
+      <a href="viewer.html?post=posts/bai-viet-2.html" class="pen-card">
+        <div class="preview-box">
+          <iframe src="posts/bai-viet-2.html"></iframe>
+        </div>
+        <div class="card-body">
+          <div class="card-header">
+            <h3 class="pen-title">Đồng hồ báo thức</h3>
+            <span class="more-btn">•••</span>
+          </div>
+          <div class="card-footer">
+            <button class="stat-btn">❤️ 0</button>
+            <button class="stat-btn">💬 0</button>
+            <button class="stat-btn">👁️ 0</button>
+          </div>
+        </div>
       </a>
+
+      <!-- CARD 3 -->
+      <a href="viewer.html?post=posts/bai-viet-3.html" class="pen-card">
+        <div class="preview-box">
+          <iframe src="posts/bai-viet-3.html"></iframe>
+        </div>
+        <div class="card-body">
+          <div class="card-header">
+            <h3 class="pen-title">Coder & Decoder Pro</h3>
+            <span class="more-btn">•••</span>
+          </div>
+          <div class="card-footer">
+            <button class="stat-btn">❤️ 0</button>
+            <button class="stat-btn">💬 0</button>
+            <button class="stat-btn">👁️ 0</button>
+          </div>
+        </div>
+      </a>
+
     </div>
   </div>
 
