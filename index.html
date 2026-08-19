@@ -1,112 +1,27 @@
+---
+layout: null
+---
 <!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Danh sách Pens - Giao diện CodePen</title>
+  <title>Danh sách Pens - CodePen Grid</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: #131417; /* Màu nền tối kiểu CodePen */
-      color: #ffffff;
-      padding: 40px 20px;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    /* Grid layout chứa các card */
-    .pen-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 24px;
-    }
-
-    /* Khung Card chính */
-    .pen-card {
-      background-color: #1e1f26;
-      border-radius: 8px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      text-decoration: none;
-      color: inherit;
-    }
-    .pen-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-    }
-
-    /* Khu vực hiển thị Live Preview hoặc Ảnh Thumbnail */
-    .preview-box {
-      width: 100%;
-      height: 200px;
-      background-color: #2c2d30;
-      position: relative;
-      overflow: hidden;
-    }
-    .preview-box iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      pointer-events: none; /* Vô hiệu hóa cuộn/bấm bên trong card preview */
-    }
-
-    /* Phần chân Card chứa Tiêu đề & Thông số */
-    .card-body {
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .pen-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #ffffff;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .more-btn {
-      color: #717790;
-      font-size: 18px;
-      cursor: pointer;
-    }
-
-    /* Thanh tương tác (Thích, Bình luận, Lượt xem) */
-    .card-footer {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .stat-btn {
-      background-color: #2c2d30;
-      border: none;
-      color: #9b9dad;
-      padding: 6px 12px;
-      border-radius: 4px;
-      font-size: 13px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-    }
-    .stat-btn:hover {
-      background-color: #3b3d45;
-      color: #fff;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #131417; color: #ffffff; padding: 40px 20px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .pen-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+    .pen-card { background-color: #1e1f26; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s ease, box-shadow 0.2s ease; text-decoration: none; color: inherit; }
+    .pen-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
+    .preview-box { width: 100%; height: 200px; background-color: #2c2d30; position: relative; overflow: hidden; }
+    .preview-box iframe { width: 100%; height: 100%; border: none; pointer-events: none; }
+    .card-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; }
+    .pen-title { font-size: 18px; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .more-btn { color: #717790; font-size: 18px; }
+    .card-footer { display: flex; align-items: center; gap: 8px; }
+    .stat-btn { background-color: #2c2d30; border: none; color: #9b9dad; padding: 6px 12px; border-radius: 4px; font-size: 13px; display: flex; align-items: center; gap: 6px; }
   </style>
 </head>
 <body>
@@ -114,15 +29,15 @@
   <div class="container">
     <div class="pen-grid">
 
-      <!-- CARD 1 -->
-      <a href="viewer.html?post=posts/bai-viet-1.html" class="pen-card">
+      <!-- Vòng lặp tự động lấy tất cả bài viết trong thư mục _posts -->
+      {% for post in site.posts %}
+      <a href="/viewer.html?post={{ post.url }}" class="pen-card">
         <div class="preview-box">
-          <!-- Nhúng trực tiếp file HTML để xem trước nội dung -->
-          <iframe src="posts/bai-viet-1.html"></iframe>
+          <iframe src="{{ post.url }}"></iframe>
         </div>
         <div class="card-body">
           <div class="card-header">
-            <h3 class="pen-title">Coder & Decoder</h3>
+            <h3 class="pen-title">{{ post.title }}</h3>
             <span class="more-btn">•••</span>
           </div>
           <div class="card-footer">
@@ -132,42 +47,7 @@
           </div>
         </div>
       </a>
-
-      <!-- CARD 2 -->
-      <a href="viewer.html?post=posts/bai-viet-2.html" class="pen-card">
-        <div class="preview-box">
-          <iframe src="posts/bai-viet-2.html"></iframe>
-        </div>
-        <div class="card-body">
-          <div class="card-header">
-            <h3 class="pen-title">Đồng hồ báo thức</h3>
-            <span class="more-btn">•••</span>
-          </div>
-          <div class="card-footer">
-            <button class="stat-btn">❤️ 0</button>
-            <button class="stat-btn">💬 0</button>
-            <button class="stat-btn">👁️ 0</button>
-          </div>
-        </div>
-      </a>
-
-      <!-- CARD 3 -->
-      <a href="viewer.html?post=posts/bai-viet-3.html" class="pen-card">
-        <div class="preview-box">
-          <iframe src="posts/bai-viet-3.html"></iframe>
-        </div>
-        <div class="card-body">
-          <div class="card-header">
-            <h3 class="pen-title">Coder & Decoder Pro</h3>
-            <span class="more-btn">•••</span>
-          </div>
-          <div class="card-footer">
-            <button class="stat-btn">❤️ 0</button>
-            <button class="stat-btn">💬 0</button>
-            <button class="stat-btn">👁️ 0</button>
-          </div>
-        </div>
-      </a>
+      {% endfor %}
 
     </div>
   </div>
