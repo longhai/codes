@@ -1,108 +1,38 @@
----
-layout: default
-title: "Jekyll CodePen Dashboard"
----
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Danh sách bài viết</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 40px 20px; }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { margin-bottom: 24px; color: #333; }
+    .post-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-decoration: none; color: inherit; display: block; transition: transform 0.2s; }
+    .card:hover { transform: translateY(-4px); }
+    .card h3 { margin: 0 0 10px 0; color: #007bff; }
+    .card p { margin: 0; color: #666; font-size: 14px; }
+  </style>
+</head>
+<body>
 
-<style>
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    padding: 0;
-    background-color: #131417;
-    color: #ffffff;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  }
-  header {
-    background: #1e1f26;
-    padding: 15px 30px;
-    border-bottom: 1px solid #2c2d38;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  header h1 { margin: 0; font-size: 20px; color: #4caf50; }
-  
-  .grid-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 24px;
-    padding: 30px;
-    max-width: 1400px;
-    margin: 0 auto;
-  }
-  
-  .pen-card {
-    background: #1e1f26;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid #2c2d38;
-    transition: transform 0.2s, box-shadow 0.2s;
-    display: flex;
-    flex-direction: column;
-  }
-  .pen-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-    border-color: #444857;
-  }
+  <div class="container">
+    <h1>Danh sách demo HTML</h1>
+    
+    <div class="post-grid">
+      <!-- Link bài viết được dẫn thông qua viewer.html -->
+      <a href="viewer.html?post=posts/bai-viet-1.html" class="card">
+        <h3>Bài viết 01: VnExpress Demo</h3>
+        <p>Xem giao diện bài viết tích hợp menu ẩn hiện trên PC & Mobile.</p>
+      </a>
 
-  /* Khung Live Preview nhỏ của từng bài */
-  .pen-preview {
-    height: 200px;
-    background: #ffffff;
-    position: relative;
-    overflow: hidden;
-    pointer-events: none; /* Khóa tương tác chuột ở xem trước */
-  }
-  .pen-preview iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-  }
-
-  .pen-info {
-    padding: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #1e1f26;
-  }
-  .pen-title {
-    color: #fff;
-    text-decoration: none;
-    font-weight: bold;
-    font-size: 16px;
-  }
-  .pen-title:hover { color: #4caf50; }
-  .pen-date { font-size: 12px; color: #868996; }
-</style>
-
-<header>
-  <h1>🚀 My CodePen Gallery</h1>
-</header>
-
-<div class="grid-container">
-  {% for post in site.posts %}
-    <div class="pen-card">
-      <!-- Khung hiển thị Live Preview thu nhỏ -->
-      <div class="pen-preview">
-        <iframe srcdoc="
-          <!DOCTYPE html>
-          <html>
-            <head><style>{{ post.css_initial | escape }}</style></head>
-            <body>
-              {{ post.html_initial | escape }}
-              <script>{{ post.js_initial | escape }}<\/script>
-            </body>
-          </html>
-        "></iframe>
-      </div>
-
-      <!-- Thông tin bài viết -->
-      <div class="pen-info">
-        <a href="{{ post.url | relative_url }}" class="pen-title">{{ post.title }}</a>
-        <span class="pen-date">{{ post.date | date: "%b %d, %Y" }}</span>
-      </div>
+      <a href="viewer.html?post=posts/bai-viet-2.html" class="card">
+        <h3>Bài viết 02: Mẫu giao diện khác</h3>
+        <p>Mô tả ngắn gọn về bài viết số 2.</p>
+      </a>
     </div>
-  {% endfor %}
-</div>
+  </div>
+
+</body>
+</html>
