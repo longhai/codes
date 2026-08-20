@@ -3,85 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Khung Xem Bài Viết</title>
+  <title>Xem Bài Viết Full Màn Hình</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
     html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background-color: #131417;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    /* Khu vực hiển thị tràn 100% màn hình */
+    .viewport-container {
       width: 100%;
       height: 100%;
-      overflow: hidden; /* Dọn dẹp thanh cuộn toàn trang */
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: #131417;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Thanh điều khiển Toolbar */
-    .toolbar {
-      height: 50px;
-      background-color: #1e1f26;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      border-bottom: 1px solid #2c2d30;
-      z-index: 10;
-      flex-shrink: 0;
-    }
-
-    .back-btn {
-      color: #aaa;
-      text-decoration: none;
-      font-size: 13px;
-      padding: 6px 12px;
-      background: #2c2d30;
-      border-radius: 4px;
-      transition: background 0.2s, color 0.2s;
-    }
-    .back-btn:hover {
-      background: #3b3d45;
-      color: #fff;
-    }
-
-    .device-switcher {
-      display: flex;
-      background: #2c2d30;
-      padding: 3px;
-      border-radius: 6px;
-      gap: 2px;
-    }
-
-    .device-btn {
-      background: transparent;
-      border: none;
-      color: #aaa;
-      padding: 6px 12px;
-      font-size: 12px;
-      font-weight: 600;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    .device-btn.active {
-      background: #444857;
-      color: #fff;
-    }
-
-    /* Khung chứa Iframe */
-    .viewport-container {
-      flex: 1;
-      width: 100%;
       display: flex;
       justify-content: center;
       align-items: center;
-      background-color: #131417;
-      overflow: hidden;
       position: relative;
     }
 
@@ -89,16 +29,16 @@
       background-color: white;
       border: none;
       display: block;
-      transition: transform 0.2s ease, width 0.2s ease, height 0.2s ease;
+      transition: transform 0.2s ease;
     }
 
-    /* Chế độ PC: Bắt buộc vừa khít không gian còn lại */
+    /* Chế độ PC: Bắt buộc vừa khít 100% full màn hình */
     .view-pc {
       width: 100% !important;
       height: 100% !important;
     }
 
-    /* Chế độ Mobile: Khung mô phỏng điện thoại */
+    /* Chế độ Mobile: Khung di động thu nhỏ */
     .view-mobile {
       width: 375px !important;
       height: 667px !important;
@@ -106,21 +46,59 @@
       border: 8px solid #2c2d30 !important;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     }
+
+    /* Nút Menu điều khiển trôi nổi ở góc màn hình */
+    .floating-menu {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      gap: 8px;
+      background: rgba(30, 31, 38, 0.85);
+      backdrop-filter: blur(8px);
+      padding: 6px;
+      border-radius: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 9999;
+      transition: opacity 0.3s;
+    }
+
+    .floating-menu:hover {
+      opacity: 1;
+    }
+
+    .float-btn {
+      color: #fff;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 8px 14px;
+      background: #2c2d30;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.2s;
+    }
+
+    .float-btn:hover {
+      background: #444857;
+    }
   </style>
 </head>
 <body>
 
-  <div class="toolbar">
-    <a href="index.html" class="back-btn">← Trang chủ</a>
-    <div class="device-switcher">
-      <button id="btn-pc" class="device-btn" onclick="setDevice('pc')">💻 Máy tính (PC)</button>
-      <button id="btn-mobile" class="device-btn" onclick="setDevice('mobile')">📱 Điện thoại (Mobile)</button>
-    </div>
+  <div class="viewport-container" id="container">
+    <iframe id="content-frame" class="view-pc" src="" scrolling="no"></iframe>
   </div>
 
-  <div class="viewport-container" id="container">
-    <!-- Thêm scrolling="no" để triệt tiêu thanh cuộn trong iframe -->
-    <iframe id="content-frame" class="view-pc" src="" scrolling="no"></iframe>
+  <!-- Menu điều khiển thu gọn nằm trôi nổi ở góc dưới phải -->
+  <div class="floating-menu">
+    <a href="index.html" class="float-btn">← Trang chủ</a>
+    <button id="toggle-device-btn" class="float-btn" onclick="toggleDevice()">📱 Mobile</button>
   </div>
 
   <script>
@@ -128,6 +106,7 @@
     const postUrl = urlParams.get('post') || '';
     const frame = document.getElementById('content-frame');
     const container = document.getElementById('container');
+    const toggleBtn = document.getElementById('toggle-device-btn');
 
     if (postUrl) {
       frame.src = postUrl;
@@ -155,22 +134,25 @@
     }
 
     function setDevice(device) {
-      const btnPc = document.getElementById('btn-pc');
-      const btnMobile = document.getElementById('btn-mobile');
-
       if (device === 'mobile') {
         frame.className = 'view-mobile';
-        btnMobile.classList.add('active');
-        btnPc.classList.remove('active');
+        toggleBtn.textContent = '💻 PC Mode';
       } else {
         frame.className = 'view-pc';
-        btnPc.classList.add('active');
-        btnMobile.classList.remove('active');
+        toggleBtn.textContent = '📱 Mobile Mode';
       }
       scaleFrame();
     }
 
-    // Nhận diện tự động
+    function toggleDevice() {
+      if (frame.classList.contains('view-pc')) {
+        setDevice('mobile');
+      } else {
+        setDevice('pc');
+      }
+    }
+
+    // Nhận diện thiết bị tự động khi mở trang
     if (isMobileDevice()) {
       setDevice('mobile');
     } else {
