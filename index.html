@@ -9,25 +9,27 @@ layout: null
   <title>Danh sách Bài viết</title>
   <style>
     :root {
-      --bg-color: #131417;
-      --card-bg: #1e1f26;
-      --preview-bg: #2c2d30;
-      --text-color: #ffffff;
-      --btn-bg: #1e1f26;
-      --btn-text: #ffffff;
-      --shadow: rgba(0, 0, 0, 0.4);
-      --card-border: rgba(255, 255, 255, 0.08);
+      /* Bảng màu Tối (Soft Dark) - Sang trọng & Dễ chịu */
+      --bg-color: #0f1115;
+      --card-bg: #181b21;
+      --preview-bg: #22262e;
+      --text-color: #e4e6eb;
+      --btn-bg: #22262e;
+      --btn-text: #e4e6eb;
+      --shadow: rgba(0, 0, 0, 0.3);
+      --card-border: rgba(255, 255, 255, 0.05);
     }
 
     [data-theme="light"] {
-      --bg-color: #f4f5f7;
+      /* Bảng màu Sáng (Light) */
+      --bg-color: #f8f9fa;
       --card-bg: #ffffff;
-      --preview-bg: #e2e8f0;
-      --text-color: #1a202c;
+      --preview-bg: #edf2f7;
+      --text-color: #2d3436;
       --btn-bg: #ffffff;
-      --btn-text: #1a202c;
-      --shadow: rgba(0, 0, 0, 0.06);
-      --card-border: rgba(0, 0, 0, 0.08);
+      --btn-text: #2d3436;
+      --shadow: rgba(0, 0, 0, 0.08);
+      --card-border: rgba(0, 0, 0, 0.1);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -36,196 +38,117 @@ layout: null
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: var(--bg-color);
       color: var(--text-color);
-      padding: 30px 20px;
-      transition: background-color 0.2s, color 0.2s;
+      padding: 40px 20px;
+      transition: background-color 0.3s ease;
     }
 
     .container {
       max-width: 1200px;
       margin: 0 auto;
-      min-height: calc(100vh - 60px);
-      display: flex;
-      flex-direction: column;
+      min-height: calc(100vh - 80px);
     }
 
-    /* Thanh Đầu Trang Tối Giản */
-    .header {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      margin-bottom: 24px;
-    }
+    .header { display: flex; justify-content: flex-end; margin-bottom: 30px; }
 
     .theme-toggle {
       background: var(--btn-bg);
       color: var(--btn-text);
       border: 1px solid var(--card-border);
-      padding: 8px 14px;
-      border-radius: 20px;
+      padding: 10px 18px;
+      border-radius: 25px;
       cursor: pointer;
       font-size: 13px;
-      font-weight: 500;
-      box-shadow: 0 2px 6px var(--shadow);
-      transition: opacity 0.2s, transform 0.1s;
+      font-weight: 600;
+      box-shadow: 0 4px 6px var(--shadow);
+      transition: all 0.2s;
     }
 
-    .theme-toggle:hover { opacity: 0.9; }
-    .theme-toggle:active { transform: scale(0.97); }
+    .theme-toggle:hover { filter: brightness(1.2); }
 
-    /* Lưới Card 4 cột trên PC */
     .pen-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 25px;
     }
 
     .pen-card {
       background-color: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 10px;
+      border-radius: 12px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       text-decoration: none;
       color: inherit;
-      box-shadow: 0 2px 8px var(--shadow);
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: all 0.3s ease;
     }
 
     .pen-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 20px var(--shadow);
+      transform: translateY(-6px);
+      box-shadow: 0 15px 30px var(--shadow);
+      border-color: rgba(255, 255, 255, 0.15);
     }
 
-    /* Khung Xem Trước */
-    .preview-box {
-      width: 100%;
-      height: 160px;
-      background-color: var(--preview-bg);
-      overflow: hidden;
-    }
+    .preview-box { width: 100%; height: 170px; background-color: var(--preview-bg); }
+    .preview-box img { width: 100%; height: 100%; object-fit: cover; }
 
-    .preview-box img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.3s;
-    }
+    .card-body { padding: 16px; }
+    .pen-title { font-size: 15px; font-weight: 600; }
 
-    .pen-card:hover .preview-box img { transform: scale(1.04); }
-
-    /* Nội Dung Card */
-    .card-body { padding: 14px 16px; }
-
-    .pen-title {
-      font-size: 14px;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .pen-title.loading {
-      background-color: var(--preview-bg);
-      border-radius: 4px;
-      color: transparent;
-      width: 120px;
-      display: inline-block;
-    }
-
-    /* Phân Trang (Pagination) */
     .pagination {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 12px;
-      margin-top: auto;
-      padding-top: 32px;
+      display: flex; justify-content: center; align-items: center;
+      gap: 15px; margin-top: 50px;
     }
 
     .page-btn {
-      background-color: var(--btn-bg);
-      color: var(--btn-text);
+      background: var(--btn-bg); color: var(--btn-text);
       border: 1px solid var(--card-border);
-      padding: 8px 16px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-size: 13px;
-      font-weight: 500;
-      transition: opacity 0.2s;
+      padding: 8px 16px; border-radius: 8px;
+      text-decoration: none; font-size: 13px;
     }
-
-    .page-btn:hover { opacity: 0.8; }
-    .page-info { font-size: 13px; opacity: 0.7; }
   </style>
 </head>
 <body>
 
   <div class="container">
     <div class="header">
-      <button class="theme-toggle" id="theme-btn" onclick="cycleTheme()">🌐 Hệ thống</button>
+      <button class="theme-toggle" id="theme-btn" onclick="cycleTheme()">🌐 Auto</button>
     </div>
 
     <div class="pen-grid">
       {% for post in paginator.posts %}
       <a href="{{ site.baseurl }}/viewer.html?post={{ post.url | relative_url }}" class="pen-card">
         <div class="preview-box">
-          <img 
-            src="https://s0.wp.com/mshots/v1/{{ site.url | append: site.baseurl | append: post.url | encode_uri }}?w=800&h=500" 
-            alt="Preview"
-            loading="lazy"
-          >
+          <img src="https://s0.wp.com/mshots/v1/{{ site.url | append: site.baseurl | append: post.url | encode_uri }}?w=800&h=500" loading="lazy">
         </div>
         <div class="card-body">
-          <h3 class="pen-title loading" data-post-url="{{ post.url | relative_url }}">Loading...</h3>
+          <h3 class="pen-title" data-post-url="{{ post.url | relative_url }}">Loading...</h3>
         </div>
       </a>
       {% endfor %}
     </div>
 
-    <!-- Thanh chuyển trang khi nhiều hơn 8 bài -->
     {% if paginator.total_pages > 1 %}
     <div class="pagination">
-      {% if paginator.previous_page %}
-        <a href="{{ paginator.previous_page_path | relative_url }}" class="page-btn">← Trang trước</a>
-      {% endif %}
-
-      <span class="page-info">Trang {{ paginator.page }} / {{ paginator.total_pages }}</span>
-
-      {% if paginator.next_page %}
-        <a href="{{ paginator.next_page_path | relative_url }}" class="page-btn">Trang sau →</a>
-      {% endif %}
+      {% if paginator.previous_page %}<a href="{{ paginator.previous_page_path | relative_url }}" class="page-btn">←</a>{% endif %}
+      <span>{{ paginator.page }} / {{ paginator.total_pages }}</span>
+      {% if paginator.next_page %}<a href="{{ paginator.next_page_path | relative_url }}" class="page-btn">→</a>{% endif %}
     </div>
     {% endif %}
   </div>
 
   <script>
-    const modes = ['auto', 'time', 'light', 'dark'];
-
-    function getAutoTheme() {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-
-    function getTimeTheme() {
-      const hour = new Date().getHours();
-      return (hour >= 6 && hour < 18) ? 'light' : 'dark';
-    }
+    const modes = ['auto', 'light', 'dark']; // Loại bỏ chế độ 'time'
 
     function applyTheme() {
       const mode = localStorage.getItem('theme_mode') || 'auto';
-      let activeTheme = 'dark';
-      let btnText = '';
+      let activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      let btnText = '🌐 Auto';
 
-      if (mode === 'auto') {
-        activeTheme = getAutoTheme();
-        btnText = '🌐 Hệ thống';
-      } else if (mode === 'time') {
-        activeTheme = getTimeTheme();
-        btnText = '⏰ Theo giờ';
-      } else if (mode === 'light') {
+      if (mode === 'light') {
         activeTheme = 'light';
         btnText = '☀️ Sáng';
-      } else {
+      } else if (mode === 'dark') {
         activeTheme = 'dark';
         btnText = '🌙 Tối';
       }
@@ -238,35 +161,23 @@ layout: null
       const currentMode = localStorage.getItem('theme_mode') || 'auto';
       const currentIndex = modes.indexOf(currentMode);
       const nextMode = modes[(currentIndex + 1) % modes.length];
-      
       localStorage.setItem('theme_mode', nextMode);
       applyTheme();
     }
 
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-      if ((localStorage.getItem('theme_mode') || 'auto') === 'auto') applyTheme();
-    });
-
     applyTheme();
 
+    // Load tiêu đề
     document.addEventListener("DOMContentLoaded", () => {
-      const titleElements = document.querySelectorAll(".pen-title[data-post-url]");
-      titleElements.forEach(el => {
-        const url = el.getAttribute("data-post-url");
-        fetch(url)
+      document.querySelectorAll(".pen-title").forEach(el => {
+        fetch(el.dataset.postUrl)
           .then(res => res.text())
-          .then(htmlText => {
-            const doc = new DOMParser().parseFromString(htmlText, "text/html");
-            el.textContent = doc.querySelector("title") ? doc.querySelector("title").innerText : "Untitled";
-            el.classList.remove("loading");
-          })
-          .catch(() => {
-            el.textContent = url.split('/').pop().replace('.html', '');
-            el.classList.remove("loading");
+          .then(html => {
+            const doc = new DOMParser().parseFromString(html, "text/html");
+            el.textContent = doc.querySelector("title")?.innerText || "Untitled";
           });
       });
     });
   </script>
-
 </body>
 </html>
