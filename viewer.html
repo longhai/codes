@@ -3,132 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Xem Bài Viết Full Màn Hình</title>
+  <title>Xem Bài Viết</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    html, body {
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      background-color: #131417;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
+    html, body { width: 100vw; height: 100vh; overflow: hidden; background-color: #131417; font-family: sans-serif; }
 
-    /* Khung chứa bài viết */
-    .viewport-container {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-    }
+    .viewport-container { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; position: relative; }
 
     #content-frame {
       background-color: white;
       border: none;
       display: block;
-      transition: width 0.2s ease, height 0.2s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Hiệu ứng mượt khi chuyển PC/Mobile */
+      transform-origin: center;
     }
 
-    /* Chế độ PC: Full toàn bộ màn hình */
-    .view-pc {
-      width: 100% !important;
-      height: 100% !important;
-    }
+    /* PC: Tràn 100% */
+    .view-pc { width: 100% !important; height: 100% !important; }
 
-    /* Chế độ Mobile: Tràn 100% chiều cao màn hình, giữ độ rộng chuẩn di động */
-    .view-mobile {
-      width: 412px !important; /* Chiều rộng chuẩn thiết bị di động */
-      height: 100% !important; /* Tràn hết chiều cao từ mép trên xuống mép dưới */
-      border: none !important;
-      border-radius: 0 !important;
-      box-shadow: 0 0 24px rgba(0, 0, 0, 0.6);
-    }
+    /* Mobile: Giới hạn chiều rộng */
+    .view-mobile { width: 412px !important; height: 100% !important; box-shadow: 0 0 24px rgba(0,0,0,0.5); }
 
-    /* Menu mini trôi nổi */
+    /* Menu điều khiển */
     .floating-menu {
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      background: rgba(30, 31, 38, 0.75);
-      backdrop-filter: blur(10px);
-      padding: 4px 6px;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      z-index: 9999;
-      cursor: grab;
+      position: fixed; top: 16px; right: 16px;
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(30, 31, 38, 0.85); backdrop-filter: blur(10px);
+      padding: 6px 12px; border-radius: 25px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 9999; cursor: move; touch-action: none; /* Quan trọng cho di động */
       user-select: none;
-      transition: opacity 0.3s ease;
-      opacity: 0.3;
     }
-
-    .floating-menu:hover, .floating-menu:active {
-      opacity: 1;
-    }
-
-    .drag-handle {
-      color: #717790;
-      font-size: 10px;
-      padding: 0 4px;
-      cursor: grab;
-    }
-
-    .float-btn {
-      color: #fff;
-      text-decoration: none;
-      font-size: 12px;
-      font-weight: 500;
-      padding: 4px 8px;
-      background: rgba(255, 255, 255, 0.08);
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s;
-    }
-
-    .float-btn:hover {
-      background: #444857;
-    }
+    
+    .float-btn { color: #fff; background: rgba(255,255,255,0.1); border: none; padding: 6px 12px; border-radius: 20px; cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <div class="viewport-container" id="container">
-    <iframe id="content-frame" class="view-pc" src="" scrolling="no"></iframe>
+  <div class="viewport-container">
+    <iframe id="content-frame" class="view-pc" src="" scrolling="yes"></iframe>
   </div>
 
   <div class="floating-menu" id="drag-menu">
-    <span class="drag-handle">⋮⋮</span>
-    <a href="index.html" class="float-btn" title="Trở về trang chủ">🏠</a>
-    <button id="toggle-device-btn" class="float-btn" onclick="toggleDevice()" title="Chuyển chế độ xem">📱</button>
+    <a href="index.html" class="float-btn">🏠</a>
+    <button id="toggle-btn" class="float-btn" onclick="toggleDevice()">📱</button>
   </div>
 
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const postUrl = urlParams.get('post') || '';
     const frame = document.getElementById('content-frame');
+    const toggleBtn = document.getElementById('toggle-btn');
     const dragMenu = document.getElementById('drag-menu');
-    const toggleBtn = document.getElementById('toggle-device-btn');
 
-    if (postUrl) {
-      frame.src = postUrl;
-    }
+    // 1. Tải bài viết
+    const urlParams = new URLSearchParams(window.location.search);
+    frame.src = urlParams.get('post') || '';
 
-    function isMobileDevice() {
-      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    }
-
-    function setDevice(device) {
-      if (device === 'mobile') {
+    // 2. Chuyển đổi chế độ
+    function toggleDevice() {
+      if (frame.classList.contains('view-pc')) {
         frame.className = 'view-mobile';
         toggleBtn.textContent = '💻';
       } else {
@@ -137,43 +69,44 @@
       }
     }
 
-    function toggleDevice() {
-      if (frame.classList.contains('view-pc')) {
-        setDevice('mobile');
-      } else {
-        setDevice('pc');
-      }
-    }
+    // 3. Logic Kéo thả (Hỗ trợ cả Chuột và Cảm ứng)
+    let isDragging = false;
+    let startX, startY, initialLeft, initialTop;
 
-    // Tự động nhận diện thiết bị
-    if (isMobileDevice()) {
-      setDevice('mobile');
-    } else {
-      setDevice('pc');
-    }
-
-    // Drag & Drop cho menu nút bấm
-    let isDragging = false, offsetPX = 0, offsetPY = 0;
-
-    dragMenu.addEventListener('mousedown', (e) => {
+    function startDrag(e) {
       isDragging = true;
-      offsetPX = e.clientX - dragMenu.getBoundingClientRect().left;
-      offsetPY = e.clientY - dragMenu.getBoundingClientRect().top;
-      dragMenu.style.cursor = 'grabbing';
-    });
+      const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+      const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+      
+      startX = clientX;
+      startY = clientY;
+      initialLeft = dragMenu.offsetLeft;
+      initialTop = dragMenu.offsetTop;
+    }
 
-    document.addEventListener('mousemove', (e) => {
+    function doDrag(e) {
       if (!isDragging) return;
-      dragMenu.style.left = `${e.clientX - offsetPX}px`;
-      dragMenu.style.top = `${e.clientY - offsetPY}px`;
-      dragMenu.style.right = 'auto';
-    });
+      e.preventDefault(); // Ngăn cuộn trang khi đang kéo
+      const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+      const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+      
+      dragMenu.style.left = (initialLeft + (clientX - startX)) + 'px';
+      dragMenu.style.top = (initialTop + (clientY - startY)) + 'px';
+      dragMenu.style.right = 'auto'; // Hủy bỏ quyền ưu tiên của right
+    }
 
-    document.addEventListener('mouseup', () => {
-      isDragging = false;
-      dragMenu.style.cursor = 'grab';
-    });
+    function stopDrag() { isDragging = false; }
+
+    // Gán sự kiện Mouse
+    dragMenu.addEventListener('mousedown', startDrag);
+    document.addEventListener('mousemove', doDrag);
+    document.addEventListener('mouseup', stopDrag);
+
+    // Gán sự kiện Touch (Quan trọng cho điện thoại)
+    dragMenu.addEventListener('touchstart', startDrag);
+    document.addEventListener('touchmove', doDrag, {passive: false});
+    document.addEventListener('touchend', stopDrag);
+
   </script>
-
 </body>
 </html>
