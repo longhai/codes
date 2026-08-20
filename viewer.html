@@ -13,7 +13,7 @@
       height: 100vh;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow: hidden; /* Ẩn toàn bộ thanh cuộn trang chính */
     }
 
     /* Thanh điều khiển */
@@ -26,6 +26,7 @@
       padding: 0 16px;
       border-bottom: 1px solid #2c2d30;
       z-index: 10;
+      flex-shrink: 0;
     }
     .back-btn {
       color: #aaa;
@@ -58,31 +59,30 @@
       color: #fff;
     }
 
-    /* Khu vực hiển thị Live Preview */
+    /* Khu vực chứa Iframe */
     .viewport-container {
       flex: 1;
       display: flex;
       justify-content: center;
       align-items: center;
       background-color: #131417;
-      overflow: auto;
+      overflow: hidden; /* Dọn dẹp thanh cuộn dư thừa */
       position: relative;
     }
 
     #content-frame {
       background-color: white;
       border: none;
-      transition: all 0.3s ease;
+      transition: transform 0.2s ease, width 0.2s ease, height 0.2s ease;
     }
 
-    /* Chế độ PC: Ép chiều rộng khung đúng độ phân giải Máy tính (1280px) */
+    /* Chế độ PC: Tự động vừa khít khung nhìn */
     .view-pc {
-      width: 1280px !important;
-      height: 800px !important;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      width: 100% !important;
+      height: 100% !important;
     }
 
-    /* Chế độ Mobile: Kích thước chuẩn iPhone 8/X */
+    /* Chế độ Mobile: Giữ chuẩn tỉ lệ điện thoại */
     .view-mobile {
       width: 375px !important;
       height: 667px !important;
@@ -107,7 +107,6 @@
   </div>
 
   <script>
-    // Lấy đường dẫn bài viết từ tham số URL (?post=...)
     const urlParams = new URLSearchParams(window.location.search);
     const postUrl = urlParams.get('post') || 'posts/2026-08-19-bai-viet-1.html';
     const frame = document.getElementById('content-frame');
@@ -115,16 +114,21 @@
 
     frame.src = postUrl;
 
-    function scaleFrameForMobile() {
-      const containerWidth = container.clientWidth - 20; // Trừ padding
-      const pcWidth = 1280;
+    function scaleFrame() {
+      // Nếu là chế độ Mobile, thu nhỏ nếu màn hình thiết bị quá ngắn/nhỏ
+      if (frame.classList.contains('view-mobile')) {
+        const containerWidth = container.clientWidth - 30;
+        const containerHeight = container.clientHeight - 30;
+        const mobileWidth = 375;
+        const mobileHeight = 667;
 
-      // Nếu đang ở chế độ PC và màn hình thiết bị nhỏ hơn 1280px (như trên điện thoại)
-      if (frame.classList.contains('view-pc') && containerWidth < pcWidth) {
-        const scale = containerWidth / pcWidth;
+        let scale = 1;
+        if (containerWidth < mobileWidth || containerHeight < mobileHeight) {
+          scale = Math.min(containerWidth / mobileWidth, containerHeight / mobileHeight);
+        }
         frame.style.transform = `scale(${scale})`;
-        frame.style.transformOrigin = 'center center';
       } else {
+        // Chế độ PC: Reset transform để iframe giãn full 100%
         frame.style.transform = 'none';
       }
     }
@@ -135,26 +139,18 @@
 
       if (device === 'mobile') {
         frame.className = 'view-mobile';
-        frame.style.transform = 'none';
         btnMobile.classList.add('active');
         btnPc.classList.remove('active');
       } else {
         frame.className = 'view-pc';
         btnPc.classList.add('active');
         btnMobile.classList.remove('active');
-        scaleFrameForMobile();
       }
+      scaleFrame();
     }
 
-    // Tự động thu nhỏ/phóng to khi xoay màn hình hoặc thay đổi kích thước cửa sổ
-    window.addEventListener('resize', () => {
-      if (frame.classList.contains('view-pc')) {
-        scaleFrameForMobile();
-      }
-    });
-
-    // Chạy scale lần đầu khi load trang
-    frame.addEventListener('load', scaleFrameForMobile);
+    window.addEventListener('resize', scaleFrame);
+    frame.addEventListener('load', scaleFrame);
   </script>
 
 </body>
