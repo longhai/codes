@@ -15,7 +15,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    /* Khung chứa tràn full màn hình */
+    /* Khung chứa bài viết */
     .viewport-container {
       width: 100%;
       height: 100%;
@@ -27,23 +27,24 @@
 
     #content-frame {
       background-color: white;
-      border: none !important;
+      border: none;
       display: block;
       transition: transform 0.2s ease, width 0.2s ease, height 0.2s ease;
     }
 
-    /* Chế độ PC: Full 100% màn hình */
+    /* Chế độ PC: Full tràn 100% màn hình */
     .view-pc {
       width: 100% !important;
       height: 100% !important;
     }
 
-    /* Chế độ Mobile trên PC: Giới hạn tỉ lệ điện thoại nhưng không bo viền */
+    /* Chế độ Mobile: Khung chuẩn điện thoại, hoàn toàn phẳng (không viền, không bo góc) */
     .view-mobile {
       width: 375px !important;
       height: 667px !important;
+      border: none !important;
       border-radius: 0 !important;
-      box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Đổ bóng nhẹ phân tách với nền */
     }
 
     /* Menu mini trôi nổi - Siêu gọn & Kéo thả */
@@ -127,14 +128,8 @@
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
 
+    // Tự động thu phóng khung mobile nếu màn hình PC quá nhỏ
     function scaleFrame() {
-      // Nếu đang dùng điện thoại thật, luôn bắt buộc 100% full màn hình
-      if (isMobileDevice()) {
-        frame.className = 'view-pc';
-        return;
-      }
-
-      // Nếu xem trên PC ở chế độ Mobile
       if (frame.classList.contains('view-mobile')) {
         const containerWidth = container.clientWidth - 20;
         const containerHeight = container.clientHeight - 20;
@@ -170,7 +165,7 @@
       }
     }
 
-    // Khởi tạo
+    // Nhận diện thiết bị ban đầu
     if (isMobileDevice()) {
       setDevice('mobile');
     } else {
@@ -180,7 +175,7 @@
     window.addEventListener('resize', scaleFrame);
     frame.addEventListener('load', scaleFrame);
 
-    // Drag & Drop cho menu
+    // Tính năng Drag & Drop cho menu nút bấm
     let isDragging = false, offsetPX = 0, offsetPY = 0;
 
     dragMenu.addEventListener('mousedown', (e) => {
