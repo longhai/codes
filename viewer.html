@@ -6,6 +6,7 @@
   <title>Khung Xem Bài Viết</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: #131417;
@@ -13,7 +14,7 @@
       height: 100vh;
       display: flex;
       flex-direction: column;
-      overflow: hidden; /* Ẩn toàn bộ thanh cuộn trang chính */
+      overflow: hidden; /* Loại bỏ hoàn toàn thanh cuộn trang chính */
     }
 
     /* Thanh điều khiển */
@@ -28,6 +29,7 @@
       z-index: 10;
       flex-shrink: 0;
     }
+
     .back-btn {
       color: #aaa;
       text-decoration: none;
@@ -35,7 +37,13 @@
       padding: 6px 12px;
       background: #2c2d30;
       border-radius: 4px;
+      transition: background 0.2s, color 0.2s;
     }
+    .back-btn:hover {
+      background: #3b3d45;
+      color: #fff;
+    }
+
     .device-switcher {
       display: flex;
       background: #2c2d30;
@@ -43,6 +51,7 @@
       border-radius: 6px;
       gap: 2px;
     }
+
     .device-btn {
       background: transparent;
       border: none;
@@ -54,19 +63,20 @@
       cursor: pointer;
       transition: 0.2s;
     }
+
     .device-btn.active {
       background: #444857;
       color: #fff;
     }
 
-    /* Khu vực chứa Iframe */
+    /* Khu vực chứa Iframe xem trước */
     .viewport-container {
       flex: 1;
       display: flex;
       justify-content: center;
       align-items: center;
       background-color: #131417;
-      overflow: hidden; /* Dọn dẹp thanh cuộn dư thừa */
+      overflow: hidden;
       position: relative;
     }
 
@@ -76,13 +86,13 @@
       transition: transform 0.2s ease, width 0.2s ease, height 0.2s ease;
     }
 
-    /* Chế độ PC: Tự động vừa khít khung nhìn */
+    /* Chế độ PC: Tự động tràn 100% không gian hiển thị */
     .view-pc {
       width: 100% !important;
       height: 100% !important;
     }
 
-    /* Chế độ Mobile: Giữ chuẩn tỉ lệ điện thoại */
+    /* Chế độ Mobile: Kích thước khung chuẩn di động */
     .view-mobile {
       width: 375px !important;
       height: 667px !important;
@@ -97,7 +107,7 @@
   <div class="toolbar">
     <a href="index.html" class="back-btn">← Trang chủ</a>
     <div class="device-switcher">
-      <button id="btn-pc" class="device-btn active" onclick="setDevice('pc')">💻 Máy tính (PC)</button>
+      <button id="btn-pc" class="device-btn" onclick="setDevice('pc')">💻 Máy tính (PC)</button>
       <button id="btn-mobile" class="device-btn" onclick="setDevice('mobile')">📱 Điện thoại (Mobile)</button>
     </div>
   </div>
@@ -108,14 +118,21 @@
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const postUrl = urlParams.get('post') || 'posts/2026-08-19-bai-viet-1.html';
+    const postUrl = urlParams.get('post') || '';
     const frame = document.getElementById('content-frame');
     const container = document.getElementById('container');
 
-    frame.src = postUrl;
+    if (postUrl) {
+      frame.src = postUrl;
+    }
 
+    // Kiểm tra thiết bị truy cập thực tế
+    function isMobileDevice() {
+      return window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+
+    // Phóng to / Thu nhỏ khung di động nếu màn hình nhỏ
     function scaleFrame() {
-      // Nếu là chế độ Mobile, thu nhỏ nếu màn hình thiết bị quá ngắn/nhỏ
       if (frame.classList.contains('view-mobile')) {
         const containerWidth = container.clientWidth - 30;
         const containerHeight = container.clientHeight - 30;
@@ -128,11 +145,11 @@
         }
         frame.style.transform = `scale(${scale})`;
       } else {
-        // Chế độ PC: Reset transform để iframe giãn full 100%
         frame.style.transform = 'none';
       }
     }
 
+    // Chuyển đổi qua lại giữa chế độ PC và Mobile
     function setDevice(device) {
       const btnPc = document.getElementById('btn-pc');
       const btnMobile = document.getElementById('btn-mobile');
@@ -147,6 +164,13 @@
         btnMobile.classList.remove('active');
       }
       scaleFrame();
+    }
+
+    // Tự động bật chế độ phù hợp ngay khi truy cập
+    if (isMobileDevice()) {
+      setDevice('mobile');
+    } else {
+      setDevice('pc');
     }
 
     window.addEventListener('resize', scaleFrame);
