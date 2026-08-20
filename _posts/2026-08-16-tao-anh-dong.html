@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Trình Phát & Xuất Ảnh Động Pro</title>
+
+  <!-- External Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gifshot/0.3.2/gifshot.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/upng-js@2.1.0/UPNG.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gifuct-js@2.1.2/dist/gifuct.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0b0d14;
+      --card-bg: rgba(22, 26, 38, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --panel: #141722;
+      --border: #202536;
+      --text: #f1f5f9;
+      --subtext: #78879e;
+      --accent: #4f46e5;
+      --accent-glow: rgba(79, 70, 229, 0.35);
+      --accent-hover: #4338ca;
+      --btn-bg: rgba(255, 255, 255, 0.06);
+      --btn-hover: rgba(255, 255, 255, 0.12);
+      --checker-1: #0f121a;
+      --checker-2: #181d2a;
+      --badge-bg: rgba(11, 13, 20, 0.85);
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f8fafc;
+        --card-bg: rgba(255, 255, 255, 0.9);
+        --card-border: rgba(0, 0, 0, 0.08);
+        --panel: #ffffff;
+        --border: #e2e8f0;
+        --text: #0f172a;
+        --subtext: #64748b;
+        --accent: #4f46e5;
+        --accent-glow: rgba(79, 70, 229, 0.2);
+        --accent-hover: #4338ca;
+        --btn-bg: #f1f5f9;
+        --btn-hover: #e2e8f0;
+        --checker-1: #ffffff;
+        --checker-2: #e2e8f0;
+        --badge-bg: rgba(255, 255, 255, 0.9);
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* Top Header Bar - Optimized for Mobile Width */
+    .app-header {
+      height: 48px;
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--card-border);
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      z-index: 10;
+      gap: 6px;
+    }
+
+    .app-logo {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 700;
+      font-size: 13px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .app-logo-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, var(--accent), #818cf8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    /* Main Viewport Container */
+    .viewport {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .vp-frame {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      border: 2px dashed var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .vp-frame.has-data { border: 1px solid var(--card-border); }
+    .vp-frame.drag-over { border-color: var(--accent); background: rgba(79, 70, 229, 0.08); box-shadow: 0 0 24px var(--accent-glow); }
+
+    .bg-checker {
+      background-image: linear-gradient(45deg, var(--checker-2) 25%, transparent 25%), 
+                        linear-gradient(-45deg, var(--checker-2) 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, var(--checker-2) 75%), 
+                        linear-gradient(-45deg, transparent 75%, var(--checker-2) 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+      background-color: var(--checker-1);
+    }
+
+    canvas { display: block; max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3)); }
+
+    /* Floating Badges */
+    .info-overlay {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .badge {
+      background: var(--badge-bg);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--card-border);
+      padding: 3px 8px;
+      border-radius: 14px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .badge b { color: var(--accent); font-family: ui-monospace, SFMono-Regular, monospace; }
+
+    .drop-hint {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      color: var(--subtext);
+      text-align: center;
+      padding: 20px;
+      pointer-events: none;
+    }
+    .drop-hint-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: var(--btn-bg);
+      border: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+    }
+    .drop-hint .title { font-weight: 700; font-size: 14px; color: var(--text); }
+    .drop-hint .sub { font-size: 11px; opacity: 0.8; max-width: 220px; }
+
+    /* Bottom Floating Dock Bar */
+    .floating-dock {
+      padding: 8px 12px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 20;
+    }
+
+    .dock-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .dock-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .dock-group { display: flex; align-items: center; gap: 6px; }
+
+    .timeline-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      padding: 0 4px;
+    }
+
+    .slider {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--border);
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    /* Button Styling */
+    button {
+      height: 36px;
+      min-width: 36px;
+      padding: 0 8px;
+      background: var(--btn-bg);
+      color: var(--text);
+      border: 1px solid var(--card-border);
+      border-radius: 9px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      white-space: nowrap;
+    }
+
+    button:hover:not(:disabled) { background: var(--btn-hover); border-color: var(--subtext); }
+    button:active:not(:disabled) { transform: scale(0.92); }
+    button:disabled { opacity: 0.3; cursor: not-allowed; }
+    button.icon-only { width: 36px; padding: 0; flex-shrink: 0; }
+    
+    /* Prominent Play Button */
+    button.btn-play-primary {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #6366f1);
+      color: #fff;
+      border: none;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+
+    button.accent-header {
+      background: rgba(79, 70, 229, 0.15);
+      border-color: rgba(79, 70, 229, 0.4);
+      color: #818cf8;
+    }
+
+    .num-input {
+      width: 36px;
+      height: 24px;
+      background: var(--bg);
+      border: 1px solid var(--card-border);
+      border-radius: 5px;
+      color: var(--accent);
+      font-weight: 700;
+      text-align: center;
+      font-size: 11px;
+      outline: none;
+    }
+
+    /* Bottom Sheet Modal Presentation */
+    .modal {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(8px);
+      display: flex; align-items: flex-end; justify-content: center; z-index: 100;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+    }
+    @media (min-width: 640px) {
+      .modal { align-items: center; padding: 20px; }
+    }
+    .modal.active { opacity: 1; pointer-events: auto; }
+    
+    .modal-card {
+      width: 100%; max-width: 480px; background: var(--panel); border: 1px solid var(--card-border);
+      border-radius: 24px 24px 0 0; padding: 18px; display: flex; flex-direction: column; gap: 12px;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.5); max-height: 85vh; overflow-y: auto;
+      transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @media (min-width: 640px) {
+      .modal-card { border-radius: 20px; transform: translateY(20px); }
+    }
+    .modal.active .modal-card { transform: translateY(0); }
+
+    .modal-card.wide { max-width: 680px; }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 14px; }
+    .modal-drag-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; align-self: center; margin-bottom: 2px; }
+
+    .form-row { display: flex; flex-direction: column; gap: 4px; }
+    .form-row label { font-size: 10px; color: var(--subtext); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-control {
+      height: 36px; background: var(--bg); border: 1px solid var(--card-border); border-radius: 8px;
+      color: var(--text); padding: 0 10px; font-size: 11px; outline: none; width: 100%;
+    }
+
+    .chip-group { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+    .chip {
+      padding: 5px 10px; background: var(--bg); border: 1px solid var(--card-border); border-radius: 6px;
+      font-size: 11px; font-weight: 600; color: var(--subtext); cursor: pointer; transition: all 0.15s;
+    }
+    .chip:hover { border-color: var(--accent); color: var(--text); }
+
+    .ss-preview-wrap {
+      width: 100%; height: 180px; background: var(--bg); border: 1px solid var(--card-border);
+      border-radius: 10px; overflow: auto; display: flex; align-items: center; justify-content: center;
+      position: relative; padding: 8px;
+    }
+    .ss-preview-wrap canvas { max-width: none; max-height: none; }
+
+    .color-picker-wrap { display: flex; gap: 8px; align-items: center; }
+    .color-picker-wrap input[type="color"] {
+      width: 36px; height: 36px; border: 1px solid var(--card-border); border-radius: 8px;
+      background: none; cursor: pointer; padding: 2px;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text);
+      cursor: pointer;
+      margin-top: 2px;
+    }
+    .checkbox-row input { accent-color: var(--accent); width: 16px; height: 16px; }
+
+    .progress { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; display: none; }
+    .progress-bar { width: 0%; height: 100%; background: var(--accent); transition: width 0.1s; }
+
+    @media (max-width: 360px) {
+      .app-logo span { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header with Compact File Action Buttons -->
+  <header class="app-header">
+    <div class="app-logo">
+      <div class="app-logo-icon">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="2" width="20" height="20" rx="4"/><path d="M7 2v20M17 2v20M2 12h20"/></svg>
+      </div>
+      <span>Sprite Inspector</span>
+    </div>
+
+    <!-- Clean Header Actions (No Status Badge Text) -->
+    <div class="header-actions">
+      <button id="btnFile" class="icon-only accent-header" title="Mở Tệp Ảnh (Chọn nhiều ảnh)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      </button>
+      <button id="btnFolder" class="icon-only" title="Mở Thư Mục Ảnh">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      </button>
+      <button id="btnSpriteModal" class="icon-only accent-header" title="Bóc Tách Sprite Sheet Grid">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Viewport Area -->
+  <main class="viewport" id="vp">
+    <div class="vp-frame bg-checker" id="vpFrame">
+      <canvas id="canvas" width="800" height="450"></canvas>
+
+      <!-- Floating Info Badges -->
+      <div class="info-overlay">
+        <div class="badge" id="resBadge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg> <span id="valRes">0 x 0</span></div>
+        <div class="badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> <span id="timecode">00:00.00</span></div>
+      </div>
+      
+      <!-- Upload Hint Overlay -->
+      <div class="drop-hint" id="dropHint">
+        <div class="drop-hint-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <div>
+          <div class="title">Chạm vào đây để nạp tệp</div>
+          <div class="sub">Hỗ trợ chọn nhiều ảnh, GIF, APNG hoặc Sprite Sheet</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Control Dock -->
+  <footer class="floating-dock">
+    <div class="dock-card">
+      <div class="dock-row">
+        <!-- Playback Controls -->
+        <div class="dock-group" style="flex: 1; justify-content: center; gap: 10px;">
+          <button id="btnLoop" class="icon-only" title="Lặp vô tận / Ping-Pong">
+            <svg id="loopIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          </button>
+          <button id="btnPrev" class="icon-only" disabled title="Khung hình trước">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+          </button>
+          <button id="btnPlay" class="btn-play-primary" disabled title="Phát / Tạm dừng">
+            <svg id="playIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </button>
+          <button id="btnNext" class="icon-only" disabled title="Khung hình tiếp">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+          </button>
+          <button id="btnBg" class="icon-only" title="Đổi màu nền">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 0 0 20z" fill="currentColor"/></svg>
+          </button>
+          <button id="btnExport" class="icon-only accent-header" disabled title="Xuất File Ảnh Động">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Timeline Scrubbing & Stats Row -->
+      <div class="dock-row">
+        <div class="timeline-wrap">
+          <input type="range" id="slider" class="slider" value="0" min="0" max="0" disabled>
+        </div>
+        <div class="dock-group">
+          <div class="badge"><span id="valFrames">0</span> f</div>
+          <div class="badge">
+            <input type="number" id="inputFps" class="num-input" value="24" min="1" max="60"> FPS
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Hidden File Input Elements -->
+  <input type="file" id="fileInput" multiple accept="image/*" style="display:none">
+  <input type="file" id="folderInput" webkitdirectory directory multiple accept="image/*" style="display:none">
+  <input type="file" id="spriteFileInput" accept="image/*" style="display:none">
+
+  <!-- Sprite Sheet Modal with Empty Frame Filtering -->
+  <div class="modal" id="modalSpriteSheet">
+    <div class="modal-card wide">
+      <div class="modal-drag-handle"></div>
+      <div class="modal-head">
+        <span>Bóc Tách Khung Hình Sprite Sheet</span>
+        <button id="btnCloseSS" class="icon-only" style="border:none; background:transparent;">✕</button>
+      </div>
+
+      <div style="display: flex; gap: 10px; flex-direction: column;">
+        <button id="btnSSSelectFile" style="width: 100%;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Chọn Ảnh Sprite Sheet Khác...
+        </button>
+
+        <div style="display: flex; gap: 8px;">
+          <div class="form-row" style="flex:1">
+            <label>Số Cột (Cols)</label>
+            <input type="number" id="ssCols" class="form-control" value="16" min="1" max="100">
+          </div>
+          <div class="form-row" style="flex:1">
+            <label>Số Dòng (Rows)</label>
+            <input type="number" id="ssRows" class="form-control" value="16" min="1" max="100">
+          </div>
+          <div class="form-row" style="flex:1">
+            <label>Max Frames</label>
+            <input type="number" id="ssMaxFrames" class="form-control" value="256" min="1" max="10000">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>Cấu hình nhanh thông dụng</label>
+          <div class="chip-group">
+            <span class="chip" onclick="window.setSSGrid(16, 16)">16 × 16</span>
+            <span class="chip" onclick="window.setSSGrid(8, 8)">8 × 8</span>
+            <span class="chip" onclick="window.setSSGrid(5, 5)">5 × 5</span>
+            <span class="chip" onclick="window.setSSGrid(4, 4)">4 × 4</span>
+            <span class="chip" onclick="window.setSSGrid(10, 10)">10 × 10</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label>Thứ tự đọc lưới</label>
+          <select id="ssOrder" class="form-control">
+            <option value="row-first">Trái qua phải, dòng trên xuống dưới (Hàng qua Hàng)</option>
+            <option value="col-first">Trên xuống dưới, cột trái qua phải (Cột qua Cột)</option>
+          </select>
+        </div>
+
+        <!-- Checkbox for Auto Skipping Empty Frames -->
+        <label class="checkbox-row">
+          <input type="checkbox" id="ssSkipEmpty" checked>
+          <span>Tự động bỏ qua các khung hình trống/trong suốt ở cuối</span>
+        </label>
+
+        <div style="background: var(--bg); padding: 8px 12px; border-radius: 10px; border: 1px solid var(--card-border); font-size: 11px; display: flex; justify-content: space-between;">
+          <div>Lưới ô: <b id="ssInfoTotal" style="color: var(--accent);">256</b></div>
+          <div>Kích thước frame: <b id="ssInfoFrameRes" style="color: var(--text);">64x64 px</b></div>
+        </div>
+
+        <div class="form-row">
+          <label>Xem trước đường lưới bóc tách</label>
+          <div class="ss-preview-wrap bg-checker">
+            <canvas id="ssCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px;">
+        <button id="btnCancelSS" style="flex: 1;">Hủy</button>
+        <button id="btnConfirmSS" style="flex: 2; background: var(--accent); color:#fff;">Nạp Vào Trình Phát</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export Modal -->
+  <div class="modal" id="modalExport">
+    <div class="modal-card">
+      <div class="modal-drag-handle"></div>
+      <div class="modal-head">
+        <span>Xuất File Ảnh Động / Chuỗi Ảnh</span>
+        <button id="btnCloseModal" class="icon-only" style="border:none; background:transparent;">✕</button>
+      </div>
+
+      <div class="form-row">
+        <label>Định dạng xuất</label>
+        <select id="expFormat" class="form-control">
+          <option value="apng">APNG (.png) - Sắc nét 100%, lặp vô tận</option>
+          <option value="gif">Ảnh GIF (.gif) - Tương thích truyền thống</option>
+          <option value="sprite">Sprite Sheet Grid (.png) - Ghép ảnh lưới</option>
+          <option value="zip">Tệp Nén ZIP (.zip) - Nén chuỗi ảnh PNG</option>
+        </select>
+      </div>
+
+      <div class="form-row" id="spriteColsRow" style="display: none;">
+        <label>Số cột trong Sprite Sheet</label>
+        <input type="number" id="expSpriteCols" class="form-control" value="16" min="1" max="50">
+      </div>
+
+      <div class="form-row">
+        <label>Tỉ lệ kích thước</label>
+        <select id="expScale" class="form-control">
+          <option value="1">100% (Kích thước gốc)</option>
+          <option value="0.75">75%</option>
+          <option value="0.5">50% (Tiết kiệm dung lượng)</option>
+        </select>
+      </div>
+
+      <div class="form-row" id="fpsExportRow">
+        <label>Tốc độ FPS khi xuất</label>
+        <input type="number" id="expFps" class="form-control" value="24" min="1" max="60">
+      </div>
+
+      <div class="form-row">
+        <label>Màu nền khi xuất</label>
+        <div class="color-picker-wrap">
+          <select id="expBgColor" class="form-control" style="flex:1">
+            <option value="transparent">Trong suốt (Alpha Channel)</option>
+            <option value="#000000">Nền Đen (#000000)</option>
+            <option value="#ffffff">Nền Trắng (#ffffff)</option>
+            <option value="custom">Tùy Chỉnh 👉</option>
+          </select>
+          <input type="color" id="expCustomColor" value="#3b82f6" style="display:none;">
+        </div>
+      </div>
+
+      <div class="progress" id="expProgress"><div class="progress-bar" id="expBar"></div></div>
+      <div id="expStatus" style="font-size: 11px; color: var(--subtext); text-align: center;">Sẵn sàng xuất file.</div>
+
+      <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px;">
+        <button id="btnCancelExp" style="flex:1;">Hủy</button>
+        <button id="btnStartExp" style="flex:2; background: var(--accent); color:#fff;">Bắt Đầu Xuất</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const canvas = $('canvas'), ctx = canvas.getContext('2d');
+    const vp = $('vp'), vpFrame = $('vpFrame'), dropHint = $('dropHint');
+    const slider = $('slider'), timecode = $('timecode');
+    
+    // Virtual Status Handler (No header text DOM element needed)
+    const statusText = { set textContent(v) {} };
+
+    let images = [], total = 0, current = 0, isPlay = false, fps = 24;
+    let lastTime = 0, accum = 0, animId = null, bgState = 0;
+    let isPingPong = false, pingPongDir = 1;
+
+    let ssSourceImg = null;
+    const ssCanvas = $('ssCanvas'), ssCtx = ssCanvas.getContext('2d');
+
+    // Global Preset Chip Function
+    window.setSSGrid = function(c, r) {
+      $('ssCols').value = c;
+      $('ssRows').value = r;
+      $('ssMaxFrames').value = c * r;
+      renderSpriteSheetGridOverlay();
+    };
+
+    // Tap Viewport triggers File selector if empty
+    vpFrame.onclick = e => {
+      if (e.target === canvas || e.target === vpFrame || dropHint.contains(e.target)) {
+        if (total === 0) $('btnFile').click();
+      }
+    };
+
+    $('btnFile').onclick = () => { $('fileInput').value = ''; $('fileInput').click(); };
+    $('btnFolder').onclick = () => { $('folderInput').value = ''; $('folderInput').click(); };
+    $('btnSSSelectFile').onclick = () => { $('spriteFileInput').value = ''; $('spriteFileInput').click(); };
+
+    $('fileInput').onchange = e => loadFiles(e.target.files);
+    $('folderInput').onchange = e => loadFiles(e.target.files);
+    $('spriteFileInput').onchange = e => {
+      if (e.target.files?.length) openSpriteSheetInspector(e.target.files[0]);
+    };
+
+    // Drag and Drop Logic
+    vp.ondragover = e => { e.preventDefault(); vpFrame.classList.add('drag-over'); };
+    vp.ondragleave = () => vpFrame.classList.remove('drag-over');
+    vp.ondrop = e => {
+      e.preventDefault(); vpFrame.classList.remove('drag-over');
+      if (e.dataTransfer.files?.length) loadFiles(e.dataTransfer.files);
+    };
+
+    // Touch Swipe Gesture for Viewport
+    let touchStartX = 0;
+    vp.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+    vp.addEventListener('touchend', e => {
+      let touchEndX = e.changedTouches[0].screenX;
+      let diff = touchEndX - touchStartX;
+      if (Math.abs(diff) > 35 && total > 0) {
+        pause();
+        if (diff < 0) { current = (current + 1) % total; } // Swipe Left -> Next
+        else { current = (current - 1 + total) % total; } // Swipe Right -> Prev
+        draw(current);
+      }
+    }, {passive: true});
+
+    function sortFiles(fileList) {
+      const exts = ['.png', '.jpg', '.jpeg', '.webp', '.avif', '.gif'];
+      return Array.from(fileList)
+        .filter(f => exts.some(ext => f.name.toLowerCase().endsWith(ext)))
+        .sort((a,b) => a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'}));
+    }
+
+    async function extractFramesFromAnimatedFile(file) {
+      const lowerName = file.name.toLowerCase();
+      let mimeType = file.type;
+
+      // GIF Decoding via gifuct-js
+      if ((lowerName.endsWith('.gif') || mimeType === 'image/gif') && window.parseGIF) {
+        try {
+          const buffer = await file.arrayBuffer();
+          const gif = parseGIF(buffer);
+          const frames = decompressFrames(gif, true);
+          if (frames && frames.length > 1) {
+            const frameImages = [];
+            const w = gif.lsd.width, h = gif.lsd.height;
+            const tempCvs = document.createElement('canvas');
+            tempCvs.width = w; tempCvs.height = h;
+            const tempCtx = tempCvs.getContext('2d');
+
+            for (let i = 0; i < frames.length; i++) {
+              const frame = frames[i];
+              const patchCvs = document.createElement('canvas');
+              patchCvs.width = frame.dims.width; patchCvs.height = frame.dims.height;
+              const patchCtx = patchCvs.getContext('2d');
+              const patchData = patchCtx.createImageData(frame.dims.width, frame.dims.height);
+              patchData.data.set(frame.patch);
+              patchCtx.putImageData(patchData, 0, 0);
+
+              if (frame.disposalType === 2) tempCtx.clearRect(0, 0, w, h);
+              tempCtx.drawImage(patchCvs, frame.dims.left, frame.dims.top);
+
+              const frameImg = new Image();
+              frameImg.src = tempCvs.toDataURL('image/png');
+              await new Promise(r => { frameImg.onload = frameImg.onerror = r; });
+              frameImages.push(frameImg);
+            }
+            return frameImages;
+          }
+        } catch (e) {
+          console.warn('GIF error:', e);
+        }
+      }
+
+      // APNG Decoding via UPNG
+      if ((lowerName.endsWith('.png') || mimeType === 'image/png') && window.UPNG) {
+        try {
+          const buffer = await file.arrayBuffer();
+          const img = UPNG.decode(buffer);
+          if (img.frames && img.frames.length > 1) {
+            const rgbaBuffers = UPNG.toRGBA8(img);
+            const frameImages = [];
+            const w = img.width, h = img.height;
+            for (let i = 0; i < rgbaBuffers.length; i++) {
+              const cvs = document.createElement('canvas');
+              cvs.width = w; cvs.height = h;
+              const ctx = cvs.getContext('2d');
+              const imgData = ctx.createImageData(w, h);
+              imgData.data.set(new Uint8Array(rgbaBuffers[i]));
+              ctx.putImageData(imgData, 0, 0);
+
+              const frameImg = new Image();
+              frameImg.src = cvs.toDataURL('image/png');
+              await new Promise(r => { frameImg.onload = frameImg.onerror = r; });
+              frameImages.push(frameImg);
+            }
+            return frameImages;
+          }
+        } catch (e) {
+          console.warn('UPNG APNG error:', e);
+        }
+      }
+
+      return null;
+    }
+
+    async function loadFiles(fileList) {
+      const files = sortFiles(fileList);
+      if (!files.length) return;
+
+      pause();
+      images.forEach(img => img?.src && URL.revokeObjectURL(img.src));
+      images = [];
+
+      if (files.length === 1) {
+        const lowerName = files[0].name.toLowerCase();
+        if (lowerName.includes('frame') && (lowerName.includes('grid') || lowerName.includes('x'))) {
+          openSpriteSheetInspector(files[0]);
+          return;
+        }
+
+        const extractedFrames = await extractFramesFromAnimatedFile(files[0]);
+        if (extractedFrames && extractedFrames.length > 0) {
+          images = extractedFrames;
+        }
+      }
+
+      if (images.length === 0) {
+        total = files.length;
+        for (let f of files) {
+          const img = new Image();
+          const url = URL.createObjectURL(f);
+          await new Promise(res => { img.onload = img.onerror = res; img.src = url; });
+          images.push(img);
+        }
+      }
+
+      populatePlayerWithFrames(images);
+    }
+
+    function populatePlayerWithFrames(frameList) {
+      images = frameList;
+      total = images.length;
+      dropHint.style.display = 'none';
+      vpFrame.classList.add('has-data');
+      $('valFrames').textContent = total;
+      
+      if (images[0]) {
+        canvas.width = images[0].naturalWidth || images[0].width || 800;
+        canvas.height = images[0].naturalHeight || images[0].height || 450;
+        $('valRes').textContent = `${canvas.width} x ${canvas.height}`;
+        $('expSpriteCols').value = Math.min(total, Math.ceil(Math.sqrt(total)));
+      }
+
+      fps = total > 100 ? 30 : (total <= 12 ? 8 : (total <= 24 ? 12 : 24));
+      $('inputFps').value = fps;
+      $('expFps').value = fps;
+
+      current = 0; pingPongDir = 1;
+      slider.disabled = false; slider.min = 0; slider.max = total - 1; slider.value = 0;
+      ['btnPlay', 'btnPrev', 'btnNext', 'btnExport'].forEach(id => $(id).disabled = false);
+
+      draw(0);
+      play();
+    }
+
+    const modalSS = $('modalSpriteSheet');
+    $('btnSpriteModal').onclick = () => {
+      pause();
+      if (images.length > 0 && images[0]) {
+        ssSourceImg = images[0];
+        renderSpriteSheetGridOverlay();
+      }
+      modalSS.classList.add('active');
+    };
+
+    $('btnCloseSS').onclick = $('btnCancelSS').onclick = () => modalSS.classList.remove('active');
+
+    async function openSpriteSheetInspector(file) {
+      pause();
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      await new Promise(r => { img.onload = img.onerror = r; img.src = url; });
+      ssSourceImg = img;
+
+      if (file.name.toLowerCase().includes('256frames') || file.name.toLowerCase().includes('16x16')) {
+        $('ssCols').value = 16;
+        $('ssRows').value = 16;
+        $('ssMaxFrames').value = 256;
+      }
+
+      renderSpriteSheetGridOverlay();
+      modalSS.classList.add('active');
+    }
+
+    $('ssCols').oninput = $('ssRows').oninput = () => {
+      const c = parseInt($('ssCols').value, 10) || 1;
+      const r = parseInt($('ssRows').value, 10) || 1;
+      $('ssMaxFrames').value = c * r;
+      renderSpriteSheetGridOverlay();
+    };
+
+    $('ssOrder').onchange = () => renderSpriteSheetGridOverlay();
+
+    function renderSpriteSheetGridOverlay() {
+      if (!ssSourceImg) return;
+      const cols = Math.max(1, parseInt($('ssCols').value, 10) || 1);
+      const rows = Math.max(1, parseInt($('ssRows').value, 10) || 1);
+      
+      const w = ssSourceImg.naturalWidth || ssSourceImg.width;
+      const h = ssSourceImg.naturalHeight || ssSourceImg.height;
+
+      ssCanvas.width = w;
+      ssCanvas.height = h;
+      ssCtx.clearRect(0, 0, w, h);
+      ssCtx.drawImage(ssSourceImg, 0, 0);
+
+      const frameW = w / cols;
+      const frameH = h / rows;
+
+      ssCtx.strokeStyle = '#6366f1';
+      ssCtx.lineWidth = Math.max(1.5, Math.round(w / 600));
+
+      for (let c = 0; c <= cols; c++) {
+        ssCtx.beginPath();
+        ssCtx.moveTo(c * frameW, 0);
+        ssCtx.lineTo(c * frameW, h);
+        ssCtx.stroke();
+      }
+
+      for (let r = 0; r <= rows; r++) {
+        ssCtx.beginPath();
+        ssCtx.moveTo(0, r * frameH);
+        ssCtx.lineTo(w, r * frameH);
+        ssCtx.stroke();
+      }
+
+      $('ssInfoTotal').textContent = cols * rows;
+      $('ssInfoFrameRes').textContent = `${Math.round(frameW)} x ${Math.round(frameH)} px`;
+    }
+
+    function isCanvasEmpty(cropCtx, w, h) {
+      const imgData = cropCtx.getImageData(0, 0, w, h).data;
+      for (let i = 3; i < imgData.length; i += 4) {
+        if (imgData[i] > 5) return false;
+      }
+      return true;
+    }
+
+    $('btnConfirmSS').onclick = async () => {
+      if (!ssSourceImg) return;
+      const cols = Math.max(1, parseInt($('ssCols').value, 10) || 1);
+      const rows = Math.max(1, parseInt($('ssRows').value, 10) || 1);
+      const maxLimit = Math.max(1, parseInt($('ssMaxFrames').value, 10) || (cols * rows));
+      const order = $('ssOrder').value;
+      const skipEmpty = $('ssSkipEmpty').checked;
+
+      const w = ssSourceImg.naturalWidth || ssSourceImg.width;
+      const h = ssSourceImg.naturalHeight || ssSourceImg.height;
+      const frameW = Math.floor(w / cols);
+      const frameH = Math.floor(h / rows);
+
+      const rawExtracted = [];
+
+      const cropCvs = document.createElement('canvas');
+      cropCvs.width = frameW; cropCvs.height = frameH;
+      const cropCtx = cropCvs.getContext('2d');
+
+      let processedCount = 0;
+
+      if (order === 'row-first') {
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            if (processedCount >= maxLimit) break;
+            cropCtx.clearRect(0, 0, frameW, frameH);
+            cropCtx.drawImage(ssSourceImg, c * frameW, r * frameH, frameW, frameH, 0, 0, frameW, frameH);
+            
+            const empty = isCanvasEmpty(cropCtx, frameW, frameH);
+            rawExtracted.push({ dataUrl: cropCvs.toDataURL('image/png'), empty });
+            processedCount++;
+          }
+          if (processedCount >= maxLimit) break;
+        }
+      } else {
+        for (let c = 0; c < cols; c++) {
+          for (let r = 0; r < rows; r++) {
+            if (processedCount >= maxLimit) break;
+            cropCtx.clearRect(0, 0, frameW, frameH);
+            cropCtx.drawImage(ssSourceImg, c * frameW, r * frameH, frameW, frameH, 0, 0, frameW, frameH);
+
+            const empty = isCanvasEmpty(cropCtx, frameW, frameH);
+            rawExtracted.push({ dataUrl: cropCvs.toDataURL('image/png'), empty });
+            processedCount++;
+          }
+          if (processedCount >= maxLimit) break;
+        }
+      }
+
+      if (skipEmpty) {
+        while (rawExtracted.length > 0 && rawExtracted[rawExtracted.length - 1].empty) {
+          rawExtracted.pop();
+        }
+      }
+
+      const finalImages = [];
+      for (let item of rawExtracted) {
+        const img = new Image();
+        img.src = item.dataUrl;
+        await new Promise(res => { img.onload = img.onerror = res; });
+        finalImages.push(img);
+      }
+
+      if (finalImages.length === 0) return;
+
+      modalSS.classList.remove('active');
+      populatePlayerWithFrames(finalImages);
+    };
+
+    function formatTime(idx, currentFps) {
+      const sec = idx / currentFps;
+      const m = Math.floor(sec / 60), s = Math.floor(sec % 60), f = Math.floor(idx % currentFps);
+      const p = n => String(n).padStart(2, '0');
+      return `${p(m)}:${p(s)}.${p(f)}`;
+    }
+
+    function draw(idx) {
+      if (idx < 0 || idx >= total || !images[idx]) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(images[idx], 0, 0);
+      slider.value = idx;
+      timecode.textContent = formatTime(idx, fps);
+    }
+
+    function animate(now) {
+      if (!isPlay || total === 0) return;
+      if (!lastTime) lastTime = now;
+      accum += now - lastTime;
+      lastTime = now;
+
+      const dur = 1000 / fps;
+      if (accum >= dur) {
+        const steps = Math.floor(accum / dur);
+        accum %= dur;
+        
+        if (isPingPong) {
+          current += pingPongDir * steps;
+          if (current >= total - 1) { current = total - 1; pingPongDir = -1; }
+          else if (current <= 0) { current = 0; pingPongDir = 1; }
+        } else {
+          current = (current + steps) % total;
+        }
+        draw(current);
+      }
+      animId = requestAnimationFrame(animate);
+    }
+
+    function play() {
+      if (!total) return;
+      isPlay = true;
+      $('playIcon').innerHTML = `<rect x="6" y="4" width="3.5" height="16" rx="1"/><rect x="14.5" y="4" width="3.5" height="16" rx="1"/>`;
+      lastTime = performance.now();
+      accum = 0;
+      animId = requestAnimationFrame(animate);
+    }
+
+    function pause() {
+      isPlay = false;
+      $('playIcon').innerHTML = `<polygon points="5 3 19 12 5 21 5 3"/>`;
+      if (animId) cancelAnimationFrame(animId);
+    }
+
+    $('btnPlay').onclick = () => isPlay ? pause() : play();
+    $('btnPrev').onclick = () => { pause(); current = (current - 1 + total) % total; draw(current); };
+    $('btnNext').onclick = () => { pause(); current = (current + 1) % total; draw(current); };
+    
+    $('btnLoop').onclick = () => {
+      isPingPong = !isPingPong;
+      pingPongDir = 1;
+      $('btnLoop').style.color = isPingPong ? 'var(--accent)' : 'inherit';
+    };
+
+    slider.oninput = e => { pause(); current = parseInt(e.target.value, 10); draw(current); };
+    $('inputFps').onchange = e => {
+      let v = parseInt(e.target.value, 10) || 24;
+      fps = Math.max(1, Math.min(60, v));
+      $('inputFps').value = fps;
+      $('expFps').value = fps;
+      timecode.textContent = formatTime(current, fps);
+    };
+
+    $('btnBg').onclick = () => {
+      bgState = (bgState + 1) % 3;
+      vpFrame.className = 'vp-frame ' + (images.length ? 'has-data ' : '') + (bgState === 0 ? 'bg-checker' : '');
+      vpFrame.style.backgroundColor = bgState === 1 ? '#000000' : (bgState === 2 ? '#ffffff' : '');
+    };
+
+    window.onkeydown = e => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+      if (e.code === 'Space') { e.preventDefault(); $('btnPlay').click(); }
+      else if (e.code === 'ArrowLeft') { e.preventDefault(); $('btnPrev').click(); }
+      else if (e.code === 'ArrowRight') { e.preventDefault(); $('btnNext').click(); }
+    };
+
+    const modalExp = $('modalExport');
+    $('btnExport').onclick = () => { pause(); modalExp.classList.add('active'); $('expProgress').style.display = 'none'; };
+    $('btnCloseModal').onclick = $('btnCancelExp').onclick = () => modalExp.classList.remove('active');
+
+    $('expFormat').onchange = e => {
+      const isSprite = e.target.value === 'sprite';
+      const isZip = e.target.value === 'zip';
+      $('spriteColsRow').style.display = isSprite ? 'flex' : 'none';
+      $('fpsExportRow').style.display = (isSprite || isZip) ? 'none' : 'flex';
+    };
+
+    $('expBgColor').onchange = e => {
+      $('expCustomColor').style.display = e.target.value === 'custom' ? 'block' : 'none';
+    };
+
+    function getExportFrameSequence() {
+      let seq = [];
+      for (let i = 0; i < total; i++) seq.push(i);
+      if (isPingPong && total > 2) {
+        for (let i = total - 2; i > 0; i--) seq.push(i);
+      }
+      return seq;
+    }
+
+    $('btnStartExp').onclick = async () => {
+      const fmt = $('expFormat').value;
+      const scale = parseFloat($('expScale').value);
+      const outFps = parseInt($('expFps').value, 10) || 24;
+      const bgSel = $('expBgColor').value;
+      const bg = bgSel === 'custom' ? $('expCustomColor').value : bgSel;
+
+      $('btnStartExp').disabled = true;
+      $('expProgress').style.display = 'block';
+      $('expBar').style.width = '0%';
+
+      if (fmt === 'apng') await exportAPNG(scale, outFps, bg);
+      else if (fmt === 'gif') exportGIF(scale, outFps, bg);
+      else if (fmt === 'sprite') exportSpriteSheet(scale, bg);
+      else if (fmt === 'zip') exportZIP(scale, bg);
+    };
+
+    async function exportAPNG(scale, outFps, bg) {
+      try {
+        $('expStatus').textContent = 'Xử lý APNG...';
+        const w = Math.round(canvas.width * scale), h = Math.round(canvas.height * scale);
+        const seq = getExportFrameSequence();
+        
+        const tmp = document.createElement('canvas'); tmp.width = w; tmp.height = h;
+        const tctx = tmp.getContext('2d');
+        const buffers = [];
+
+        for (let i = 0; i < seq.length; i++) {
+          tctx.clearRect(0, 0, w, h);
+          if (bg !== 'transparent') { tctx.fillStyle = bg; tctx.fillRect(0, 0, w, h); }
+          tctx.drawImage(images[seq[i]], 0, 0, w, h);
+          
+          const imgData = tctx.getImageData(0, 0, w, h);
+          buffers.push(imgData.data.buffer.slice(0));
+          $('expBar').style.width = `${Math.round(((i + 1) / seq.length) * 60)}%`;
+
+          if (i % 3 === 0) await new Promise(r => setTimeout(r, 0));
+        }
+
+        $('expStatus').textContent = 'Mã hóa APNG...';
+        await new Promise(r => setTimeout(r, 50));
+
+        const delays = new Array(seq.length).fill(Math.round(1000 / outFps));
+        const apngBuffer = UPNG.encode(buffers, w, h, 0, delays);
+        const blob = new Blob([apngBuffer], { type: 'image/png' });
+        download(URL.createObjectURL(blob), 'animation.png');
+        $('expStatus').textContent = 'Hoàn tất! Đã tải APNG.';
+      } catch(err) {
+        console.error('APNG Error:', err);
+        $('expStatus').textContent = `Lỗi tạo APNG.`;
+      } finally {
+        $('btnStartExp').disabled = false;
+      }
+    }
+
+    function exportGIF(scale, outFps, bg) {
+      $('expStatus').textContent = 'Mã hóa GIF...';
+      const w = Math.round(canvas.width * scale), h = Math.round(canvas.height * scale);
+      const seq = getExportFrameSequence();
+
+      const tmp = document.createElement('canvas'); tmp.width = w; tmp.height = h;
+      const tctx = tmp.getContext('2d');
+      const frames = [];
+
+      for (let i = 0; i < seq.length; i++) {
+        tctx.clearRect(0, 0, w, h);
+        if (bg !== 'transparent') { tctx.fillStyle = bg; tctx.fillRect(0, 0, w, h); }
+        tctx.drawImage(images[seq[i]], 0, 0, w, h);
+        frames.push(tmp.toDataURL('image/png'));
+      }
+
+      gifshot.createGIF({
+        images: frames, gifWidth: w, gifHeight: h, interval: 1 / outFps,
+        numFrames: seq.length, sampleInterval: 10, numWorkers: 2,
+        progressCallback: p => {
+          $('expBar').style.width = `${Math.round(p * 100)}%`;
+          $('expStatus').textContent = `Xử lý GIF: ${Math.round(p * 100)}%`;
+        }
+      }, obj => {
+        $('btnStartExp').disabled = false;
+        if (!obj.error) {
+          download(obj.image, 'animation.gif');
+          $('expStatus').textContent = 'Hoàn tất! Đã tải GIF.';
+        } else {
+          $('expStatus').textContent = 'Lỗi mã hóa GIF.';
+        }
+      });
+    }
+
+    function exportSpriteSheet(scale, bg) {
+      $('expStatus').textContent = 'Ghép Sprite Sheet...';
+      const cols = Math.max(1, parseInt($('expSpriteCols').value, 10) || 16);
+      const rows = Math.ceil(total / cols);
+      const frameW = Math.round(canvas.width * scale);
+      const frameH = Math.round(canvas.height * scale);
+
+      const sheetCanvas = document.createElement('canvas');
+      sheetCanvas.width = cols * frameW;
+      sheetCanvas.height = rows * frameH;
+      const sctx = sheetCanvas.getContext('2d');
+
+      sctx.clearRect(0, 0, sheetCanvas.width, sheetCanvas.height);
+      if (bg !== 'transparent') {
+        sctx.fillStyle = bg;
+        sctx.fillRect(0, 0, sheetCanvas.width, sheetCanvas.height);
+      }
+
+      for (let i = 0; i < total; i++) {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        sctx.drawImage(images[i], col * frameW, row * frameH, frameW, frameH);
+        $('expBar').style.width = `${Math.round(((i + 1) / total) * 100)}%`;
+      }
+
+      download(sheetCanvas.toDataURL('image/png'), 'spritesheet.png');
+      $('btnStartExp').disabled = false;
+      $('expStatus').textContent = 'Hoàn tất! Đã tải Sprite Sheet PNG.';
+    }
+
+    async function exportZIP(scale, bg) {
+      $('expStatus').textContent = 'Nén chuỗi ảnh ZIP...';
+      const w = Math.round(canvas.width * scale), h = Math.round(canvas.height * scale);
+      const zip = new JSZip();
+      
+      const tmp = document.createElement('canvas'); tmp.width = w; tmp.height = h;
+      const tctx = tmp.getContext('2d');
+
+      for (let i = 0; i < total; i++) {
+        tctx.clearRect(0, 0, w, h);
+        if (bg !== 'transparent') { tctx.fillStyle = bg; tctx.fillRect(0, 0, w, h); }
+        tctx.drawImage(images[i], 0, 0, w, h);
+
+        const dataUrl = tmp.toDataURL('image/png');
+        const base64Data = dataUrl.replace(/^data:image\/png;base64,/, "");
+        const padIndex = String(i + 1).padStart(4, '0');
+        zip.file(`frame_${padIndex}.png`, base64Data, { base64: true });
+
+        $('expBar').style.width = `${Math.round(((i + 1) / total) * 70)}%`;
+      }
+
+      $('expStatus').textContent = 'Đóng gói file ZIP...';
+      const content = await zip.generateAsync({ type: "blob" }, p => {
+        $('expBar').style.width = `${70 + Math.round(p.percent * 0.3)}%`;
+      });
+
+      download(URL.createObjectURL(content), 'sequence.zip');
+      $('btnStartExp').disabled = false;
+      $('expStatus').textContent = 'Hoàn tất! Đã tải ZIP chuỗi ảnh.';
+    }
+
+    function download(url, filename) {
+      const a = document.createElement('a'); a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+  </script>
+</body>
+</html>
