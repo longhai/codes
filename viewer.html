@@ -11,11 +11,11 @@
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      background-color: #131417;
+      background-color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
-    /* Khu vực hiển thị tràn 100% màn hình */
+    /* Khung chứa tràn full màn hình */
     .viewport-container {
       width: 100%;
       height: 100%;
@@ -27,27 +27,15 @@
 
     #content-frame {
       background-color: white;
-      border: none;
+      border: none !important;
       display: block;
-      transition: transform 0.2s ease;
-    }
-
-    /* Chế độ PC: Bắt buộc vừa khít 100% full màn hình */
-    .view-pc {
       width: 100% !important;
       height: 100% !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
     }
 
-    /* Chế độ Mobile: Khung di động thu nhỏ */
-    .view-mobile {
-      width: 375px !important;
-      height: 667px !important;
-      border-radius: 16px;
-      border: 8px solid #2c2d30 !important;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    }
-
-    /* Menu mini trôi nổi - Siêu nhỏ gọn & Kéo thả được */
+    /* Menu mini trôi nổi - Siêu gọn & Kéo thả */
     .floating-menu {
       position: fixed;
       top: 16px;
@@ -65,11 +53,11 @@
       cursor: grab;
       user-select: none;
       transition: opacity 0.3s ease;
-      opacity: 0.3; /* Mặc định ẩn mờ để không che bài viết */
+      opacity: 0.3;
     }
 
     .floating-menu:hover, .floating-menu:active {
-      opacity: 1; /* Rê chuột vào sẽ hiện rõ */
+      opacity: 1;
     }
 
     .drag-handle {
@@ -103,10 +91,9 @@
 <body>
 
   <div class="viewport-container" id="container">
-    <iframe id="content-frame" class="view-pc" src="" scrolling="no"></iframe>
+    <iframe id="content-frame" src="" scrolling="no"></iframe>
   </div>
 
-  <!-- Menu mini có thể kéo thả tự do -->
   <div class="floating-menu" id="drag-menu">
     <span class="drag-handle">⋮⋮</span>
     <a href="index.html" class="float-btn" title="Trở về trang chủ">🏠</a>
@@ -117,9 +104,8 @@
     const urlParams = new URLSearchParams(window.location.search);
     const postUrl = urlParams.get('post') || '';
     const frame = document.getElementById('content-frame');
-    const container = document.getElementById('container');
-    const toggleBtn = document.getElementById('toggle-device-btn');
     const dragMenu = document.getElementById('drag-menu');
+    const toggleBtn = document.getElementById('toggle-device-btn');
 
     if (postUrl) {
       frame.src = postUrl;
@@ -129,53 +115,29 @@
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
 
-    function scaleFrame() {
-      if (frame.classList.contains('view-mobile')) {
-        const containerWidth = container.clientWidth - 20;
-        const containerHeight = container.clientHeight - 20;
-        const mobileWidth = 375;
-        const mobileHeight = 667;
-
-        let scale = 1;
-        if (containerWidth < mobileWidth || containerHeight < mobileHeight) {
-          scale = Math.min(containerWidth / mobileWidth, containerHeight / mobileHeight);
-        }
-        frame.style.transform = `scale(${scale})`;
-      } else {
-        frame.style.transform = 'none';
-      }
-    }
-
     function setDevice(device) {
       if (device === 'mobile') {
-        frame.className = 'view-mobile';
         toggleBtn.textContent = '💻';
       } else {
-        frame.className = 'view-pc';
         toggleBtn.textContent = '📱';
       }
-      scaleFrame();
     }
 
     function toggleDevice() {
-      if (frame.classList.contains('view-pc')) {
+      if (toggleBtn.textContent === '📱') {
         setDevice('mobile');
       } else {
         setDevice('pc');
       }
     }
 
-    // Nhận diện thiết bị
     if (isMobileDevice()) {
       setDevice('mobile');
     } else {
       setDevice('pc');
     }
 
-    window.addEventListener('resize', scaleFrame);
-    frame.addEventListener('load', scaleFrame);
-
-    // Tính năng kéo thả menu (Drag & Drop)
+    // Drag & Drop cho menu điều khiển
     let isDragging = false, offsetPX = 0, offsetPY = 0;
 
     dragMenu.addEventListener('mousedown', (e) => {
