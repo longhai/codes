@@ -9,121 +9,54 @@ layout: null
   <title>Danh sách Bài viết</title>
   <style>
     :root {
-      /* Bảng màu Tối (Soft Dark) - Sang trọng & Dễ chịu */
-      --bg-color: #0f1115;
-      --card-bg: #181b21;
-      --preview-bg: #22262e;
-      --text-color: #e4e6eb;
-      --btn-bg: #22262e;
-      --btn-text: #e4e6eb;
-      --shadow: rgba(0, 0, 0, 0.3);
+      /* Soft Dark Mode - Xám than chì dịu mắt */
+      --bg-color: #161920;
+      --card-bg: #20252e;
+      --preview-bg: #2a303a;
+      --text-color: #cbd5e1;
+      --btn-bg: #2a303a;
+      --btn-text: #cbd5e1;
+      --shadow: rgba(0, 0, 0, 0.4);
       --card-border: rgba(255, 255, 255, 0.05);
     }
 
     [data-theme="light"] {
-      /* Bảng màu Sáng (Light) */
-      --bg-color: #f8f9fa;
+      --bg-color: #f1f5f9;
       --card-bg: #ffffff;
-      --preview-bg: #edf2f7;
-      --text-color: #2d3436;
+      --preview-bg: #e2e8f0;
+      --text-color: #334155;
       --btn-bg: #ffffff;
-      --btn-text: #2d3436;
+      --btn-text: #334155;
       --shadow: rgba(0, 0, 0, 0.08);
-      --card-border: rgba(0, 0, 0, 0.1);
+      --card-border: #e2e8f0;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      padding: 40px 20px;
-      transition: background-color 0.3s ease;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      min-height: calc(100vh - 80px);
-    }
-
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-color); padding: 40px 20px; transition: background-color 0.3s ease; }
+    .container { max-width: 1200px; margin: 0 auto; }
     .header { display: flex; justify-content: flex-end; margin-bottom: 30px; }
-
-    .theme-toggle {
-      background: var(--btn-bg);
-      color: var(--btn-text);
-      border: 1px solid var(--card-border);
-      padding: 10px 18px;
-      border-radius: 25px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      box-shadow: 0 4px 6px var(--shadow);
-      transition: all 0.2s;
-    }
-
-    .theme-toggle:hover { filter: brightness(1.2); }
-
-    .pen-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 25px;
-    }
-
-    .pen-card {
-      background-color: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      text-decoration: none;
-      color: inherit;
-      transition: all 0.3s ease;
-    }
-
-    .pen-card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 15px 30px var(--shadow);
-      border-color: rgba(255, 255, 255, 0.15);
-    }
-
+    .theme-toggle { background: var(--btn-bg); color: var(--btn-text); border: 1px solid var(--card-border); padding: 10px 18px; border-radius: 25px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; box-shadow: 0 4px 6px var(--shadow); }
+    .pen-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
+    .pen-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; overflow: hidden; text-decoration: none; color: inherit; transition: all 0.3s ease; }
+    .pen-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px var(--shadow); }
     .preview-box { width: 100%; height: 170px; background-color: var(--preview-bg); }
     .preview-box img { width: 100%; height: 100%; object-fit: cover; }
-
     .card-body { padding: 16px; }
     .pen-title { font-size: 15px; font-weight: 600; }
-
-    .pagination {
-      display: flex; justify-content: center; align-items: center;
-      gap: 15px; margin-top: 50px;
-    }
-
-    .page-btn {
-      background: var(--btn-bg); color: var(--btn-text);
-      border: 1px solid var(--card-border);
-      padding: 8px 16px; border-radius: 8px;
-      text-decoration: none; font-size: 13px;
-    }
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 50px; }
+    .page-btn { background: var(--btn-bg); color: var(--btn-text); border: 1px solid var(--card-border); padding: 8px 16px; border-radius: 8px; text-decoration: none; font-size: 13px; }
   </style>
 </head>
 <body>
-
   <div class="container">
     <div class="header">
       <button class="theme-toggle" id="theme-btn" onclick="cycleTheme()">🌐 Auto</button>
     </div>
-
     <div class="pen-grid">
       {% for post in paginator.posts %}
       <a href="{{ site.baseurl }}/viewer.html?post={{ post.url | relative_url }}" class="pen-card">
-        <div class="preview-box">
-          <img src="https://s0.wp.com/mshots/v1/{{ site.url | append: site.baseurl | append: post.url | encode_uri }}?w=800&h=500" loading="lazy">
-        </div>
-        <div class="card-body">
-          <h3 class="pen-title" data-post-url="{{ post.url | relative_url }}">Loading...</h3>
-        </div>
+        <div class="preview-box"><img src="https://s0.wp.com/mshots/v1/{{ site.url | append: site.baseurl | append: post.url | encode_uri }}?w=800&h=500" loading="lazy"></div>
+        <div class="card-body"><h3 class="pen-title" data-post-url="{{ post.url | relative_url }}">Loading...</h3></div>
       </a>
       {% endfor %}
     </div>
@@ -138,44 +71,34 @@ layout: null
   </div>
 
   <script>
-    const modes = ['auto', 'light', 'dark']; // Loại bỏ chế độ 'time'
-
+    const modes = ['auto', 'light', 'dark'];
     function applyTheme() {
       const mode = localStorage.getItem('theme_mode') || 'auto';
-      let activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      let themeToApply = 'light';
       let btnText = '🌐 Auto';
 
-      if (mode === 'light') {
-        activeTheme = 'light';
-        btnText = '☀️ Sáng';
-      } else if (mode === 'dark') {
-        activeTheme = 'dark';
-        btnText = '🌙 Tối';
+      if (mode === 'light') { themeToApply = 'light'; btnText = '☀️ Sáng'; }
+      else if (mode === 'dark') { themeToApply = 'dark'; btnText = '🌙 Tối'; }
+      else { 
+        themeToApply = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        btnText = '🌐 Auto'; 
       }
-
-      document.documentElement.setAttribute('data-theme', activeTheme);
+      document.documentElement.setAttribute('data-theme', themeToApply);
       document.getElementById('theme-btn').textContent = btnText;
     }
 
     function cycleTheme() {
       const currentMode = localStorage.getItem('theme_mode') || 'auto';
-      const currentIndex = modes.indexOf(currentMode);
-      const nextMode = modes[(currentIndex + 1) % modes.length];
+      const nextMode = modes[(modes.indexOf(currentMode) + 1) % modes.length];
       localStorage.setItem('theme_mode', nextMode);
       applyTheme();
     }
-
     applyTheme();
-
-    // Load tiêu đề
-    document.addEventListener("DOMContentLoaded", () => {
-      document.querySelectorAll(".pen-title").forEach(el => {
-        fetch(el.dataset.postUrl)
-          .then(res => res.text())
-          .then(html => {
-            const doc = new DOMParser().parseFromString(html, "text/html");
-            el.textContent = doc.querySelector("title")?.innerText || "Untitled";
-          });
+    // Load titles
+    document.querySelectorAll(".pen-title").forEach(el => {
+      fetch(el.dataset.postUrl).then(r => r.text()).then(html => {
+        const doc = new DOMParser().parseFromString(html, "text/html");
+        el.textContent = doc.querySelector("title")?.innerText || "Untitled";
       });
     });
   </script>
