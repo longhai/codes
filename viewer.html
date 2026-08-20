@@ -7,17 +7,21 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden; /* Dọn dẹp thanh cuộn toàn trang */
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: #131417;
       color: #fff;
-      height: 100vh;
       display: flex;
       flex-direction: column;
-      overflow: hidden; /* Loại bỏ hoàn toàn thanh cuộn trang chính */
     }
 
-    /* Thanh điều khiển */
+    /* Thanh điều khiển Toolbar */
     .toolbar {
       height: 50px;
       background-color: #1e1f26;
@@ -69,9 +73,10 @@
       color: #fff;
     }
 
-    /* Khu vực chứa Iframe xem trước */
+    /* Khung chứa Iframe */
     .viewport-container {
       flex: 1;
+      width: 100%;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -83,16 +88,17 @@
     #content-frame {
       background-color: white;
       border: none;
+      display: block;
       transition: transform 0.2s ease, width 0.2s ease, height 0.2s ease;
     }
 
-    /* Chế độ PC: Tự động tràn 100% không gian hiển thị */
+    /* Chế độ PC: Bắt buộc vừa khít không gian còn lại */
     .view-pc {
       width: 100% !important;
       height: 100% !important;
     }
 
-    /* Chế độ Mobile: Kích thước khung chuẩn di động */
+    /* Chế độ Mobile: Khung mô phỏng điện thoại */
     .view-mobile {
       width: 375px !important;
       height: 667px !important;
@@ -113,7 +119,8 @@
   </div>
 
   <div class="viewport-container" id="container">
-    <iframe id="content-frame" class="view-pc" src=""></iframe>
+    <!-- Thêm scrolling="no" để triệt tiêu thanh cuộn trong iframe -->
+    <iframe id="content-frame" class="view-pc" src="" scrolling="no"></iframe>
   </div>
 
   <script>
@@ -126,16 +133,14 @@
       frame.src = postUrl;
     }
 
-    // Kiểm tra thiết bị truy cập thực tế
     function isMobileDevice() {
       return window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
 
-    // Phóng to / Thu nhỏ khung di động nếu màn hình nhỏ
     function scaleFrame() {
       if (frame.classList.contains('view-mobile')) {
-        const containerWidth = container.clientWidth - 30;
-        const containerHeight = container.clientHeight - 30;
+        const containerWidth = container.clientWidth - 20;
+        const containerHeight = container.clientHeight - 20;
         const mobileWidth = 375;
         const mobileHeight = 667;
 
@@ -149,7 +154,6 @@
       }
     }
 
-    // Chuyển đổi qua lại giữa chế độ PC và Mobile
     function setDevice(device) {
       const btnPc = document.getElementById('btn-pc');
       const btnMobile = document.getElementById('btn-mobile');
@@ -166,7 +170,7 @@
       scaleFrame();
     }
 
-    // Tự động bật chế độ phù hợp ngay khi truy cập
+    // Nhận diện tự động
     if (isMobileDevice()) {
       setDevice('mobile');
     } else {
