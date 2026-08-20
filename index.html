@@ -6,94 +6,152 @@ layout: null
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Danh sách Pens - CodePen Grid</title>
+  <title>Danh sách Pens</title>
   <style>
+    :root {
+      --bg-color: #131417;
+      --card-bg: #1e1f26;
+      --preview-bg: #2c2d30;
+      --text-color: #ffffff;
+      --btn-bg: #2c2d30;
+      --btn-text: #ffffff;
+      --shadow: rgba(0, 0, 0, 0.4);
+    }
+
+    [data-theme="light"] {
+      --bg-color: #f4f5f7;
+      --card-bg: #ffffff;
+      --preview-bg: #e2e8f0;
+      --text-color: #1a202c;
+      --btn-bg: #e2e8f0;
+      --btn-text: #1a202c;
+      --shadow: rgba(0, 0, 0, 0.08);
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: #131417;
-      color: #ffffff;
-      padding: 40px 20px;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding: 30px 20px;
+      transition: background-color 0.2s, color 0.2s;
     }
+
     .container { max-width: 1200px; margin: 0 auto; }
+
+    /* Thanh Đầu Trang Tối Giản */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .theme-toggle {
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* Lưới Card */
     .pen-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 24px;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
     }
+
     .pen-card {
-      background-color: #1e1f26;
+      background-color: var(--card-bg);
       border-radius: 8px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       text-decoration: none;
       color: inherit;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 2px 8px var(--shadow);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
+
     .pen-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 16px var(--shadow);
     }
+
+    /* Khung Xem Trước */
     .preview-box {
       width: 100%;
-      height: 200px;
-      background-color: #2c2d30;
-      position: relative;
+      height: 180px;
+      background-color: var(--preview-bg);
       overflow: hidden;
     }
+
     .preview-box img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transition: transform 0.3s ease;
+      transition: transform 0.3s;
     }
-    .pen-card:hover .preview-box img { transform: scale(1.05); }
-    .card-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-    .card-header { display: flex; align-items: center; justify-content: space-between; }
-    
-    /* Hiệu ứng skeleton chờ tải tiêu đề */
+
+    .pen-card:hover .preview-box img { transform: scale(1.04); }
+
+    /* Nội Dung Card Tối Giản */
+    .card-body { padding: 14px 16px; }
+
     .pen-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #ffffff;
+      font-size: 16px;
+      font-weight: 600;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 240px;
-      min-height: 22px;
     }
+
     .pen-title.loading {
-      background-color: #2c2d30;
+      background-color: var(--preview-bg);
       border-radius: 4px;
       color: transparent;
-      width: 140px;
+      width: 120px;
+      display: inline-block;
     }
-    
-    .more-btn { color: #717790; font-size: 18px; }
-    .card-footer { display: flex; align-items: center; gap: 8px; }
-    .stat-btn {
-      background-color: #2c2d30;
-      border: none;
-      color: #9b9dad;
-      padding: 6px 12px;
-      border-radius: 4px;
-      font-size: 12px;
+
+    /* Phân Trang Minimal */
+    .pagination {
       display: flex;
+      justify-content: center;
       align-items: center;
-      gap: 6px;
+      gap: 12px;
+      margin-top: 32px;
     }
+
+    .page-btn {
+      background-color: var(--btn-bg);
+      color: var(--btn-text);
+      padding: 6px 14px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .page-info { font-size: 13px; opacity: 0.7; }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <div class="pen-grid">
+    <div class="header">
+      <h2 style="font-size: 20px; font-weight: 700;">Pens</h2>
+      <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">☀️ Giao diện Sáng</button>
+    </div>
 
-      {% for post in site.posts %}
+    <div class="pen-grid">
+      {% for post in paginator.posts %}
       <a href="{{ site.baseurl }}/viewer.html?post={{ post.url | relative_url }}" class="pen-card">
-        
-        <!-- Ảnh Chụp Màn Hình Tự Động -->
         <div class="preview-box">
           <img 
             src="https://s0.wp.com/mshots/v1/{{ site.url | append: site.baseurl | append: post.url | encode_uri }}?w=800&h=500" 
@@ -101,52 +159,60 @@ layout: null
             loading="lazy"
           >
         </div>
-
-        <!-- Thông tin tiêu đề -->
         <div class="card-body">
-          <div class="card-header">
-            <!-- Thẻ h3 chứa URL trong data-url để JS tải tiêu đề -->
-            <h3 class="pen-title loading" data-post-url="{{ post.url | relative_url }}">Loading...</h3>
-            <span class="more-btn">•••</span>
-          </div>
-
-          <div class="card-footer">
-            <button type="button" class="stat-btn">❤️ 0</button>
-            <button type="button" class="stat-btn">💬 0</button>
-            <button type="button" class="stat-btn">👁️ 0</button>
-          </div>
+          <h3 class="pen-title loading" data-post-url="{{ post.url | relative_url }}">Loading...</h3>
         </div>
-
       </a>
       {% endfor %}
-
     </div>
+
+    {% if paginator.total_pages > 1 %}
+    <div class="pagination">
+      {% if paginator.previous_page %}
+        <a href="{{ paginator.previous_page_path | relative_url }}" class="page-btn">← Trước</a>
+      {% endif %}
+
+      <span class="page-info">{{ paginator.page }} / {{ paginator.total_pages }}</span>
+
+      {% if paginator.next_page %}
+        <a href="{{ paginator.next_page_path | relative_url }}" class="page-btn">Sau →</a>
+      {% endif %}
+    </div>
+    {% endif %}
   </div>
 
   <script>
-    // JS tự động quét các thẻ h3 và fetch lấy thẻ <title> trong file HTML thật
+    // 1. Quản lý Giao diện Sáng / Tối (Light / Dark)
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      const btn = document.getElementById('theme-btn');
+      btn.textContent = theme === 'light' ? '🌙 Giao diện Tối' : '☀️ Giao diện Sáng';
+      localStorage.setItem('theme', theme);
+    }
+
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+      applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+    }
+
+    // Tự nhớ giao diện người dùng chọn
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    applyTheme(savedTheme);
+
+    // 2. Tự đọc thẻ <title> từ file HTML bài viết
     document.addEventListener("DOMContentLoaded", () => {
       const titleElements = document.querySelectorAll(".pen-title[data-post-url]");
-
       titleElements.forEach(el => {
         const url = el.getAttribute("data-post-url");
-
         fetch(url)
-          .then(response => response.text())
+          .then(res => res.text())
           .then(htmlText => {
-            // Dùng DOMParser để bóc tách thẻ <title> từ chuỗi HTML
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlText, "text/html");
-            const pageTitle = doc.querySelector("title") ? doc.querySelector("title").innerText : "Untilled Pen";
-            
-            // Cập nhật tiêu đề vào Card
-            el.textContent = pageTitle;
+            const doc = new DOMParser().parseFromString(htmlText, "text/html");
+            el.textContent = doc.querySelector("title") ? doc.querySelector("title").innerText : "Untitled";
             el.classList.remove("loading");
           })
           .catch(() => {
-            // Nếu lỗi thì lấy tên file làm tiêu đề thay thế
-            const fallbackTitle = url.split('/').pop().replace('.html', '');
-            el.textContent = fallbackTitle;
+            el.textContent = url.split('/').pop().replace('.html', '');
             el.classList.remove("loading");
           });
       });
