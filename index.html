@@ -205,16 +205,16 @@ layout: null
 
       if (mode === 'auto') {
         activeTheme = getAutoTheme();
-        btnText = '🌐 Theo hệ thống';
+        btnText = '🌐';
       } else if (mode === 'time') {
         activeTheme = getTimeTheme();
-        btnText = '⏰ Theo thời gian (6h-18h)';
+        btnText = '⏰';
       } else if (mode === 'light') {
         activeTheme = 'light';
-        btnText = '☀️ Giao diện Sáng';
+        btnText = '☀️';
       } else {
         activeTheme = 'dark';
-        btnText = '🌙 Giao diện Tối';
+        btnText = '🌙';
       }
 
       document.documentElement.setAttribute('data-theme', activeTheme);
