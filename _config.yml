@@ -1,4 +1,6 @@
-title: Jekyll Playground
-theme: minima
-plugins:
-  - jekyll-feed
+# Tự động gán layout: null cho tất cả file trong _posts mà không cần viết ---
+defaults:
+  - scope:
+      path: "_posts"
+    values:
+      layout: null
