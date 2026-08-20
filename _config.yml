@@ -1,4 +1,8 @@
-# Tự động gán layout: null cho tất cả file trong _posts mà không cần viết ---
+# Cấu hình phân trang
+paginate: 6 # Số lượng bài viết hiển thị trên 1 trang (bạn có thể đổi thành 9, 12, v.v.)
+paginate_path: "/page:num/"
+
+# Cấu hình mặc định không dùng layout cho _posts
 defaults:
   - scope:
       path: "_posts"
