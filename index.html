@@ -6,7 +6,7 @@ layout: null
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Danh sách Pens</title>
+  <title>Danh sách Bài viết</title>
   <style>
     :root {
       --bg-color: #131417;
@@ -40,10 +40,10 @@ layout: null
 
     .container { max-width: 1200px; margin: 0 auto; }
 
-    /* Thanh Đầu Trang Tối Giản */
+    /* Thanh Đầu Trang Tối Giản (Đã bỏ tiêu đề Pens) */
     .header {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end; /* Đẩy nút cài đặt về góc phải */
       align-items: center;
       margin-bottom: 24px;
     }
@@ -56,8 +56,10 @@ layout: null
       border-radius: 6px;
       cursor: pointer;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 500;
+      transition: opacity 0.2s;
     }
+    .theme-toggle:hover { opacity: 0.85; }
 
     /* Lưới Card */
     .pen-grid {
@@ -145,8 +147,8 @@ layout: null
 
   <div class="container">
     <div class="header">
-      <h2 style="font-size: 20px; font-weight: 700;">Pens</h2>
-      <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">☀️ Giao diện Sáng</button>
+      <!-- Nút đổi chế độ thông minh -->
+      <button class="theme-toggle" id="theme-btn" onclick="cycleTheme()">🌐 Theo hệ thống</button>
     </div>
 
     <div class="pen-grid">
@@ -182,24 +184,61 @@ layout: null
   </div>
 
   <script>
-    // 1. Quản lý Giao diện Sáng / Tối (Light / Dark)
-    function applyTheme(theme) {
-      document.documentElement.setAttribute('data-theme', theme);
-      const btn = document.getElementById('theme-btn');
-      btn.textContent = theme === 'light' ? '🌙 Giao diện Tối' : '☀️ Giao diện Sáng';
-      localStorage.setItem('theme', theme);
+    // Các chế độ: auto (hệ thống) -> time (theo giờ) -> light (sáng) -> dark (tối)
+    const modes = ['auto', 'time', 'light', 'dark'];
+
+    function getAutoTheme() {
+      // Nhận diện theme tối/sáng từ Trình duyệt hoặc Windows/macOS
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
 
-    function toggleTheme() {
-      const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-      applyTheme(currentTheme === 'dark' ? 'light' : 'dark');
+    function getTimeTheme() {
+      // 6h sáng -> 18h tối là Sáng, còn lại là Tối
+      const hour = new Date().getHours();
+      return (hour >= 6 && hour < 18) ? 'light' : 'dark';
     }
 
-    // Tự nhớ giao diện người dùng chọn
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    applyTheme(savedTheme);
+    function applyTheme() {
+      const mode = localStorage.getItem('theme_mode') || 'auto';
+      let activeTheme = 'dark';
+      let btnText = '';
 
-    // 2. Tự đọc thẻ <title> từ file HTML bài viết
+      if (mode === 'auto') {
+        activeTheme = getAutoTheme();
+        btnText = '🌐 Theo hệ thống';
+      } else if (mode === 'time') {
+        activeTheme = getTimeTheme();
+        btnText = '⏰ Theo thời gian (6h-18h)';
+      } else if (mode === 'light') {
+        activeTheme = 'light';
+        btnText = '☀️ Giao diện Sáng';
+      } else {
+        activeTheme = 'dark';
+        btnText = '🌙 Giao diện Tối';
+      }
+
+      document.documentElement.setAttribute('data-theme', activeTheme);
+      document.getElementById('theme-btn').textContent = btnText;
+    }
+
+    function cycleTheme() {
+      const currentMode = localStorage.getItem('theme_mode') || 'auto';
+      const currentIndex = modes.indexOf(currentMode);
+      const nextMode = modes[(currentIndex + 1) % modes.length];
+      
+      localStorage.setItem('theme_mode', nextMode);
+      applyTheme();
+    }
+
+    // Tự động cập nhật nếu hệ thống hoặc thời gian thay đổi
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if ((localStorage.getItem('theme_mode') || 'auto') === 'auto') applyTheme();
+    });
+
+    // Khởi tạo theme ban đầu
+    applyTheme();
+
+    // Tự động bóc tách thẻ <title> từ file HTML bài viết
     document.addEventListener("DOMContentLoaded", () => {
       const titleElements = document.querySelectorAll(".pen-title[data-post-url]");
       titleElements.forEach(el => {
