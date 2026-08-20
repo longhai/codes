@@ -342,7 +342,7 @@
       $('soundSelect').value = soundType;
       if (ledColor) applyLedColor(ledColor);
       updateUI();
-      $('clockBtn').onclick = speakTime;
+      $('clockBtn').onclick = () => speakTime(false);
       $('alarmBar').onclick = () => toggleModal(true);
     };
 
@@ -449,8 +449,9 @@
     }
 
     function speakTime(isAlarm = false) {
+      const isA = (isAlarm === true);
       const d = new Date();
-      speak(tts[lang](d.getHours(), d.getMinutes(), alarmNote, isAlarm));
+      speak(tts[lang](d.getHours(), d.getMinutes(), alarmNote, isA));
     }
   </script>
 </body>
