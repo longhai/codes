@@ -13,9 +13,10 @@ layout: null
       --card-bg: #1e1f26;
       --preview-bg: #2c2d30;
       --text-color: #ffffff;
-      --btn-bg: #2c2d30;
+      --btn-bg: #1e1f26;
       --btn-text: #ffffff;
       --shadow: rgba(0, 0, 0, 0.4);
+      --card-border: rgba(255, 255, 255, 0.08);
     }
 
     [data-theme="light"] {
@@ -23,9 +24,10 @@ layout: null
       --card-bg: #ffffff;
       --preview-bg: #e2e8f0;
       --text-color: #1a202c;
-      --btn-bg: #e2e8f0;
+      --btn-bg: #ffffff;
       --btn-text: #1a202c;
-      --shadow: rgba(0, 0, 0, 0.08);
+      --shadow: rgba(0, 0, 0, 0.06);
+      --card-border: rgba(0, 0, 0, 0.08);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -38,12 +40,18 @@ layout: null
       transition: background-color 0.2s, color 0.2s;
     }
 
-    .container { max-width: 1200px; margin: 0 auto; }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      min-height: calc(100vh - 60px);
+      display: flex;
+      flex-direction: column;
+    }
 
-    /* Thanh Đầu Trang Tối Giản (Đã bỏ tiêu đề Pens) */
+    /* Thanh Đầu Trang Tối Giản */
     .header {
       display: flex;
-      justify-content: flex-end; /* Đẩy nút cài đặt về góc phải */
+      justify-content: flex-end;
       align-items: center;
       margin-bottom: 24px;
     }
@@ -51,15 +59,18 @@ layout: null
     .theme-toggle {
       background: var(--btn-bg);
       color: var(--btn-text);
-      border: none;
+      border: 1px solid var(--card-border);
       padding: 8px 14px;
-      border-radius: 6px;
+      border-radius: 20px;
       cursor: pointer;
       font-size: 13px;
       font-weight: 500;
-      transition: opacity 0.2s;
+      box-shadow: 0 2px 6px var(--shadow);
+      transition: opacity 0.2s, transform 0.1s;
     }
-    .theme-toggle:hover { opacity: 0.85; }
+
+    .theme-toggle:hover { opacity: 0.9; }
+    .theme-toggle:active { transform: scale(0.97); }
 
     /* Lưới Card */
     .pen-grid {
@@ -70,7 +81,8 @@ layout: null
 
     .pen-card {
       background-color: var(--card-bg);
-      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -81,8 +93,8 @@ layout: null
     }
 
     .pen-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 16px var(--shadow);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 20px var(--shadow);
     }
 
     /* Khung Xem Trước */
@@ -106,7 +118,7 @@ layout: null
     .card-body { padding: 14px 16px; }
 
     .pen-title {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 600;
       white-space: nowrap;
       overflow: hidden;
@@ -127,12 +139,14 @@ layout: null
       justify-content: center;
       align-items: center;
       gap: 12px;
-      margin-top: 32px;
+      margin-top: auto;
+      padding-top: 32px;
     }
 
     .page-btn {
       background-color: var(--btn-bg);
       color: var(--btn-text);
+      border: 1px solid var(--card-border);
       padding: 6px 14px;
       border-radius: 6px;
       text-decoration: none;
@@ -147,8 +161,7 @@ layout: null
 
   <div class="container">
     <div class="header">
-      <!-- Nút đổi chế độ thông minh -->
-      <button class="theme-toggle" id="theme-btn" onclick="cycleTheme()">🌐 Theo hệ thống</button>
+      <button class="theme-toggle" id="theme-btn" onclick="cycleTheme()">🌐 Hệ thống</button>
     </div>
 
     <div class="pen-grid">
@@ -184,16 +197,14 @@ layout: null
   </div>
 
   <script>
-    // Các chế độ: auto (hệ thống) -> time (theo giờ) -> light (sáng) -> dark (tối)
+    // Các chế độ giao diện: auto -> time -> light -> dark
     const modes = ['auto', 'time', 'light', 'dark'];
 
     function getAutoTheme() {
-      // Nhận diện theme tối/sáng từ Trình duyệt hoặc Windows/macOS
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
 
     function getTimeTheme() {
-      // 6h sáng -> 18h tối là Sáng, còn lại là Tối
       const hour = new Date().getHours();
       return (hour >= 6 && hour < 18) ? 'light' : 'dark';
     }
@@ -205,16 +216,16 @@ layout: null
 
       if (mode === 'auto') {
         activeTheme = getAutoTheme();
-        btnText = '🌐';
+        btnText = '🌐 Hệ thống';
       } else if (mode === 'time') {
         activeTheme = getTimeTheme();
-        btnText = '⏰';
+        btnText = '⏰ Theo giờ';
       } else if (mode === 'light') {
         activeTheme = 'light';
-        btnText = '☀️';
+        btnText = '☀️ Giao diện Sáng';
       } else {
         activeTheme = 'dark';
-        btnText = '🌙';
+        btnText = '🌙 Giao diện Tối';
       }
 
       document.documentElement.setAttribute('data-theme', activeTheme);
@@ -230,15 +241,15 @@ layout: null
       applyTheme();
     }
 
-    // Tự động cập nhật nếu hệ thống hoặc thời gian thay đổi
+    // Tự động lắng nghe nếu giao diện hệ thống thay đổi
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
       if ((localStorage.getItem('theme_mode') || 'auto') === 'auto') applyTheme();
     });
 
-    // Khởi tạo theme ban đầu
+    // Khởi tạo theme
     applyTheme();
 
-    // Tự động bóc tách thẻ <title> từ file HTML bài viết
+    // Tự đọc thẻ <title> từ file HTML bài viết
     document.addEventListener("DOMContentLoaded", () => {
       const titleElements = document.querySelectorAll(".pen-title[data-post-url]");
       titleElements.forEach(el => {
