@@ -11,7 +11,7 @@
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      background-color: #ffffff;
+      background-color: #131417;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
@@ -29,10 +29,21 @@
       background-color: white;
       border: none !important;
       display: block;
+      transition: transform 0.2s ease, width 0.2s ease, height 0.2s ease;
+    }
+
+    /* Chế độ PC: Full 100% màn hình */
+    .view-pc {
       width: 100% !important;
       height: 100% !important;
+    }
+
+    /* Chế độ Mobile trên PC: Giới hạn tỉ lệ điện thoại nhưng không bo viền */
+    .view-mobile {
+      width: 375px !important;
+      height: 667px !important;
       border-radius: 0 !important;
-      box-shadow: none !important;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
     }
 
     /* Menu mini trôi nổi - Siêu gọn & Kéo thả */
@@ -91,7 +102,7 @@
 <body>
 
   <div class="viewport-container" id="container">
-    <iframe id="content-frame" src="" scrolling="no"></iframe>
+    <iframe id="content-frame" class="view-pc" src="" scrolling="no"></iframe>
   </div>
 
   <div class="floating-menu" id="drag-menu">
@@ -104,6 +115,7 @@
     const urlParams = new URLSearchParams(window.location.search);
     const postUrl = urlParams.get('post') || '';
     const frame = document.getElementById('content-frame');
+    const container = document.getElementById('container');
     const dragMenu = document.getElementById('drag-menu');
     const toggleBtn = document.getElementById('toggle-device-btn');
 
@@ -115,29 +127,60 @@
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
 
-    function setDevice(device) {
-      if (device === 'mobile') {
-        toggleBtn.textContent = '💻';
+    function scaleFrame() {
+      // Nếu đang dùng điện thoại thật, luôn bắt buộc 100% full màn hình
+      if (isMobileDevice()) {
+        frame.className = 'view-pc';
+        return;
+      }
+
+      // Nếu xem trên PC ở chế độ Mobile
+      if (frame.classList.contains('view-mobile')) {
+        const containerWidth = container.clientWidth - 20;
+        const containerHeight = container.clientHeight - 20;
+        const mobileWidth = 375;
+        const mobileHeight = 667;
+
+        let scale = 1;
+        if (containerWidth < mobileWidth || containerHeight < mobileHeight) {
+          scale = Math.min(containerWidth / mobileWidth, containerHeight / mobileHeight);
+        }
+        frame.style.transform = `scale(${scale})`;
       } else {
-        toggleBtn.textContent = '📱';
+        frame.style.transform = 'none';
       }
     }
 
+    function setDevice(device) {
+      if (device === 'mobile') {
+        frame.className = 'view-mobile';
+        toggleBtn.textContent = '💻';
+      } else {
+        frame.className = 'view-pc';
+        toggleBtn.textContent = '📱';
+      }
+      scaleFrame();
+    }
+
     function toggleDevice() {
-      if (toggleBtn.textContent === '📱') {
+      if (frame.classList.contains('view-pc')) {
         setDevice('mobile');
       } else {
         setDevice('pc');
       }
     }
 
+    // Khởi tạo
     if (isMobileDevice()) {
       setDevice('mobile');
     } else {
       setDevice('pc');
     }
 
-    // Drag & Drop cho menu điều khiển
+    window.addEventListener('resize', scaleFrame);
+    frame.addEventListener('load', scaleFrame);
+
+    // Drag & Drop cho menu
     let isDragging = false, offsetPX = 0, offsetPY = 0;
 
     dragMenu.addEventListener('mousedown', (e) => {
