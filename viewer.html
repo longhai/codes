@@ -3,72 +3,158 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CodePen Preview Viewer</title>
+  <title>Khung Xem Bài Viết</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #1e1f26; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #131417;
+      color: #fff;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
 
-    /* Thanh Header kiểu CodePen */
-    .codepen-header { height: 50px; background: #131417; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid #2c2d30; }
-    .title { color: #fff; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-    .back-btn { color: #aaa; text-decoration: none; font-size: 13px; padding: 4px 8px; background: #2c2d30; border-radius: 4px; }
-    .back-btn:hover { color: #fff; }
-
-    /* Nút chọn thiết bị */
-    .device-switcher { display: flex; background: #2c2d30; padding: 3px; border-radius: 6px; gap: 2px; }
-    .device-btn { background: transparent; border: none; color: #aaa; padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 4px; cursor: pointer; transition: 0.2s; }
-    .device-btn.active { background: #444857; color: #fff; }
+    /* Thanh điều khiển */
+    .toolbar {
+      height: 50px;
+      background-color: #1e1f26;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid #2c2d30;
+      z-index: 10;
+    }
+    .back-btn {
+      color: #aaa;
+      text-decoration: none;
+      font-size: 13px;
+      padding: 6px 12px;
+      background: #2c2d30;
+      border-radius: 4px;
+    }
+    .device-switcher {
+      display: flex;
+      background: #2c2d30;
+      padding: 3px;
+      border-radius: 6px;
+      gap: 2px;
+    }
+    .device-btn {
+      background: transparent;
+      border: none;
+      color: #aaa;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .device-btn.active {
+      background: #444857;
+      color: #fff;
+    }
 
     /* Khu vực hiển thị Live Preview */
-    .preview-container { flex: 1; display: flex; justify-content: center; align-items: center; background: #131417; padding: 10px; overflow: auto; }
-    #preview-frame { background: #fff; transition: width 0.3s ease, height 0.3s ease; border: none; }
-    
-    /* Chế độ PC */
-    .mode-pc { width: 100%; height: 100%; border-radius: 0; }
-    
-    /* Chế độ Mobile */
-    .mode-mobile { width: 375px; height: 667px; border-radius: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.5); border: 4px solid #2c2d30 !important; }
+    .viewport-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #131417;
+      overflow: auto;
+      position: relative;
+    }
+
+    #content-frame {
+      background-color: white;
+      border: none;
+      transition: all 0.3s ease;
+    }
+
+    /* Chế độ PC: Ép chiều rộng khung đúng độ phân giải Máy tính (1280px) */
+    .view-pc {
+      width: 1280px !important;
+      height: 800px !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Chế độ Mobile: Kích thước chuẩn iPhone 8/X */
+    .view-mobile {
+      width: 375px !important;
+      height: 667px !important;
+      border-radius: 16px;
+      border: 8px solid #2c2d30 !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
   </style>
 </head>
 <body>
 
-  <header class="codepen-header">
-    <div class="title">
-      <a href="index.html" class="back-btn">← Trang chủ</a>
-      <span>Xem bài viết</span>
-    </div>
-
+  <div class="toolbar">
+    <a href="index.html" class="back-btn">← Trang chủ</a>
     <div class="device-switcher">
-      <button id="btn-pc" class="device-btn active" onclick="switchMode('pc')">💻 PC</button>
-      <button id="btn-mobile" class="device-btn" onclick="switchMode('mobile')">📱 Mobile</button>
+      <button id="btn-pc" class="device-btn active" onclick="setDevice('pc')">💻 Máy tính (PC)</button>
+      <button id="btn-mobile" class="device-btn" onclick="setDevice('mobile')">📱 Điện thoại (Mobile)</button>
     </div>
-  </header>
+  </div>
 
-  <main class="preview-container">
-    <iframe id="preview-frame" class="mode-pc" src=""></iframe>
-  </main>
+  <div class="viewport-container" id="container">
+    <iframe id="content-frame" class="view-pc" src=""></iframe>
+  </div>
 
   <script>
-    // Lấy bài viết từ tham số URL (?post=posts/bai-viet-1.html)
-    const params = new URLSearchParams(window.location.search);
-    const postFile = params.get('post') || 'posts/bai-viet-1.html';
-    document.getElementById('preview-frame').src = postFile;
+    // Lấy đường dẫn bài viết từ tham số URL (?post=...)
+    const urlParams = new URLSearchParams(window.location.search);
+    const postUrl = urlParams.get('post') || 'posts/2026-08-19-bai-viet-1.html';
+    const frame = document.getElementById('content-frame');
+    const container = document.getElementById('container');
 
-    function switchMode(mode) {
-      const frame = document.getElementById('preview-frame');
+    frame.src = postUrl;
+
+    function scaleFrameForMobile() {
+      const containerWidth = container.clientWidth - 20; // Trừ padding
+      const pcWidth = 1280;
+
+      // Nếu đang ở chế độ PC và màn hình thiết bị nhỏ hơn 1280px (như trên điện thoại)
+      if (frame.classList.contains('view-pc') && containerWidth < pcWidth) {
+        const scale = containerWidth / pcWidth;
+        frame.style.transform = `scale(${scale})`;
+        frame.style.transformOrigin = 'center center';
+      } else {
+        frame.style.transform = 'none';
+      }
+    }
+
+    function setDevice(device) {
       const btnPc = document.getElementById('btn-pc');
       const btnMobile = document.getElementById('btn-mobile');
 
-      if (mode === 'mobile') {
-        frame.className = 'mode-mobile';
+      if (device === 'mobile') {
+        frame.className = 'view-mobile';
+        frame.style.transform = 'none';
         btnMobile.classList.add('active');
         btnPc.classList.remove('active');
       } else {
-        frame.className = 'mode-pc';
+        frame.className = 'view-pc';
         btnPc.classList.add('active');
         btnMobile.classList.remove('active');
+        scaleFrameForMobile();
       }
     }
+
+    // Tự động thu nhỏ/phóng to khi xoay màn hình hoặc thay đổi kích thước cửa sổ
+    window.addEventListener('resize', () => {
+      if (frame.classList.contains('view-pc')) {
+        scaleFrameForMobile();
+      }
+    });
+
+    // Chạy scale lần đầu khi load trang
+    frame.addEventListener('load', scaleFrameForMobile);
   </script>
 
 </body>
