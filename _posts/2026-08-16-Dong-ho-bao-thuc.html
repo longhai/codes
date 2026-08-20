@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Đồng Hồ LED Báo Thức</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/dseg7-classic@5.1.0/700.css">
+
+  <style>
+    :root {
+      --bg: radial-gradient(circle at 50% 30%, #f8fafc 0%, #cbd5e1 100%);
+      --w-bg: #ffffff; --w-border: #cbd5e1; --w-shadow: #00000014 0 12px 35px;
+      --accent: #0284c7; --c-bg: #0f172a; --c-border: #334155;
+      --c-dim: #38bdf814; --c-digit: #38bdf8; --c-glow: 0 0 3px #38bdf8b3;
+      --card-bg: #ffffff; --card-border: #e2e8f0; --input-bg: #f8fafc;
+      --input-text: #0f172a; --label-color: #64748b;
+      --f-digital: 'DSEG7 Classic', monospace; --f-accent: 'Orbitron', sans-serif;
+      --f-ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: radial-gradient(circle at 50% 30%, #0d1117 0%, #010409 100%);
+        --w-bg: #0d1117; --w-border: #21262d; --w-shadow: #000000cc 0 20px 50px;
+        --accent: #ff9d00; --c-bg: #030712; --c-border: #ffffff1a;
+        --c-dim: #ff9d0012; --c-digit: #ff9d00; --c-glow: 0 0 3px #ff9d00b3;
+        --card-bg: #111827; --card-border: #1f2937; --input-bg: #030712;
+        --input-text: #f3f4f6; --label-color: #9ca3af;
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+    body { background: var(--bg); min-height: 100vh; display: grid; place-items: center; color: var(--c-digit); font-family: var(--f-accent); padding: 12px; }
+    
+    .widget { width: 100%; max-width: 380px; background: var(--w-bg); border: 2px solid var(--w-border); border-radius: 20px; padding: 20px 16px; box-shadow: var(--w-shadow); text-align: center; }
+    .date { font-size: .85rem; font-weight: 700; color: var(--accent); letter-spacing: 1.5px; margin-bottom: 12px; text-transform: uppercase; }
+    
+    .clock-wrapper { position: relative; display: inline-flex; padding: 12px 16px; background: var(--c-bg); border: 1px solid var(--c-border); border-radius: 14px; margin-bottom: 16px; cursor: pointer; transition: transform .1s; }
+    .clock-wrapper:active { transform: scale(.96); }
+    
+    .time-bg, .clock { font-family: var(--f-digital); font-size: calc(2.2rem + 1vw); line-height: 1; letter-spacing: 2px; }
+    .time-bg { position: absolute; top: 12px; left: 16px; color: var(--c-dim); pointer-events: none; }
+    .clock { position: relative; z-index: 1; display: flex; align-items: baseline; font-weight: 700; color: var(--c-digit); text-shadow: var(--c-glow); }
+    .ampm { font-family: var(--f-accent); font-size: .85rem; font-weight: 900; margin-left: 6px; }
+
+    .alarm { 
+      display: flex; justify-content: center; align-items: center; gap: 8px; 
+      padding-top: 12px; border-top: 1px dashed var(--w-border); 
+      font-size: .9rem; font-weight: 700; color: var(--c-digit); 
+      cursor: pointer; opacity: 0.4; transition: opacity 0.3s ease, color 0.3s ease; 
+    }
+    .alarm:hover { opacity: 0.7; }
+    .alarm.active { opacity: 1; color: var(--accent); text-shadow: var(--c-glow); }
+    .alarm.active svg { animation: ring 1.5s infinite; }
+    .note-tag { font-family: var(--f-ui); font-size: .8rem; color: #f59e0b; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    @keyframes ring { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(15deg); } 40% { transform: rotate(-15deg); } 60% { transform: rotate(10deg); } 80% { transform: rotate(-10deg); } }
+
+    .modal { position: fixed; inset: 0; background: #000000d9; backdrop-filter: blur(6px); display: grid; place-items: center; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 99; padding: 16px; }
+    .modal.open { opacity: 1; pointer-events: auto; }
+    .card { background: var(--card-bg); border: 2px solid var(--card-border); border-radius: 18px; padding: 20px; width: 100%; max-width: 360px; font-family: var(--f-ui); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); }
+    .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--card-border); padding-bottom: 10px; color: var(--accent); font-family: var(--f-accent); font-size: .85rem; font-weight: 700; }
+    .field { display: flex; flex-direction: column; gap: 6px; text-align: left; margin-bottom: 14px; }
+    
+    label { font-size: 0.75rem; font-weight: 600; color: var(--label-color); text-transform: uppercase; letter-spacing: 0.5px; }
+    input[type="time"], input[type="text"], select {
+      width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--card-border);
+      background: var(--input-bg); color: var(--input-text); font-family: var(--f-ui); font-size: 0.9rem;
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s; user-select: text;
+    }
+    input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2); }
+    
+    .row-inline { display: flex; gap: 8px; align-items: center; }
+    .row-inline select { flex: 1; }
+
+    .btn {
+      width: 100%; padding: 12px; border-radius: 10px; border: none;
+      background: var(--accent); color: #ffffff; font-family: var(--f-accent);
+      font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: transform 0.1s, opacity 0.2s;
+      margin-top: 10px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.98); }
+
+    .btn-secondary {
+      padding: 10px 14px; border-radius: 10px; border: 1px solid var(--card-border);
+      background: var(--input-bg); color: var(--input-text); font-family: var(--f-ui);
+      font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background 0.2s;
+    }
+    .btn-secondary:hover { background: var(--card-border); }
+
+    .btn-off {
+      background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);
+      box-shadow: none; margin-top: 8px;
+    }
+    .btn-off:hover { background: rgba(239, 68, 68, 0.25); }
+
+    .ringing-overlay { position: fixed; inset: 0; background: #000000f0; backdrop-filter: blur(8px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity .3s; padding: 24px; text-align: center; }
+    .ringing-overlay.active { opacity: 1; pointer-events: auto; }
+    .ring-bell-icon { width: 80px; height: 80px; color: #f59e0b; animation: ring 0.6s infinite ease-in-out; margin-bottom: 16px; }
+    .ring-title { font-size: 1.5rem; font-family: var(--f-accent); color: #ffffff; margin-bottom: 8px; }
+    .ring-note { font-size: 1.1rem; font-family: var(--f-ui); color: #38bdf8; margin-bottom: 24px; }
+    .ring-btns { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 280px; }
+    .btn-stop-ring { background: #ef4444; color: white; padding: 14px; font-size: 1.1rem; font-weight: bold; border-radius: 12px; border: none; cursor: pointer; }
+    .btn-snooze-ring { background: #3b82f6; color: white; padding: 12px; font-size: .95rem; border-radius: 12px; border: none; cursor: pointer; }
+
+    .color-options { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+    .color-dot { width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 0.2s, border-color 0.2s; outline: none; }
+    .color-dot:hover, .color-dot.active { transform: scale(1.15); border-color: var(--input-text); box-shadow: 0 0 6px rgba(0,0,0,0.3); }
+    .custom-color-wrapper { position: relative; width: 26px; height: 26px; border-radius: 50%; overflow: hidden; border: 2px solid var(--card-border); cursor: pointer; background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red); }
+    .custom-color-wrapper input[type="color"] { position: absolute; top: -10px; left: -10px; width: 46px; height: 46px; border: none; cursor: pointer; opacity: 0; }
+  </style>
+</head>
+
+<body>
+  <div class="widget">
+    <div class="date" id="date">---</div>
+
+    <div class="clock-wrapper" id="clockBtn" title="Bấm để nghe đọc giờ">
+      <div class="time-bg">88:88:88</div>
+      <div class="clock">
+        <span id="time">00:00:00</span>
+        <span class="ampm" id="ampm">AM</span>
+      </div>
+    </div>
+
+    <div class="alarm" id="alarmBar" title="Cài đặt báo thức">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M4 2C2.8 3.7 2 5.7 2 8"/><path d="M22 8c0-2.3-.8-4.3-2-6"/></svg>
+      <span id="alarmText">--:--</span>
+      <span class="note-tag" id="alarmNoteText"></span>
+    </div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="card">
+      <div class="head">
+        <div style="display:flex;align-items:center;gap:6px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg> BÁO THỨC & NHẮC NHỞ</div>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="cursor:pointer" onclick="toggleModal(false)"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </div>
+      <div class="field">
+        <label>Giờ báo thức</label>
+        <input type="time" id="alarmInput" onkeydown="handleEnterKey(event)">
+      </div>
+      <div class="field">
+        <label>Nội dung nhắc nhở</label>
+        <input type="text" id="noteInput" placeholder="Ví dụ: Uống thuốc, Đi họp..." onkeydown="handleEnterKey(event)">
+      </div>
+      <div class="field">
+        <label>Màu hiển thị LED đồng hồ</label>
+        <div class="color-options">
+          <button class="color-dot" data-color="#0284c7" style="background:#0284c7" onclick="setLedColor('#0284c7')" title="Xanh Cyan"></button>
+          <button class="color-dot" data-color="#ff9d00" style="background:#ff9d00" onclick="setLedColor('#ff9d00')" title="Cam Hổ Phách"></button>
+          <button class="color-dot" data-color="#10b981" style="background:#10b981" onclick="setLedColor('#10b981')" title="Xanh Lục Matrix"></button>
+          <button class="color-dot" data-color="#ef4444" style="background:#ef4444" onclick="setLedColor('#ef4444')" title="Đỏ LED"></button>
+          <button class="color-dot" data-color="#a855f7" style="background:#a855f7" onclick="setLedColor('#a855f7')" title="Tím Neon"></button>
+          <button class="color-dot" data-color="#ec4899" style="background:#ec4899" onclick="setLedColor('#ec4899')" title="Hồng Neon"></button>
+          <div class="custom-color-wrapper" title="Chọn màu tùy chỉnh...">
+            <input type="color" id="customColorPicker" onchange="setLedColor(this.value)">
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Âm thanh báo thức</label>
+        <div class="row-inline">
+          <select id="soundSelect" onchange="saveSoundSetting()">
+            <option value="digital">Bíp kĩ thuật số (Classic Win/Watch)</option>
+            <option value="radar">Điện thoại Radar (Chuông dịu)</option>
+            <option value="marimba">Điện thoại Marimba (Gõ phím)</option>
+            <option value="bell">Chuông Báo Thức (Classic Bell)</option>
+            <option value="tts">Đọc giọng nói (TTS)</option>
+          </select>
+          <button class="btn-secondary" onclick="testAlarmSound()">Nghe thử</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Ngôn ngữ đọc giờ (TTS)</label>
+        <select id="langSelect" onchange="saveLang()">
+          <option value="vi-VN">Tiếng Việt</option>
+          <option value="en-US">English</option>
+          <option value="ja-JP">日本語</option>
+          <option value="ko-KR">한국어</option>
+          <option value="zh-CN">中文</option>
+          <option value="fr-FR">Français</option>
+          <option value="de-DE">Deutsch</option>
+        </select>
+      </div>
+      <button class="btn" onclick="saveAlarm()">Lưu Báo Thức</button>
+      <button class="btn btn-off" id="btnOff" onclick="turnOffAlarm()" style="display:none">Tắt Báo Thức</button>
+    </div>
+  </div>
+
+  <div class="ringing-overlay" id="ringingOverlay">
+    <svg class="ring-bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M4 2C2.8 3.7 2 5.7 2 8"/><path d="M22 8c0-2.3-.8-4.3-2-6"/></svg>
+    <div class="ring-title" id="ringTimeTitle">00:00</div>
+    <div class="ring-note" id="ringNoteText">Đã đến giờ báo thức!</div>
+    <div class="ring-btns">
+      <button class="btn-stop-ring" onclick="dismissAlarmRinging()">TẮT BÁO THỨC</button>
+      <button class="btn-snooze-ring" onclick="snoozeAlarmRinging(5)">TẠM DỪNG (5 PHÚT)</button>
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    let alarm = localStorage.getItem('savedAlarmTime');
+    let alarmNote = localStorage.getItem('savedAlarmNote') || '';
+    let lang = localStorage.getItem('savedLang') || 'vi-VN';
+    let soundType = localStorage.getItem('savedSoundType') || 'digital';
+    let ledColor = localStorage.getItem('savedLedColor');
+
+    let audioCtx = null;
+    let alarmLoopInterval = null;
+    let isRinging = false;
+
+    function handleEnterKey(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveAlarm();
+      }
+    }
+
+    function setLedColor(hex) {
+      if (!hex) return;
+      localStorage.setItem('savedLedColor', hex);
+      applyLedColor(hex);
+    }
+
+    function applyLedColor(hex) {
+      if (!hex) return;
+      const root = document.documentElement;
+      root.style.setProperty('--c-digit', hex);
+      root.style.setProperty('--accent', hex);
+      root.style.setProperty('--c-glow', `0 0 4px ${hex}b3`);
+      root.style.setProperty('--c-dim', `${hex}1a`);
+      if ($('customColorPicker')) $('customColorPicker').value = hex;
+
+      document.querySelectorAll('.color-dot').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-color') === hex);
+      });
+    }
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playBeepSound(freq, duration, type='square', gainVal=0.15) {
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(gainVal, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) { console.error(e); }
+    }
+
+    function playSoundPreset(preset) {
+      const ctx = getAudioContext();
+      if (preset === 'digital') {
+        playBeepSound(1800, 0.08, 'square', 0.12);
+        setTimeout(() => playBeepSound(1800, 0.08, 'square', 0.12), 120);
+        setTimeout(() => playBeepSound(1800, 0.08, 'square', 0.12), 240);
+      } else if (preset === 'radar') {
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((f, i) => {
+          setTimeout(() => playBeepSound(f, 0.3, 'sine', 0.15), i * 110);
+        });
+      } else if (preset === 'marimba') {
+        const notes = [659.25, 587.33, 523.25, 659.25];
+        notes.forEach((f, i) => {
+          setTimeout(() => playBeepSound(f, 0.18, 'triangle', 0.25), i * 140);
+        });
+      } else if (preset === 'bell') {
+        playBeepSound(880, 0.6, 'sine', 0.3);
+        setTimeout(() => playBeepSound(1174.66, 0.8, 'sine', 0.2), 150);
+      } else if (preset === 'tts') {
+        speakTime();
+      }
+    }
+
+    function startAlarmAudioLoop() {
+      stopAlarmAudioLoop();
+      playSoundPreset(soundType);
+      if (soundType !== 'tts') {
+        alarmLoopInterval = setInterval(() => {
+          playSoundPreset(soundType);
+        }, soundType === 'radar' || soundType === 'marimba' ? 1400 : 1000);
+      } else {
+        alarmLoopInterval = setInterval(() => {
+          speakTime(true);
+        }, 5000);
+      }
+    }
+
+    function stopAlarmAudioLoop() {
+      if (alarmLoopInterval) {
+        clearInterval(alarmLoopInterval);
+        alarmLoopInterval = null;
+      }
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    function testAlarmSound() {
+      getAudioContext();
+      stopAlarmAudioLoop();
+      playSoundPreset(soundType);
+    }
+
+    const tts = {
+      'vi-VN': (h, m, n, isA) => isA ? `Bây giờ là ${h} giờ ${m} phút. ${n ? 'Lời nhắc: ' + n : 'Dậy đi thôi!'}` : `Bây giờ là ${h} giờ ${m} phút`,
+      'en-US': (h, m, n, isA) => isA ? `It is ${h}:${m<10?'0'+m:m}. ${n ? 'Reminder: ' + n : 'Wake up!'}` : `It is ${h}:${m<10?'0'+m:m}`,
+      'ja-JP': (h, m, n, isA) => isA ? `${h}時${m}分です。${n ? 'リマインダー: ' + n : '時間です！'}` : `現在は${h}時${m}分です`,
+      'ko-KR': (h, m, n, isA) => isA ? `${h}시 ${m}분입니다. ${n ? '알림: ' + n : '일어나세요!'}` : `지금은 ${h}시 ${m}분입니다`,
+      'zh-CN': (h, m, n, isA) => isA ? `现在是${h}点${m}分。${n ? '提醒：' + n : '起床了！'}` : `现在是${h}点${m}分`,
+      'fr-FR': (h, m, n, isA) => isA ? `Il est ${h} heures ${m}. ${n ? 'Rappel: ' + n : 'Réveillez-vous!'}` : `Il est ${h} heures ${m}`,
+      'de-DE': (h, m, n, isA) => isA ? `Es ist ${h} Uhr ${m}. ${n ? 'Erinnerung: ' + n : 'Aufstehen!'}` : `Es ist ${h} Uhr ${m}`
+    };
+
+    document.addEventListener('click', () => {
+      getAudioContext();
+      window.speechSynthesis?.resume();
+    }, { once: true });
+
+    window.onload = () => {
+      $('langSelect').value = lang;
+      $('soundSelect').value = soundType;
+      if (ledColor) applyLedColor(ledColor);
+      updateUI();
+      $('clockBtn').onclick = speakTime;
+      $('alarmBar').onclick = () => toggleModal(true);
+    };
+
+    setInterval(() => {
+      const d = new Date(), h = d.getHours(), m = d.getMinutes(), s = d.getSeconds(), pad = n => String(n).padStart(2, '0');
+      $('date').innerText = d.toLocaleDateString(lang, { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+      $('time').innerText = `${pad(h % 12 || 12)}:${pad(m)}:${pad(s)}`;
+      $('ampm').innerText = h >= 12 ? 'PM' : 'AM';
+
+      const currentFormattedTime = `${pad(h)}:${pad(m)}`;
+      if (alarm === currentFormattedTime && s === 0 && !isRinging) {
+        triggerAlarmRinging(h, m);
+      }
+    }, 1000);
+
+    function triggerAlarmRinging(h, m) {
+      isRinging = true;
+      const pad = n => String(n).padStart(2, '0');
+      const h12 = h % 12 || 12;
+      $('ringTimeTitle').innerText = `${pad(h12)}:${pad(m)} ${h >= 12 ? 'PM' : 'AM'}`;
+      $('ringNoteText').innerText = alarmNote ? `Lời nhắc: ${alarmNote}` : 'Đã đến giờ báo thức!';
+      $('ringingOverlay').classList.add('active');
+      startAlarmAudioLoop();
+    }
+
+    function dismissAlarmRinging() {
+      isRinging = false;
+      stopAlarmAudioLoop();
+      $('ringingOverlay').classList.remove('active');
+    }
+
+    function snoozeAlarmRinging(minutes = 5) {
+      dismissAlarmRinging();
+      const d = new Date();
+      d.setMinutes(d.getMinutes() + minutes);
+      const pad = n => String(n).padStart(2, '0');
+      alarm = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      localStorage.setItem('savedAlarmTime', alarm);
+      updateUI();
+    }
+
+    function toggleModal(open) {
+      if (open) {
+        $('alarmInput').value = alarm || '';
+        $('noteInput').value = alarmNote;
+        setTimeout(() => $('alarmInput').focus(), 100);
+      }
+      $('modal').classList.toggle('open', open);
+    }
+
+    function saveAlarm() {
+      const v = $('alarmInput').value;
+      if (v) {
+        alarm = v;
+        alarmNote = $('noteInput').value.trim();
+        localStorage.setItem('savedAlarmTime', v);
+        localStorage.setItem('savedAlarmNote', alarmNote);
+        updateUI();
+        toggleModal(false);
+      }
+    }
+
+    function turnOffAlarm() {
+      alarm = null;
+      alarmNote = '';
+      localStorage.removeItem('savedAlarmTime');
+      localStorage.removeItem('savedAlarmNote');
+      updateUI();
+      toggleModal(false);
+    }
+
+    function saveLang() {
+      lang = $('langSelect').value;
+      localStorage.setItem('savedLang', lang);
+    }
+
+    function saveSoundSetting() {
+      soundType = $('soundSelect').value;
+      localStorage.setItem('savedSoundType', soundType);
+    }
+
+    function updateUI() {
+      const ab = $('alarmBar'), off = $('btnOff'), noteEl = $('alarmNoteText');
+      if (alarm) {
+        ab.classList.add('active');
+        let [h, m] = alarm.split(':'), h12 = parseInt(h);
+        $('alarmText').innerText = `${String(h12 % 12 || 12).padStart(2, '0')}:${m} ${h12 >= 12 ? 'PM' : 'AM'}`;
+        noteEl.innerText = alarmNote ? `• ${alarmNote}` : '';
+        off.style.display = 'block';
+      } else {
+        ab.classList.remove('active');
+        $('alarmText').innerText = '--:--';
+        noteEl.innerText = '';
+        off.style.display = 'none';
+      }
+    }
+
+    function speak(txt) {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(txt);
+      u.lang = lang;
+      window.speechSynthesis.speak(u);
+    }
+
+    function speakTime(isAlarm = false) {
+      const d = new Date();
+      speak(tts[lang](d.getHours(), d.getMinutes(), alarmNote, isAlarm));
+    }
+  </script>
+</body>
+</html>
