@@ -29,25 +29,25 @@
       background-color: white;
       border: none;
       display: block;
-      transition: transform 0.2s ease, width 0.2s ease, height 0.2s ease;
+      transition: width 0.2s ease, height 0.2s ease;
     }
 
-    /* Chế độ PC: Full tràn 100% màn hình */
+    /* Chế độ PC: Full toàn bộ màn hình */
     .view-pc {
       width: 100% !important;
       height: 100% !important;
     }
 
-    /* Chế độ Mobile: Khung chuẩn điện thoại, hoàn toàn phẳng (không viền, không bo góc) */
+    /* Chế độ Mobile: Tràn 100% chiều cao màn hình, giữ độ rộng chuẩn di động */
     .view-mobile {
-      width: 375px !important;
-      height: 667px !important;
+      width: 412px !important; /* Chiều rộng chuẩn thiết bị di động */
+      height: 100% !important; /* Tràn hết chiều cao từ mép trên xuống mép dưới */
       border: none !important;
       border-radius: 0 !important;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Đổ bóng nhẹ phân tách với nền */
+      box-shadow: 0 0 24px rgba(0, 0, 0, 0.6);
     }
 
-    /* Menu mini trôi nổi - Siêu gọn & Kéo thả */
+    /* Menu mini trôi nổi */
     .floating-menu {
       position: fixed;
       top: 16px;
@@ -116,7 +116,6 @@
     const urlParams = new URLSearchParams(window.location.search);
     const postUrl = urlParams.get('post') || '';
     const frame = document.getElementById('content-frame');
-    const container = document.getElementById('container');
     const dragMenu = document.getElementById('drag-menu');
     const toggleBtn = document.getElementById('toggle-device-btn');
 
@@ -128,24 +127,6 @@
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
 
-    // Tự động thu phóng khung mobile nếu màn hình PC quá nhỏ
-    function scaleFrame() {
-      if (frame.classList.contains('view-mobile')) {
-        const containerWidth = container.clientWidth - 20;
-        const containerHeight = container.clientHeight - 20;
-        const mobileWidth = 375;
-        const mobileHeight = 667;
-
-        let scale = 1;
-        if (containerWidth < mobileWidth || containerHeight < mobileHeight) {
-          scale = Math.min(containerWidth / mobileWidth, containerHeight / mobileHeight);
-        }
-        frame.style.transform = `scale(${scale})`;
-      } else {
-        frame.style.transform = 'none';
-      }
-    }
-
     function setDevice(device) {
       if (device === 'mobile') {
         frame.className = 'view-mobile';
@@ -154,7 +135,6 @@
         frame.className = 'view-pc';
         toggleBtn.textContent = '📱';
       }
-      scaleFrame();
     }
 
     function toggleDevice() {
@@ -165,17 +145,14 @@
       }
     }
 
-    // Nhận diện thiết bị ban đầu
+    // Tự động nhận diện thiết bị
     if (isMobileDevice()) {
       setDevice('mobile');
     } else {
       setDevice('pc');
     }
 
-    window.addEventListener('resize', scaleFrame);
-    frame.addEventListener('load', scaleFrame);
-
-    // Tính năng Drag & Drop cho menu nút bấm
+    // Drag & Drop cho menu nút bấm
     let isDragging = false, offsetPX = 0, offsetPY = 0;
 
     dragMenu.addEventListener('mousedown', (e) => {
