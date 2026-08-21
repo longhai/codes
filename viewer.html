@@ -24,13 +24,15 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    /* Đảm bảo body và container mở rộng khi ở chế độ Fullscreen */
     html, body { 
       width: 100%; 
       height: 100vh; 
       background-color: var(--bg-color); 
       font-family: sans-serif; 
       transition: background-color 0.3s ease;
-      overflow: auto; /* Cho phép cuộn khi ở chế độ PC */
+      overflow: auto;
     }
     
     .viewport-container { 
@@ -47,13 +49,11 @@
       transition: width 0.3s ease; 
     }
     
-    /* Giao diện PC: Cố định độ rộng chuẩn PC (1280px) để tràn out màn hình điện thoại */
     .view-pc { 
       width: 1280px !important; 
       height: 100% !important; 
     }
 
-    /* Giao diện Mobile: Vừa vặn màn hình điện thoại */
     .view-mobile { 
       width: 412px !important; 
       max-width: 100% !important;
@@ -61,13 +61,14 @@
       box-shadow: 0 0 24px rgba(0,0,0,0.3); 
     }
     
+    /* Menu điều khiển kéo thả */
     .floating-menu {
       position: fixed; top: 16px; right: 16px; display: flex; align-items: center; gap: 8px;
       background: var(--menu-bg); backdrop-filter: blur(10px);
       padding: 6px 12px; border-radius: 25px; border: 1px solid var(--menu-border);
       z-index: 9999; cursor: move; touch-action: none; user-select: none;
     }
-    .float-btn { color: var(--btn-color); background: var(--btn-bg); border: none; padding: 6px 12px; border-radius: 20px; cursor: pointer; text-decoration: none; }
+    .float-btn { color: var(--btn-color); background: var(--btn-bg); border: none; padding: 6px 12px; border-radius: 20px; cursor: pointer; text-decoration: none; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -76,8 +77,9 @@
   </div>
   
   <div class="floating-menu" id="drag-menu">
-    <a href="index.html" class="float-btn">🏠</a>
-    <button id="toggle-btn" class="float-btn" onclick="toggleDevice()">📱</button>
+    <a href="index.html" class="float-btn" title="Trang chủ">🏠</a>
+    <button id="toggle-btn" class="float-btn" onclick="toggleDevice()" title="Chuyển chế độ PC/Mobile">📱</button>
+    <button id="fullscreen-btn" class="float-btn" onclick="toggleFullScreen()" title="Toàn màn hình">⛶</button>
   </div>
 
   <script>
@@ -85,31 +87,68 @@
     const toggleBtn = document.getElementById('toggle-btn');
     const dragMenu = document.getElementById('drag-menu');
     const viewportMeta = document.getElementById('viewport-meta');
+    const fsBtn = document.getElementById('fullscreen-btn');
     
     frame.src = new URLSearchParams(window.location.search).get('post') || '';
 
+    // 1. Chuyển đổi giao diện PC / Mobile
     function toggleDevice() {
       if (frame.classList.contains('view-pc')) {
-        // Chuyển sang Mobile
         frame.className = 'view-mobile'; 
         toggleBtn.textContent = '💻';
         viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
       } else {
-        // Chuyển sang PC (Cố định khung nhìn ở 1280px để giao diện PC hiển thị đúng kích thước thật)
         frame.className = 'view-pc'; 
         toggleBtn.textContent = '📱';
         viewportMeta.setAttribute('content', 'width=1280');
       }
     }
 
-    // Thiết lập mặc định khi mở trang
     if (window.innerWidth <= 768) {
-      toggleDevice(); // Nếu là màn hình nhỏ thì khởi chạy ở chế độ Mobile
+      toggleDevice();
     } else {
       viewportMeta.setAttribute('content', 'width=1280');
     }
 
-    // Kéo thả nút bằng tay/chuột
+    // 2. Chức năng Fullscreen tương thích đa nền tảng (PC & Mobile)
+    function toggleFullScreen() {
+      const doc = document;
+      const docEl = doc.documentElement;
+
+      const requestFS = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
+      const exitFS = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+
+      const isFS = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+
+      if (!isFS) {
+        if (requestFS) {
+          requestFS.call(docEl).then(() => {
+            fsBtn.textContent = '🗗'; // Biểu tượng thu nhỏ
+          }).catch(err => {
+            console.log("Lỗi bật Fullscreen: ", err);
+          });
+        }
+      } else {
+        if (exitFS) {
+          exitFS.call(doc).then(() => {
+            fsBtn.textContent = '⛶'; // Biểu tượng phóng to
+          });
+        }
+      }
+    }
+
+    // Lắng nghe sự kiện thoát Fullscreen bằng phím ESC hoặc thao tác vuốt của điện thoại
+    document.addEventListener('fullscreenchange', updateFSButton);
+    document.addEventListener('webkitfullscreenchange', updateFSButton);
+    document.addEventListener('mozfullscreenchange', updateFSButton);
+    document.addEventListener('MSFullscreenChange', updateFSButton);
+
+    function updateFSButton() {
+      const isFS = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+      fsBtn.textContent = isFS ? '🗗' : '⛶';
+    }
+
+    // 3. Logic Kéo thả Menu
     let isDragging = false, startX, startY, initialLeft, initialTop;
     function startDrag(e) { 
       isDragging = true; 
