@@ -25,14 +25,13 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
-    /* Đảm bảo body và container mở rộng khi ở chế độ Fullscreen */
     html, body { 
       width: 100%; 
       height: 100vh; 
       background-color: var(--bg-color); 
       font-family: sans-serif; 
       transition: background-color 0.3s ease;
-      overflow: auto;
+      overflow: hidden;
     }
     
     .viewport-container { 
@@ -46,22 +45,34 @@
     #content-frame { 
       background-color: white; 
       border: none; 
-      transition: width 0.3s ease; 
+      transition: width 0.3s ease, height 0.3s ease; 
     }
     
     .view-pc { 
-      width: 1280px !important; 
-      height: 100% !important; 
+      width: 1280px; 
+      height: 100%; 
+      max-width: 100%;
     }
 
     .view-mobile { 
-      width: 412px !important; 
-      max-width: 100% !important;
-      height: 100% !important; 
+      width: 412px; 
+      max-width: 100%;
+      height: 100%; 
       box-shadow: 0 0 24px rgba(0,0,0,0.3); 
     }
+
+    /* ĐỘT PHÁ FULLSCREEN: Ép iframe tràn 100% màn hình khi bật Fullscreen */
+    :fullscreen #content-frame,
+    :-webkit-full-screen #content-frame,
+    :-moz-full-screen #content-frame,
+    :-ms-fullscreen #content-frame {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100vw !important;
+      box-shadow: none !important;
+    }
     
-    /* Menu điều khiển kéo thả */
+    /* Menu điều khiển */
     .floating-menu {
       position: fixed; top: 16px; right: 16px; display: flex; align-items: center; gap: 8px;
       background: var(--menu-bg); backdrop-filter: blur(10px);
@@ -72,6 +83,7 @@
   </style>
 </head>
 <body>
+
   <div class="viewport-container">
     <iframe id="content-frame" class="view-pc" src=""></iframe>
   </div>
@@ -83,110 +95,107 @@
   </div>
 
   <script>
-  const frame = document.getElementById('content-frame');
-  const toggleBtn = document.getElementById('toggle-btn');
-  const dragMenu = document.getElementById('drag-menu');
-  const viewportMeta = document.getElementById('viewport-meta');
-  const fsBtn = document.getElementById('fullscreen-btn');
+    const frame = document.getElementById('content-frame');
+    const toggleBtn = document.getElementById('toggle-btn');
+    const dragMenu = document.getElementById('drag-menu');
+    const viewportMeta = document.getElementById('viewport-meta');
+    const fsBtn = document.getElementById('fullscreen-btn');
+    
+    frame.src = new URLSearchParams(window.location.search).get('post') || '';
 
-  // 1. Tải URL bài viết
-  frame.src = new URLSearchParams(window.location.search).get('post') || '';
+    // 1. Chuyển đổi giao diện PC / Mobile
+    function toggleDevice() {
+      if (frame.classList.contains('view-pc')) {
+        frame.className = 'view-mobile'; 
+        toggleBtn.textContent = '💻';
+        viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+      } else {
+        frame.className = 'view-pc'; 
+        toggleBtn.textContent = '📱';
+        viewportMeta.setAttribute('content', 'width=1280');
+      }
+    }
 
-  // 2. Chuyển đổi giao diện PC / Mobile
-  function toggleDevice() {
-    if (frame.classList.contains('view-pc')) {
-      frame.className = 'view-mobile'; 
-      toggleBtn.textContent = '💻';
-      viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+    if (window.innerWidth <= 768) {
+      toggleDevice();
     } else {
-      frame.className = 'view-pc'; 
-      toggleBtn.textContent = '📱';
       viewportMeta.setAttribute('content', 'width=1280');
     }
-  }
 
-  // Khởi tạo chế độ ban đầu theo kích thước màn hình
-  if (window.innerWidth <= 768) {
-    toggleDevice();
-  } else {
-    viewportMeta.setAttribute('content', 'width=1280');
-  }
+    // 2. Chức năng Fullscreen tương thích đa nền tảng
+    function toggleFullScreen() {
+      const doc = document;
+      const docEl = doc.documentElement;
 
-  // 3. Toàn màn hình (An toàn cho mọi thiết bị)
-  function toggleFullScreen() {
-    const doc = document;
-    const docEl = doc.documentElement;
-    const isFS = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
+      const isFS = doc.fullscreenElement || doc.webkitFullscreenElement || doc.mozFullScreenElement || doc.msFullscreenElement;
 
-    try {
-      if (!isFS) {
-        if (docEl.requestFullscreen) docEl.requestFullscreen();
-        else if (docEl.webkitRequestFullScreen) docEl.webkitRequestFullScreen();
-        else if (docEl.mozRequestFullScreen) docEl.mozRequestFullScreen();
-        else if (docEl.msRequestFullscreen) docEl.msRequestFullscreen();
-      } else {
-        if (doc.exitFullscreen) doc.exitFullscreen();
-        else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
-        else if (doc.mozCancelFullScreen) doc.mozCancelFullScreen();
-        else if (doc.msExitFullscreen) doc.msExitFullscreen();
+      try {
+        if (!isFS) {
+          if (docEl.requestFullscreen) docEl.requestFullscreen();
+          else if (docEl.webkitRequestFullScreen) docEl.webkitRequestFullScreen();
+          else if (docEl.mozRequestFullScreen) docEl.mozRequestFullScreen();
+          else if (docEl.msRequestFullscreen) docEl.msRequestFullscreen();
+        } else {
+          if (doc.exitFullscreen) doc.exitFullscreen();
+          else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
+          else if (doc.mozCancelFullScreen) doc.mozCancelFullScreen();
+          else if (doc.msExitFullscreen) doc.msExitFullscreen();
+        }
+      } catch (err) {
+        console.warn("Lỗi Fullscreen:", err);
       }
-    } catch (err) {
-      console.warn("Không thể bật Fullscreen:", err);
     }
-  }
 
-  // Cập nhật icon khi thay đổi trạng thái Fullscreen
-  ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
-    document.addEventListener(evt, () => {
-      const isFS = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
-      fsBtn.textContent = isFS ? '🗗' : '⛶';
+    // Lắng nghe sự kiện đổi trạng thái Fullscreen
+    ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
+      document.addEventListener(evt, () => {
+        const isFS = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+        fsBtn.textContent = isFS ? '🗗' : '⛶';
+      });
     });
-  });
 
-  // 4. Logic Kéo thả Menu (Đã chặn xung đột Click & Tránh viền)
-  let isDragging = false, startX, startY, initialLeft, initialTop;
+    // 3. Logic Kéo thả Menu
+    let isDragging = false, startX, startY, initialLeft, initialTop;
 
-  function startDrag(e) { 
-    // Không kích hoạt kéo thả nếu người dùng bấm trực tiếp vào Button/Link
-    if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
+    function startDrag(e) { 
+      if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
 
-    isDragging = true; 
-    const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-    const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-    
-    startX = clientX; 
-    startY = clientY;
-    initialLeft = dragMenu.offsetLeft; 
-    initialTop = dragMenu.offsetTop;
-  }
+      isDragging = true; 
+      const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+      const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+      
+      startX = clientX; 
+      startY = clientY;
+      initialLeft = dragMenu.offsetLeft; 
+      initialTop = dragMenu.offsetTop;
+    }
 
-  function doDrag(e) {
-    if (!isDragging) return;
-    if (e.cancelable) e.preventDefault();
+    function doDrag(e) {
+      if (!isDragging) return;
+      if (e.cancelable) e.preventDefault();
 
-    const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-    const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+      const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+      const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
 
-    let newLeft = initialLeft + (clientX - startX);
-    let newTop = initialTop + (clientY - startY);
+      let newLeft = initialLeft + (clientX - startX);
+      let newTop = initialTop + (clientY - startY);
 
-    // Giữ menu không văng ra ngoài viền màn hình
-    const maxLeft = window.innerWidth - dragMenu.offsetWidth;
-    const maxTop = window.innerHeight - dragMenu.offsetHeight;
+      const maxLeft = window.innerWidth - dragMenu.offsetWidth;
+      const maxTop = window.innerHeight - dragMenu.offsetHeight;
 
-    dragMenu.style.left = Math.max(0, Math.min(newLeft, maxLeft)) + 'px';
-    dragMenu.style.top = Math.max(0, Math.min(newTop, maxTop)) + 'px';
-    dragMenu.style.right = 'auto';
-  }
+      dragMenu.style.left = Math.max(0, Math.min(newLeft, maxLeft)) + 'px';
+      dragMenu.style.top = Math.max(0, Math.min(newTop, maxTop)) + 'px';
+      dragMenu.style.right = 'auto';
+    }
 
-  function stopDrag() { isDragging = false; }
+    function stopDrag() { isDragging = false; }
 
-  dragMenu.addEventListener('mousedown', startDrag);
-  dragMenu.addEventListener('touchstart', startDrag, {passive: false});
-  document.addEventListener('mousemove', doDrag);
-  document.addEventListener('touchmove', doDrag, {passive: false});
-  document.addEventListener('mouseup', stopDrag);
-  document.addEventListener('touchend', stopDrag);
-</script>
+    dragMenu.addEventListener('mousedown', startDrag);
+    dragMenu.addEventListener('touchstart', startDrag, {passive: false});
+    document.addEventListener('mousemove', doDrag);
+    document.addEventListener('touchmove', doDrag, {passive: false});
+    document.addEventListener('mouseup', stopDrag);
+    document.addEventListener('touchend', stopDrag);
+  </script>
 </body>
 </html>
