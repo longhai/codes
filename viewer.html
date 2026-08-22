@@ -27,7 +27,7 @@
     
     html, body { 
       width: 100%; 
-      height: 100vh; 
+      height: 100%; 
       background-color: var(--bg-color); 
       font-family: sans-serif; 
       transition: background-color 0.3s ease;
@@ -61,14 +61,19 @@
       box-shadow: 0 0 24px rgba(0,0,0,0.3); 
     }
 
-    /* ĐỘT PHÁ FULLSCREEN: Ép iframe tràn 100% màn hình khi bật Fullscreen */
+    /* ĐỘT PHÁ FULLSCREEN TRÀN MÀN HÌNH HOÀN TOÀN */
+    :fullscreen .viewport-container,
+    :-webkit-full-screen .viewport-container {
+      width: 100vw !important;
+      height: 100vh !important;
+    }
+
     :fullscreen #content-frame,
-    :-webkit-full-screen #content-frame,
-    :-moz-full-screen #content-frame,
-    :-ms-fullscreen #content-frame {
+    :-webkit-full-screen #content-frame {
       width: 100vw !important;
       height: 100vh !important;
       max-width: 100vw !important;
+      max-height: 100vh !important;
       box-shadow: none !important;
     }
     
@@ -78,8 +83,14 @@
       background: var(--menu-bg); backdrop-filter: blur(10px);
       padding: 6px 12px; border-radius: 25px; border: 1px solid var(--menu-border);
       z-index: 9999; cursor: move; touch-action: none; user-select: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     .float-btn { color: var(--btn-color); background: var(--btn-bg); border: none; padding: 6px 12px; border-radius: 20px; cursor: pointer; text-decoration: none; font-size: 14px; }
+    
+    /* Khi đang kéo menu, vô hiệu hóa tương tác iframe để tránh bị giật khựng */
+    .is-dragging #content-frame {
+      pointer-events: none !important;
+    }
   </style>
 </head>
 <body>
@@ -122,7 +133,7 @@
       viewportMeta.setAttribute('content', 'width=1280');
     }
 
-    // 2. Chức năng Fullscreen tương thích đa nền tảng
+    // 2. Chức năng Fullscreen
     function toggleFullScreen() {
       const doc = document;
       const docEl = doc.documentElement;
@@ -146,7 +157,6 @@
       }
     }
 
-    // Lắng nghe sự kiện đổi trạng thái Fullscreen
     ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(evt => {
       document.addEventListener(evt, () => {
         const isFS = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
@@ -154,13 +164,15 @@
       });
     });
 
-    // 3. Logic Kéo thả Menu
+    // 3. Logic Kéo thả Menu Mượt Mà (Không khựng)
     let isDragging = false, startX, startY, initialLeft, initialTop;
 
     function startDrag(e) { 
       if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A') return;
 
       isDragging = true; 
+      document.body.classList.add('is-dragging'); // Khóa iframe để không nuốt chuột
+
       const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
       const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
       
@@ -188,7 +200,10 @@
       dragMenu.style.right = 'auto';
     }
 
-    function stopDrag() { isDragging = false; }
+    function stopDrag() { 
+      isDragging = false; 
+      document.body.classList.remove('is-dragging'); // Mở lại iframe
+    }
 
     dragMenu.addEventListener('mousedown', startDrag);
     dragMenu.addEventListener('touchstart', startDrag, {passive: false});
