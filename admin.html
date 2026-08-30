@@ -85,7 +85,6 @@ layout: null
           </div>
         </details>
         
-        <!-- NÚT XÓA BÀI (Chỉ xuất hiện khi chọn bài cũ) -->
         <button type="button" id="deleteBtn" onclick="deletePost()" style="background: var(--danger); color:#fff; font-weight:bold; border:none; display:none;">🗑️ Xóa</button>
         <button type="button" id="submitBtn" onclick="submitForm()" style="background: var(--pri); color:#fff; font-weight:bold; border:none;">🚀 Đăng</button>
       </div>
@@ -200,34 +199,41 @@ function resetForm() {
   document.getElementById('statusLabel').textContent = 'Tạo mới';
   document.getElementById('submitBtn').textContent = '🚀 Đăng';
   document.getElementById('submitBtn').style.background = 'var(--pri)';
-  document.getElementById('deleteBtn').style.display = 'none'; // Ẩn nút Xóa
+  document.getElementById('deleteBtn').style.display = 'none';
   updatePreview();
 }
 
+// BÓC TÁCH TRIỆT ĐỂ FRONT MATTER VÀ CẶP THẺ CODE
 async function editPost(path, sha) {
   try {
     const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${path}`, {
       headers: { 'Authorization': `Bearer ${GH_CONFIG.token}` }
     });
     const data = await res.json();
-    const rawText = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
+    // Giải mã Unicode từ Base64 GitHub
+    let rawText = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
 
     const fileName = path.split('/').pop().replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/\.(html|md)$/, '');
-    
     let extractedTitle = fileName;
     let body = rawText;
 
-    if (rawText.startsWith('---')) {
-      const parts = rawText.split(/^---$/m);
-      if (parts.length >= 3) {
-        const titleMatch = parts[1].match(/title:\s*["']?([^"'\n]+)["']?/);
+    // 1. Tách sạch khối Front Matter (đoạn nằm giữa cặp ---)
+    if (body.startsWith('---')) {
+      const firstEndIndex = body.indexOf('---', 3);
+      if (firstEndIndex !== -1) {
+        const headerText = body.substring(0, firstEndIndex);
+        const titleMatch = headerText.match(/title:\s*["']?([^"'\n]+)["']?/);
         if (titleMatch) extractedTitle = titleMatch[1];
-        body = parts.slice(2).join('---').trim();
+        
+        // Cắt bỏ toàn bộ phần Front Matter
+        body = body.substring(firstEndIndex + 3).trim();
       }
     }
 
-    body = body.replace(/^```html\n?/, '').replace(/\n?```$/, '');
+    // 2. Cắt bỏ khối bao code Markdown ```html ở đầu và ``` ở cuối (nếu có)
+    body = body.replace(/^```html\s*/i, '').replace(/\s*```$/i, '').trim();
 
+    // 3. Điền dữ liệu sạch vào Editor
     document.getElementById('title').value = extractedTitle;
     document.querySelector('input[name="postType"][value="code"]').checked = true;
     document.getElementById('content').value = body;
@@ -236,12 +242,12 @@ async function editPost(path, sha) {
     document.getElementById('statusLabel').textContent = 'Sửa: ' + fileName;
     document.getElementById('submitBtn').textContent = '💾 Lưu';
     document.getElementById('submitBtn').style.background = '#2563eb';
-    document.getElementById('deleteBtn').style.display = 'inline-block'; // Hiện nút Xóa
+    document.getElementById('deleteBtn').style.display = 'inline-block';
+    
     updatePreview();
   } catch(e) { alert('Không nạp được bài!'); }
 }
 
-// CHỨC NĂNG XÓA BÀI VIẾT
 async function deletePost() {
   if (!currentPath || !currentSha) return alert('Chưa chọn bài viết để xóa!');
   if (!GH_CONFIG.token) return alert('Chưa cài Token!');
@@ -286,7 +292,7 @@ async function submitForm() {
   btn.disabled = true;
 
   const title = document.getElementById('title').value.trim();
-  const rawContent = document.getElementById('content').value;
+  const rawContent = document.getElementById('content').value.trim();
   const isCode = document.querySelector('input[name="postType"][value="code"]').checked;
 
   const today = new Date().toISOString().split('T')[0];
