@@ -147,7 +147,6 @@ function updatePreview() {
   let content = document.getElementById('content').value;
   const iframe = document.getElementById('previewFrame');
 
-  // Preview trực tiếp code HTML thuần
   const blob = new Blob([content], { type: 'text/html' });
   if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
   currentBlobUrl = URL.createObjectURL(blob);
@@ -167,7 +166,7 @@ async function loadPosts() {
     const files = await res.json();
     rawPostsList = files.filter(f => f.type === 'file' && (f.name.endsWith('.html') || f.name.endsWith('.md')));
     
-    selectEl.innerHTML = '<option value="">-- Bài viết cũ (' + rawPostsList.length + ') --</option>';
+    selectEl.innerHTML = '<option value="">-- Chọn bài viết cũ (' + rawPostsList.length + ') --</option>';
     rawPostsList.reverse().forEach((file, index) => {
       const opt = document.createElement('option');
       opt.value = index;
@@ -194,6 +193,7 @@ function resetForm() {
   updatePreview();
 }
 
+// BỘ LỌC TOÀN DIỆN (CLEANER): TỰ ĐỘNG BỎ RÁC FRONT MATTER VÀ MARKDOWN CODE BLOCK
 async function editPost(path, sha) {
   try {
     const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${path}`, {
@@ -202,18 +202,16 @@ async function editPost(path, sha) {
     const data = await res.json();
     let body = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
 
-    // Lấy tên file gốc làm Tiêu đề
     const fileName = path.split('/').pop().replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/\.(html|md)$/, '');
 
-    // Làm sạch nếu lỡ dính Front Matter hay cặp thẻ ```html từ trước
-    if (body.startsWith('---')) {
-      const parts = body.split(/^---$/m);
-      if (parts.length >= 3) body = parts.slice(2).join('---').trim();
-    }
-    body = body.replace(/^```html\n?/, '').replace(/\n?```$/, '');
+    // 1. Lọc sạch Front Matter (--- ... ---) nếu lỡ bị dính từ các lần đăng trước
+    body = body.replace(/^---[\s\S]*?---\s*/m, '');
+
+    // 2. Lọc sạch thẻ bao Markdown (```html ... ```)
+    body = body.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '');
 
     document.getElementById('title').value = fileName;
-    document.getElementById('content').value = body;
+    document.getElementById('content').value = body.trim();
 
     currentSha = sha; currentPath = path;
     document.getElementById('statusLabel').textContent = 'Sửa: ' + fileName;
@@ -235,7 +233,7 @@ async function deletePost() {
   btn.disabled = true;
 
   try {
-    const res = await fetch(`[https://api.github.com/repos/$](https://api.github.com/repos/$){GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${currentPath}`, {
+    const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${currentPath}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${GH_CONFIG.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: `Delete post: ${fileName}`, sha: currentSha })
@@ -250,14 +248,13 @@ async function deletePost() {
   finally { btn.disabled = false; }
 }
 
-// LƯU NỘI DUNG CODE THUẦN 100% THUẦN TÚY (KHÔNG CHÈN THÊM RÁC)
 async function submitForm() {
   if (!GH_CONFIG.token) return alert('Chưa cài Token!');
   const btn = document.getElementById('submitBtn');
   btn.disabled = true;
 
   const title = document.getElementById('title').value.trim();
-  const fileContent = document.getElementById('content').value; // Code thuần túy
+  const fileContent = document.getElementById('content').value;
 
   const today = new Date().toISOString().split('T')[0];
   const slug = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
@@ -268,7 +265,7 @@ async function submitForm() {
   if (currentSha) payload.sha = currentSha;
 
   try {
-    const res = await fetch(`[https://api.github.com/repos/$](https://api.github.com/repos/$){GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${filePath}`, {
+    const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${filePath}`, {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${GH_CONFIG.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
