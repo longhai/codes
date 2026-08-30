@@ -6,7 +6,7 @@ layout: null
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>Quản lý Bài viết - Responsive Pro</title>
+  <title>Quản lý Bài viết - Fix Live Preview</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -57,7 +57,7 @@ layout: null
   <header>
     <div class="header-row">
       <button type="button" onclick="resetForm()" style="background: var(--success); color:#fff; font-weight:bold; border:none;">➕ Mới</button>
-      <select id="postSelect" style="flex:1; max-width: 100%;">
+      <select id="postSelect" style="flex:1;">
         <option value="">-- Chọn bài viết cũ --</option>
       </select>
     </div>
@@ -84,32 +84,28 @@ layout: null
   </header>
 
   <main id="mainWorkspace" class="show-editor">
-    
     <div class="pane pane-editor">
       <input type="text" id="title" class="title-input" placeholder="Tiêu đề bài viết..." oninput="updatePreview()">
       
       <div class="options-bar">
         <div style="display:flex; gap:12px;">
-          <label><input type="radio" name="postType" value="code" checked onchange="updatePreview()"> 💻 App/Code HTML</label>
-          <label><input type="radio" name="postType" value="text" onchange="updatePreview()"> 📝 Bài viết Văn bản</label>
+          <label><input type="radio" name="postType" value="code" checked onchange="updatePreview()"> 💻 Code</label>
+          <label><input type="radio" name="postType" value="text" onchange="updatePreview()"> 📝 Văn bản</label>
         </div>
         <span id="statusLabel" style="font-size:11px; color:var(--text-muted);">Tạo mới</span>
       </div>
 
-      <textarea id="content" placeholder="Nhập mã HTML/JS/CSS thực thi..." oninput="updatePreview()"></textarea>
+      <textarea id="content" placeholder="Nhập mã HTML/JS..." oninput="updatePreview()"></textarea>
     </div>
 
     <div class="pane pane-preview">
-      <!-- Cấp đầy đủ quyền Sandbox để JS và ứng dụng web hoạt động thực tế -->
-      <iframe id="previewFrame" sandbox="allow-scripts allow-same-origin allow-modals allow-forms allow-popups"></iframe>
+      <iframe id="previewFrame"></iframe>
     </div>
-
   </main>
 
 <script>
 let GH_CONFIG = JSON.parse(localStorage.getItem('gh_cfg') || '{}');
 let rawPostsList = [], currentSha = null, currentPath = null;
-let currentBlobUrl = null;
 
 document.getElementById('cfgOwner').value = GH_CONFIG.owner || 'longhai';
 document.getElementById('cfgRepo').value = GH_CONFIG.repo || 'codes';
@@ -139,26 +135,29 @@ function switchMobileTab(tab) {
   }
 }
 
-// Cơ chế render chuẩn môi trường chạy HTML/JS thực tế qua Blob URL
+// XỬ LÝ RENDER REAL-TIME CHẠY ĐÚNG HTML/CSS/JS CHỨC NĂNG
 function updatePreview() {
   const title = document.getElementById('title').value || 'Tiêu đề';
-  const content = document.getElementById('content').value;
+  let content = document.getElementById('content').value;
   const isCode = document.querySelector('input[name="postType"]:checked').value === 'code';
   const iframe = document.getElementById('previewFrame');
 
+  // Làm sạch rác Front Matter nếu dán trùng
+  content = content.replace(/^---[\s\S]*?---\n?/, '');
+
   let renderHtml = '';
   if (isCode) {
-    renderHtml = content; // Giữ nguyên toàn bộ mã HTML/JS/CSS để thực thi trực tiếp
+    // Tách bóc các thẻ ```html hoặc ``` ở 2 đầu nếu có
+    renderHtml = content.replace(/^```(html)?\n?/, '').replace(/\n?```$/, '');
   } else {
-    renderHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:sans-serif;padding:15px;line-height:1.6;color:#333;}</style></head><body><h2>${title}</h2><hr><div style="white-space:pre-wrap;">${content}</div></body></html>`;
+    renderHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:sans-serif;padding:15px;line-height:1.6;color:#333;}</style></head><body><h2>${title}</h2><hr style="margin:10px 0;border:0;border-top:1px solid #eee;"><div style="white-space: pre-wrap;">${content}</div></body></html>`;
   }
 
-  // Thu hồi URL cũ để giải phóng bộ nhớ
-  if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
-  
-  const blob = new Blob([renderHtml], { type: 'text/html; charset=utf-8' });
-  currentBlobUrl = URL.createObjectURL(blob);
-  iframe.src = currentBlobUrl;
+  // Inject mã trực tiếp vào DOM Iframe để JS/CSS thực thi độc lập
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  doc.open();
+  doc.write(renderHtml);
+  doc.close();
 }
 
 async function loadPosts() {
@@ -166,7 +165,7 @@ async function loadPosts() {
   if (!GH_CONFIG.token) return;
 
   try {
-    const res = await fetch(`[https://api.github.com/repos/$](https://api.github.com/repos/$){GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/_posts`, {
+    const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/_posts`, {
       headers: { 'Authorization': `Bearer ${GH_CONFIG.token}` }
     });
     if (!res.ok) return;
@@ -202,13 +201,13 @@ function resetForm() {
 
 async function editPost(path, sha) {
   try {
-    const res = await fetch(`[https://api.github.com/repos/$](https://api.github.com/repos/$){GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${path}`, {
+    const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${path}`, {
       headers: { 'Authorization': `Bearer ${GH_CONFIG.token}` }
     });
     const data = await res.json();
     const rawText = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
     const fileName = path.split('/').pop().replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/\.(html|md)$/, '');
-
+    
     let extractedTitle = fileName;
     let body = rawText;
 
@@ -224,8 +223,7 @@ async function editPost(path, sha) {
     document.getElementById('title').value = extractedTitle;
     document.querySelector('input[name="postType"][value="code"]').checked = true;
 
-    // Lọc bỏ wrapper ```html nếu bài cũ lỡ bị bọc
-    body = body.replace(/^```html\n?/, '').replace(/\n?```$/, '');
+    body = body.replace(/^```(html)?\n?/, '').replace(/\n?```$/, '');
     document.getElementById('content').value = body;
 
     currentSha = sha; currentPath = path;
@@ -248,13 +246,10 @@ async function submitForm() {
   const today = new Date().toISOString().split('T')[0];
   const slug = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
   
-  // NẾU LÀ CODE: Giữ nguyên code thực thi (không bọc ```html). NẾU LÀ VĂN BẢN: Đóng gói Front Matter
-  let fileContent = '';
-  if (isCode) {
-    fileContent = rawContent; 
-  } else {
-    fileContent = `---\nlayout: post\ntitle: "${title}"\ndate: ${today}\ntype: text\n---\n\n${rawContent}`;
-  }
+  // Làm sạch code trước khi đóng gói lên GitHub
+  const cleanBody = rawContent.replace(/^```(html)?\n?/, '').replace(/\n?```$/, '');
+  const finalBody = isCode ? "```html\n" + cleanBody + "\n```" : cleanBody;
+  const fileContent = `---\nlayout: post\ntitle: "${title}"\ndate: ${today}\ntype: ${isCode ? 'code' : 'text'}\n---\n\n${finalBody}`;
 
   const filePath = currentPath || `_posts/${today}-${slug}.html`;
   const encodedContent = btoa(unescape(encodeURIComponent(fileContent)));
@@ -262,7 +257,7 @@ async function submitForm() {
   if (currentSha) payload.sha = currentSha;
 
   try {
-    const res = await fetch(`[https://api.github.com/repos/$](https://api.github.com/repos/$){GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${filePath}`, {
+    const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${filePath}`, {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${GH_CONFIG.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -282,4 +277,3 @@ updatePreview();
 </script>
 </body>
 </html>
-
