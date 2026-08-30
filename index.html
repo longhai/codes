@@ -1,108 +1,27 @@
 ---
-layout: null
+layout: default
+title: Danh sách Bài viết
+body_class: page-index
 ---
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Danh sách Bài viết</title>
-  <style>
-    /* Mặc định: Giao diện Sáng (Light Mode) */
-    :root {
-      --bg-color: #f1f5f9;
-      --card-bg: #ffffff;
-      --preview-bg: #e2e8f0;
-      --text-color: #334155;
-      --shadow: rgba(0, 0, 0, 0.08);
-      --card-border: #e2e8f0;
-    }
-
-    /* Tự động chuyển sang Soft Dark Mode khi máy chọn Dark Mode */
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg-color: #161920;
-        --card-bg: #20252e;
-        --preview-bg: #2a303a;
-        --text-color: #cbd5e1;
-        --shadow: rgba(0, 0, 0, 0.4);
-        --card-border: rgba(255, 255, 255, 0.05);
-      }
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-      background-color: var(--bg-color); 
-      color: var(--text-color); 
-      padding: 40px 20px; 
-      transition: background-color 0.3s ease, color 0.3s ease; 
-    }
-
-    .container { max-width: 1200px; margin: 0 auto; }
-    
-    .pen-grid { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
-      gap: 25px; 
-    }
-
-    .pen-card { 
-      background-color: var(--card-bg); 
-      border: 1px solid var(--card-border); 
-      border-radius: 12px; 
-      overflow: hidden; 
-      text-decoration: none; 
-      color: inherit; 
-      transition: all 0.3s ease; 
-    }
-
-    .pen-card:hover { 
-      transform: translateY(-5px); 
-      box-shadow: 0 10px 20px var(--shadow); 
-    }
-
-    .preview-box { width: 100%; height: 170px; background-color: var(--preview-bg); }
-    .preview-box img { width: 100%; height: 100%; object-fit: cover; }
-    .card-body { padding: 16px; }
-    .pen-title { font-size: 15px; font-weight: 600; }
-    
-    .pagination { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 50px; }
-    .page-btn { background: var(--card-bg); color: var(--text-color); border: 1px solid var(--card-border); padding: 8px 16px; border-radius: 8px; text-decoration: none; font-size: 13px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="pen-grid">
-      {% for post in paginator.posts %}
-      <a href="{{ site.baseurl }}/viewer.html?post={{ post.url | relative_url }}" class="pen-card">
-        <div class="preview-box"><img src="https://s0.wp.com/mshots/v1/{{ site.url | append: site.baseurl | append: post.url | encode_uri }}?w=800&h=500" loading="lazy"></div>
-        <div class="card-body"><h3 class="pen-title" data-post-url="{{ post.url | relative_url }}">Loading...</h3></div>
-      </a>
-      {% endfor %}
-    </div>
-
-    {% if paginator.total_pages > 1 %}
-    <div class="pagination">
-      {% if paginator.previous_page %}<a href="{{ paginator.previous_page_path | relative_url }}" class="page-btn">←</a>{% endif %}
-      <span>{{ paginator.page }} / {{ paginator.total_pages }}</span>
-      {% if paginator.next_page %}<a href="{{ paginator.next_page_path | relative_url }}" class="page-btn">→</a>{% endif %}
-    </div>
-    {% endif %}
+<div class="container">
+  <div class="pen-grid">
+    {% for post in paginator.posts %}
+    <a href="{{ '/viewer.html' | relative_url }}?post={{ post.url | relative_url }}" class="pen-card">
+      <div class="preview-box">
+        <img src="https://s0.wp.com/mshots/v1/{{ site.url | append: site.baseurl | append: post.url | encode_uri }}?w=800&h=500" loading="lazy">
+      </div>
+      <div class="card-body">
+        <h3 class="pen-title" data-post-url="{{ post.url | relative_url }}">Loading...</h3>
+      </div>
+    </a>
+    {% endfor %}
   </div>
 
-  <script>
-    // Xóa dữ liệu cũ nếu từng lưu thiết lập thủ công
-    localStorage.removeItem('theme_mode');
-
-    // Tự động tải tiêu đề các bài viết
-    document.querySelectorAll(".pen-title").forEach(el => {
-      fetch(el.dataset.postUrl).then(r => r.text()).then(html => {
-        const doc = new DOMParser().parseFromString(html, "text/html");
-        el.textContent = doc.querySelector("title")?.innerText || "Untitled";
-      });
-    });
-  </script>
-</body>
-</html>
+  {% if paginator.total_pages > 1 %}
+  <div class="pagination">
+    {% if paginator.previous_page %}<a href="{{ paginator.previous_page_path | relative_url }}" class="page-btn">←</a>{% endif %}
+    <span>{{ paginator.page }} / {{ paginator.total_pages }}</span>
+    {% if paginator.next_page %}<a href="{{ paginator.next_page_path | relative_url }}" class="page-btn">→</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
