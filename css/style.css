@@ -1,0 +1,34 @@
+:root { --bg: #f1f5f9; --card: #fff; --text: #334155; --border: #e2e8f0; --pri: #ef4444; }
+@media (prefers-color-scheme: dark) { :root { --bg: #161920; --card: #20252e; --text: #cbd5e1; --border: rgba(255,255,255,0.05); } }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; transition: .3s; }
+
+/* Index Styles */
+body.page-index { padding: 40px 20px; overflow-y: auto; }
+.container { max-width: 1200px; margin: 0 auto; }
+.pen-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
+.pen-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; text-decoration: none; color: inherit; transition: .3s; }
+.pen-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px #0002; }
+.preview-box { width: 100%; height: 170px; background: #8882; }
+.preview-box img { width: 100%; height: 100%; object-fit: cover; }
+.card-body { padding: 16px; }
+.pen-title { font-size: 15px; font-weight: 600; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 50px; }
+.page-btn { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; text-decoration: none; }
+
+/* Viewer Styles */
+body.page-viewer { overflow: hidden; }
+.box { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+#f { background: #fff; border: 0; transition: width .3s, height .3s; }
+.pc { width: 1280px; height: 100%; max-width: 100%; }
+.mb { width: 412px; height: 100%; max-width: 100%; box-shadow: 0 0 24px #0004; }
+:fullscreen .box, :fullscreen #f { width: 100vw !important; height: 100vh !important; max-width: 100vw !important; box-shadow: none; }
+
+/* FAB Menu */
+.fab { position: fixed; width: 52px; height: 52px; z-index: 99; touch-action: none; user-select: none; }
+.main { width: 52px; height: 52px; border-radius: 50%; background: var(--pri); color: #fff; border: 0; box-shadow: 0 6px 18px #0003; cursor: move; font-size: 22px; transition: .3s; }
+.fab.active .main { transform: rotate(90deg); background: #dc2626; }
+.sub { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; border-radius: 50%; background: var(--card); color: var(--text); border: 1px solid #0002; box-shadow: 0 4px 12px #0002; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; text-decoration: none; opacity: 0; pointer-events: none; transform: translate(-50%,-50%) scale(.2); transition: transform .3s, opacity .2s; }
+.fab.active .sub { opacity: 1; pointer-events: auto; }
+.sub.dis { opacity: .3 !important; pointer-events: none; }
+body.drag #f { pointer-events: none !important; }
