@@ -5,7 +5,7 @@ layout: null
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Quản lý Bài viết</title>
   <style>
     :root {
@@ -18,31 +18,38 @@ layout: null
       --success: #16a34a;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 
-    /* HEADER TOPBAR */
-    header { background: var(--card); border-bottom: 1px solid var(--border); padding: 8px 10px; display: flex; flex-direction: column; gap: 8px; }
+    /* LAYOUT KHUNG CỐ ĐỊNH BAN ĐẦU */
+    .app-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; }
+
+    /* TOPBAR GỌN GÀNG 2 HÀNG */
+    header { background: var(--card); border-bottom: 1px solid var(--border); padding: 6px 10px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
     .header-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
     
-    select, input, button { background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 6px 10px; font-size: 13px; outline: none; }
+    select, input, button { background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 6px 8px; font-size: 13px; outline: none; }
     
+    /* MOBILE TAB SWITCHER */
     .view-tabs { display: flex; background: var(--bg); border-radius: 6px; padding: 2px; border: 1px solid var(--border); }
-    .tab-btn { border: none; padding: 4px 12px; font-size: 12px; border-radius: 4px; cursor: pointer; color: var(--text-muted); }
+    .tab-btn { border: none; padding: 4px 10px; font-size: 12px; border-radius: 4px; cursor: pointer; color: var(--text-muted); }
     .tab-btn.active { background: var(--pri); color: #fff; font-weight: bold; }
 
-    main { flex: 1; display: flex; width: 100%; overflow: hidden; }
-    .pane { flex: 1; display: flex; flex-direction: column; height: 100%; padding: 8px; gap: 8px; }
+    /* WORKSPACE KHÔNG BỊ TRÀN MAN HÌNH */
+    main { flex: 1; display: flex; width: 100%; height: 100%; min-height: 0; overflow: hidden; position: relative; }
+    .pane { flex: 1; display: flex; flex-direction: column; height: 100%; min-height: 0; padding: 8px; gap: 6px; }
     
-    .title-input { font-size: 14px; font-weight: bold; width: 100%; }
-    .options-bar { display: flex; align-items: center; justify-content: space-between; background: var(--card); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px; }
+    .title-input { font-size: 14px; font-weight: bold; width: 100%; flex-shrink: 0; }
+    .options-bar { display: flex; align-items: center; justify-content: space-between; background: var(--card); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px; flex-shrink: 0; }
     
-    textarea { flex: 1; width: 100%; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 10px; font-family: monospace; font-size: 13px; resize: none; line-height: 1.4; }
+    /* TEXTAREA CUỘN NỘI BỘ, KHÔNG ĐẨY MÀN HÌNH */
+    textarea { flex: 1; width: 100%; height: 100%; min-height: 0; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 10px; font-family: monospace; font-size: 13px; resize: none; line-height: 1.4; overflow-y: auto; }
     
-    /* PREVIEW IFRAME */
-    #previewFrame { flex: 1; width: 100%; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; }
+    /* IFRAME CHẠY CODE THỰC TẾ */
+    #previewFrame { flex: 1; width: 100%; height: 100%; min-height: 0; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; }
 
+    /* RESPONSIVE CHO MOBILE & PC */
     @media (min-width: 769px) {
-      header { flex-direction: row; justify-content: space-between; height: 50px; }
+      header { flex-direction: row; justify-content: space-between; height: 48px; }
       .header-row { width: auto; }
       .view-tabs { display: none; }
       .pane-editor { border-right: 1px solid var(--border); }
@@ -50,17 +57,18 @@ layout: null
       main .pane-editor { display: flex !important; }
     }
     @media (max-width: 768px) {
-      main.show-editor .pane-preview { display: none; }
-      main.show-preview .pane-editor { display: none; }
+      main.show-editor .pane-preview { display: none !important; }
+      main.show-preview .pane-editor { display: none !important; }
     }
   </style>
 </head>
-<body class="show-editor">
+<body>
 
+<div class="app-container">
   <!-- TOPBAR -->
   <header>
     <div class="header-row">
-      <button type="button" onclick="resetForm()" style="background: var(--success); color:#fff; font-weight:bold; border:none;">➕ Mới</button>
+      <button type="button" onclick="resetForm()" style="background: var(--success); color:#fff; font-weight:bold; border:none; shrink:0;">➕ Mới</button>
       <select id="postSelect" style="flex:1; max-width: 100%;">
         <option value="">-- Chọn bài viết cũ --</option>
       </select>
@@ -90,26 +98,29 @@ layout: null
   <!-- WORKSPACE -->
   <main id="mainWorkspace" class="show-editor">
     
+    <!-- KHUNG BIÊN TẬP -->
     <div class="pane pane-editor">
       <input type="text" id="title" class="title-input" placeholder="Tiêu đề bài viết..." oninput="updatePreview()">
       
       <div class="options-bar">
         <div style="display:flex; gap:12px;">
-          <label><input type="radio" name="postType" value="code" checked onchange="updatePreview()"> 💻 Code HTML</label>
+          <label><input type="radio" name="postType" value="code" checked onchange="updatePreview()"> 💻 Mã Code</label>
           <label><input type="radio" name="postType" value="text" onchange="updatePreview()"> 📝 Văn bản</label>
         </div>
         <span id="statusLabel" style="font-size:11px; color:var(--text-muted);">Tạo mới</span>
       </div>
 
-      <textarea id="content" placeholder="Dán toàn bộ mã HTML/CSS/JS vào đây..." oninput="updatePreview()"></textarea>
+      <textarea id="content" placeholder="Nhập mã HTML/JS..." oninput="updatePreview()"></textarea>
     </div>
 
-    <!-- KHUNG XEM TRỰC TIẾP (Đã cấp quyền chạy JS) -->
+    <!-- KHUNG XEM THỰC TẾ -->
     <div class="pane pane-preview">
+      <!-- Cấp quyền sandbox đầy đủ để thực thi JS/CSS trong Iframe -->
       <iframe id="previewFrame" sandbox="allow-scripts allow-same-origin allow-modals allow-forms"></iframe>
     </div>
 
   </main>
+</div>
 
 <script>
 let GH_CONFIG = JSON.parse(localStorage.getItem('gh_cfg') || '{}');
@@ -143,26 +154,26 @@ function switchMobileTab(tab) {
   }
 }
 
-// XỬ LÝ LIVE PREVIEW BẢN CHUẨN REAL-TIME
+// RENDER TRỰC TIẾP CODE VÀO IFRAME (THỰC THI CHUẨN HTML/CSS/JS)
 function updatePreview() {
   const title = document.getElementById('title').value || 'Tiêu đề';
   let content = document.getElementById('content').value;
   const isCode = document.querySelector('input[name="postType"]:checked').value === 'code';
+  
   const iframe = document.getElementById('previewFrame');
-
-  // Làm sạch code HTML để iframe thực thi trực tiếp
-  content = content.replace(/^```html\n?/, '').replace(/\n?```$/, '');
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
 
   let renderHtml = '';
   if (isCode) {
-    // Chạy nguyên bản mã HTML/CSS/JS thực tế
+    // Nếu là bài code HTML, thực thi trực tiếp toàn bộ nguồn code
     renderHtml = content;
   } else {
-    // Render bài viết văn bản thường
-    renderHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:sans-serif;padding:15px;line-height:1.6;color:#333;}</style></head><body><h2>${title}</h2><hr style="margin:10px 0;border:0;border-top:1px solid #eee;"><div style="white-space:pre-wrap;">${content}</div></body></html>`;
+    // Nếu là bài viết văn bản thường
+    renderHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:sans-serif; padding:15px; line-height:1.6; color:#333;">
+      <h2>${title}</h2><hr style="margin:10px 0; border:0; border-top:1px solid #eee;"><div style="white-space: pre-wrap;">${content}</div>
+    </body></html>`;
   }
 
-  const doc = iframe.contentDocument || iframe.contentWindow.document;
   doc.open();
   doc.write(renderHtml);
   doc.close();
@@ -173,7 +184,7 @@ async function loadPosts() {
   if (!GH_CONFIG.token) return;
 
   try {
-    const res = await fetch(`[https://api.github.com/repos/$](https://api.github.com/repos/$){GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/_posts`, {
+    const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/_posts`, {
       headers: { 'Authorization': `Bearer ${GH_CONFIG.token}` }
     });
     if (!res.ok) return;
@@ -209,13 +220,15 @@ function resetForm() {
 
 async function editPost(path, sha) {
   try {
-    const res = await fetch(`[https://api.github.com/repos/$](https://api.github.com/repos/$){GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${path}`, {
+    const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${path}`, {
       headers: { 'Authorization': `Bearer ${GH_CONFIG.token}` }
     });
     const data = await res.json();
     const rawText = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
-    const fileName = path.split('/').pop().replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/\.(html|md)$/, '');
 
+    const fileName = path.split('/').pop().replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/\.(html|md)$/, '');
+    
+    // Xử lý tách Front Matter chuẩn
     let extractedTitle = fileName;
     let body = rawText;
 
@@ -228,11 +241,11 @@ async function editPost(path, sha) {
       }
     }
 
+    // Bóc tách lớp khối ```html nếu trước đây lưu dạng markdown
+    body = body.replace(/^```html\n?/, '').replace(/\n?```$/, '');
+
     document.getElementById('title').value = extractedTitle;
     document.querySelector('input[name="postType"][value="code"]').checked = true;
-
-    // Tách bỏ vỏ Markdown code block nếu bài viết cũ lưu dạng này
-    body = body.replace(/^```html\n?/, '').replace(/\n?```$/, '');
     document.getElementById('content').value = body;
 
     currentSha = sha; currentPath = path;
@@ -255,8 +268,9 @@ async function submitForm() {
   const today = new Date().toISOString().split('T')[0];
   const slug = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
   
-  // Lưu trực tiếp nội dung HTML sạch để Jekyll render 100% chuẩn
-  const fileContent = `---\nlayout: post\ntitle: "${title}"\ndate: ${today}\ntype: ${isCode ? 'code' : 'text'}\n---\n\n${rawContent}`;
+  // Lưu file với cấu trúc phẳng gọn nhẹ
+  const finalBody = isCode ? "```html\n" + rawContent + "\n```" : rawContent;
+  const fileContent = `---\nlayout: post\ntitle: "${title}"\ndate: ${today}\ntype: ${isCode ? 'code' : 'text'}\n---\n\n${finalBody}`;
 
   const filePath = currentPath || `_posts/${today}-${slug}.html`;
   const encodedContent = btoa(unescape(encodeURIComponent(fileContent)));
