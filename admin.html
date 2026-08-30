@@ -3,7 +3,22 @@ layout: default
 title: Quản lý Bài viết
 body_class: page-index
 ---
-<div class="container" style="max-width: 650px; padding: 15px; margin: 0 auto;">
+<style>
+  .admin-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+  .preview-box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 15px; min-height: 350px; overflow-y: auto; }
+  .tab-btn { padding: 8px 16px; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 6px; cursor: pointer; font-weight: bold; }
+  .tab-btn.active { background: var(--pri); color: #fff; border-color: var(--pri); }
+  
+  /* Tối ưu 2 cột cho màn hình lớn (PC) */
+  @media (min-width: 992px) {
+    .admin-container { max-width: 1200px !important; }
+    .admin-grid { grid-template-columns: 1fr 1fr; }
+    .mobile-tabs { display: none !important; }
+    .view-panel { display: block !important; }
+  }
+</style>
+
+<div class="container admin-container" style="max-width: 650px; padding: 15px; margin: 0 auto;">
   
   <!-- CẤU HÌNH GITHUB -->
   <details style="margin-bottom: 15px; background: var(--card); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
@@ -16,10 +31,10 @@ body_class: page-index
     </div>
   </details>
 
-  <!-- CHỌN BÀI CŨ -->
+  <!-- THANH CHỌN BÀI CŨ -->
   <div style="background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
     <div style="display: flex; justify-content: space-between; align-items: center;">
-      <label for="postSelect" style="font-size: 13px; font-weight: bold;">📂 Bài viết cũ:</label>
+      <label for="postSelect" style="font-size: 13px; font-weight: bold;">📂 Bài viết đã đăng:</label>
       <button type="button" onclick="resetForm()" style="padding: 4px 10px; background: #22c55e; color: #fff; border: 0; border-radius: 5px; font-size: 12px; font-weight: bold; cursor: pointer;">➕ Tạo mới</button>
     </div>
     <select id="postSelect" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px;">
@@ -27,38 +42,42 @@ body_class: page-index
     </select>
   </div>
 
-  <!-- SOẠN THẢO & XEM TRƯỚC -->
-  <div style="background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 15px;">
+  <!-- THANH CHUYỂN TAB TRÊN MOBILE -->
+  <div class="mobile-tabs" style="display: flex; gap: 10px; margin-bottom: 15px;">
+    <button type="button" class="tab-btn active" id="tabEditBtn" onclick="switchTab('edit')">✏️ Soạn thảo</button>
+    <button type="button" class="tab-btn" id="tabPrevBtn" onclick="switchTab('preview')">👁️ Xem thực tế</button>
+  </div>
+
+  <div class="admin-grid">
     
-    <!-- TAB CHUYỂN ĐỔI -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-      <h3 id="formTitle" style="font-size: 16px; margin: 0;">✏️ Soạn bài mới</h3>
-      <div style="display: flex; gap: 5px; background: var(--bg); padding: 3px; border-radius: 6px; border: 1px solid var(--border);">
-        <button type="button" id="tabEdit" onclick="switchTab('edit')" style="padding: 5px 12px; border: 0; border-radius: 4px; background: var(--pri); color: #fff; font-size: 12px; font-weight: bold; cursor: pointer;">✏️ Soạn thảo</button>
-        <button type="button" id="tabPreview" onclick="switchTab('preview')" style="padding: 5px 12px; border: 0; border-radius: 4px; background: transparent; color: var(--text); font-size: 12px; font-weight: bold; cursor: pointer;">👁️ Xem trước</button>
+    <!-- CỘT 1: SOẠN THẢO -->
+    <div id="editPanel" class="view-panel" style="background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 15px;">
+      <h3 id="formTitle" style="margin-bottom: 12px; font-size: 16px;">✏️ Soạn bài mới</h3>
+      
+      <form id="postForm" style="display: flex; flex-direction: column; gap: 12px;">
+        <input type="text" id="title" placeholder="Tiêu đề bài viết..." required style="padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 15px;">
+
+        <div style="display: flex; gap: 15px; background: var(--bg); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);">
+          <label style="font-size: 13px; cursor: pointer;"><input type="radio" name="postType" value="code" checked> 💻 Mã Code</label>
+          <label style="font-size: 13px; cursor: pointer;"><input type="radio" name="postType" value="text"> 📝 Văn bản</label>
+        </div>
+
+        <textarea id="content" placeholder="Nhập nội dung bài viết hoặc dán mã HTML/JS..." rows="12" required style="padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: monospace; font-size: 13px; line-height: 1.4;"></textarea>
+
+        <button type="submit" id="submitBtn" style="padding: 12px; background: var(--pri); color: #fff; border: 0; border-radius: 6px; font-weight: bold; font-size: 15px; cursor: pointer;">🚀 Đăng bài ngay</button>
+      </form>
+    </div>
+
+    <!-- CỘT 2: XEM TRƯỚC THỰC TẾ -->
+    <div id="previewPanel" class="view-panel" style="display: none;">
+      <div class="preview-box">
+        <span style="font-size: 11px; color: #888; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">Xem trước thực tế</span>
+        <h1 id="pvTitle" style="margin: 10px 0; font-size: 20px;"></h1>
+        <hr style="border: 0; border-top: 1px solid var(--border); margin-bottom: 15px;">
+        <div id="pvBody"></div>
       </div>
     </div>
-    
-    <form id="postForm" style="display: flex; flex-direction: column; gap: 12px;">
-      <input type="text" id="title" placeholder="Tiêu đề bài viết..." required style="padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 15px;">
 
-      <div style="display: flex; gap: 15px; background: var(--bg); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);">
-        <label style="font-size: 13px; cursor: pointer;"><input type="radio" name="postType" value="code" checked> 💻 Mã Code</label>
-        <label style="font-size: 13px; cursor: pointer;"><input type="radio" name="postType" value="text"> 📝 Văn bản</label>
-      </div>
-
-      <!-- KHU VỰC NHẬP NỘI DUNG -->
-      <div id="editArea">
-        <textarea id="content" placeholder="Nhập mã HTML/JS hoặc nội dung bài viết..." rows="12" required style="width: 100%; box-sizing: border-box; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: monospace; font-size: 13px; line-height: 1.4;"></textarea>
-      </div>
-
-      <!-- KHU VỰC XEM TRƯỚC THỰC TẾ (MẶC ĐỊNH ẨN) -->
-      <div id="previewArea" style="display: none; width: 100%; min-height: 250px; border-radius: 6px; border: 1px solid var(--border); background: #fff; overflow: hidden;">
-        <iframe id="previewFrame" style="width: 100%; height: 300px; border: 0;"></iframe>
-      </div>
-
-      <button type="submit" id="submitBtn" style="padding: 12px; background: var(--pri); color: #fff; border: 0; border-radius: 6px; font-weight: bold; font-size: 15px; cursor: pointer;">🚀 Đăng bài ngay</button>
-    </form>
   </div>
 
 </div>
@@ -83,47 +102,53 @@ function saveConfig() {
   loadPosts();
 }
 
-// 1. Chuyển đổi giữa Chế độ Soạn thảo và Xem trước
+// Xử lý chuyển Tab trên Điện thoại
 function switchTab(tab) {
-  const editArea = document.getElementById('editArea');
-  const previewArea = document.getElementById('previewArea');
-  const tabEdit = document.getElementById('tabEdit');
-  const tabPreview = document.getElementById('tabPreview');
+  const editPnl = document.getElementById('editPanel');
+  const prevPnl = document.getElementById('previewPanel');
+  const btnEdit = document.getElementById('tabEditBtn');
+  const btnPrev = document.getElementById('tabPrevBtn');
 
-  if (tab === 'preview') {
-    editArea.style.display = 'none';
-    previewArea.style.display = 'block';
-    tabEdit.style.background = 'transparent';
-    tabEdit.style.color = 'var(--text)';
-    tabPreview.style.background = 'var(--pri)';
-    tabPreview.style.color = '#fff';
-
-    // Rendercode hoặc văn bản vào iFrame thực tế
-    const content = document.getElementById('content').value;
-    const isCode = document.querySelector('input[name="postType"]:checked').value === 'code';
-    const iframe = document.getElementById('previewFrame').contentWindow.document;
-
-    iframe.open();
-    if (isCode) {
-      // Chạy trực tiếp HTML/JS/CSS
-      iframe.write(content);
-    } else {
-      // Hiển thị dạng văn bản
-      iframe.write(`<div style="font-family: sans-serif; padding: 15px; line-height: 1.6; color: #333;">${content.replace(/\n/g, '<br>')}</div>`);
-    }
-    iframe.close();
-
+  if (tab === 'edit') {
+    editPnl.style.display = 'block';
+    prevPnl.style.display = 'none';
+    btnEdit.classList.add('active');
+    btnPrev.classList.remove('active');
   } else {
-    editArea.style.display = 'block';
-    previewArea.style.display = 'none';
-    tabEdit.style.background = 'var(--pri)';
-    tabEdit.style.color = '#fff';
-    tabPreview.style.background = 'transparent';
-    tabPreview.style.color = 'var(--text)';
+    editPnl.style.display = 'none';
+    prevPnl.style.display = 'block';
+    btnEdit.classList.remove('active');
+    btnPrev.classList.add('active');
+    updatePreview();
   }
 }
 
-// 2. Tải danh sách bài cũ
+// Cập nhật nội dung Xem thực tế Real-time
+function updatePreview() {
+  const title = document.getElementById('title').value || 'Tiêu đề bài viết...';
+  const content = document.getElementById('content').value || 'Nội dung sẽ hiển thị ở đây...';
+  const isCode = document.querySelector('input[name="postType"]:checked').value === 'code';
+
+  document.getElementById('pvTitle').textContent = title;
+  const pvBody = document.getElementById('pvBody');
+
+  if (isCode) {
+    pvBody.innerHTML = `<pre style="background:var(--bg); padding:12px; border-radius:6px; overflow-x:auto; border:1px solid var(--border); font-family:monospace; font-size:13px;"><code>${escapeHtml(content)}</code></pre>`;
+  } else {
+    pvBody.innerHTML = content.replace(/\n/g, '<br>');
+  }
+}
+
+function escapeHtml(text) {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+// Lắng nghe gõ phím để Live Preview tự cập nhật
+document.getElementById('title').addEventListener('input', updatePreview);
+document.getElementById('content').addEventListener('input', updatePreview);
+document.querySelectorAll('input[name="postType"]').forEach(r => r.addEventListener('change', updatePreview));
+
+// Tải bài viết cũ
 async function loadPosts() {
   const selectEl = document.getElementById('postSelect');
   if (!GH_CONFIG.token) {
@@ -174,7 +199,7 @@ function resetForm() {
   document.getElementById('formTitle').textContent = '✏️ Soạn bài mới';
   document.getElementById('submitBtn').textContent = '🚀 Đăng bài ngay';
   document.getElementById('submitBtn').style.background = 'var(--pri)';
-  switchTab('edit');
+  updatePreview();
 }
 
 async function editPost(path, sha) {
@@ -206,7 +231,7 @@ async function editPost(path, sha) {
     document.getElementById('formTitle').textContent = '✏️ Cập nhật bài viết';
     document.getElementById('submitBtn').textContent = '💾 Lưu thay đổi';
     document.getElementById('submitBtn').style.background = '#2563eb';
-    switchTab('edit');
+    updatePreview();
   } catch(e) {
     alert('Lỗi tải nội dung bài!');
   }
