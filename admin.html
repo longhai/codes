@@ -1,71 +1,153 @@
 ---
 layout: default
-title: Quản lý Bài viết
+title: Quản lý & Chỉnh sửa Bài viết
 body_class: page-index
 ---
-<div class="container" style="max-width: 600px;">
-  <h2>Tạo bài viết mới</h2>
-  <form id="postForm" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
-    <input type="password" id="ghToken" placeholder="GitHub Personal Access Token" required style="padding: 10px;">
-    <input type="text" id="postTitle" placeholder="Tiêu đề bài viết" required style="padding: 10px;">
-    <input type="text" id="postSlug" placeholder="Tên file (vd: my-first-post)" required style="padding: 10px;">
-    <textarea id="postContent" placeholder="Nội dung bài viết (Markdown)" rows="10" required style="padding: 10px;"></textarea>
-    <button type="submit" style="padding: 10px; background: var(--pri); color: #fff; border: 0; cursor: pointer;">Đăng bài</button>
-  </form>
+<div class="container" style="max-width: 1100px; display: grid; grid-template-columns: 300px 1fr; gap: 30px;">
+  
+  <!-- CỘT 1: DANH SÁCH BÀI CŨ -->
+  <div style="background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; height: 80vh; display: flex; flex-direction: column;">
+    <button onclick="resetForm()" style="padding: 10px; background: #22c55e; color: #fff; border: 0; border-radius: 6px; cursor: pointer; font-weight: bold; margin-bottom: 15px;">➕ Tạo bài mới</button>
+    <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--text);">Bài viết đã đăng:</h3>
+    <div id="postList" style="overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 8px;">Đang tải danh sách...</div>
+  </div>
+
+  <!-- CỘT 2: FORM VIẾT / SỬA BÀI -->
+  <div style="background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px;">
+    <h2 id="formTitle" style="margin-bottom: 20px;">Tạo bài viết mới</h2>
+    
+    <form id="postForm" style="display: flex; flex-direction: column; gap: 15px;">
+      <input type="text" id="title" placeholder="Tiêu đề bài viết..." required style="padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
+
+      <div style="display: flex; gap: 20px; align-items: center;">
+        <label><input type="radio" name="postType" value="text" checked> 📝 Bài viết thường</label>
+        <label><input type="radio" name="postType" value="code"> 💻 Bài viết Mã Code</label>
+      </div>
+
+      <textarea id="content" placeholder="Nhập nội dung hoặc mã code..." rows="14" required style="padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: monospace;"></textarea>
+
+      <button type="submit" id="submitBtn" style="padding: 12px; background: var(--pri); color: #fff; border: 0; border-radius: 8px; font-weight: bold; cursor: pointer;">🚀 Đăng bài ngay</button>
+    </form>
+  </div>
 </div>
 
 <script>
+const GH_CONFIG = {
+  token: 'ghp_xxxxxx', // Thay GitHub Personal Access Token của bạn
+  owner: 'TÊN_ACCOUNT_GITHUB',
+  repo: 'TÊN_REPOSITORY'
+};
+
+let currentSha = null;  // Lưu mã SHA để ghi đè bài cũ
+let currentPath = null; // Lưu đường dẫn bài cũ
+
+// 1. Tải danh sách bài viết từ thư mục _posts
+async function loadPosts() {
+  const listEl = document.getElementById('postList');
+  try {
+    const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/_posts`, {
+      headers: { 'Authorization': `token ${GH_CONFIG.token}` }
+    });
+    const files = await res.json();
+    
+    listEl.innerHTML = '';
+    files.reverse().forEach(file => {
+      if (file.name.endsWith('.md')) {
+        const btn = document.createElement('button');
+        btn.textContent = file.name.replace(/^\d{4}-\d{2}-\d{2}-/, '').replace('.md', '');
+        btn.style.cssText = 'text-align:left; padding:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); border-radius:6px; cursor:pointer; font-size:13px; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;';
+        btn.onclick = () => editPost(file.path, file.sha);
+        listEl.appendChild(btn);
+      }
+    });
+  } catch (err) {
+    listEl.innerHTML = 'Lỗi nạp bài viết!';
+  }
+}
+
+// 2. Chuyển sang chế độ Chỉnh sửa bài viết cũ
+async function editPost(path, sha) {
+  const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${path}`, {
+    headers: { 'Authorization': `token ${GH_CONFIG.token}` }
+  });
+  const data = await res.json();
+  const rawText = decodeURIComponent(escape(atob(data.content)));
+
+  // Tách Front Matter và Nội dung
+  const match = rawText.match(/^---[\s\S]*?title:\s*"([^"]+)"[\s\S]*?type:\s*(\w+)[\s\S]*?---([\s\S]*)$/);
+  
+  if (match) {
+    document.getElementById('title').value = match[1];
+    document.querySelector(`input[name="postType"][value="${match[2]}"]`).checked = true;
+    let body = match[3].trim();
+    if (match[2] === 'code') body = body.replace(/^```html\n/, '').replace(/\n```$/, ''); // Bóc khung code
+    document.getElementById('content').value = body;
+  } else {
+    document.getElementById('content').value = rawText;
+  }
+
+  currentSha = sha;
+  currentPath = path;
+  document.getElementById('formTitle').textContent = '✏️ Cập nhật bài viết';
+  document.getElementById('submitBtn').textContent = '💾 Lưu thay đổi';
+  document.getElementById('submitBtn').style.background = '#2563eb';
+}
+
+// 3. Reset form về trạng thái Tạo mới
+function resetForm() {
+  currentSha = null;
+  currentPath = null;
+  document.getElementById('postForm').reset();
+  document.getElementById('formTitle').textContent = 'Tạo bài viết mới';
+  document.getElementById('submitBtn').textContent = '🚀 Đăng bài ngay';
+  document.getElementById('submitBtn').style.background = 'var(--pri)';
+}
+
+// 4. Xử lý Đăng mới hoặc Cập nhật bài
 document.getElementById('postForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  
-  const token = document.getElementById('ghToken').value;
-  const title = document.getElementById('postTitle').value;
-  const slug = document.getElementById('postSlug').value;
-  const content = document.getElementById('postContent').value;
-  
-  // Thông tin Repository của bạn
-  const REPO_OWNER = 'YOUR_GITHUB_USERNAME';
-  const REPO_NAME = 'YOUR_REPO_NAME';
-  
-  // Định dạng ngàyYYYY-MM-DD
-  const dateStr = new Date().toISOString().split('T')[0];
-  const filePath = `_posts/${dateStr}-${slug}.md`;
-  
-  // Nội dung file Markdown kèm Front Matter
-  const fileContent = `---
-layout: post
-title: "${title}"
-date: ${dateStr}
----
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
 
-${content}`;
+  const title = document.getElementById('title').value.trim();
+  const rawContent = document.getElementById('content').value;
+  const isCode = document.querySelector('input[name="postType"]:checked').value === 'code';
 
-  // Mã hóa Base64 cho GitHub API
-  const encodedContent = btoa(unescape(encodeURIComponent(fileContent)));
+  const today = new Date().toISOString().split('T')[0];
+  const slug = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+  
+  const finalBody = isCode ? "```html\n" + rawContent + "\n```" : rawContent;
+  const fileMarkdown = `---\nlayout: post\ntitle: "${title}"\ndate: ${today}\ntype: ${isCode ? 'code' : 'text'}\n---\n\n${finalBody}`;
+  
+  // Nối đường dẫn: nếu là sửa bài cũ thì giữ nguyên path, nếu là bài mới thì tạo path mới
+  const filePath = currentPath || `_posts/${today}-${slug}.md`;
+  const encodedContent = btoa(unescape(encodeURIComponent(fileMarkdown)));
+
+  const payload = { message: `Update/Create: ${title}`, content: encodedContent };
+  if (currentSha) payload.sha = currentSha; // Truyền mã SHA nếu là cập nhật bài cũ
 
   try {
-    const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${filePath}`, {
+    const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${filePath}`, {
       method: 'PUT',
-      headers: {
-        'Authorization': `token ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: `Create post: ${title}`,
-        content: encodedContent
-      })
+      headers: { 'Authorization': `token ${GH_CONFIG.token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
 
     if (res.ok) {
-      alert('Tạo bài viết thành công! Chờ GitHub Build lại trang.');
-      location.reload();
+      alert(currentSha ? '✅ Cập nhật bài thành công!' : '✅ Đã đăng bài mới thành công!');
+      resetForm();
+      loadPosts();
     } else {
       const err = await res.json();
-      alert('Lỗi: ' + err.message);
+      alert('❌ Lỗi: ' + err.message);
     }
   } catch (err) {
-    alert('Không thể kết nối API!');
+    alert('❌ Lỗi kết nối!');
+  } finally {
+    btn.disabled = false;
   }
 });
-            </script>
 
+// Tải danh sách bài cũ khi mở trang
+loadPosts();
+</script>
