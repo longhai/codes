@@ -6,270 +6,128 @@ layout: null
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Quản lý Bài viết</title>
+  <title>Admin</title>
   <style>
-    :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --border: #334155;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --pri: #2563eb;
-      --success: #16a34a;
-      --danger: #dc2626;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100%; height: 100%; height: 100dvh; overflow: hidden; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-
-    .app-container { display: flex; flex-direction: column; height: 100%; width: 100vw; overflow: hidden; }
-
-    header { background: var(--card); border-bottom: 1px solid var(--border); padding: 6px 10px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
-    .header-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
-    
-    select, input, button { background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 6px 8px; font-size: 13px; outline: none; }
-    
-    .view-tabs { display: flex; background: var(--bg); border-radius: 6px; padding: 2px; border: 1px solid var(--border); }
-    .tab-btn { border: none; padding: 4px 10px; font-size: 12px; border-radius: 4px; cursor: pointer; color: var(--text-muted); }
-    .tab-btn.active { background: var(--pri); color: #fff; font-weight: bold; }
-
-    main { flex: 1; display: flex; width: 100%; height: 100%; min-height: 0; overflow: hidden; position: relative; }
-    .pane { flex: 1; display: flex; flex-direction: column; height: 100%; min-height: 0; padding: 6px; gap: 6px; }
-    
-    .title-input { font-size: 14px; font-weight: bold; width: 100%; flex-shrink: 0; }
-    
-    textarea { flex: 1; width: 100%; height: 100%; min-height: 0; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 10px; font-family: monospace; font-size: 13px; resize: none; line-height: 1.4; overflow-y: auto; }
-    
-    .preview-box { flex: 1; width: 100%; height: 100%; min-height: 0; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; display: flex; }
-    #previewFrame { width: 100%; height: 100%; border: none; background: #fff; }
-
-    @media (min-width: 769px) {
-      header { flex-direction: row; justify-content: space-between; height: 48px; }
-      .header-row { width: auto; }
-      .view-tabs { display: none; }
-      .pane-editor { border-right: 1px solid var(--border); }
-      main .pane-preview { display: flex !important; }
-      main .pane-editor { display: flex !important; }
-    }
-    @media (max-width: 768px) {
-      main.show-editor .pane-preview { display: none !important; }
-      main.show-preview .pane-editor { display: none !important; }
-    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{width:100%;height:100dvh;overflow:hidden;background:#0f172a;color:#f8fafc;font-family:sans-serif;font-size:13px}
+    .app{display:flex;flex-direction:column;height:100%}
+    header{background:#1e293b;border-bottom:1px solid #334155;padding:6px;display:flex;flex-direction:column;gap:6px}
+    .row{display:flex;gap:6px;align-items:center;justify-content:space-between}
+    select,input,button{background:#0f172a;border:1px solid #334155;color:#fff;border-radius:4px;padding:5px 8px;font-size:12px;outline:none}
+    button{cursor:pointer;font-weight:bold}
+    .tabs{display:flex;background:#0f172a;border-radius:4px;padding:2px;border:1px solid #334155}
+    .tab{border:none;padding:3px 8px;color:#94a3b8;border-radius:3px}
+    .tab.active{background:#2563eb;color:#fff}
+    main{flex:1;display:flex;position:relative;overflow:hidden;padding:6px}
+    .pane{flex:1;display:flex;flex-direction:column;gap:6px;height:100%}
+    input.title{font-weight:bold;width:100%}
+    textarea{flex:1;width:100%;background:#1e293b;border:1px solid #334155;color:#fff;border-radius:4px;padding:8px;font-family:monospace;resize:none;outline:none}
+    iframe{width:100%;height:100%;border:1px solid #334155;border-radius:4px;background:#fff}
+    @media(min-width:769px){.tabs{display:none}main{gap:6px}.pane-prev{display:flex!important}}
+    @media(max-width:768px){.show-ed .pane-prev,.show-prev .pane-ed{display:none!important}}
   </style>
 </head>
 <body>
-
-<div class="app-container">
+<div class="app">
   <header>
-    <div class="header-row">
-      <button type="button" onclick="resetForm()" style="background: var(--success); color:#fff; font-weight:bold; border:none; shrink:0;">➕ Mới</button>
-      <select id="postSelect" style="flex:1; max-width: 100%;">
-        <option value="">-- Chọn bài viết cũ --</option>
-      </select>
+    <div class="row">
+      <button onclick="resetForm()" style="background:#16a34a">➕ Mới</button>
+      <select id="postSelect" style="flex:1"><option value="">-- Chọn bài --</option></select>
     </div>
-
-    <div class="header-row" style="justify-content: space-between;">
-      <div class="view-tabs">
-        <button class="tab-btn active" onclick="switchMobileTab('editor')">✏️ Sửa</button>
-        <button class="tab-btn" onclick="switchMobileTab('preview')">👁️ Xem thực tế</button>
+    <div class="row">
+      <div class="tabs">
+        <button class="tab active" onclick="tab('ed')">✏️ Sửa</button>
+        <button class="tab" onclick="tab('prev')">👁️ Xem</button>
       </div>
-
-      <div style="display:flex; gap:6px; align-items:center;">
-        <details style="position: relative;">
-          <summary style="cursor:pointer; font-size:12px; list-style:none;">⚙️ Auth</summary>
-          <div style="position: absolute; right: 0; top: 25px; background: var(--card); border: 1px solid var(--border); padding: 10px; border-radius: 8px; width: 200px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
-            <input type="text" id="cfgOwner" placeholder="User GitHub">
-            <input type="text" id="cfgRepo" placeholder="Repo">
-            <input type="password" id="cfgToken" placeholder="Token ghp_...">
-            <button type="button" onclick="saveConfig()" style="background: var(--pri); color:#fff; border:none;">Lưu</button>
+      <div style="display:flex;gap:4px">
+        <details style="position:relative">
+          <summary style="cursor:pointer;list-style:none">⚙️</summary>
+          <div style="position:absolute;right:0;top:22px;background:#1e293b;border:1px solid #334155;padding:8px;border-radius:6px;display:flex;flex-direction:column;gap:6px;z-index:9;width:180px">
+            <input id="cfgOwner" placeholder="User"><input id="cfgRepo" placeholder="Repo"><input id="cfgToken" type="password" placeholder="Token">
+            <button onclick="saveCfg()" style="background:#2563eb">Lưu</button>
           </div>
         </details>
-        
-        <button type="button" id="deleteBtn" onclick="deletePost()" style="background: var(--danger); color:#fff; font-weight:bold; border:none; display:none;">🗑️ Xóa</button>
-        <button type="button" id="submitBtn" onclick="submitForm()" style="background: var(--pri); color:#fff; font-weight:bold; border:none;">🚀 Đăng</button>
+        <button id="delBtn" onclick="delPost()" style="background:#dc2626;display:none">🗑️ Xóa</button>
+        <button id="subBtn" onclick="subForm()" style="background:#2563eb">🚀 Đăng</button>
       </div>
     </div>
   </header>
-
-  <main id="mainWorkspace" class="show-editor">
-    <div class="pane pane-editor">
-      <input type="text" id="title" class="title-input" placeholder="Tiêu đề (dùng làm tên file)..." oninput="updatePreview()">
-      <textarea id="content" placeholder="Nhập trực tiếp mã HTML/CSS/JS..." oninput="updatePreview()"></textarea>
+  <main id="ws" class="show-ed">
+    <div class="pane pane-ed">
+      <input id="title" class="title" placeholder="Tiêu đề (tên file)..." oninput="pv()">
+      <textarea id="content" placeholder="Mã HTML/CSS/JS..." oninput="pv()"></textarea>
     </div>
-
-    <div class="pane pane-preview">
-      <div class="preview-box">
-        <iframe id="previewFrame"></iframe>
-      </div>
-    </div>
+    <div class="pane pane-prev"><iframe id="frame"></iframe></div>
   </main>
 </div>
-
 <script>
-let GH_CONFIG = JSON.parse(localStorage.getItem('gh_cfg') || '{}');
-let rawPostsList = [], currentSha = null, currentPath = null;
+let C = JSON.parse(localStorage.getItem('gh_cfg')||'{}'), list=[], cSha=null, cPath=null, bUrl=null;
+const $ = id => document.getElementById(id);
+cfgOwner.value = C.owner||'longhai'; cfgRepo.value = C.repo||'codes'; cfgToken.value = C.token||'';
 
-document.getElementById('cfgOwner').value = GH_CONFIG.owner || 'longhai';
-document.getElementById('cfgRepo').value = GH_CONFIG.repo || 'codes';
-document.getElementById('cfgToken').value = GH_CONFIG.token || '';
-
-function saveConfig() {
-  GH_CONFIG = {
-    owner: document.getElementById('cfgOwner').value.trim(),
-    repo: document.getElementById('cfgRepo').value.trim(),
-    token: document.getElementById('cfgToken').value.trim()
-  };
-  localStorage.setItem('gh_cfg', JSON.stringify(GH_CONFIG));
-  alert('Đã lưu cấu hình!');
-  loadPosts();
+function saveCfg(){
+  C = {owner:cfgOwner.value.trim(), repo:cfgRepo.value.trim(), token:cfgToken.value.trim()};
+  localStorage.setItem('gh_cfg', JSON.stringify(C)); alert('Đã lưu!'); load();
 }
-
-function switchMobileTab(tab) {
-  const ws = document.getElementById('mainWorkspace');
-  const btns = document.querySelectorAll('.tab-btn');
-  if (tab === 'editor') {
-    ws.className = 'show-editor';
-    btns[0].classList.add('active'); btns[1].classList.remove('active');
-  } else {
-    ws.className = 'show-preview';
-    btns[1].classList.add('active'); btns[0].classList.remove('active');
-    updatePreview();
-  }
+function tab(t){
+  ws.className = t==='ed'?'show-ed':'show-prev';
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active', (i===0)===(t==='ed')));
+  if(t==='prev') pv();
 }
-
-let currentBlobUrl = null;
-function updatePreview() {
-  let content = document.getElementById('content').value;
-  const iframe = document.getElementById('previewFrame');
-
-  const blob = new Blob([content], { type: 'text/html' });
-  if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
-  currentBlobUrl = URL.createObjectURL(blob);
-  iframe.src = currentBlobUrl;
+function pv(){
+  if(bUrl) URL.revokeObjectURL(bUrl);
+  frame.src = bUrl = URL.createObjectURL(new Blob([content.value], {type:'text/html'}));
 }
-
-async function loadPosts() {
-  const selectEl = document.getElementById('postSelect');
-  if (!GH_CONFIG.token) return;
-
+async function req(path, method='GET', body=null){
+  const opt = {method, headers:{'Authorization':`Bearer ${C.token}`,'Content-Type':'application/json'}};
+  if(body) opt.body = JSON.stringify(body);
+  return fetch(`https://api.github.com/repos/${C.owner}/${C.repo}/contents/${path}`, opt);
+}
+async function load(){
+  if(!C.token) return;
   try {
-    const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/_posts`, {
-      headers: { 'Authorization': `Bearer ${GH_CONFIG.token}` }
-    });
-    if (!res.ok) return;
-
-    const files = await res.json();
-    rawPostsList = files.filter(f => f.type === 'file' && (f.name.endsWith('.html') || f.name.endsWith('.md')));
-    
-    selectEl.innerHTML = '<option value="">-- Chọn bài viết cũ (' + rawPostsList.length + ') --</option>';
-    rawPostsList.reverse().forEach((file, index) => {
-      const opt = document.createElement('option');
-      opt.value = index;
-      opt.textContent = file.name.replace(/^\d{4}-\d{2}-\d{2}-/, '');
-      selectEl.appendChild(opt);
-    });
-  } catch (err) {}
+    const res = await req('_posts'); if(!res.ok) return;
+    list = (await res.json()).filter(f=>f.type==='file'&&(f.name.endsWith('.html')||f.name.endsWith('.md'))).reverse();
+    postSelect.innerHTML = '<option value="">-- Chọn bài ('+list.length+') --</option>' + list.map((f,i)=>`<option value="${i}">${f.name.replace(/^\d{4}-\d{2}-\d{2}-/,'')}</option>`).join('');
+  }catch(e){}
 }
+postSelect.onchange = e => e.target.value!=="" ? edit(list[e.target.value].path, list[e.target.value].sha) : resetForm();
 
-document.getElementById('postSelect').addEventListener('change', (e) => {
-  if (e.target.value !== "") editPost(rawPostsList[e.target.value].path, rawPostsList[e.target.value].sha);
-  else resetForm();
-});
-
-function resetForm() {
-  currentSha = null; currentPath = null;
-  document.getElementById('title').value = '';
-  document.getElementById('content').value = '';
-  document.getElementById('postSelect').value = '';
-  document.getElementById('submitBtn').textContent = '🚀 Đăng';
-  document.getElementById('submitBtn').style.background = 'var(--pri)';
-  document.getElementById('deleteBtn').style.display = 'none';
-  updatePreview();
+function resetForm(){
+  cSha = cPath = null; title.value = content.value = postSelect.value = '';
+  subBtn.textContent = '🚀 Đăng'; delBtn.style.display = 'none'; pv();
 }
-
-async function editPost(path, sha) {
+async function edit(path, sha){
   try {
-    const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${path}`, {
-      headers: { 'Authorization': `Bearer ${GH_CONFIG.token}` }
-    });
-    const data = await res.json();
-    let body = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
-
-    const fileName = path.split('/').pop().replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/\.(html|md)$/, '');
-
-    body = body.replace(/^---[\s\S]*?---\s*/m, '');
-    body = body.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '');
-
-    document.getElementById('title').value = fileName;
-    document.getElementById('content').value = body.trim();
-
-    currentSha = sha; currentPath = path;
-    document.getElementById('submitBtn').textContent = '💾 Lưu';
-    document.getElementById('submitBtn').style.background = '#2563eb';
-    document.getElementById('deleteBtn').style.display = 'inline-block';
-    updatePreview();
-  } catch(e) { alert('Không nạp được bài!'); }
+    const res = await req(path), data = await res.json();
+    let body = decodeURIComponent(escape(atob(data.content.replace(/\s/g,''))))
+      .replace(/^---[\s\S]*?---\s*/m,'').replace(/^```[a-z]*\n?/i,'').replace(/\n?```$/i,'');
+    title.value = path.split('/').pop().replace(/^\d{4}-\d{2}-\d{2}-/,'').replace(/\.(html|md)$/,'');
+    content.value = body.trim(); cSha = sha; cPath = path;
+    subBtn.textContent = '💾 Lưu'; delBtn.style.display = 'inline-block'; pv();
+  }catch(e){ alert('Lỗi nạp bài!'); }
 }
-
-async function deletePost() {
-  if (!currentPath || !currentSha) return alert('Chưa chọn bài!');
-  if (!GH_CONFIG.token) return alert('Chưa cài Token!');
-
-  const fileName = currentPath.split('/').pop();
-  if (!confirm(`⚠️ XÓA bài viết "${fileName}"?`)) return;
-
-  const btn = document.getElementById('deleteBtn');
-  btn.disabled = true;
-
-  try {
-    const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${currentPath}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${GH_CONFIG.token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: `Delete post: ${fileName}`, sha: currentSha })
-    });
-
-    if (res.ok) {
-      alert('🗑️ Đã xóa thành công!');
-      resetForm();
-      loadPosts();
-    } else { alert('❌ Lỗi xóa bài!'); }
-  } catch (err) { alert('❌ Lỗi kết nối!'); } 
-  finally { btn.disabled = false; }
+async function delPost(){
+  if(!cPath || !confirm('⚠️ Xóa bài viết này?')) return;
+  delBtn.disabled = true;
+  if((await req(cPath, 'DELETE', {message:`Delete`, sha:cSha})).ok){ alert('🗑️ Đã xóa!'); resetForm(); load(); }
+  else alert('❌ Lỗi xóa!');
+  delBtn.disabled = false;
 }
-
-async function submitForm() {
-  if (!GH_CONFIG.token) return alert('Chưa cài Token!');
-  const btn = document.getElementById('submitBtn');
-  btn.disabled = true;
-
-  const title = document.getElementById('title').value.trim();
-  const fileContent = document.getElementById('content').value;
-
-  const today = new Date().toISOString().split('T')[0];
-  const slug = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+async function subForm(){
+  if(!C.token || !title.value.trim()) return alert('Thiếu Token hoặc Tiêu đề!');
+  subBtn.disabled = true;
+  const t = title.value.trim(), day = new Date().toISOString().split('T')[0];
+  const slug = t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w\s-]/g,'').replace(/\s+/g,'-');
+  const path = cPath || `_posts/${day}-${slug}.html`;
+  const payload = {message:`Save: ${t}`, content: btoa(unescape(encodeURIComponent(content.value)))};
+  if(cSha) payload.sha = cSha;
   
-  const filePath = currentPath || `_posts/${today}-${slug}.html`;
-  const encodedContent = btoa(unescape(encodeURIComponent(fileContent)));
-  const payload = { message: `Save: ${title}`, content: encodedContent };
-  if (currentSha) payload.sha = currentSha;
-
-  try {
-    const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${filePath}`, {
-      method: 'PUT',
-      headers: { 'Authorization': `Bearer ${GH_CONFIG.token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (res.ok) {
-      alert(currentSha ? '✅ Đã lưu cập nhật!' : '✅ Đã đăng thành công!');
-      resetForm();
-      loadPosts();
-    } else { alert('❌ Lỗi đăng bài!'); }
-  } catch (err) { alert('❌ Lỗi kết nối!'); } 
-  finally { btn.disabled = false; }
+  if((await req(path, 'PUT', payload)).ok){ alert('✅ Thành công!'); resetForm(); load(); }
+  else alert('❌ Lỗi!');
+  subBtn.disabled = false;
 }
-
-loadPosts();
-updatePreview();
+load(); pv();
 </script>
 </body>
 </html>
