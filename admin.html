@@ -18,36 +18,31 @@ layout: null
       --success: #16a34a;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    html, body { width: 100%; height: 100%; height: 100dvh; overflow: hidden; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 
-    /* LAYOUT KHUNG CỐ ĐỊNH BAN ĐẦU */
-    .app-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; overflow: hidden; }
+    .app-container { display: flex; flex-direction: column; height: 100%; width: 100vw; overflow: hidden; }
 
-    /* TOPBAR GỌN GÀNG 2 HÀNG */
     header { background: var(--card); border-bottom: 1px solid var(--border); padding: 6px 10px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
     .header-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
     
     select, input, button { background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 6px 8px; font-size: 13px; outline: none; }
     
-    /* MOBILE TAB SWITCHER */
     .view-tabs { display: flex; background: var(--bg); border-radius: 6px; padding: 2px; border: 1px solid var(--border); }
     .tab-btn { border: none; padding: 4px 10px; font-size: 12px; border-radius: 4px; cursor: pointer; color: var(--text-muted); }
     .tab-btn.active { background: var(--pri); color: #fff; font-weight: bold; }
 
-    /* WORKSPACE KHÔNG BỊ TRÀN MAN HÌNH */
     main { flex: 1; display: flex; width: 100%; height: 100%; min-height: 0; overflow: hidden; position: relative; }
-    .pane { flex: 1; display: flex; flex-direction: column; height: 100%; min-height: 0; padding: 8px; gap: 6px; }
+    .pane { flex: 1; display: flex; flex-direction: column; height: 100%; min-height: 0; padding: 6px; gap: 6px; }
     
     .title-input { font-size: 14px; font-weight: bold; width: 100%; flex-shrink: 0; }
     .options-bar { display: flex; align-items: center; justify-content: space-between; background: var(--card); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px; flex-shrink: 0; }
     
-    /* TEXTAREA CUỘN NỘI BỘ, KHÔNG ĐẨY MÀN HÌNH */
     textarea { flex: 1; width: 100%; height: 100%; min-height: 0; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 10px; font-family: monospace; font-size: 13px; resize: none; line-height: 1.4; overflow-y: auto; }
     
-    /* IFRAME CHẠY CODE THỰC TẾ */
-    #previewFrame { flex: 1; width: 100%; height: 100%; min-height: 0; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; }
+    /* PREVIEW CONTAINER CÓ THỂ CUỘN TRANG */
+    .preview-box { flex: 1; width: 100%; height: 100%; min-height: 0; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; display: flex; }
+    #previewFrame { width: 100%; height: 100%; border: none; background: #fff; }
 
-    /* RESPONSIVE CHO MOBILE & PC */
     @media (min-width: 769px) {
       header { flex-direction: row; justify-content: space-between; height: 48px; }
       .header-row { width: auto; }
@@ -65,7 +60,6 @@ layout: null
 <body>
 
 <div class="app-container">
-  <!-- TOPBAR -->
   <header>
     <div class="header-row">
       <button type="button" onclick="resetForm()" style="background: var(--success); color:#fff; font-weight:bold; border:none; shrink:0;">➕ Mới</button>
@@ -95,10 +89,7 @@ layout: null
     </div>
   </header>
 
-  <!-- WORKSPACE -->
   <main id="mainWorkspace" class="show-editor">
-    
-    <!-- KHUNG BIÊN TẬP -->
     <div class="pane pane-editor">
       <input type="text" id="title" class="title-input" placeholder="Tiêu đề bài viết..." oninput="updatePreview()">
       
@@ -113,12 +104,11 @@ layout: null
       <textarea id="content" placeholder="Nhập mã HTML/JS..." oninput="updatePreview()"></textarea>
     </div>
 
-    <!-- KHUNG XEM THỰC TẾ -->
     <div class="pane pane-preview">
-      <!-- Cấp quyền sandbox đầy đủ để thực thi JS/CSS trong Iframe -->
-      <iframe id="previewFrame" sandbox="allow-scripts allow-same-origin allow-modals allow-forms"></iframe>
+      <div class="preview-box">
+        <iframe id="previewFrame"></iframe>
+      </div>
     </div>
-
   </main>
 </div>
 
@@ -154,29 +144,28 @@ function switchMobileTab(tab) {
   }
 }
 
-// RENDER TRỰC TIẾP CODE VÀO IFRAME (THỰC THI CHUẨN HTML/CSS/JS)
+// FIX ENGINE PREVIEW BẰNG KỸ THUẬT BLOB URL (CHẠY JS BÌNH THƯỜNG)
+let currentBlobUrl = null;
 function updatePreview() {
   const title = document.getElementById('title').value || 'Tiêu đề';
   let content = document.getElementById('content').value;
   const isCode = document.querySelector('input[name="postType"]:checked').value === 'code';
-  
   const iframe = document.getElementById('previewFrame');
-  const doc = iframe.contentDocument || iframe.contentWindow.document;
 
   let renderHtml = '';
   if (isCode) {
-    // Nếu là bài code HTML, thực thi trực tiếp toàn bộ nguồn code
     renderHtml = content;
   } else {
-    // Nếu là bài viết văn bản thường
-    renderHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:sans-serif; padding:15px; line-height:1.6; color:#333;">
+    renderHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="font-family:sans-serif; padding:15px; line-height:1.6; color:#333;">
       <h2>${title}</h2><hr style="margin:10px 0; border:0; border-top:1px solid #eee;"><div style="white-space: pre-wrap;">${content}</div>
     </body></html>`;
   }
 
-  doc.open();
-  doc.write(renderHtml);
-  doc.close();
+  // Tạo môi trường độc lập cho Script chạy thực tế
+  const blob = new Blob([renderHtml], { type: 'text/html' });
+  if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+  currentBlobUrl = URL.createObjectURL(blob);
+  iframe.src = currentBlobUrl;
 }
 
 async function loadPosts() {
@@ -228,7 +217,6 @@ async function editPost(path, sha) {
 
     const fileName = path.split('/').pop().replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/\.(html|md)$/, '');
     
-    // Xử lý tách Front Matter chuẩn
     let extractedTitle = fileName;
     let body = rawText;
 
@@ -241,7 +229,6 @@ async function editPost(path, sha) {
       }
     }
 
-    // Bóc tách lớp khối ```html nếu trước đây lưu dạng markdown
     body = body.replace(/^```html\n?/, '').replace(/\n?```$/, '');
 
     document.getElementById('title').value = extractedTitle;
@@ -268,7 +255,6 @@ async function submitForm() {
   const today = new Date().toISOString().split('T')[0];
   const slug = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
   
-  // Lưu file với cấu trúc phẳng gọn nhẹ
   const finalBody = isCode ? "```html\n" + rawContent + "\n```" : rawContent;
   const fileContent = `---\nlayout: post\ntitle: "${title}"\ndate: ${today}\ntype: ${isCode ? 'code' : 'text'}\n---\n\n${finalBody}`;
 
@@ -278,7 +264,7 @@ async function submitForm() {
   if (currentSha) payload.sha = currentSha;
 
   try {
-    const res = await fetch(`[https://api.github.com/repos/$](https://api.github.com/repos/$){GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${filePath}`, {
+    const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${filePath}`, {
       method: 'PUT',
       headers: { 'Authorization': `Bearer ${GH_CONFIG.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
