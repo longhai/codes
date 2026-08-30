@@ -1,85 +1,93 @@
 ---
 layout: default
-title: Quản lý Bài viết
+title: Quản trị Blog
 body_class: page-index
 ---
 <style>
-  .admin-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
-  .preview-box { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 15px; min-height: 350px; overflow-y: auto; }
-  .tab-btn { padding: 8px 16px; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 6px; cursor: pointer; font-weight: bold; }
-  .tab-btn.active { background: var(--pri); color: #fff; border-color: var(--pri); }
-  
-  /* Tối ưu 2 cột cho màn hình lớn (PC) */
-  @media (min-width: 992px) {
-    .admin-container { max-width: 1200px !important; }
-    .admin-grid { grid-template-columns: 1fr 1fr; }
-    .mobile-tabs { display: none !important; }
-    .view-panel { display: block !important; }
+  :root {
+    --primary: #2563eb;
+    --success: #16a34a;
+    --bg-card: var(--card, #1e293b);
+    --border-color: var(--border, #334155);
   }
+  .admin-container { max-width: 1200px; margin: 0 auto; padding: 12px; font-family: system-ui, -apple-system, sans-serif; }
+  .tab-nav { display: flex; gap: 6px; margin-bottom: 12px; background: var(--bg-card); padding: 4px; border-radius: 10px; border: 1px solid var(--border-color); }
+  .tab-btn { flex: 1; padding: 10px; border: 0; background: transparent; color: var(--text); border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; transition: 0.2s; }
+  .tab-btn.active { background: var(--primary); color: #fff; }
+  
+  .grid-layout { display: grid; grid-template-columns: 1fr; gap: 15px; }
+  @media (min-width: 900px) {
+    .grid-layout { grid-template-columns: 320px 1fr; }
+    .preview-mode-desktop { display: grid !important; grid-template-columns: 1fr 1fr; gap: 15px; }
+  }
+
+  .card-box { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 15px; }
+  .form-control { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg); color: var(--text); font-size: 14px; box-sizing: border-box; }
+  .preview-frame { width: 100%; height: 400px; border: 1px solid var(--border-color); border-radius: 8px; background: #fff; color: #000; }
 </style>
 
-<div class="container admin-container" style="max-width: 650px; padding: 15px; margin: 0 auto;">
+<div class="admin-container">
   
   <!-- CẤU HÌNH GITHUB -->
-  <details style="margin-bottom: 15px; background: var(--card); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
-    <summary style="cursor: pointer; font-weight: bold; font-size: 14px;">⚙️ Cấu hình Token</summary>
-    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
-      <input type="text" id="cfgOwner" placeholder="Tên tài khoản GitHub" style="padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
-      <input type="text" id="cfgRepo" placeholder="Tên Repository" style="padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
-      <input type="password" id="cfgToken" placeholder="GitHub Token (ghp_...)" style="padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text);">
-      <button type="button" onclick="saveConfig()" style="padding: 10px; background: #2563eb; color: #fff; border: 0; border-radius: 6px; font-weight: bold;">Lưu cấu hình</button>
+  <details style="margin-bottom: 12px;" class="card-box">
+    <summary style="cursor: pointer; font-weight: bold; font-size: 13px;">⚙️ Cài đặt Token GitHub</summary>
+    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+      <input type="text" id="cfgOwner" class="form-control" placeholder="Tên tài khoản GitHub">
+      <input type="text" id="cfgRepo" class="form-control" placeholder="Tên Repository">
+      <input type="password" id="cfgToken" class="form-control" placeholder="GitHub Token (ghp_...)">
+      <button type="button" onclick="saveConfig()" style="padding: 10px; background: var(--primary); color: #fff; border: 0; border-radius: 8px; font-weight: bold; cursor: pointer;">💾 Lưu Cấu Hình</button>
     </div>
   </details>
 
-  <!-- THANH CHỌN BÀI CŨ -->
-  <div style="background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px;">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <label for="postSelect" style="font-size: 13px; font-weight: bold;">📂 Bài viết đã đăng:</label>
-      <button type="button" onclick="resetForm()" style="padding: 4px 10px; background: #22c55e; color: #fff; border: 0; border-radius: 5px; font-size: 12px; font-weight: bold; cursor: pointer;">➕ Tạo mới</button>
-    </div>
-    <select id="postSelect" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px;">
-      <option value="">-- Chọn bài viết để sửa --</option>
-    </select>
+  <!-- THANH ĐIỀU HƯỚNG TAB (TỐI ƯU CHO MOBILE) -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('edit')">✏️ Soạn thảo</button>
+    <button class="tab-btn" onclick="switchTab('preview')">👁️ Xem trước</button>
+    <button class="tab-btn" onclick="switchTab('list')">📂 Bài cũ (<span id="postCount">0</span>)</button>
   </div>
 
-  <!-- THANH CHUYỂN TAB TRÊN MOBILE -->
-  <div class="mobile-tabs" style="display: flex; gap: 10px; margin-bottom: 15px;">
-    <button type="button" class="tab-btn active" id="tabEditBtn" onclick="switchTab('edit')">✏️ Soạn thảo</button>
-    <button type="button" class="tab-btn" id="tabPrevBtn" onclick="switchTab('preview')">👁️ Xem thực tế</button>
-  </div>
-
-  <div class="admin-grid">
+  <div class="grid-layout">
     
-    <!-- CỘT 1: SOẠN THẢO -->
-    <div id="editPanel" class="view-panel" style="background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 15px;">
-      <h3 id="formTitle" style="margin-bottom: 12px; font-size: 16px;">✏️ Soạn bài mới</h3>
-      
-      <form id="postForm" style="display: flex; flex-direction: column; gap: 12px;">
-        <input type="text" id="title" placeholder="Tiêu đề bài viết..." required style="padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 15px;">
+    <!-- CỘT DANH SÁCH BÀI CŨ (ẨN/HIỆN THEO TAB HOẶC PC) -->
+    <div id="tab-list" class="card-box" style="display: none;">
+      <div style="display: flex; gap: 6px; margin-bottom: 10px;">
+        <input type="text" id="searchPost" class="form-control" placeholder="🔍 Tìm bài viết..." oninput="filterPosts()">
+        <button onclick="resetForm()" style="background: var(--success); color: #fff; border: 0; border-radius: 8px; padding: 0 12px; font-weight: bold; cursor: pointer;">➕</button>
+      </div>
+      <div id="postList" style="max-height: 500px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">Đang tải...</div>
+    </div>
 
-        <div style="display: flex; gap: 15px; background: var(--bg); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border);">
-          <label style="font-size: 13px; cursor: pointer;"><input type="radio" name="postType" value="code" checked> 💻 Mã Code</label>
-          <label style="font-size: 13px; cursor: pointer;"><input type="radio" name="postType" value="text"> 📝 Văn bản</label>
+    <!-- KHU VỰC CHÍNH: SOẠN THẢO & XEM TRƯỚC -->
+    <div id="mainEditorArea" class="preview-mode-desktop">
+      
+      <!-- FORM NHẬP NỘI DUNG -->
+      <div id="tab-edit" class="card-box" style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 id="formTitle" style="font-size: 15px; margin: 0;">Soạn bài viết</h3>
+          <button type="button" onclick="resetForm()" style="background: transparent; color: var(--primary); border: 0; font-size: 12px; cursor: pointer;">Tạo mới</button>
         </div>
 
-        <textarea id="content" placeholder="Nhập nội dung bài viết hoặc dán mã HTML/JS..." rows="12" required style="padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: monospace; font-size: 13px; line-height: 1.4;"></textarea>
+        <input type="text" id="title" class="form-control" placeholder="Tiêu đề bài viết..." required oninput="updatePreview()">
 
-        <button type="submit" id="submitBtn" style="padding: 12px; background: var(--pri); color: #fff; border: 0; border-radius: 6px; font-weight: bold; font-size: 15px; cursor: pointer;">🚀 Đăng bài ngay</button>
-      </form>
-    </div>
+        <div style="display: flex; gap: 15px; font-size: 13px;">
+          <label style="cursor: pointer;"><input type="radio" name="postType" value="code" checked onchange="updatePreview()"> 💻 Mã Code (HTML)</label>
+          <label style="cursor: pointer;"><input type="radio" name="postType" value="text" onchange="updatePreview()"> 📝 Văn bản</label>
+        </div>
 
-    <!-- CỘT 2: XEM TRƯỚC THỰC TẾ -->
-    <div id="previewPanel" class="view-panel" style="display: none;">
-      <div class="preview-box">
-        <span style="font-size: 11px; color: #888; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">Xem trước thực tế</span>
-        <h1 id="pvTitle" style="margin: 10px 0; font-size: 20px;"></h1>
-        <hr style="border: 0; border-top: 1px solid var(--border); margin-bottom: 15px;">
-        <div id="pvBody"></div>
+        <textarea id="content" class="form-control" placeholder="Dán mã HTML hoặc nhập nội dung..." rows="14" style="font-family: monospace; font-size: 13px;" required oninput="updatePreview()"></textarea>
+
+        <button type="button" id="submitBtn" onclick="submitPost()" style="padding: 12px; background: var(--primary); color: #fff; border: 0; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer;">🚀 Đăng bài ngay</button>
       </div>
+
+      <!-- KHUNG XEM TRƯỚC (LIVE PREVIEW) -->
+      <div id="tab-preview" class="card-box" style="display: none;">
+        <h3 style="font-size: 15px; margin-top: 0; margin-bottom: 12px;">👁️ Xem trước thực tế</h3>
+        <iframe id="previewFrame" class="preview-frame"></iframe>
+      </div>
+
     </div>
 
   </div>
-
 </div>
 
 <script>
@@ -87,6 +95,7 @@ let GH_CONFIG = JSON.parse(localStorage.getItem('gh_cfg') || '{}');
 let rawPostsList = [];
 let currentSha = null, currentPath = null;
 
+// Khởi tạo Cấu hình
 document.getElementById('cfgOwner').value = GH_CONFIG.owner || 'longhai';
 document.getElementById('cfgRepo').value = GH_CONFIG.repo || 'codes';
 document.getElementById('cfgToken').value = GH_CONFIG.token || '';
@@ -98,61 +107,49 @@ function saveConfig() {
     token: document.getElementById('cfgToken').value.trim()
   };
   localStorage.setItem('gh_cfg', JSON.stringify(GH_CONFIG));
-  alert('Đã lưu cấu hình!');
+  alert('Đã lưu!');
   loadPosts();
 }
 
-// Xử lý chuyển Tab trên Điện thoại
-function switchTab(tab) {
-  const editPnl = document.getElementById('editPanel');
-  const prevPnl = document.getElementById('previewPanel');
-  const btnEdit = document.getElementById('tabEditBtn');
-  const btnPrev = document.getElementById('tabPrevBtn');
+// Chuyển đổi Tab linh hoạt cho Mobile & PC
+function switchTab(tabName) {
+  const isMobile = window.innerWidth < 900;
+  
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
 
-  if (tab === 'edit') {
-    editPnl.style.display = 'block';
-    prevPnl.style.display = 'none';
-    btnEdit.classList.add('active');
-    btnPrev.classList.remove('active');
+  if (isMobile) {
+    document.getElementById('tab-edit').style.display = tabName === 'edit' ? 'flex' : 'none';
+    document.getElementById('tab-preview').style.display = tabName === 'preview' ? 'block' : 'none';
+    document.getElementById('tab-list').style.display = tabName === 'list' ? 'block' : 'none';
   } else {
-    editPnl.style.display = 'none';
-    prevPnl.style.display = 'block';
-    btnEdit.classList.remove('active');
-    btnPrev.classList.add('active');
-    updatePreview();
+    // Trên PC: Luôn hiện danh sách bên trái, còn bên phải hiện Soạn thảo & Xem trước
+    document.getElementById('tab-list').style.display = tabName === 'list' ? 'block' : 'block';
+    document.getElementById('tab-edit').style.display = 'flex';
+    document.getElementById('tab-preview').style.display = 'block';
   }
 }
 
-// Cập nhật nội dung Xem thực tế Real-time
+// Render Xem trước Thực tế (Live Preview)
 function updatePreview() {
-  const title = document.getElementById('title').value || 'Tiêu đề bài viết...';
-  const content = document.getElementById('content').value || 'Nội dung sẽ hiển thị ở đây...';
+  const content = document.getElementById('content').value;
   const isCode = document.querySelector('input[name="postType"]:checked').value === 'code';
+  const frame = document.getElementById('previewFrame').contentWindow.document;
 
-  document.getElementById('pvTitle').textContent = title;
-  const pvBody = document.getElementById('pvBody');
-
+  frame.open();
   if (isCode) {
-    pvBody.innerHTML = `<pre style="background:var(--bg); padding:12px; border-radius:6px; overflow-x:auto; border:1px solid var(--border); font-family:monospace; font-size:13px;"><code>${escapeHtml(content)}</code></pre>`;
+    frame.write(content); // Render HTML/JS thực tế
   } else {
-    pvBody.innerHTML = content.replace(/\n/g, '<br>');
+    frame.write(`<div style="font-family: sans-serif; padding: 15px; line-height: 1.6;">${content.replace(/\n/g, '<br>')}</div>`);
   }
+  frame.close();
 }
 
-function escapeHtml(text) {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
-// Lắng nghe gõ phím để Live Preview tự cập nhật
-document.getElementById('title').addEventListener('input', updatePreview);
-document.getElementById('content').addEventListener('input', updatePreview);
-document.querySelectorAll('input[name="postType"]').forEach(r => r.addEventListener('change', updatePreview));
-
-// Tải bài viết cũ
+// Tải danh sách bài viết
 async function loadPosts() {
-  const selectEl = document.getElementById('postSelect');
+  const listEl = document.getElementById('postList');
   if (!GH_CONFIG.token) {
-    selectEl.innerHTML = '<option value="">Chưa nhập Token!</option>';
+    listEl.innerHTML = '<span style="color:#eab308; font-size:12px;">Chưa nhập Token!</span>';
     return;
   }
 
@@ -161,47 +158,40 @@ async function loadPosts() {
       headers: { 'Authorization': `Bearer ${GH_CONFIG.token}` }
     });
     
-    if (!res.ok) {
-      selectEl.innerHTML = `<option value="">Lỗi ${res.status}: Sai Token/Repo</option>`;
-      return;
-    }
-
+    if (!res.ok) throw new Error();
     const files = await res.json();
+
     rawPostsList = files.filter(f => f.type === 'file' && (f.name.endsWith('.html') || f.name.endsWith('.md')));
-
-    selectEl.innerHTML = '<option value="">-- Chọn bài viết để sửa (' + rawPostsList.length + ' bài) --</option>';
+    document.getElementById('postCount').textContent = rawPostsList.length;
     
-    rawPostsList.reverse().forEach((file, index) => {
-      const opt = document.createElement('option');
-      opt.value = index;
-      opt.textContent = file.name.replace(/^\d{4}-\d{2}-\d{2}-/, '');
-      selectEl.appendChild(opt);
-    });
+    renderPostList(rawPostsList);
   } catch (err) {
-    selectEl.innerHTML = '<option value="">Không tải được bài cũ!</option>';
+    listEl.innerHTML = '<span style="color:#ef4444; font-size:12px;">Lỗi tải bài cũ!</span>';
   }
 }
 
-document.getElementById('postSelect').addEventListener('change', (e) => {
-  const idx = e.target.value;
-  if (idx !== "") {
-    const selectedFile = rawPostsList[idx];
-    editPost(selectedFile.path, selectedFile.sha);
-  } else {
-    resetForm();
-  }
-});
-
-function resetForm() {
-  currentSha = null; currentPath = null;
-  document.getElementById('postForm').reset();
-  document.getElementById('postSelect').value = "";
-  document.getElementById('formTitle').textContent = '✏️ Soạn bài mới';
-  document.getElementById('submitBtn').textContent = '🚀 Đăng bài ngay';
-  document.getElementById('submitBtn').style.background = 'var(--pri)';
-  updatePreview();
+function renderPostList(list) {
+  const listEl = document.getElementById('postList');
+  listEl.innerHTML = '';
+  
+  list.slice().reverse().forEach(file => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = file.name.replace(/^\d{4}-\d{2}-\d{2}-/, '');
+    btn.style.cssText = 'text-align:left; padding:8px 10px; border:1px solid var(--border-color); background:var(--bg); color:var(--text); border-radius:6px; cursor:pointer; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
+    btn.onclick = () => editPost(file.path, file.sha);
+    listEl.appendChild(btn);
+  });
 }
 
+// Tìm kiếm bài viết
+function filterPosts() {
+  const q = document.getElementById('searchPost').value.toLowerCase();
+  const filtered = rawPostsList.filter(f => f.name.toLowerCase().includes(q));
+  renderPostList(filtered);
+}
+
+// Đọc nội dung để sửa
 async function editPost(path, sha) {
   try {
     const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${path}`, {
@@ -212,7 +202,6 @@ async function editPost(path, sha) {
 
     const titleMatch = rawText.match(/title:\s*["']?([^"'\n]+)["']?/);
     const typeMatch = rawText.match(/type:\s*(\w+)/);
-
     const contentParts = rawText.split(/^---$/m);
     let body = contentParts.length >= 3 ? contentParts.slice(2).join('---').trim() : rawText;
 
@@ -221,24 +210,32 @@ async function editPost(path, sha) {
     const postType = typeMatch ? typeMatch[1] : (path.endsWith('.html') ? 'code' : 'text');
     document.querySelector(`input[name="postType"][value="${postType}"]`).checked = true;
 
-    if (postType === 'code') {
-      body = body.replace(/^```html\n?/, '').replace(/\n?```$/, '');
-    }
+    if (postType === 'code') body = body.replace(/^```html\n?/, '').replace(/\n?```$/, '');
     
     document.getElementById('content').value = body;
-
     currentSha = sha; currentPath = path;
-    document.getElementById('formTitle').textContent = '✏️ Cập nhật bài viết';
-    document.getElementById('submitBtn').textContent = '💾 Lưu thay đổi';
-    document.getElementById('submitBtn').style.background = '#2563eb';
+
+    document.getElementById('formTitle').textContent = '✏️ Sửa bài viết';
+    document.getElementById('submitBtn').textContent = '💾 Lưu cập nhật';
+    
     updatePreview();
+    if (window.innerWidth < 900) switchTab('edit'); // Tự chuyển về tab sửa bài trên Mobile
   } catch(e) {
-    alert('Lỗi tải nội dung bài!');
+    alert('Không thể đọc nội dung!');
   }
 }
 
-document.getElementById('postForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
+function resetForm() {
+  currentSha = null; currentPath = null;
+  document.getElementById('title').value = '';
+  document.getElementById('content').value = '';
+  document.getElementById('formTitle').textContent = 'Soạn bài viết';
+  document.getElementById('submitBtn').textContent = '🚀 Đăng bài ngay';
+  updatePreview();
+}
+
+// Đăng bài
+async function submitPost() {
   if (!GH_CONFIG.token) return alert('Chưa nhập Token!');
 
   const btn = document.getElementById('submitBtn');
@@ -246,7 +243,7 @@ document.getElementById('postForm').addEventListener('submit', async (e) => {
 
   const title = document.getElementById('title').value.trim();
   const rawContent = document.getElementById('content').value;
-  const isCode = document.querySelector('input[name="postType"]:checked').value === 'code';
+  const isCode = document.querySelector('input[name="postType"][value="code"]').checked;
 
   const today = new Date().toISOString().split('T')[0];
   const slug = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
@@ -279,6 +276,15 @@ document.getElementById('postForm').addEventListener('submit', async (e) => {
     alert('❌ Lỗi kết nối!');
   } finally {
     btn.disabled = false;
+  }
+}
+
+// Tự động căn chỉnh hiển thị ban đầu
+window.addEventListener('resize', () => {
+  if (window.innerWidth >= 900) {
+    document.getElementById('tab-edit').style.display = 'flex';
+    document.getElementById('tab-preview').style.display = 'block';
+    document.getElementById('tab-list').style.display = 'block';
   }
 });
 
