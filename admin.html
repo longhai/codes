@@ -93,13 +93,13 @@ layout: null
 
   <main id="mainWorkspace" class="show-editor">
     <div class="pane pane-editor">
-      <input type="text" id="title" class="title-input" placeholder="Tên bài viết (tên file)..." oninput="updatePreview()">
+      <input type="text" id="title" class="title-input" placeholder="Tiêu đề (dùng làm tên file)..." oninput="updatePreview()">
       
       <div class="options-bar">
-        <span id="statusLabel" style="font-size:12px; color:var(--text-muted); font-weight:bold;">Tạo mới bài viết HTML</span>
+        <span id="statusLabel" style="font-size:11px; color:var(--text-muted);">Tạo mới</span>
       </div>
 
-      <textarea id="content" placeholder="Dán toàn bộ mã HTML/CSS/JS thuần vào đây..." oninput="updatePreview()"></textarea>
+      <textarea id="content" placeholder="Nhập trực tiếp mã HTML/CSS/JS..." oninput="updatePreview()"></textarea>
     </div>
 
     <div class="pane pane-preview">
@@ -142,12 +142,12 @@ function switchMobileTab(tab) {
   }
 }
 
-// XEM TRỰC TIẾP CODE NGUYÊN BẢN 100%
 let currentBlobUrl = null;
 function updatePreview() {
-  const content = document.getElementById('content').value;
+  let content = document.getElementById('content').value;
   const iframe = document.getElementById('previewFrame');
 
+  // Preview trực tiếp code HTML thuần
   const blob = new Blob([content], { type: 'text/html' });
   if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
   currentBlobUrl = URL.createObjectURL(blob);
@@ -187,109 +187,28 @@ function resetForm() {
   document.getElementById('title').value = '';
   document.getElementById('content').value = '';
   document.getElementById('postSelect').value = '';
-  document.getElementById('statusLabel').textContent = 'Tạo mới bài viết HTML';
+  document.getElementById('statusLabel').textContent = 'Tạo mới';
   document.getElementById('submitBtn').textContent = '🚀 Đăng';
   document.getElementById('submitBtn').style.background = 'var(--pri)';
   document.getElementById('deleteBtn').style.display = 'none';
   updatePreview();
 }
 
-// ĐỌC BÀI VÀ LẤY SẠCH BẢN NGUYÊN MẪU (LỌC BỎ HEADER CŨ NẾU CÓ)
 async function editPost(path, sha) {
   try {
     const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${path}`, {
       headers: { 'Authorization': `Bearer ${GH_CONFIG.token}` }
     });
     const data = await res.json();
-    let rawText = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
+    let body = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
 
+    // Lấy tên file gốc làm Tiêu đề
     const fileName = path.split('/').pop().replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/\.(html|md)$/, '');
-    
-    // Nếu trước đây có Front Matter hoặc ```html thì bóc sạch ra
-    if (rawText.startsWith('---')) {
-      const parts = rawText.split(/^---$/m);
-      if (parts.length >= 3) rawText = parts.slice(2).join('---').trim();
+
+    // Làm sạch nếu lỡ dính Front Matter hay cặp thẻ ```html từ trước
+    if (body.startsWith('---')) {
+      const parts = body.split(/^---$/m);
+      if (parts.length >= 3) body = parts.slice(2).join('---').trim();
     }
-    rawText = rawText.replace(/^```html\n?/, '').replace(/\n?```$/, '');
-
-    document.getElementById('title').value = fileName;
-    document.getElementById('content').value = rawText;
-
-    currentSha = sha; currentPath = path;
-    document.getElementById('statusLabel').textContent = 'Đang sửa: ' + fileName;
-    document.getElementById('submitBtn').textContent = '💾 Lưu';
-    document.getElementById('submitBtn').style.background = '#2563eb';
-    document.getElementById('deleteBtn').style.display = 'inline-block';
-    updatePreview();
-  } catch(e) { alert('Không nạp được bài!'); }
-}
-
-async function deletePost() {
-  if (!currentPath || !currentSha) return alert('Chưa chọn bài viết!');
-  if (!GH_CONFIG.token) return alert('Chưa cài Token!');
-
-  const fileName = currentPath.split('/').pop();
-  if (!confirm(`⚠️ Bạn có chắc muốn XÓA bài "${fileName}"?`)) return;
-
-  const btn = document.getElementById('deleteBtn');
-  btn.disabled = true;
-
-  try {
-    const res = await fetch(`[https://api.github.com/repos/$](https://api.github.com/repos/$){GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${currentPath}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${GH_CONFIG.token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: `Delete: ${fileName}`, sha: currentSha })
-    });
-
-    if (res.ok) {
-      alert('🗑️ Đã xóa bài viết!');
-      resetForm();
-      loadPosts();
-    } else { alert('❌ Lỗi không thể xóa!'); }
-  } catch (err) { alert('❌ Lỗi kết nối!'); } 
-  finally { btn.disabled = false; }
-}
-
-// LƯU THUẦN NỘI DUNG CODE (KHÔNG THÊM FRONT MATTER / RÁC THỪA)
-async function submitForm() {
-  if (!GH_CONFIG.token) return alert('Chưa cài Token!');
-  const title = document.getElementById('title').value.trim();
-  const rawContent = document.getElementById('content').value;
-
-  if (!title) return alert('Vui lòng nhập tên bài!');
-  if (!rawContent) return alert('Nội dung code đang trống!');
-
-  const btn = document.getElementById('submitBtn');
-  btn.disabled = true;
-
-  const today = new Date().toISOString().split('T')[0];
-  const slug = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+    body = body.replace(/^```html\n?/, '').replace(/\n?
   
-  // Lưu trực tiếp nội dung người dùng nhập
-  const filePath = currentPath || `_posts/${today}-${slug}.html`;
-  const encodedContent = btoa(unescape(encodeURIComponent(rawContent)));
-  
-  const payload = { message: `Save: ${title}`, content: encodedContent };
-  if (currentSha) payload.sha = currentSha;
-
-  try {
-    const res = await fetch(`[https://api.github.com/repos/$](https://api.github.com/repos/$){GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${filePath}`, {
-      method: 'PUT',
-      headers: { 'Authorization': `Bearer ${GH_CONFIG.token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    if (res.ok) {
-      alert(currentSha ? '✅ Đã lưu thành công!' : '✅ Đã tạo mới bài viết!');
-      resetForm();
-      loadPosts();
-    } else { alert('❌ Lỗi đăng bài!'); }
-  } catch (err) { alert('❌ Lỗi kết nối!'); } 
-  finally { btn.disabled = false; }
-}
-
-loadPosts();
-updatePreview();
-</script>
-</body>
-</html>
