@@ -1,0 +1,71 @@
+---
+layout: default
+title: Quản lý Bài viết
+body_class: page-index
+---
+<div class="container" style="max-width: 600px;">
+  <h2>Tạo bài viết mới</h2>
+  <form id="postForm" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+    <input type="password" id="ghToken" placeholder="GitHub Personal Access Token" required style="padding: 10px;">
+    <input type="text" id="postTitle" placeholder="Tiêu đề bài viết" required style="padding: 10px;">
+    <input type="text" id="postSlug" placeholder="Tên file (vd: my-first-post)" required style="padding: 10px;">
+    <textarea id="postContent" placeholder="Nội dung bài viết (Markdown)" rows="10" required style="padding: 10px;"></textarea>
+    <button type="submit" style="padding: 10px; background: var(--pri); color: #fff; border: 0; cursor: pointer;">Đăng bài</button>
+  </form>
+</div>
+
+<script>
+document.getElementById('postForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const token = document.getElementById('ghToken').value;
+  const title = document.getElementById('postTitle').value;
+  const slug = document.getElementById('postSlug').value;
+  const content = document.getElementById('postContent').value;
+  
+  // Thông tin Repository của bạn
+  const REPO_OWNER = 'YOUR_GITHUB_USERNAME';
+  const REPO_NAME = 'YOUR_REPO_NAME';
+  
+  // Định dạng ngàyYYYY-MM-DD
+  const dateStr = new Date().toISOString().split('T')[0];
+  const filePath = `_posts/${dateStr}-${slug}.md`;
+  
+  // Nội dung file Markdown kèm Front Matter
+  const fileContent = `---
+layout: post
+title: "${title}"
+date: ${dateStr}
+---
+
+${content}`;
+
+  // Mã hóa Base64 cho GitHub API
+  const encodedContent = btoa(unescape(encodeURIComponent(fileContent)));
+
+  try {
+    const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${filePath}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: `Create post: ${title}`,
+        content: encodedContent
+      })
+    });
+
+    if (res.ok) {
+      alert('Tạo bài viết thành công! Chờ GitHub Build lại trang.');
+      location.reload();
+    } else {
+      const err = await res.json();
+      alert('Lỗi: ' + err.message);
+    }
+  } catch (err) {
+    alert('Không thể kết nối API!');
+  }
+});
+            </script>
+
