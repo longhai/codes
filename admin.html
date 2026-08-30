@@ -6,7 +6,7 @@ layout: null
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>Quản lý Bài viết</title>
+  <title>Quản lý Bài viết - Responsive Pro</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -20,18 +20,15 @@ layout: null
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-    /* HEADER FIX CHỐNG TRÀN VÀ CHE MẤT NÚT */
     header { background: var(--card); border-bottom: 1px solid var(--border); padding: 8px 10px; display: flex; flex-direction: column; gap: 8px; }
     .header-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
     
     select, input, button { background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 6px 10px; font-size: 13px; outline: none; }
     
-    /* TAB CHUYỂN ĐỔI MOBILE */
     .view-tabs { display: flex; background: var(--bg); border-radius: 6px; padding: 2px; border: 1px solid var(--border); }
     .tab-btn { border: none; padding: 4px 12px; font-size: 12px; border-radius: 4px; cursor: pointer; color: var(--text-muted); }
     .tab-btn.active { background: var(--pri); color: #fff; font-weight: bold; }
 
-    /* KHU VỰC LÀM VIỆC FULL MÀN HÌNH */
     main { flex: 1; display: flex; width: 100%; overflow: hidden; }
     .pane { flex: 1; display: flex; flex-direction: column; height: 100%; padding: 8px; gap: 8px; }
     
@@ -41,7 +38,6 @@ layout: null
     textarea { flex: 1; width: 100%; background: var(--card); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 10px; font-family: monospace; font-size: 13px; resize: none; line-height: 1.4; }
     #previewFrame { flex: 1; width: 100%; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; }
 
-    /* RESPONSIVE PC & MOBILE */
     @media (min-width: 769px) {
       header { flex-direction: row; justify-content: space-between; height: 50px; }
       .header-row { width: auto; }
@@ -58,10 +54,9 @@ layout: null
 </head>
 <body class="show-editor">
 
-  <!-- TOPBAR TỐI ƯU GIAO DIỆN HÀNG KÉP TỰ ĐỘNG -->
   <header>
     <div class="header-row">
-      <button type="button" onclick="resetForm()" style="background: var(--success); color:#fff; font-weight:bold; border:none; shrink:0;">➕ Mới</button>
+      <button type="button" onclick="resetForm()" style="background: var(--success); color:#fff; font-weight:bold; border:none;">➕ Mới</button>
       <select id="postSelect" style="flex:1; max-width: 100%;">
         <option value="">-- Chọn bài viết cũ --</option>
       </select>
@@ -88,7 +83,6 @@ layout: null
     </div>
   </header>
 
-  <!-- WORKSPACE -->
   <main id="mainWorkspace" class="show-editor">
     
     <div class="pane pane-editor">
@@ -96,17 +90,18 @@ layout: null
       
       <div class="options-bar">
         <div style="display:flex; gap:12px;">
-          <label><input type="radio" name="postType" value="code" checked onchange="updatePreview()"> 💻 Code</label>
-          <label><input type="radio" name="postType" value="text" onchange="updatePreview()"> 📝 Văn bản</label>
+          <label><input type="radio" name="postType" value="code" checked onchange="updatePreview()"> 💻 App/Code HTML</label>
+          <label><input type="radio" name="postType" value="text" onchange="updatePreview()"> 📝 Bài viết Văn bản</label>
         </div>
         <span id="statusLabel" style="font-size:11px; color:var(--text-muted);">Tạo mới</span>
       </div>
 
-      <textarea id="content" placeholder="Nhập nội dung mã HTML/JS..." oninput="updatePreview()"></textarea>
+      <textarea id="content" placeholder="Nhập mã HTML/JS/CSS thực thi..." oninput="updatePreview()"></textarea>
     </div>
 
     <div class="pane pane-preview">
-      <iframe id="previewFrame"></iframe>
+      <!-- Cấp đầy đủ quyền Sandbox để JS và ứng dụng web hoạt động thực tế -->
+      <iframe id="previewFrame" sandbox="allow-scripts allow-same-origin allow-modals allow-forms allow-popups"></iframe>
     </div>
 
   </main>
@@ -114,6 +109,7 @@ layout: null
 <script>
 let GH_CONFIG = JSON.parse(localStorage.getItem('gh_cfg') || '{}');
 let rawPostsList = [], currentSha = null, currentPath = null;
+let currentBlobUrl = null;
 
 document.getElementById('cfgOwner').value = GH_CONFIG.owner || 'longhai';
 document.getElementById('cfgRepo').value = GH_CONFIG.repo || 'codes';
@@ -143,20 +139,26 @@ function switchMobileTab(tab) {
   }
 }
 
+// Cơ chế render chuẩn môi trường chạy HTML/JS thực tế qua Blob URL
 function updatePreview() {
   const title = document.getElementById('title').value || 'Tiêu đề';
   const content = document.getElementById('content').value;
   const isCode = document.querySelector('input[name="postType"]:checked').value === 'code';
   const iframe = document.getElementById('previewFrame');
-  const doc = iframe.contentDocument || iframe.contentWindow.document;
 
-  let renderHtml = isCode ? content : `<div style="font-family:sans-serif; padding:15px; line-height:1.6; color:#333;">
-    <h2>${title}</h2><hr style="margin:10px 0; border:0; border-top:1px solid #eee;"><div style="white-space: pre-wrap;">${content}</div>
-  </div>`;
+  let renderHtml = '';
+  if (isCode) {
+    renderHtml = content; // Giữ nguyên toàn bộ mã HTML/JS/CSS để thực thi trực tiếp
+  } else {
+    renderHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:sans-serif;padding:15px;line-height:1.6;color:#333;}</style></head><body><h2>${title}</h2><hr><div style="white-space:pre-wrap;">${content}</div></body></html>`;
+  }
 
-  doc.open();
-  doc.write(renderHtml);
-  doc.close();
+  // Thu hồi URL cũ để giải phóng bộ nhớ
+  if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+  
+  const blob = new Blob([renderHtml], { type: 'text/html; charset=utf-8' });
+  currentBlobUrl = URL.createObjectURL(blob);
+  iframe.src = currentBlobUrl;
 }
 
 async function loadPosts() {
@@ -164,7 +166,7 @@ async function loadPosts() {
   if (!GH_CONFIG.token) return;
 
   try {
-    const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/_posts`, {
+    const res = await fetch(`[https://api.github.com/repos/$](https://api.github.com/repos/$){GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/_posts`, {
       headers: { 'Authorization': `Bearer ${GH_CONFIG.token}` }
     });
     if (!res.ok) return;
@@ -198,24 +200,19 @@ function resetForm() {
   updatePreview();
 }
 
-// FIX THUẬT TOÁN TÁCH TIÊU ĐỀ CHUẨN XÁC
 async function editPost(path, sha) {
   try {
-    const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${path}`, {
+    const res = await fetch(`[https://api.github.com/repos/$](https://api.github.com/repos/$){GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${path}`, {
       headers: { 'Authorization': `Bearer ${GH_CONFIG.token}` }
     });
     const data = await res.json();
     const rawText = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
-
-    // Lấy tên file gốc làm Tiêu đề mặc định (Ví dụ: emulatorjs)
     const fileName = path.split('/').pop().replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/\.(html|md)$/, '');
-    
-    // Tách phần Front Matter chuẩn Jekyll (nếu có)
-    const hasFrontMatter = rawText.startsWith('---');
+
     let extractedTitle = fileName;
     let body = rawText;
 
-    if (hasFrontMatter) {
+    if (rawText.startsWith('---')) {
       const parts = rawText.split(/^---$/m);
       if (parts.length >= 3) {
         const titleMatch = parts[1].match(/title:\s*["']?([^"'\n]+)["']?/);
@@ -227,7 +224,7 @@ async function editPost(path, sha) {
     document.getElementById('title').value = extractedTitle;
     document.querySelector('input[name="postType"][value="code"]').checked = true;
 
-    // Bóc khối ```html nếu có
+    // Lọc bỏ wrapper ```html nếu bài cũ lỡ bị bọc
     body = body.replace(/^```html\n?/, '').replace(/\n?```$/, '');
     document.getElementById('content').value = body;
 
@@ -250,8 +247,14 @@ async function submitForm() {
 
   const today = new Date().toISOString().split('T')[0];
   const slug = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
-  const finalBody = isCode ? "```html\n" + rawContent + "\n```" : rawContent;
-  const fileContent = `---\nlayout: post\ntitle: "${title}"\ndate: ${today}\ntype: ${isCode ? 'code' : 'text'}\n---\n\n${finalBody}`;
+  
+  // NẾU LÀ CODE: Giữ nguyên code thực thi (không bọc ```html). NẾU LÀ VĂN BẢN: Đóng gói Front Matter
+  let fileContent = '';
+  if (isCode) {
+    fileContent = rawContent; 
+  } else {
+    fileContent = `---\nlayout: post\ntitle: "${title}"\ndate: ${today}\ntype: text\n---\n\n${rawContent}`;
+  }
 
   const filePath = currentPath || `_posts/${today}-${slug}.html`;
   const encodedContent = btoa(unescape(encodeURIComponent(fileContent)));
@@ -279,3 +282,4 @@ updatePreview();
 </script>
 </body>
 </html>
+
