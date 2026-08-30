@@ -1,124 +1,14 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta id="vp" name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Xem Bài Viết</title>
-  <style>
-    :root { --bg: #f1f5f9; --btn: #fff; --text: #334155; --pri: #ef4444; }
-    @media (prefers-color-scheme: dark) { :root { --bg: #161920; --btn: #1e242e; --text: #f1f5f9; } }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100%; height: 100%; background: var(--bg); font-family: system-ui, sans-serif; overflow: hidden; }
-    .box { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
-    #f { background: #fff; border: 0; transition: width .3s, height .3s; }
-    .pc { width: 1280px; height: 100%; max-width: 100%; }
-    .mb { width: 412px; height: 100%; max-width: 100%; box-shadow: 0 0 24px #0004; }
-    :fullscreen .box, :fullscreen #f { width: 100vw !important; height: 100vh !important; max-width: 100vw !important; box-shadow: none; }
-    .fab { position: fixed; width: 52px; height: 52px; z-index: 99; touch-action: none; user-select: none; }
-    .main { width: 52px; height: 52px; border-radius: 50%; background: var(--pri); color: #fff; border: 0; box-shadow: 0 6px 18px #0003; cursor: move; font-size: 22px; transition: .3s; }
-    .fab.active .main { transform: rotate(90deg); background: #dc2626; }
-    .sub { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; border-radius: 50%; background: var(--btn); color: var(--text); border: 1px solid #0002; box-shadow: 0 4px 12px #0002; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; text-decoration: none; opacity: 0; pointer-events: none; transform: translate(-50%,-50%) scale(.2); transition: transform .3s, opacity .2s; }
-    .fab.active .sub { opacity: 1; pointer-events: auto; }
-    .sub.dis { opacity: .3 !important; pointer-events: none; }
-    body.drag #f { pointer-events: none !important; }
-  </style>
-</head>
-<body>
-  <div class="box"><iframe id="f" class="pc"></iframe></div>
-  
-  <div class="fab" id="menu">
-    <button class="main" id="mBtn" title="Menu">⚙️</button>
-    <a href="index.html" class="sub" title="Trang chủ">🏠</a>
-    <button id="devBtn" class="sub" onclick="togDev()" title="Đổi PC/Mobile">📱</button>
-    <a id="srcBtn" href="#" target="_blank" class="sub" title="Bài gốc">🔗</a>
-    <button id="fsBtn" class="sub" onclick="togFS()" title="Full">⛶</button>
-  </div>
+---
+layout: default
+title: Xem Bài Viết
+body_class: page-viewer
+---
+<div class="box"><iframe id="f" class="pc"></iframe></div>
 
-  <script>
-    const $ = id => document.getElementById(id);
-    const f = $('f'), menu = $('menu'), mBtn = $('mBtn'), devBtn = $('devBtn'), fsBtn = $('fsBtn'), srcBtn = $('srcBtn'), vp = $('vp');
-    let dragged = false, isDrag = false, sx, sy, il, it;
-
-    // Nạp link bài viết
-    const post = new URLSearchParams(location.search).get('post') || '';
-    f.src = post;
-    post ? srcBtn.href = post : (srcBtn.classList.add('dis'), srcBtn.title = 'Không có link');
-
-    // Tự định vị theo thiết bị
-    const setPos = isMb => {
-      if (dragged) return;
-      Object.assign(menu.style, { top: isMb ? 'auto' : '24px', bottom: isMb ? '24px' : 'auto', left: 'auto', right: '24px' });
-    };
-
-    // Chuyển chế độ PC / Mobile
-    function togDev() {
-      const isMb = f.classList.contains('pc');
-      f.className = isMb ? 'mb' : 'pc';
-      devBtn.textContent = isMb ? '💻' : '📱';
-      vp.content = isMb ? 'width=device-width,initial-scale=1' : 'width=1280';
-      setPos(isMb);
-      updateRadial();
-    }
-    if (window.innerWidth <= 768) togDev(); else setPos(false);
-
-    // Fullscreen
-    function togFS() {
-      const isFS = document.fullscreenElement || document.webkitFullscreenElement;
-      isFS ? (document.exitFullscreen || document.webkitExitFullscreen).call(document) : 
-             (document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullScreen).call(document.documentElement);
-    }
-    ['fullscreenchange','webkitfullscreenchange'].forEach(e => document.addEventListener(e, () => {
-      fsBtn.textContent = (document.fullscreenElement || document.webkitFullscreenElement) ? '🗗' : '⛶';
-    }));
-
-    // Bung tròn 4 hướng
-    const subs = Array.from(menu.querySelectorAll('.sub'));
-    function updateRadial() {
-      if (!menu.classList.contains('active')) return;
-      const r = menu.getBoundingClientRect();
-      const R = 95, isR = r.left + r.width / 2 > innerWidth / 2, isB = r.top + r.height / 2 > innerHeight / 2;
-      const sDeg = isR ? (isB ? 180 : 90) : (isB ? 270 : 0);
-      const step = 90 / (subs.length - 1);
-
-      subs.forEach((b, i) => {
-        const rad = (sDeg + step * i) * Math.PI / 180;
-        b.style.transform = `translate(calc(-50% + ${Math.round(R * Math.cos(rad))}px), calc(-50% + ${Math.round(R * Math.sin(rad))}px)) scale(1)`;
-      });
-    }
-
-    const closeMenu = () => { menu.classList.remove('active'); subs.forEach(b => b.style.transform = 'translate(-50%,-50%) scale(.2)'); };
-    const togMenu = () => { menu.classList.toggle('active'); menu.classList.contains('active') ? updateRadial() : closeMenu(); };
-
-    // Drag-drop
-    const getPos = e => e.touches ? e.touches[0] : e;
-    function startDrag(e) {
-      isDrag = true; dragged = false; document.body.classList.add('drag');
-      const p = getPos(e); sx = p.clientX; sy = p.clientY; il = menu.offsetLeft; it = menu.offsetTop;
-    }
-    function doDrag(e) {
-      if (!isDrag) return;
-      const p = getPos(e), dx = p.clientX - sx, dy = p.clientY - sy;
-      if (Math.hypot(dx, dy) > 5) {
-        dragged = true; if (e.cancelable) e.preventDefault();
-        Object.assign(menu.style, {
-          left: Math.max(10, Math.min(il + dx, innerWidth - menu.offsetWidth - 10)) + 'px',
-          top: Math.max(10, Math.min(it + dy, innerHeight - menu.offsetHeight - 10)) + 'px',
-          right: 'auto', bottom: 'auto'
-        });
-        updateRadial();
-      }
-    }
-    function stopDrag() { isDrag = false; document.body.classList.remove('drag'); }
-
-    mBtn.addEventListener('mousedown', startDrag);
-    mBtn.addEventListener('touchstart', startDrag, {passive: false});
-    document.addEventListener('mousemove', doDrag);
-    document.addEventListener('touchmove', doDrag, {passive: false});
-    document.addEventListener('mouseup', stopDrag);
-    document.addEventListener('touchend', stopDrag);
-    mBtn.addEventListener('click', () => !dragged && togMenu());
-    document.addEventListener('click', e => !menu.contains(e.target) && closeMenu());
-    window.addEventListener('resize', updateRadial);
-  </script>
-</body>
-</html>
+<div class="fab" id="menu">
+  <button class="main" id="mBtn" title="Menu">⚙️</button>
+  <a href="{{ '/' | relative_url }}" class="sub" title="Trang chủ">🏠</a>
+  <button id="devBtn" class="sub" onclick="togDev()" title="Đổi PC/Mobile">📱</button>
+  <a id="srcBtn" href="#" target="_blank" class="sub" title="Bài gốc">🔗</a>
+  <button id="fsBtn" class="sub" onclick="togFS()" title="Full">⛶</button>
+</div>
