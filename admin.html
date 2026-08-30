@@ -36,13 +36,10 @@ layout: null
   <header>
     <div class="row">
       <button onclick="resetForm()" style="background:#16a34a">➕ Mới</button>
-      
-      <!-- NÚT UPLOAD FILE HTML/TEXT -->
       <label class="btn-file" style="background:#0284c7">
         📁 File
         <input type="file" id="fileInput" accept=".html,.htm,.txt,.md" style="display:none" onchange="uploadFile(event)">
       </label>
-
       <select id="postSelect" style="flex:1"><option value="">-- Chọn bài --</option></select>
     </div>
     <div class="row">
@@ -90,25 +87,30 @@ function pv(){
   frame.src = bUrl = URL.createObjectURL(new Blob([content.value], {type:'text/html'}));
 }
 
-// XỬ LÝ ĐỌC FILE KHI TẢI LÊN
 function uploadFile(e){
   const file = e.target.files[0];
   if(!file) return;
   const reader = new FileReader();
   reader.onload = function(evt){
     let text = evt.target.result;
-    // Tự động làm sạch mã nếu file có dính Front Matter hoặc Markdown
     text = text.replace(/^---[\s\S]*?---\s*/m,'').replace(/^```[a-z]*\n?/i,'').replace(/\n?```$/i,'');
-    
-    // Tự lấy tên file làm tiêu đề nếu chưa có
-    if(!title.value.trim()){
-      title.value = file.name.replace(/\.(html|htm|txt|md)$/i, '');
-    }
+    if(!title.value.trim()) title.value = file.name.replace(/\.(html|htm|txt|md)$/i, '');
     content.value = text.trim();
     pv();
   };
   reader.readAsText(file);
-  e.target.value = ''; // Reset input
+  e.target.value = '';
+}
+
+// HÀM CHUYỂN TIẾNG VIỆT THÀNH SLUG (ĐÃ CHUẨN HÓA đ -> d)
+function toSlug(str) {
+  return str.toLowerCase()
+    .replace(/đ/g, 'd').replace(/Đ/g, 'd')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
 }
 
 async function req(path, method='GET', body=null){
@@ -151,7 +153,7 @@ async function subForm(){
   if(!C.token || !title.value.trim()) return alert('Thiếu Token hoặc Tiêu đề!');
   subBtn.disabled = true;
   const t = title.value.trim(), day = new Date().toISOString().split('T')[0];
-  const slug = t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w\s-]/g,'').replace(/\s+/g,'-');
+  const slug = toSlug(t);
   const path = cPath || `_posts/${day}-${slug}.html`;
   const payload = {message:`Save: ${t}`, content: btoa(unescape(encodeURIComponent(content.value)))};
   if(cSha) payload.sha = cSha;
