@@ -85,6 +85,7 @@ layout: null
           </div>
         </details>
         
+        <!-- NÚT XÓA BÀI (Chỉ xuất hiện khi chọn bài cũ) -->
         <button type="button" id="deleteBtn" onclick="deletePost()" style="background: var(--danger); color:#fff; font-weight:bold; border:none; display:none;">🗑️ Xóa</button>
         <button type="button" id="submitBtn" onclick="submitForm()" style="background: var(--pri); color:#fff; font-weight:bold; border:none;">🚀 Đăng</button>
       </div>
@@ -93,13 +94,17 @@ layout: null
 
   <main id="mainWorkspace" class="show-editor">
     <div class="pane pane-editor">
-      <input type="text" id="title" class="title-input" placeholder="Tiêu đề (dùng làm tên file)..." oninput="updatePreview()">
+      <input type="text" id="title" class="title-input" placeholder="Tiêu đề bài viết..." oninput="updatePreview()">
       
       <div class="options-bar">
+        <div style="display:flex; gap:12px;">
+          <label><input type="radio" name="postType" value="code" checked onchange="updatePreview()"> 💻 Mã Code</label>
+          <label><input type="radio" name="postType" value="text" onchange="updatePreview()"> 📝 Văn bản</label>
+        </div>
         <span id="statusLabel" style="font-size:11px; color:var(--text-muted);">Tạo mới</span>
       </div>
 
-      <textarea id="content" placeholder="Nhập trực tiếp mã HTML/CSS/JS..." oninput="updatePreview()"></textarea>
+      <textarea id="content" placeholder="Nhập mã HTML/JS..." oninput="updatePreview()"></textarea>
     </div>
 
     <div class="pane pane-preview">
@@ -144,11 +149,16 @@ function switchMobileTab(tab) {
 
 let currentBlobUrl = null;
 function updatePreview() {
+  const title = document.getElementById('title').value || 'Tiêu đề';
   let content = document.getElementById('content').value;
+  const isCode = document.querySelector('input[name="postType"]:checked').value === 'code';
   const iframe = document.getElementById('previewFrame');
 
-  // Preview trực tiếp code HTML thuần
-  const blob = new Blob([content], { type: 'text/html' });
+  let renderHtml = isCode ? content : `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="font-family:sans-serif; padding:15px; line-height:1.6; color:#333;">
+    <h2>${title}</h2><hr style="margin:10px 0; border:0; border-top:1px solid #eee;"><div style="white-space: pre-wrap;">${content}</div>
+  </body></html>`;
+
+  const blob = new Blob([renderHtml], { type: 'text/html' });
   if (currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
   currentBlobUrl = URL.createObjectURL(blob);
   iframe.src = currentBlobUrl;
@@ -190,7 +200,7 @@ function resetForm() {
   document.getElementById('statusLabel').textContent = 'Tạo mới';
   document.getElementById('submitBtn').textContent = '🚀 Đăng';
   document.getElementById('submitBtn').style.background = 'var(--pri)';
-  document.getElementById('deleteBtn').style.display = 'none';
+  document.getElementById('deleteBtn').style.display = 'none'; // Ẩn nút Xóa
   updatePreview();
 }
 
@@ -200,15 +210,114 @@ async function editPost(path, sha) {
       headers: { 'Authorization': `Bearer ${GH_CONFIG.token}` }
     });
     const data = await res.json();
-    let body = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
+    const rawText = decodeURIComponent(escape(atob(data.content.replace(/\s/g, ''))));
 
-    // Lấy tên file gốc làm Tiêu đề
     const fileName = path.split('/').pop().replace(/^\d{4}-\d{2}-\d{2}-/, '').replace(/\.(html|md)$/, '');
+    
+    let extractedTitle = fileName;
+    let body = rawText;
 
-    // Làm sạch nếu lỡ dính Front Matter hay cặp thẻ ```html từ trước
-    if (body.startsWith('---')) {
-      const parts = body.split(/^---$/m);
-      if (parts.length >= 3) body = parts.slice(2).join('---').trim();
+    if (rawText.startsWith('---')) {
+      const parts = rawText.split(/^---$/m);
+      if (parts.length >= 3) {
+        const titleMatch = parts[1].match(/title:\s*["']?([^"'\n]+)["']?/);
+        if (titleMatch) extractedTitle = titleMatch[1];
+        body = parts.slice(2).join('---').trim();
+      }
     }
-    body = body.replace(/^```html\n?/, '').replace(/\n?
+
+    body = body.replace(/^```html\n?/, '').replace(/\n?```$/, '');
+
+    document.getElementById('title').value = extractedTitle;
+    document.querySelector('input[name="postType"][value="code"]').checked = true;
+    document.getElementById('content').value = body;
+
+    currentSha = sha; currentPath = path;
+    document.getElementById('statusLabel').textContent = 'Sửa: ' + fileName;
+    document.getElementById('submitBtn').textContent = '💾 Lưu';
+    document.getElementById('submitBtn').style.background = '#2563eb';
+    document.getElementById('deleteBtn').style.display = 'inline-block'; // Hiện nút Xóa
+    updatePreview();
+  } catch(e) { alert('Không nạp được bài!'); }
+}
+
+// CHỨC NĂNG XÓA BÀI VIẾT
+async function deletePost() {
+  if (!currentPath || !currentSha) return alert('Chưa chọn bài viết để xóa!');
+  if (!GH_CONFIG.token) return alert('Chưa cài Token!');
+
+  const fileName = currentPath.split('/').pop();
+  if (!confirm(`⚠️ Bạn có chắc chắn muốn XÓA bài viết "${fileName}" vĩnh viễn?`)) return;
+
+  const btn = document.getElementById('deleteBtn');
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${currentPath}`, {
+      method: 'DELETE',
+      headers: { 
+        'Authorization': `Bearer ${GH_CONFIG.token}`,
+        'Content-Type': 'application/json' 
+      },
+      body: JSON.stringify({
+        message: `Delete post: ${fileName}`,
+        sha: currentSha
+      })
+    });
+
+    if (res.ok) {
+      alert('🗑️ Đã xóa bài viết thành công!');
+      resetForm();
+      loadPosts();
+    } else {
+      const err = await res.json();
+      alert('❌ Lỗi không thể xóa bài: ' + err.message);
+    }
+  } catch (err) {
+    alert('❌ Lỗi kết nối!');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function submitForm() {
+  if (!GH_CONFIG.token) return alert('Chưa cài Token!');
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+
+  const title = document.getElementById('title').value.trim();
+  const rawContent = document.getElementById('content').value;
+  const isCode = document.querySelector('input[name="postType"][value="code"]').checked;
+
+  const today = new Date().toISOString().split('T')[0];
+  const slug = title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
   
+  const finalBody = isCode ? "```html\n" + rawContent + "\n```" : rawContent;
+  const fileContent = `---\nlayout: post\ntitle: "${title}"\ndate: ${today}\ntype: ${isCode ? 'code' : 'text'}\n---\n\n${finalBody}`;
+
+  const filePath = currentPath || `_posts/${today}-${slug}.html`;
+  const encodedContent = btoa(unescape(encodeURIComponent(fileContent)));
+  const payload = { message: `Update: ${title}`, content: encodedContent };
+  if (currentSha) payload.sha = currentSha;
+
+  try {
+    const res = await fetch(`https://api.github.com/repos/${GH_CONFIG.owner}/${GH_CONFIG.repo}/contents/${filePath}`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${GH_CONFIG.token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      alert(currentSha ? '✅ Đã lưu cập nhật!' : '✅ Đã đăng thành công!');
+      resetForm();
+      loadPosts();
+    } else { alert('❌ Lỗi đăng bài!'); }
+  } catch (err) { alert('❌ Lỗi kết nối!'); } 
+  finally { btn.disabled = false; }
+}
+
+loadPosts();
+updatePreview();
+</script>
+</body>
+</html>
