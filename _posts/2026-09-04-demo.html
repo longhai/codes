@@ -52,9 +52,8 @@
     #svg-container {
       flex: 1.2;
       width: 100%;
-      max-width: 580px;
-      height: 80vh;
-      max-height: 540px;
+      height: 100%;
+      max-height: 96vh;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -202,24 +201,27 @@
     // Tự động tính toán số lượng ô (NUM) vừa khít với không gian thực tế
     function calcOptimalNum() {
       const container = document.getElementById('svg-container');
-      const mobile = isMobileDevice();
-      let availablePixelHeight;
-
-      if (!mobile) {
-        // Trên PC: Đồng bộ chiều cao khả dụng chuẩn 540px với khung Preview
-        const mainH = document.querySelector('main')?.clientHeight || window.innerHeight;
-        availablePixelHeight = Math.min(mainH * 0.8, 540);
-      } else {
-        // Trên Mobile: Lấy chiều cao thực tế của container bên dưới
-        availablePixelHeight = container?.clientHeight || (window.innerHeight * 0.55);
-      }
+      const cw = container?.clientWidth || window.innerWidth;
+      const ch = container?.clientHeight || (window.innerHeight * 0.6);
       
-      const availableH = availablePixelHeight - S_Y0 - 12;
+      if (!cw || !ch) return;
+
+      const containerRatio = cw / ch;
+      const targetH = 540 / containerRatio;
+      
+      const availableH = targetH - S_Y0 - 12;
       const slotStep = S_H + S_GAP; // 56px mỗi ô
       
       // Giới hạn trong khoảng từ 3 đến 12 ô tùy theo độ dài màn hình
       const calculatedNum = Math.round(availableH / slotStep);
       NUM = Math.max(3, Math.min(12, calculatedNum));
+    }
+
+    // Cập nhật viewBox của SVG vừa khít với chiều cao chuẩn
+    function updateSvgViewBox() {
+      calcOptimalNum(); // Đảm bảo tính toán NUM chính xác trước khi cập nhật ViewBox
+      const totalH = S_Y0 + NUM * (S_H + S_GAP) + 12;
+      document.getElementById('svg').setAttribute('viewBox', `0 0 540 ${totalH}`);
     }
 
     // Tính toán kích thước ô dựa trên chế độ hiển thị & số lượng ô NUM
@@ -237,12 +239,6 @@
     let games = [], selIdx = 0, topIdx = 0, slots = [];
 
     const getX = (y, p) => isCurved ? (p.X0 + (p.X1 - p.X0) * (1 - Math.pow(Math.max(-1, Math.min(1, (y - p.Y_MID) / p.HALF_H)), 2))) : p.X0;
-
-    // Cập nhật viewBox của SVG vừa khít với chiều cao chuẩn
-    function updateSvgViewBox() {
-      const totalH = S_Y0 + NUM * (S_H + S_GAP) + 12;
-      document.getElementById('svg').setAttribute('viewBox', `0 0 540 ${totalH}`);
-    }
 
     function renderMenuList() {
       const pop = document.getElementById('menu-pop');
@@ -331,7 +327,7 @@
         games = [...set];
         document.getElementById('loader').style.display = 'none';
         
-        // Đợi trình duyệt reflow layout sau khi ẩn màn hình chờ rồi mới vẽ menu
+        // Chờ DOM hoàn tất layout sau khi ẩn loader để lấy đúng vị trí & kích thước PC
         requestAnimationFrame(() => {
           drawHeader(); 
           drawSlots(); 
