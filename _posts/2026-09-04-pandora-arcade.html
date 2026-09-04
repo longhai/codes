@@ -6,29 +6,23 @@
   <title>Pandora Arcade</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@700;800&display=swap');
-    
     * { box-sizing: border-box; margin: 0; padding: 0; touch-action: none; user-select: none; }
     body { font-family: 'Rajdhani', sans-serif; background: radial-gradient(circle at 50% 30%, #c2410c, #7f1d1d 35%, #050101); height: 100vh; width: 100vw; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-    
     #loader { position: fixed; inset: 0; z-index: 50; background: #000000eb; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fbbf24; font: 13px 'Orbitron'; letter-spacing: 1px; }
     .spin { width: 40px; height: 40px; border: 4px solid #f97316; border-top-color: transparent; border-radius: 50%; animation: s .8s linear infinite; margin-bottom: 12px; }
     @keyframes s { to { transform: rotate(360deg); } }
-    
     main { width: 100%; height: 100%; max-height: 100vh; max-width: 1200px; display: flex; align-items: center; justify-content: center; gap: 20px; padding: 16px; }
     #svg-container { flex: 1.2; width: 100%; height: 100%; max-height: 96vh; display: flex; align-items: center; justify-content: center; order: 1; }
     svg { width: 100%; height: 100%; filter: drop-shadow(0 10px 20px rgba(0,0,0,.85)); }
-    
     #preview-container { flex: 1; width: 100%; max-width: 650px; aspect-ratio: 4 / 3; max-height: 78vh; background: rgba(15,23,42,.9); border: 2px solid #ea580c; border-radius: 16px; box-shadow: 0 0 25px rgba(234,88,12,.45), inset 0 0 20px #000; display: flex; align-items: center; justify-content: center; padding: 10px; position: relative; overflow: hidden; backdrop-filter: blur(8px); order: 2; }
     #preview-container::before { content: ''; position: absolute; inset: 0; border-radius: 14px; border: 1px solid rgba(255,255,255,.12); pointer-events: none; }
     #preview-img { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; filter: drop-shadow(0 4px 12px rgba(0,0,0,.8)); transition: opacity .2s; }
-    
     #menu-pop { display: none; position: absolute; top: 60px; left: 50%; transform: translateX(-50%); background: #0f172a; border: 1.5px solid #38bdf8; border-radius: 10px; padding: 8px; z-index: 100; box-shadow: 0 10px 30px #000; max-height: 70vh; overflow-y: auto; width: 260px; }
     #menu-pop.show { display: block; }
     .menu-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: #e2e8f0; font: 700 16px 'Rajdhani'; border-radius: 6px; cursor: pointer; transition: .2s; }
     .menu-item:hover, .menu-item.active { background: #ea580c; color: #fff; }
     .tn { font: 700 18px 'Rajdhani'; fill: #e2e8f0; }
     .ta { font: 800 20px 'Rajdhani'; fill: #fff; filter: drop-shadow(0 2px 4px rgba(0,0,0,.95)); }
-    
     @media (max-width: 820px), (max-aspect-ratio: 1/1) {
       main { flex-direction: column; justify-content: flex-start; gap: 10px; padding: 10px; }
       #preview-container { order: 1; max-width: 400px; max-height: 32vh; }
@@ -71,13 +65,15 @@
     const H_TOP = 8, H_BOT = 56, S_Y0 = 66, S_H = 48, S_GAP = 8;
     const isMobileDevice = () => window.innerWidth < 820 || window.innerHeight > window.innerWidth;
     
-    let currentDatIdx = 0, isCurved = !isMobileDevice(), NUM = 5, games = [], selIdx = 0, topIdx = 0, slots = [];
+    let currentDatIdx = 0, 
+        isCurved = localStorage.getItem('pandora_curved') !== null ? localStorage.getItem('pandora_curved') === 'true' : !isMobileDevice(), 
+        NUM = 10, games = [], selIdx = 0, topIdx = 0, slots = [];
 
     function calcOptimalNum() {
       const c = $('svg-container'), cw = c?.clientWidth || window.innerWidth, ch = c?.clientHeight || (window.innerHeight * 0.6);
       if (!cw || !ch) return;
       const calculated = Math.round((540 / (cw / ch) - S_Y0 - 12) / (S_H + S_GAP));
-      NUM = isMobileDevice() ? Math.max(4, Math.min(7, calculated)) : Math.max(8, Math.min(16, calculated));
+      NUM = isMobileDevice() ? Math.max(4, Math.min(7, calculated)) : Math.max(10, Math.min(16, calculated));
     }
 
     function updateSvgViewBox() {
@@ -116,12 +112,19 @@
       $('hg').innerHTML = `
         <polygon points="${xl0.toFixed(1)},${H_TOP} ${(xl0+p.W).toFixed(1)},${H_TOP} ${(xl1+p.W).toFixed(1)},${H_BOT} ${xl1.toFixed(1)},${H_BOT}" fill="url(#gh)" stroke="#475569" stroke-width="1.5"/>
         <line x1="${xl0.toFixed(1)}" y1="${H_TOP}" x2="${xl1.toFixed(1)}" y2="${H_BOT}" stroke="#38bdf8" stroke-width="4"/>
-        <g id="btn-menu" style="cursor:pointer"><text x="${startX}" y="${H_TOP + 30}" font-size="18">${DAT_LIST[currentDatIdx].icon}</text></g>
-        <text id="cnt-txt" x="${startX + 26}" y="${H_TOP + 30}" fill="#fbbf24" font-size="16" font-weight="bold" font-family="Orbitron">GAME: 0 / 0</text>
-        <g id="btn-toggle" style="cursor:pointer"><text x="${(xl0 + p.W - 25).toFixed(1)}" y="${H_TOP + 31}" fill="${clr}" font-size="20" font-weight="900" font-family="Orbitron" text-anchor="middle">${isCurved ? ')' : '|'}</text></g>`;
+        <g id="btn-menu" style="cursor:pointer"><text x="${startX}" y="${H_TOP + 31}" font-size="18">${DAT_LIST[currentDatIdx].icon}</text></g>
+        <text id="cnt-txt" x="${startX + 26}" y="${H_TOP + 31}" fill="#fbbf24" font-size="16" font-weight="bold" font-family="Orbitron">GAME: 0 / 0</text>
+        <g id="btn-toggle" style="cursor:pointer"><text x="${(xl0 + p.W - 25).toFixed(1)}" y="${H_TOP + 32}" fill="${clr}" font-size="20" font-weight="900" font-family="Orbitron" text-anchor="middle">${isCurved ? ')' : '|'}</text></g>`;
 
       $('btn-menu').onclick = e => { e.stopPropagation(); renderMenuList(); $('menu-pop').classList.toggle('show'); };
-      $('btn-toggle').onclick = e => { e.stopPropagation(); isCurved = !isCurved; drawHeader(); drawSlots(); render(); };
+      $('btn-toggle').onclick = e => { 
+        e.stopPropagation(); 
+        isCurved = !isCurved; 
+        localStorage.setItem('pandora_curved', isCurved);
+        drawHeader(); 
+        drawSlots(); 
+        render(); 
+      };
     }
 
     function drawSlots() {
@@ -199,7 +202,7 @@
 
     const move = step => { const nxt = selIdx + step; if (nxt >= 0 && nxt < games.length) { selIdx = nxt; render(); } };
     
-    window.onresize = () => { isCurved = !isMobileDevice(); drawHeader(); drawSlots(); render(); };
+    window.onresize = () => { drawHeader(); drawSlots(); render(); };
 
     let touchStartY = 0;
     const svgC = $('svg-container');
