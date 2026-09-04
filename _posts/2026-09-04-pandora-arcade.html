@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pandora Arcade</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@700;800&display=swap');
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; touch-action: none; user-select: none; }
+    body { font-family: 'Rajdhani', sans-serif; background: radial-gradient(circle at 50% 30%, #c2410c, #7f1d1d 35%, #050101); height: 100vh; width: 100vw; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    
+    #loader { position: fixed; inset: 0; z-index: 50; background: #000000eb; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fbbf24; font: 13px 'Orbitron'; letter-spacing: 1px; }
+    .spin { width: 40px; height: 40px; border: 4px solid #f97316; border-top-color: transparent; border-radius: 50%; animation: s .8s linear infinite; margin-bottom: 12px; }
+    @keyframes s { to { transform: rotate(360deg); } }
+    
+    main { width: 100%; height: 100%; max-height: 100vh; max-width: 1200px; display: flex; align-items: center; justify-content: center; gap: 20px; padding: 16px; }
+    #svg-container { flex: 1.2; width: 100%; height: 100%; max-height: 96vh; display: flex; align-items: center; justify-content: center; order: 1; }
+    svg { width: 100%; height: 100%; filter: drop-shadow(0 10px 20px rgba(0,0,0,.85)); }
+    
+    #preview-container { width: 100%; max-width: 580px; aspect-ratio: 4 / 3; max-height: 82vh; background: rgba(15,23,42,.9); border: 2px solid #ea580c; border-radius: 16px; box-shadow: 0 0 25px rgba(234,88,12,.45), inset 0 0 20px #000; display: flex; align-items: center; justify-content: center; padding: 10px; position: relative; overflow: hidden; backdrop-filter: blur(8px); order: 2; flex: none; }
+    #preview-container::before { content: ''; position: absolute; inset: 0; border-radius: 14px; border: 1px solid rgba(255,255,255,.12); pointer-events: none; }
+    #preview-img { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; filter: drop-shadow(0 4px 12px rgba(0,0,0,.8)); transition: opacity .2s; }
+    
+    #menu-pop { display: none; position: absolute; top: 60px; left: 50%; transform: translateX(-50%); background: #0f172a; border: 1.5px solid #38bdf8; border-radius: 10px; padding: 8px; z-index: 100; box-shadow: 0 10px 30px #000; max-height: 70vh; overflow-y: auto; width: 260px; }
+    #menu-pop.show { display: block; }
+    .menu-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: #e2e8f0; font: 700 16px 'Rajdhani'; border-radius: 6px; cursor: pointer; transition: .2s; }
+    .menu-item:hover, .menu-item.active { background: #ea580c; color: #fff; }
+    .tn { font: 700 18px 'Rajdhani'; fill: #e2e8f0; }
+    .ta { font: 800 20px 'Rajdhani'; fill: #fff; filter: drop-shadow(0 2px 4px rgba(0,0,0,.95)); }
+    
+    @media (max-width: 820px), (max-aspect-ratio: 1/1) {
+      main { flex-direction: column; justify-content: flex-start; gap: 10px; padding: 10px; }
+      #preview-container { order: 1; max-width: 400px; max-height: 32vh; }
+      #svg-container { order: 2; flex: 1; max-height: none; overflow: hidden; }
+    }
+  </style>
+</head>
+<body>
+  <div id="loader"><div class="spin"></div><p id="ld-t">ĐANG TẢI DỮ LIỆU GAME...</p></div>
+  <div id="menu-pop"></div>
+
+  <main>
+    <div id="svg-container">
+      <svg id="svg" viewBox="0 0 540 630">
+        <defs>
+          <linearGradient id="gn"><stop offset="0%" stop-color="#1e293b"/><stop offset="50%" stop-color="#334155"/><stop offset="100%" stop-color="#1e293b"/></linearGradient>
+          <linearGradient id="ga"><stop offset="0%" stop-color="#dc2626"/><stop offset="50%" stop-color="#ea580c"/><stop offset="100%" stop-color="#dc2626"/></linearGradient>
+          <linearGradient id="gh"><stop offset="0%" stop-color="#0f172a"/><stop offset="50%" stop-color="#1e293b"/><stop offset="100%" stop-color="#0f172a"/></linearGradient>
+          <filter id="gw"><feGaussianBlur stdDeviation="3.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter>
+          <g id="cd"></g>
+        </defs>
+        <g id="hg"></g><g id="sg"></g>
+      </svg>
+    </div>
+    <div id="preview-container"><img id="preview-img" src="" alt="Game Preview"/></div>
+  </main>
+
+  <script>
+    const RAW = "https://raw.githubusercontent.com/libretro/FBNeo/refs/heads/master/dats/FinalBurn Neo (ClrMame Pro XML, ";
+    const DAT_LIST = [
+      { name: "Arcade FBNeo", icon: "🕹️", system: "FBNeo - Arcade Games", url: RAW + "Arcade only).dat" },
+      { name: "Nintendo NES", icon: "🍄", system: "Nintendo - Nintendo Entertainment System", url: RAW + "NES Games only).dat" },
+      { name: "Super Nintendo", icon: "🎮", system: "Nintendo - Super Nintendo Entertainment System", url: RAW + "SNES Games only).dat" },
+      { name: "Megadrive", icon: "⚡", system: "Sega - Mega Drive - Genesis", url: RAW + "Megadrive only).dat" },
+      { name: "Game Boy Advance", icon: "👾", system: "Nintendo - Game Boy Advance", url: RAW + "GBA Games only).dat" },
+      { name: "Neo Geo Arcade", icon: "⚔️", system: "SNK - Neo Geo", url: RAW + "Neogeo only).dat" }
+    ];
+
+    const $ = id => document.getElementById(id);
+    const H_TOP = 8, H_BOT = 56, S_Y0 = 66, S_H = 48, S_GAP = 8;
+    const isMobileDevice = () => window.innerWidth < 820 || window.innerHeight > window.innerWidth;
+    
+    let currentDatIdx = 0, isCurved = !isMobileDevice(), NUM = 5, games = [], selIdx = 0, topIdx = 0, slots = [];
+
+    function calcOptimalNum() {
+      const c = $('svg-container'), cw = c?.clientWidth || window.innerWidth, ch = c?.clientHeight || (window.innerHeight * 0.6);
+      if (!cw || !ch) return;
+      const calculated = Math.round((540 / (cw / ch) - S_Y0 - 12) / (S_H + S_GAP));
+      NUM = isMobileDevice() ? Math.max(4, Math.min(7, calculated)) : Math.max(8, Math.min(12, calculated));
+    }
+
+    function updateSvgViewBox() {
+      calcOptimalNum();
+      $('svg').setAttribute('viewBox', `0 0 540 ${S_Y0 + NUM * (S_H + S_GAP) + 12}`);
+    }
+
+    function getParams() {
+      calcOptimalNum();
+      const s = !isCurved, X0 = s ? 5 : 14, X1 = s ? 5 : 85, W = s ? 530 : 435;
+      const Y_MID = (H_TOP + S_Y0 + (NUM - 1) * (S_H + S_GAP) + S_H) / 2;
+      return { X0, X1, W, Y_MID, HALF_H: Y_MID - H_TOP };
+    }
+
+    const getX = (y, p) => isCurved ? (p.X0 + (p.X1 - p.X0) * (1 - Math.pow(Math.max(-1, Math.min(1, (y - p.Y_MID) / p.HALF_H)), 2))) : p.X0;
+
+    function renderMenuList() {
+      $('menu-pop').innerHTML = DAT_LIST.map((item, i) => 
+        `<div class="menu-item ${i === currentDatIdx ? 'active' : ''}" onclick="switchDat(${i})">
+          <span>${item.icon}</span> <span>${item.name}</span>
+        </div>`
+      ).join('');
+    }
+
+    function switchDat(idx) {
+      currentDatIdx = idx;
+      $('menu-pop').classList.remove('show');
+      $('loader').style.display = 'flex';
+      loadData();
+    }
+
+    function drawHeader() {
+      updateSvgViewBox();
+      const p = getParams(), xl0 = getX(H_TOP, p), xl1 = getX(H_BOT, p);
+      const startX = (xl0 + xl1) / 2 + 18, clr = isCurved ? '#f97316' : '#38bdf8';
+      $('hg').innerHTML = `
+        <polygon points="${xl0.toFixed(1)},${H_TOP} ${(xl0+p.W).toFixed(1)},${H_TOP} ${(xl1+p.W).toFixed(1)},${H_BOT} ${xl1.toFixed(1)},${H_BOT}" fill="url(#gh)" stroke="#475569" stroke-width="1.5"/>
+        <line x1="${xl0.toFixed(1)}" y1="${H_TOP}" x2="${xl1.toFixed(1)}" y2="${H_BOT}" stroke="#38bdf8" stroke-width="4"/>
+        <g id="btn-menu" style="cursor:pointer"><text x="${startX}" y="${H_TOP + 30}" font-size="18">${DAT_LIST[currentDatIdx].icon}</text></g>
+        <text id="cnt-txt" x="${startX + 26}" y="${H_TOP + 30}" fill="#fbbf24" font-size="16" font-weight="bold" font-family="Orbitron">GAME: 0 / 0</text>
+        <g id="btn-toggle" style="cursor:pointer"><text x="${(xl0 + p.W - 25).toFixed(1)}" y="${H_TOP + 31}" fill="${clr}" font-size="20" font-weight="900" font-family="Orbitron" text-anchor="middle">${isCurved ? ')' : '|'}</text></g>`;
+
+      $('btn-menu').onclick = e => { e.stopPropagation(); renderMenuList(); $('menu-pop').classList.toggle('show'); };
+      $('btn-toggle').onclick = e => { e.stopPropagation(); isCurved = !isCurved; drawHeader(); drawSlots(); render(); };
+    }
+
+    function drawSlots() {
+      const p = getParams(), grp = $('sg'), defs = $('cd');
+      grp.innerHTML = defs.innerHTML = ''; slots = [];
+      for (let i = 0; i < NUM; i++) {
+        const y0 = S_Y0 + i * (S_H + S_GAP), y1 = y0 + S_H, xl0 = getX(y0, p), xl1 = getX(y1, p);
+        defs.innerHTML += `<clipPath id="c${i}"><polygon points="${xl0.toFixed(1)},${y0} ${(xl0+p.W-15).toFixed(1)},${y0} ${(xl1+p.W-15).toFixed(1)},${y1} ${xl1.toFixed(1)},${y1}"/></clipPath>`;
+        const el = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        el.style.cursor = "pointer";
+        el.innerHTML = `
+          <polygon points="${xl0.toFixed(1)},${y0} ${(xl0+p.W).toFixed(1)},${y0} ${(xl1+p.W).toFixed(1)},${y1} ${xl1.toFixed(1)},${y1}" fill="url(#gn)" stroke="#475569" stroke-width="1.5"/>
+          <line x1="${xl0.toFixed(1)}" y1="${y0}" x2="${xl1.toFixed(1)}" y2="${y1}" stroke="#60a5fa" stroke-width="4"/>
+          <text x="${(xl0+xl1)/2 + 18}" y="${y0 + 29.5}" class="tn" clip-path="url(#c${i})"></text>`;
+        el.onclick = () => { if (topIdx + i < games.length) { selIdx = topIdx + i; render(); } };
+        grp.appendChild(el);
+        slots.push({ poly: el.querySelector('polygon'), line: el.querySelector('line'), txt: el.querySelector('text'), g: el });
+      }
+    }
+
+    async function loadData() {
+      try {
+        selIdx = topIdx = 0;
+        const res = await fetch(DAT_LIST[currentDatIdx].url), xml = await res.text();
+        const doc = new DOMParser().parseFromString(xml, "text/xml"), set = new Set();
+        doc.querySelectorAll("game, machine").forEach(n => {
+          const t = n.querySelector("description")?.textContent.trim() || n.getAttribute("name");
+          if (t) set.add(t);
+        });
+        games = [...set];
+        $('loader').style.display = 'none';
+        requestAnimationFrame(() => { drawHeader(); drawSlots(); render(); });
+      } catch {
+        $('ld-t').innerText = "LỖI TẢI DỮ LIỆU!";
+        $('ld-t').style.color = "#ef4444";
+      }
+    }
+
+    function updatePreview(gameName) {
+      const img = $('preview-img'), sys = encodeURIComponent(DAT_LIST[currentDatIdx].system);
+      const name = encodeURIComponent(gameName.replace(/&/g, '_').replace(/[/\\?%*:|"<>]/g, '_'));
+      const base = `https://thumbnails.libretro.com/${sys}`;
+      const fallback = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23f97316' stroke-width='1.5'%3E%3Crect x='2' y='2' width='20' height='20' rx='4'/%3E%3Cpath d='M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z'/%3E%3Cpath d='m21 15-5-5L5 21'/%3E%3C/svg%3E";
+
+      img.src = `${base}/Named_Snaps/${name}.png`;
+      img.onerror = () => {
+        img.src = `${base}/Named_Boxarts/${name}.png`;
+        img.onerror = () => { img.src = fallback; };
+      };
+    }
+
+    function render() {
+      if (!games.length) return;
+      if (selIdx < topIdx) topIdx = selIdx; else if (selIdx >= topIdx + NUM) topIdx = selIdx - NUM + 1;
+      topIdx = Math.max(0, Math.min(topIdx, games.length - NUM));
+      $('cnt-txt').textContent = `GAME: ${selIdx + 1} / ${games.length}`;
+      
+      slots.forEach((s, i) => {
+        const idx = topIdx + i, active = idx === selIdx;
+        if (idx < games.length) {
+          s.g.style.display = "block";
+          s.txt.textContent = games[idx].length > 56 ? games[idx].slice(0, 54) + "..." : games[idx];
+          s.poly.setAttribute("fill", active ? "url(#ga)" : "url(#gn)");
+          s.poly.setAttribute("stroke", active ? "#fef08a" : "#475569");
+          s.poly.setAttribute("stroke-width", active ? "2.5" : "1.5");
+          active ? s.poly.setAttribute("filter", "url(#gw)") : s.poly.removeAttribute("filter");
+          s.line.setAttribute("stroke", active ? "#fef08a" : "#60a5fa");
+          s.line.setAttribute("stroke-width", active ? "5" : "4");
+          s.txt.setAttribute("class", active ? "ta" : "tn");
+        } else s.g.style.display = "none";
+      });
+
+      updatePreview(games[selIdx]);
+    }
+
+    const move = step => { const nxt = selIdx + step; if (nxt >= 0 && nxt < games.length) { selIdx = nxt; render(); } };
+    
+    window.onresize = () => { isCurved = !isMobileDevice(); drawHeader(); drawSlots(); render(); };
+
+    let touchStartY = 0;
+    const svgC = $('svg-container');
+    svgC.addEventListener('touchstart', e => { if (e.touches.length) touchStartY = e.touches[0].clientY; }, { passive: true });
+    svgC.addEventListener('touchmove', e => {
+      if (!games.length || !e.touches.length) return;
+      const curY = e.touches[0].clientY, diffY = touchStartY - curY;
+      if (Math.abs(diffY) > 30) { move(diffY > 0 ? 1 : -1); touchStartY = curY; }
+    }, { passive: true });
+
+    window.onwheel = e => move(e.deltaY > 0 ? 1 : -1);
+    window.onkeydown = e => { if (e.key === 'ArrowDown') move(1); else if (e.key === 'ArrowUp') move(-1); };
+    window.onclick = () => $('menu-pop').classList.remove('show');
+    window.onload = loadData;
+  </script>
+</body>
+</html>
