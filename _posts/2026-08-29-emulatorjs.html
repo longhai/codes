@@ -1,71 +1,6 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>EmulatorJS</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='%231AAFFF' d='M8 1a1 1 0 0 0 0 1v9h5a1 1 0 0 0 0-6H8zM1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8z'/></svg>">
-<style>
-:root{--primary:#1AAFFF;--primary-hover:#0098ea;--bg-color:#0d0e12;--card-bg:#333;--card-border:#555;--text-color:#f0f0f0;--text-sub:#a0a5b5;--box-hover-bg:rgba(26,175,255,.05);--modal-shadow:rgba(0,0,0,.5);--overlay-bg:rgba(0,0,0,.6)}
-@media (prefers-color-scheme:light){:root{--primary:#0088cc;--primary-hover:#006699;--bg-color:#f4f6f9;--card-bg:#fff;--card-border:#d0d5dd;--text-color:#1a1d20;--text-sub:#667085;--box-hover-bg:rgba(0,136,204,.05);--modal-shadow:rgba(0,0,0,.15);--overlay-bg:rgba(0,0,0,.3)}}
-*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-body{background:var(--bg-color);color:var(--text-color);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:background-color .3s,color .3s}
-#box{position:relative;width:90%;max-width:500px;height:240px;border:2px solid var(--card-border);border-radius:12px;background:var(--card-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;transition:.3s;cursor:pointer}
-#box:hover{border-color:var(--primary);}
-#box input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
-#drop-label{font-size:1rem;color:var(--text-sub);pointer-events:none;line-height:1.5}
-#display{position:fixed;inset:0;background:#000;z-index:100}
-#game{width:100%;height:100%}
-#toolbar{margin-top:20px;display:flex;gap:10px;width:90%;max-width:500px}
-#url-input{flex:1;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:10px 14px;color:var(--text-color);outline:0;font-size:.9rem;transition:.3s}
-#url-input:focus{border-color:var(--primary)}
-#settings{background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.3s}
-#settings:hover{background:var(--card-border)}
-#settings svg{width:20px;height:20px;fill:var(--text-color)}
-button,select{background:var(--card-bg);border:1px solid var(--card-border);color:var(--text-color);padding:8px 14px;border-radius:6px;font-size:.9rem;cursor:pointer;outline:0;transition:.2s}
-button:hover:not(:disabled){background:var(--primary);border-color:var(--primary);color:#fff}
-button:disabled{opacity:.5;cursor:not-allowed}
-.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;width:90%;max-width:420px;z-index:1000;opacity:0;visibility:hidden;transition:.3s;box-shadow:0 10px 25px var(--modal-shadow)}
-.popup.show{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
-.popup-overlay{position:fixed;inset:0;background:var(--overlay-bg);backdrop-filter:blur(4px);z-index:999;opacity:0;visibility:hidden;transition:.3s}
-.popup.show+.popup-overlay{opacity:1;visibility:visible}
-.popup .content{padding:24px}
-.popup h1{font-size:1.25rem;margin-bottom:20px;border-bottom:1px solid var(--card-border);padding-bottom:10px}
-.buttonbox{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:.95rem}
-.buttonbox input[type="text"]{background:var(--bg-color);border:1px solid var(--card-border);color:var(--text-color);padding:6px 10px;border-radius:6px;width:55%;outline:0}
-#pwa-status-msg{font-size:12px;color:#f44336;margin-top:4px;text-align:right}
-.switch{position:relative;display:inline-block;width:44px;height:24px}
-.switch input{opacity:0;width:0;height:0}
-.slider{position:absolute;cursor:pointer;inset:0;background:var(--card-border);transition:.3s;border-radius:24px}
-.slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#fff;transition:.3s;border-radius:50%}
-input:checked+.slider{background:var(--primary)}
-input:checked+.slider:before{transform:translateX(20px)}
-</style>
-</head>
-<body>
-<div id="box"><input type="file" id="input"><span id="drop-label"></span></div>
-<div id="toolbar">
-    <input type="text" id="url-input">
-    <button id="settings" title="Cài đặt"><svg viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg></button>
-</div>
-
-<div id="popup-settings" class="popup">
-    <div class="content">
-        <h1 id="settings-title-h1"></h1>
-        <div class="buttonbox"><span id="label-debug"></span><label class="switch"><input type="checkbox" id="debug"/><span class="slider"></span></label></div>
-        <div class="buttonbox"><span id="label-cache"></span><button id="cache"></button></div>
-        <div class="buttonbox"><span id="label-lang"></span><select id="language"></select></div>
-        <div class="buttonbox"><span id="label-cdn"></span><input type="text" id="customPath" placeholder="https://cdn.emulatorjs.org/stable/data/" /></div>
-        <div id="customPathValid" style="font-size:11px;text-align:right"></div>
-        <div class="buttonbox"><span id="label-pwa"></span><button id="install"></button></div>
-        <div id="pwa-status-msg"></div>
-        <div style="display:flex;justify-content:flex-end;margin-top:1.2em">
-            <button id="settings-close" style="background:var(--primary);border:none;color:#fff"></button>
-        </div>
-    </div>
-</div>
-<div class="popup-overlay"></div>
-
-<script>
+<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EmulatorJS</title><link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='%231AAFFF' d='M8 1a1 1 0 0 0 0 1v9h5a1 1 0 0 0 0-6H8zM1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8z'/></svg>"><style>
+:root{--primary:#1AAFFF;--bg-color:#0d0e12;--card-bg:#333;--card-border:#555;--text-color:#f0f0f0;--text-sub:#a0a5b5;--modal-shadow:rgba(0,0,0,.5);--overlay-bg:rgba(0,0,0,.6)}@media(prefers-color-scheme:light){:root{--primary:#0088cc;--bg-color:#f4f6f9;--card-bg:#fff;--card-border:#d0d5dd;--text-color:#1a1d20;--text-sub:#667085;--modal-shadow:rgba(0,0,0,.15);--overlay-bg:rgba(0,0,0,.3)}}
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}body{background:var(--bg-color);color:var(--text-color);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:.3s}#box{position:relative;width:90%;max-width:500px;height:240px;border:2px solid var(--card-border);border-radius:12px;background:var(--card-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;cursor:pointer}#box:hover{border-color:var(--primary)}#box input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}#drop-label{font-size:1rem;color:var(--text-sub);pointer-events:none;line-height:1.5}#display{position:fixed;inset:0;background:#000;z-index:100}#game{width:100%;height:100%}#toolbar{margin-top:20px;display:flex;gap:10px;width:90%;max-width:500px}#url-input{flex:1;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:10px 14px;color:var(--text-color);outline:0;font-size:.9rem}#url-input:focus{border-color:var(--primary)}#settings{background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer}#settings svg{width:20px;height:20px;fill:var(--text-color)}button,select{background:var(--card-bg);border:1px solid var(--card-border);color:var(--text-color);padding:8px 14px;border-radius:6px;font-size:.9rem;cursor:pointer;outline:0}button:hover:not(:disabled){background:var(--primary);border-color:var(--primary);color:#fff}button:disabled{opacity:.5;cursor:not-allowed}.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;width:90%;max-width:420px;z-index:1000;opacity:0;visibility:hidden;transition:.3s;box-shadow:0 10px 25px var(--modal-shadow)}.popup.show{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}.popup-overlay{position:fixed;inset:0;background:var(--overlay-bg);backdrop-filter:blur(4px);z-index:999;opacity:0;visibility:hidden;transition:.3s}.popup.show+.popup-overlay{opacity:1;visibility:visible}.popup .content{padding:24px}.popup h1{font-size:1.25rem;margin-bottom:20px;border-bottom:1px solid var(--card-border);padding-bottom:10px}.buttonbox{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:.95rem}.buttonbox input[type="text"]{background:var(--bg-color);border:1px solid var(--card-border);color:var(--text-color);padding:6px 10px;border-radius:6px;width:55%;outline:0}#pwa-status-msg{font-size:12px;color:#f44336;margin-top:4px;text-align:right}.switch{position:relative;display:inline-block;width:44px;height:24px}.switch input{opacity:0;width:0;height:0}.slider{position:absolute;cursor:pointer;inset:0;background:var(--card-border);transition:.3s;border-radius:24px}.slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#fff;transition:.3s;border-radius:50%}input:checked+.slider{background:var(--primary)}input:checked+.slider:before{transform:translateX(20px)}</style></head><body><div id="box"><input type="file" id="input"><span id="drop-label"></span></div><div id="toolbar"><input type="text" id="url-input"><button id="settings" title="Cài đặt"><svg viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg></button></div><div id="popup-settings" class="popup"><div class="content"><h1 id="settings-title-h1"></h1><div class="buttonbox"><span id="label-debug"></span><label class="switch"><input type="checkbox" id="debug"/><span class="slider"></span></label></div><div class="buttonbox"><span id="label-cache"></span><button id="cache"></button></div><div class="buttonbox"><span id="label-lang"></span><select id="language"></select></div><div class="buttonbox"><span id="label-cdn"></span><input type="text" id="customPath" placeholder="https://cdn.emulatorjs.org/stable/data/"/></div><div id="customPathValid" style="font-size:11px;text-align:right"></div><div class="buttonbox"><span id="label-pwa"></span><button id="install"></button></div><div id="pwa-status-msg"></div><div style="display:flex;justify-content:flex-end;margin-top:1.2em"><button id="settings-close" style="background:var(--primary);border:none;color:#fff"></button></div></div></div><div class="popup-overlay"></div><script>
 const $=i=>document.getElementById(i),
 ejsLangMap={auto:"",en:"en-US",vi:"vi-VN",pt:"pt-BR",es:"es-ES",ja:"ja-JP",zh:"zh-CN",de:"de-DE",fr:"fr-FR",ru:"ru-RU"},
 langs={auto:"Tự động",en:"English",vi:"Tiếng Việt",pt:"Português",es:"Español",ja:"日本語",zh:"中文",de:"Deutsch",fr:"Français",ru:"Русский"},
@@ -100,11 +35,9 @@ function resetBox(){
 }
 
 function initSettings(){
-    const m=$("popup-settings");
+    const m=$("popup-settings"),p=new URLSearchParams(location.search);
     $("settings").onclick=()=>{checkPwa();m.classList.add("show")};
     $("settings-close").onclick=()=>m.classList.remove("show");
-
-    const p=new URLSearchParams(location.search);
     $("debug").checked=["1","true"].includes(p.get('debug'));
     $("debug").onchange=()=>location.search=$("debug").checked?"?debug=1":"";
 
@@ -140,25 +73,19 @@ function initSettings(){
 
 async function launch(src){
     if(!src)return;
-    let fn=typeof src==="string"?src.split("/").pop():src.name,
+    const urlParams=new URLSearchParams(location.search);
+    let fn=typeof src==="string"?decodeURIComponent(src.split("/").pop()):src.name,
         ext=(fn.split('.').pop()||"").toLowerCase().split('?')[0].split('#')[0],
         gameName=fn.substring(0,fn.lastIndexOf('.'))||fn,
-        core=extMap[ext];
+        core=urlParams.get('core')||extMap[ext];
 
     if(!core){
         $("box").classList.add("selecting-core");
         core=await new Promise(res=>{
-            $("box").innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:260px;z-index:20">
-                <span style="font-size:.95rem;font-weight:600">Chọn hệ máy cho ROM:</span>
-                <select id="core-picker" style="width:100%"></select>
-                <button id="core-submit" style="width:100%;background:var(--primary);color:#fff;border:none">Tải game</button>
-            </div>`;
+            $("box").innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:260px;z-index:20"><span style="font-size:.95rem;font-weight:600">Chọn hệ máy cho ROM:</span><select id="core-picker" style="width:100%"></select><button id="core-submit" style="width:100%;background:var(--primary);color:#fff;border:none">Tải game</button></div>`;
             const sel=$("core-picker");
             for(let c in coreNames)sel.add(new Option(c,coreNames[c]));
-            $("core-submit").onclick=()=>{
-                $("box").classList.remove("selecting-core");
-                res(sel.value);
-            };
+            $("core-submit").onclick=()=>{$("box").classList.remove("selecting-core");res(sel.value)};
         });
         resetBox();
     }
@@ -170,12 +97,10 @@ async function launch(src){
     div.appendChild(sub);document.body.appendChild(div);
 
     const cdn=localStorage.getItem("custom_cdn")||"https://cdn.emulatorjs.org/stable/data/";
-
     const handleExit=()=>{
-        try{location.reload()}catch(e){console.error("Reload err:",e)}
+        try{location.reload()}catch(e){}
         setTimeout(()=>{
-            const cur=$("display");
-            if(cur)cur.remove();
+            if($("display"))$("display").remove();
             $("box").style.display="";
             if($("toolbar"))$("toolbar").style.display="";
             if($("input"))$("input").value="";
@@ -186,7 +111,7 @@ async function launch(src){
     Object.assign(window,{
         EJS_player:"#game",
         EJS_gameName:gameName||"Game",
-        EJS_biosUrl: ["arcade", "mame2003_plus"].includes(core) ? "https://longhai.github.io/bios/arcade.7z" : "",
+        EJS_biosUrl:["arcade","mame2003_plus"].includes(core)?"https://longhai.github.io/bios/arcade.7z":"",
         EJS_gameUrl:src,
         EJS_core:core,
         EJS_pathtodata:cdn,
@@ -194,6 +119,9 @@ async function launch(src){
         EJS_DEBUG_XX:$("debug").checked,
         EJS_onExit:handleExit
     });
+
+    if(urlParams.get('p'))window.EJS_gameParentUrl=urlParams.get('p');
+    if(urlParams.get('patch'))window.EJS_gamePatchUrl=urlParams.get('patch');
 
     const cl=window.language||localStorage.getItem("language")||"auto";
     if(cl&&cl!=="auto")window.EJS_language=ejsLangMap[cl]||cl;
@@ -204,7 +132,6 @@ async function launch(src){
     obs.observe(div,{childList:!0,subtree:!0,characterData:!0});
 
     if(["psp","dosbox_pure"].includes(core))window.EJS_threads=!0;
-
     sc.src=cdn+(cdn.endsWith("data/")?"loader.js":"data/loader.js");
     document.body.appendChild(sc);
 }
@@ -216,42 +143,21 @@ function checkPwa(){
     const isVi=(window.language==="vi"||(window.language==="auto"&&navigator.language.startsWith("vi"))),
           st=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone,
           mk=localStorage.getItem("pwa_installed")==="true";
-
-    if(st||(mk&&!installPrompt)){
-        $("install").textContent=isVi?i18n.vi.installed:i18n.en.installed;
-        $("install").disabled=!0;
-    }else{
-        $("install").textContent=isVi?i18n.vi.inst:i18n.en.inst;
-        $("install").disabled=!installPrompt;
-    }
+    $("install").textContent=(st||(mk&&!installPrompt))?(isVi?i18n.vi.installed:i18n.en.installed):(isVi?i18n.vi.inst:i18n.en.inst);
+    $("install").disabled=st||(mk&&!installPrompt)||!installPrompt;
 }
 
-window.addEventListener("beforeinstallprompt",e=>{
-    e.preventDefault();installPrompt=e;
-    localStorage.removeItem("pwa_installed");
-    checkPwa();
-});
-
-window.addEventListener("appinstalled",()=>{
-    localStorage.setItem("pwa_installed","true");
-    installPrompt=null;
-    checkPwa();
-});
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installPrompt=e;localStorage.removeItem("pwa_installed");checkPwa()});
+window.addEventListener("appinstalled",()=>{localStorage.setItem("pwa_installed","true");installPrompt=null;checkPwa()});
 
 (()=>{
     try{
-        const m={
-            name:"EmulatorJS Demo",short_name:"EmulatorJS",start_url:location.href,
-            display:"standalone",background_color:"#0d0e12",theme_color:"#1AAFFF",
-            icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='%231AAFFF' d='M8 1a1 1 0 0 0 0 1v9h5a1 1 0 0 0 0-6H8zM1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8z'/></svg>",sizes:"192x192 512x512",type:"image/svg+xml"}]
-        },l=document.createElement("link");
-        l.rel="manifest";
-        l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:"application/json"}));
+        const m={name:"EmulatorJS Demo",short_name:"EmulatorJS",start_url:location.href,display:"standalone",background_color:"#0d0e12",theme_color:"#1AAFFF",icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='%231AAFFF' d='M8 1a1 1 0 0 0 0 1v9h5a1 1 0 0 0-6H8zM1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8z'/></svg>",sizes:"192x192 512x512",type:"image/svg+xml"}]},
+              l=document.createElement("link");
+        l.rel="manifest";l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:"application/json"}));
         document.head.appendChild(l);
-
         if('serviceWorker'in navigator&&location.protocol.startsWith('http')){
-            const sw=`self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>self.clients.claim());self.addEventListener('fetch',e=>e.respondWith(fetch(e.request)));`;
-            navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:"application/javascript"}))).catch(()=>{});
+            navigator.serviceWorker.register(URL.createObjectURL(new Blob(["self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>self.clients.claim());self.addEventListener('fetch',e=>e.respondWith(fetch(e.request)));"],{type:"application/javascript"}))).catch(()=>{});
         }
     }catch(e){}
     checkPwa();
@@ -261,21 +167,19 @@ $("install").onclick=async()=>{
     if(installPrompt){
         try{
             installPrompt.prompt();
-            const c=await installPrompt.userChoice;
-            if(c?.outcome==='accepted'){
-                localStorage.setItem("pwa_installed","true");
-                installPrompt=null;
-                checkPwa();
+            if((await installPrompt.userChoice)?.outcome==='accepted'){
+                localStorage.setItem("pwa_installed","true");installPrompt=null;checkPwa();
             }
-        }catch(e){$("pwa-status-msg").textContent="Lỗi cài đặt PWA: "+e.message}
+        }catch(e){$("pwa-status-msg").textContent="Lỗi PWA: "+e.message}
     }else{
-        $("pwa-status-msg").textContent=(window.language==="en"||(window.language==="auto"&&!navigator.language.startsWith("vi")))
-            ?"PWA requires HTTPS or localhost, and a supported browser."
-            :"PWA yêu cầu môi trường HTTPS/localhost và trình duyệt hỗ trợ.";
+        $("pwa-status-msg").textContent=(window.language==="en"||(window.language==="auto"&&!navigator.language.startsWith("vi")))?"PWA requires HTTPS or localhost.":"PWA yêu cầu môi trường HTTPS/localhost.";
     }
 };
 
 initSettings();
-</script>
-</body>
-</html>
+
+// Tự động kích hoạt game nếu nhận tham số từ URL
+const autoRom = new URLSearchParams(location.search).get('rom');
+if(autoRom) launch(autoRom);
+</script></body></html>
+<!--hỗ trợ link emu.html?core=fbneo&rom=https://...game.zip-->
