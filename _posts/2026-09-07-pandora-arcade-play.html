@@ -11,7 +11,6 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      touch-action: manipulation;
       user-select: none;
     }
     
@@ -77,6 +76,7 @@
       align-items: center;
       justify-content: center;
       order: 1;
+      touch-action: none;
     }
     
     svg {
@@ -258,6 +258,34 @@
     
     .tn { font: 700 18px 'Rajdhani', sans-serif; fill: #e2e8f0; }
     .ta { font: 800 20px 'Rajdhani', sans-serif; fill: #fff; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.95)); }
+
+    .gp-guide {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(234, 88, 12, 0.6);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+      border-radius: 20px;
+      padding: 6px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font: 700 11px 'Orbitron', sans-serif;
+      color: #e2e8f0;
+      z-index: 40;
+      backdrop-filter: blur(8px);
+      white-space: nowrap;
+      max-width: 95vw;
+      overflow-x: auto;
+    }
+    .gp-guide b {
+      color: #38bdf8;
+    }
+    .gp-guide .highlight {
+      color: #fbbf24;
+    }
     
     @media (max-width: 820px), (max-aspect-ratio: 1/1) {
       main {
@@ -315,7 +343,6 @@
     </div>
   </main>
 
-  <!-- Fullscreen Game Player Modal -->
   <div id="game-player-modal">
     <div id="player-toolbar">
       <span id="player-title">PANDORA ARCADE PLAYER</span>
@@ -332,7 +359,53 @@
     const GITHUB_ROMS_API = "https://api.github.com/repos/longhai/games/contents/roms";
     const EMULATOR_BASE_URL = "https://longhai.github.io/codes/2026/08/29/emulatorjs.html";
     const ROMS_RAW_BASE = "https://longhai.github.io/games/roms/";
-    const CACHE_TTL = 12 * 60 * 60 * 1000; // Cache TTL: 12 hours
+    const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 Hours TTL
+
+    // Web Audio Sound Synth for Arcade Effects
+    let audioCtx = null;
+    function playSound(type) {
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+
+        if (type === 'move') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.exponentialRampToValueAtTime(160, now + 0.04);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
+          osc.start(now);
+          osc.stop(now + 0.04);
+        } else if (type === 'select') {
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(440, now);
+          osc.frequency.setValueAtTime(880, now + 0.08);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+          osc.start(now);
+          osc.stop(now + 0.18);
+        } else if (type === 'category') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.08);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+          osc.start(now);
+          osc.stop(now + 0.1);
+        }
+      } catch (e) {
+        // Audio Context fallback
+      }
+    }
 
     function getCache(key) {
       try {
@@ -359,7 +432,6 @@
       }
     }
 
-    // System to Libretro snapshot directory & EmulatorJS core mapping
     const SYSTEM_MAPPINGS = [
       { keywords: ["mega drive", "megadrive", "genesis", "sega"], icon: "⚡", system: "Sega - Mega Drive - Genesis", core: "segaMD" },
       { keywords: ["snes", "super famicom", "super nintendo", "sfc"], icon: "🎮", system: "Nintendo - Super Nintendo Entertainment System", core: "snes" },
@@ -398,7 +470,7 @@
     let currentDatIdx = 0;
     let isCurved = localStorage.getItem('pandora_curved') !== null ? localStorage.getItem('pandora_curved') === 'true' : !isMobileDevice();
     let NUM = 10;
-    let games = []; // Objects: { name: cleanName, fullName: rawFileName }
+    let games = [];
     let selIdx = 0;
     let topIdx = 0;
     let slots = [];
@@ -445,6 +517,7 @@
       }
       currentDatIdx = idx;
       $('menu-pop').classList.remove('show');
+      playSound('category');
       showLoader("ĐANG TẢI GIAO DIỆN GAME...");
       loadGameList();
     }
@@ -463,6 +536,7 @@
         <line x1="${xl0.toFixed(1)}" y1="${H_TOP}" x2="${xl1.toFixed(1)}" y2="${H_BOT}" stroke="#38bdf8" stroke-width="4"/>
         <g id="btn-menu" style="cursor:pointer"><text x="${startX}" y="${H_TOP + 31}" font-size="18">${datList[currentDatIdx]?.icon || '🕹️'}</text></g>
         <text id="cnt-txt" x="${startX + 26}" y="${H_TOP + 31}" fill="#fbbf24" font-size="16" font-weight="bold" font-family="Orbitron">GAME: 0 / 0</text>
+        <text id="gp-icon-status" x="${startX + 185}" y="${H_TOP + 31}" font-size="14" fill="${gamepadConnected ? '#4ade80' : '#475569'}" title="Gamepad Connected">🎮</text>
         <g id="btn-toggle" style="cursor:pointer"><text x="${(xl0 + p.W - 25).toFixed(1)}" y="${H_TOP + 32}" fill="${clr}" font-size="20" font-weight="900" font-family="Orbitron" text-anchor="middle">${isCurved ? ')' : '|'}</text></g>`;
 
       $('btn-menu').onclick = e => {
@@ -506,7 +580,7 @@
         el.onclick = () => {
           if (topIdx + i < games.length) {
             if (selIdx === topIdx + i) {
-              launchCurrentGame(); // Launch on second click
+              launchCurrentGame();
             } else {
               selIdx = topIdx + i;
               render();
@@ -611,7 +685,6 @@
           rawFiles = data.map(item => item.name);
         }
 
-        // Map files to objects holding clean display name and original file name
         games = rawFiles
           .filter(name => name && name !== ".gitkeep" && !name.includes('/'))
           .map(fullName => {
@@ -665,10 +738,18 @@
       const base = `https://thumbnails.libretro.com/${sys}`;
       const fallback = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23f97316' stroke-width='1.5'%3E%3Crect x='2' y='2' width='20' height='20' rx='4'/%3E%3Cpath d='M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z'/%3E%3Cpath d='m21 15-5-5L5 21'/%3E%3C/svg%3E";
 
+      // Track target name on image element to avoid async image race conditions
+      img.dataset.targetName = name;
       img.src = `${base}/Named_Snaps/${name}.png`;
+      
       img.onerror = () => {
+        if (img.dataset.targetName !== name) return;
         img.src = `${base}/Named_Boxarts/${name}.png`;
-        img.onerror = () => { img.src = fallback; };
+        img.onerror = () => { 
+          if (img.dataset.targetName === name) {
+            img.src = fallback;
+          }
+        };
       };
     }
 
@@ -685,6 +766,7 @@
       const currentGame = games[selIdx];
       if (!currentGame || !currentGame.fullName) return;
 
+      playSound('select');
       const currentCategory = datList[currentDatIdx];
       const playerUrl = buildGameEmulatorUrl(currentGame, currentCategory);
 
@@ -759,11 +841,11 @@
         updatePreview(games[selIdx]);
       }
     }
-
-    const move = step => {
+    const move = (step, sound = true) => {
       const nxt = selIdx + step;
       if (nxt >= 0 && nxt < games.length) {
         selIdx = nxt;
+        if (sound) playSound('move');
         render();
       }
     };
@@ -793,13 +875,210 @@
     }, { passive: true });
 
     window.onwheel = e => move(e.deltaY > 0 ? 1 : -1);
+    
     window.onkeydown = e => {
-      if (e.key === 'ArrowDown') move(1);
-      else if (e.key === 'ArrowUp') move(-1);
-      else if (e.key === 'Enter') launchCurrentGame();
-      else if (e.key === 'Escape') closeGamePlayer();
+      // Isolate keyboard input when game player modal is active
+      const modalActive = $('game-player-modal').classList.contains('active');
+      if (modalActive) {
+        if (e.key === 'Escape') closeGamePlayer();
+        return;
+      }
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        move(1);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        move(-1);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        launchCurrentGame();
+      } else if (e.key === 'Escape') {
+        closeGamePlayer();
+      }
     };
+
     window.onclick = () => $('menu-pop').classList.remove('show');
+
+    let gamepadConnected = false;
+    let gpLastTime = 0;
+    let lastGpBtnState = {};
+
+    function showGamepadToast(msg) {
+      let toast = $('gp-toast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'gp-toast';
+        toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(15,23,42,0.95);border:1.5px solid #22c55e;color:#4ade80;padding:8px 20px;border-radius:20px;font:700 13px Orbitron,sans-serif;z-index:999;box-shadow:0 0 20px rgba(34,197,94,0.5);transition:opacity 0.3s ease, transform 0.3s ease;pointer-events:none;';
+        document.body.appendChild(toast);
+      }
+      toast.textContent = msg;
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateX(-50%) translateY(0)';
+      clearTimeout(toast._timeout);
+      toast._timeout = setTimeout(() => { 
+        toast.style.opacity = '0'; 
+        toast.style.transform = 'translateX(-50%) translateY(10px)';
+      }, 2500);
+    }
+
+    window.addEventListener("gamepadconnected", (e) => {
+      gamepadConnected = true;
+      const gpName = e.gamepad.id.split("(")[0].trim() || "Tay cầm";
+      showGamepadToast("🎮 TAY CẦM ĐÃ KẾT NỐI: " + gpName.toUpperCase());
+      drawHeader();
+    });
+
+    window.addEventListener("gamepaddisconnected", () => {
+      gamepadConnected = false;
+      showGamepadToast("⚠️ TAY CẦM ĐÃ NGẮT KẾT NỐI");
+      drawHeader();
+    });
+
+    function pollGamepadLoop(timestamp) {
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+      let activeGp = null;
+      for (let i = 0; i < gamepads.length; i++) {
+        if (gamepads[i] && gamepads[i].connected) { 
+          activeGp = gamepads[i]; 
+          break; 
+        }
+      }
+
+      if (activeGp) {
+        if (!gamepadConnected) {
+          gamepadConnected = true;
+          drawHeader();
+        }
+
+        const modalActive = $('game-player-modal').classList.contains('active');
+        
+        if (modalActive) {
+          // Shortcut in Game Player: SELECT + START or HOME button to quit back to arcade menu
+          const bSelect = activeGp.buttons[8]?.pressed;
+          const bStart = activeGp.buttons[9]?.pressed;
+          const bHome = activeGp.buttons[16]?.pressed || activeGp.buttons[17]?.pressed;
+          
+          if ((bSelect && bStart) || bHome) {
+            if (!lastGpBtnState['exit']) {
+              lastGpBtnState['exit'] = true;
+              closeGamePlayer();
+              showGamepadToast("✖ ĐÃ ĐÓNG GAME PLAYER");
+            }
+          } else {
+            lastGpBtnState['exit'] = false;
+          }
+        } else {
+          // Main Arcade Menu Navigation Logic
+          const now = performance.now();
+          
+          const axisY = activeGp.axes[1] !== undefined ? activeGp.axes[1] : (activeGp.axes[3] || 0);
+          const axisX = activeGp.axes[0] !== undefined ? activeGp.axes[0] : (activeGp.axes[2] || 0);
+          
+          const dUp = activeGp.buttons[12]?.pressed || axisY < -0.55;
+          const dDown = activeGp.buttons[13]?.pressed || axisY > 0.55;
+          const dLeft = activeGp.buttons[14]?.pressed || axisX < -0.55;
+          const dRight = activeGp.buttons[15]?.pressed || axisX > 0.55;
+          
+          const btnA = activeGp.buttons[0]?.pressed;       // A / Cross
+          const btnB = activeGp.buttons[1]?.pressed;       // B / Circle
+          const btnY = activeGp.buttons[3]?.pressed;       // Y / Triangle
+          const btnLB = activeGp.buttons[4]?.pressed;      // LB / L1
+          const btnRB = activeGp.buttons[5]?.pressed;      // RB / R1
+          const btnLT = activeGp.buttons[6]?.pressed || (activeGp.buttons[6]?.value && activeGp.buttons[6].value > 0.5); // LT / L2
+          const btnRT = activeGp.buttons[7]?.pressed || (activeGp.buttons[7]?.value && activeGp.buttons[7].value > 0.5); // RT / R2
+          const btnStart = activeGp.buttons[9]?.pressed;   // Start
+          const btnSelect = activeGp.buttons[8]?.pressed;  // Select
+
+          // Up / Down with hold-to-repeat delay
+          if (dUp || dDown) {
+            const delay = lastGpBtnState['firstRepeat'] ? 150 : 320;
+            if (!lastGpBtnState['dir'] || (now - gpLastTime > delay)) {
+              move(dUp ? -1 : 1);
+              gpLastTime = now;
+              if (!lastGpBtnState['dir']) {
+                lastGpBtnState['dir'] = true;
+                lastGpBtnState['firstRepeat'] = false;
+              } else {
+                lastGpBtnState['firstRepeat'] = true;
+              }
+            }
+          } else {
+            lastGpBtnState['dir'] = false;
+            lastGpBtnState['firstRepeat'] = false;
+          }
+
+          // Fast Scroll with LT / RT Triggers
+          if (btnLT || btnRT) {
+            if (!lastGpBtnState['trigger']) {
+              lastGpBtnState['trigger'] = true;
+              move(btnLT ? -5 : 5);
+            }
+          } else {
+            lastGpBtnState['trigger'] = false;
+          }
+
+          // Left / Right or LB / RB to switch Category
+          if (dLeft || dRight || btnLB || btnRB) {
+            if (!lastGpBtnState['cat']) {
+              lastGpBtnState['cat'] = true;
+              if (datList.length > 0) {
+                const step = (dRight || btnRB) ? 1 : -1;
+                let nextIdx = currentDatIdx + step;
+                if (nextIdx < 0) nextIdx = datList.length - 1;
+                if (nextIdx >= datList.length) nextIdx = 0;
+                switchDat(nextIdx);
+                showGamepadToast(`📁 HỆ MÁY: ${datList[nextIdx]?.name || ''}`);
+              }
+            }
+          } else {
+            lastGpBtnState['cat'] = false;
+          }
+
+          // Launch Game (A Button or START)
+          if (btnA || btnStart) {
+            if (!lastGpBtnState['confirm']) {
+              lastGpBtnState['confirm'] = true;
+              launchCurrentGame();
+            }
+          } else {
+            lastGpBtnState['confirm'] = false;
+          }
+
+          // Close Popup Menu (B Button)
+          if (btnB) {
+            if (!lastGpBtnState['back']) {
+              lastGpBtnState['back'] = true;
+              if ($('menu-pop').classList.contains('show')) {
+                $('menu-pop').classList.remove('show');
+              }
+            }
+          } else {
+            lastGpBtnState['back'] = false;
+          }
+
+          // Toggle Curved Mode (Y Button or SELECT)
+          if (btnY || btnSelect) {
+            if (!lastGpBtnState['toggle']) {
+              lastGpBtnState['toggle'] = true;
+              isCurved = !isCurved;
+              localStorage.setItem('pandora_curved', isCurved);
+              drawHeader();
+              drawSlots();
+              render();
+              showGamepadToast(isCurved ? "🔄 CHẾ ĐỘ: KHUNG CONG" : "📏 CHẾ ĐỘ: KHUNG THẲNG");
+            }
+          } else {
+            lastGpBtnState['toggle'] = false;
+          }
+        }
+      }
+
+      requestAnimationFrame(pollGamepadLoop);
+    }
+
+    requestAnimationFrame(pollGamepadLoop);
+
     window.onload = loadCategories;
   </script>
 </body>
