@@ -259,34 +259,6 @@
     .tn { font: 700 18px 'Rajdhani', sans-serif; fill: #e2e8f0; }
     .ta { font: 800 20px 'Rajdhani', sans-serif; fill: #fff; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.95)); }
 
-    .gp-guide {
-      position: fixed;
-      bottom: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(15, 23, 42, 0.92);
-      border: 1px solid rgba(234, 88, 12, 0.6);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
-      border-radius: 20px;
-      padding: 6px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font: 700 11px 'Orbitron', sans-serif;
-      color: #e2e8f0;
-      z-index: 40;
-      backdrop-filter: blur(8px);
-      white-space: nowrap;
-      max-width: 95vw;
-      overflow-x: auto;
-    }
-    .gp-guide b {
-      color: #38bdf8;
-    }
-    .gp-guide .highlight {
-      color: #fbbf24;
-    }
-    
     @media (max-width: 820px), (max-aspect-ratio: 1/1) {
       main {
         flex-direction: column;
@@ -361,52 +333,6 @@
     const ROMS_RAW_BASE = "https://longhai.github.io/games/roms/";
     const CACHE_TTL = 12 * 60 * 60 * 1000; // 12 Hours TTL
 
-    // Web Audio Sound Synth for Arcade Effects
-    let audioCtx = null;
-    function playSound(type) {
-      try {
-        if (!audioCtx) {
-          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        const now = audioCtx.currentTime;
-
-        if (type === 'move') {
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(320, now);
-          osc.frequency.exponentialRampToValueAtTime(160, now + 0.04);
-          gain.gain.setValueAtTime(0.12, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
-          osc.start(now);
-          osc.stop(now + 0.04);
-        } else if (type === 'select') {
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(440, now);
-          osc.frequency.setValueAtTime(880, now + 0.08);
-          gain.gain.setValueAtTime(0.18, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
-          osc.start(now);
-          osc.stop(now + 0.18);
-        } else if (type === 'category') {
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(523.25, now);
-          osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.08);
-          gain.gain.setValueAtTime(0.15, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-          osc.start(now);
-          osc.stop(now + 0.1);
-        }
-      } catch (e) {
-        // Audio Context fallback
-      }
-    }
-
     function getCache(key) {
       try {
         const raw = localStorage.getItem(key);
@@ -436,13 +362,15 @@
       { keywords: ["mega drive", "megadrive", "genesis", "sega"], icon: "⚡", system: "Sega - Mega Drive - Genesis", core: "segaMD" },
       { keywords: ["snes", "super famicom", "super nintendo", "sfc"], icon: "🎮", system: "Nintendo - Super Nintendo Entertainment System", core: "snes" },
       { keywords: ["famicon", "famicom", "nes"], icon: "🍄", system: "Nintendo - Nintendo Entertainment System", core: "nes" },
-      { keywords: ["arcade"], icon: "🕹️", system: "FBNeo - Arcade Games", core: "fbneo" },
+      { keywords: ["arcade", "cps1", "cps2", "cps3", "fbneo", "fba"], icon: "🕹️", system: "FBNeo - Arcade Games", core: "arcade" },
+      { keywords: ["mame"], icon: "🕹️", system: "MAME 2003-Plus", core: "mame2003plus" },
       { keywords: ["gba", "game boy advance"], icon: "👾", system: "Nintendo - Game Boy Advance", core: "gba" },
       { keywords: ["gbc", "game boy color"], icon: "📱", system: "Nintendo - Game Boy Color", core: "gbc" },
       { keywords: ["gb", "game boy"], icon: "📱", system: "Nintendo - Game Boy", core: "gb" },
-      { keywords: ["neogeo", "neo geo"], icon: "⚔️", system: "SNK - Neo Geo", core: "fbneo" },
+      { keywords: ["neogeo", "neo geo"], icon: "⚔️", system: "SNK - Neo Geo", core: "arcade" },
       { keywords: ["n64", "nintendo 64"], icon: "💎", system: "Nintendo - Nintendo 64", core: "n64" },
-      { keywords: ["psx", "ps1", "playstation"], icon: "💿", system: "Sony - PlayStation", core: "psx" }
+      { keywords: ["psx", "ps1", "playstation"], icon: "💿", system: "Sony - PlayStation", core: "psx" },
+      { keywords: ["pce", "pc engine", "turbografx"], icon: "🎮", system: "NEC - PC Engine - TurboGrafx-16", core: "pce" }
     ];
 
     function resolveSystemInfo(dirName) {
@@ -459,7 +387,7 @@
       if (match) {
         return { icon: match.icon, system: match.system, core: match.core };
       }
-      return { icon: "🕹️", system: dirName, core: "fbneo" };
+      return { icon: "🕹️", system: dirName, core: "arcade" };
     }
 
     const $ = id => document.getElementById(id);
@@ -517,7 +445,6 @@
       }
       currentDatIdx = idx;
       $('menu-pop').classList.remove('show');
-      playSound('category');
       showLoader("ĐANG TẢI GIAO DIỆN GAME...");
       loadGameList();
     }
@@ -607,7 +534,7 @@
 
     async function loadCategories() {
       showLoader("ĐANG TẢI DANH SÁCH MENU TỪ GITHUB...");
-      const cachedCategories = getCache("pandora_categories_v2");
+      const cachedCategories = getCache("pandora_categories_v4");
       if (cachedCategories && cachedCategories.length > 0) {
         datList = cachedCategories;
         currentDatIdx = 0;
@@ -635,11 +562,11 @@
           };
         });
 
-        setCache("pandora_categories_v2", datList);
+        setCache("pandora_categories_v4", datList);
         currentDatIdx = 0;
         await loadGameList();
       } catch (err) {
-        const stale = localStorage.getItem("pandora_categories_v2");
+        const stale = localStorage.getItem("pandora_categories_v4");
         if (stale) {
           try {
             datList = JSON.parse(stale).data;
@@ -738,7 +665,6 @@
       const base = `https://thumbnails.libretro.com/${sys}`;
       const fallback = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23f97316' stroke-width='1.5'%3E%3Crect x='2' y='2' width='20' height='20' rx='4'/%3E%3Cpath d='M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z'/%3E%3Cpath d='m21 15-5-5L5 21'/%3E%3C/svg%3E";
 
-      // Track target name on image element to avoid async image race conditions
       img.dataset.targetName = name;
       img.src = `${base}/Named_Snaps/${name}.png`;
       
@@ -755,7 +681,7 @@
 
     function buildGameEmulatorUrl(gameObj, category) {
       if (!gameObj || !gameObj.fullName || !category) return "";
-      const core = category.core || "fbneo";
+      const core = category.core || "arcade";
       const categoryPath = encodeURIComponent(category.name);
       const fileName = encodeURIComponent(gameObj.fullName);
       const romUrl = `${ROMS_RAW_BASE}${categoryPath}/${fileName}`;
@@ -766,7 +692,6 @@
       const currentGame = games[selIdx];
       if (!currentGame || !currentGame.fullName) return;
 
-      playSound('select');
       const currentCategory = datList[currentDatIdx];
       const playerUrl = buildGameEmulatorUrl(currentGame, currentCategory);
 
@@ -841,11 +766,11 @@
         updatePreview(games[selIdx]);
       }
     }
-    const move = (step, sound = true) => {
+
+    const move = (step) => {
       const nxt = selIdx + step;
       if (nxt >= 0 && nxt < games.length) {
         selIdx = nxt;
-        if (sound) playSound('move');
         render();
       }
     };
@@ -877,7 +802,6 @@
     window.onwheel = e => move(e.deltaY > 0 ? 1 : -1);
     
     window.onkeydown = e => {
-      // Isolate keyboard input when game player modal is active
       const modalActive = $('game-player-modal').classList.contains('active');
       if (modalActive) {
         if (e.key === 'Escape') closeGamePlayer();
@@ -954,7 +878,6 @@
         const modalActive = $('game-player-modal').classList.contains('active');
         
         if (modalActive) {
-          // Shortcut in Game Player: SELECT + START or HOME button to quit back to arcade menu
           const bSelect = activeGp.buttons[8]?.pressed;
           const bStart = activeGp.buttons[9]?.pressed;
           const bHome = activeGp.buttons[16]?.pressed || activeGp.buttons[17]?.pressed;
@@ -969,7 +892,6 @@
             lastGpBtnState['exit'] = false;
           }
         } else {
-          // Main Arcade Menu Navigation Logic
           const now = performance.now();
           
           const axisY = activeGp.axes[1] !== undefined ? activeGp.axes[1] : (activeGp.axes[3] || 0);
@@ -980,17 +902,16 @@
           const dLeft = activeGp.buttons[14]?.pressed || axisX < -0.55;
           const dRight = activeGp.buttons[15]?.pressed || axisX > 0.55;
           
-          const btnA = activeGp.buttons[0]?.pressed;       // A / Cross
-          const btnB = activeGp.buttons[1]?.pressed;       // B / Circle
-          const btnY = activeGp.buttons[3]?.pressed;       // Y / Triangle
-          const btnLB = activeGp.buttons[4]?.pressed;      // LB / L1
-          const btnRB = activeGp.buttons[5]?.pressed;      // RB / R1
-          const btnLT = activeGp.buttons[6]?.pressed || (activeGp.buttons[6]?.value && activeGp.buttons[6].value > 0.5); // LT / L2
-          const btnRT = activeGp.buttons[7]?.pressed || (activeGp.buttons[7]?.value && activeGp.buttons[7].value > 0.5); // RT / R2
-          const btnStart = activeGp.buttons[9]?.pressed;   // Start
-          const btnSelect = activeGp.buttons[8]?.pressed;  // Select
+          const btnA = activeGp.buttons[0]?.pressed;
+          const btnB = activeGp.buttons[1]?.pressed;
+          const btnY = activeGp.buttons[3]?.pressed;
+          const btnLB = activeGp.buttons[4]?.pressed;
+          const btnRB = activeGp.buttons[5]?.pressed;
+          const btnLT = activeGp.buttons[6]?.pressed || (activeGp.buttons[6]?.value && activeGp.buttons[6].value > 0.5);
+          const btnRT = activeGp.buttons[7]?.pressed || (activeGp.buttons[7]?.value && activeGp.buttons[7].value > 0.5);
+          const btnStart = activeGp.buttons[9]?.pressed;
+          const btnSelect = activeGp.buttons[8]?.pressed;
 
-          // Up / Down with hold-to-repeat delay
           if (dUp || dDown) {
             const delay = lastGpBtnState['firstRepeat'] ? 150 : 320;
             if (!lastGpBtnState['dir'] || (now - gpLastTime > delay)) {
@@ -1008,7 +929,6 @@
             lastGpBtnState['firstRepeat'] = false;
           }
 
-          // Fast Scroll with LT / RT Triggers
           if (btnLT || btnRT) {
             if (!lastGpBtnState['trigger']) {
               lastGpBtnState['trigger'] = true;
@@ -1018,7 +938,6 @@
             lastGpBtnState['trigger'] = false;
           }
 
-          // Left / Right or LB / RB to switch Category
           if (dLeft || dRight || btnLB || btnRB) {
             if (!lastGpBtnState['cat']) {
               lastGpBtnState['cat'] = true;
@@ -1035,7 +954,6 @@
             lastGpBtnState['cat'] = false;
           }
 
-          // Launch Game (A Button or START)
           if (btnA || btnStart) {
             if (!lastGpBtnState['confirm']) {
               lastGpBtnState['confirm'] = true;
@@ -1045,7 +963,6 @@
             lastGpBtnState['confirm'] = false;
           }
 
-          // Close Popup Menu (B Button)
           if (btnB) {
             if (!lastGpBtnState['back']) {
               lastGpBtnState['back'] = true;
@@ -1057,7 +974,6 @@
             lastGpBtnState['back'] = false;
           }
 
-          // Toggle Curved Mode (Y Button or SELECT)
           if (btnY || btnSelect) {
             if (!lastGpBtnState['toggle']) {
               lastGpBtnState['toggle'] = true;
