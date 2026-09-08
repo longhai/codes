@@ -361,21 +361,29 @@
 
     // System to Libretro snapshot directory & EmulatorJS core mapping
     const SYSTEM_MAPPINGS = [
+      { keywords: ["mega drive", "megadrive", "genesis", "sega"], icon: "⚡", system: "Sega - Mega Drive - Genesis", core: "segaMD" },
+      { keywords: ["snes", "super famicom", "super nintendo", "sfc"], icon: "🎮", system: "Nintendo - Super Nintendo Entertainment System", core: "snes" },
+      { keywords: ["famicon", "famicom", "nes"], icon: "🍄", system: "Nintendo - Nintendo Entertainment System", core: "nes" },
       { keywords: ["arcade"], icon: "🕹️", system: "FBNeo - Arcade Games", core: "fbneo" },
-      { keywords: ["famicon", "famicom", "nes"], icon: "🍄", system: "Nintendo - Nintendo Entertainment System", core: "fceumm" },
-      { keywords: ["snes", "super famicom", "super nintendo"], icon: "🎮", system: "Nintendo - Super Nintendo Entertainment System", core: "snes9x" },
-      { keywords: ["mega drive", "megadrive", "genesis"], icon: "⚡", system: "Sega - Mega Drive - Genesis", core: "segaMD" },
       { keywords: ["gba", "game boy advance"], icon: "👾", system: "Nintendo - Game Boy Advance", core: "gba" },
+      { keywords: ["gbc", "game boy color"], icon: "📱", system: "Nintendo - Game Boy Color", core: "gbc" },
+      { keywords: ["gb", "game boy"], icon: "📱", system: "Nintendo - Game Boy", core: "gb" },
       { keywords: ["neogeo", "neo geo"], icon: "⚔️", system: "SNK - Neo Geo", core: "fbneo" },
       { keywords: ["n64", "nintendo 64"], icon: "💎", system: "Nintendo - Nintendo 64", core: "n64" },
-      { keywords: ["psx", "ps1", "playstation"], icon: "💿", system: "Sony - PlayStation", core: "psx" },
-      { keywords: ["gbc", "game boy color"], icon: "📱", system: "Nintendo - Game Boy Color", core: "gbc" },
-      { keywords: ["gb", "game boy"], icon: "📱", system: "Nintendo - Game Boy", core: "gb" }
+      { keywords: ["psx", "ps1", "playstation"], icon: "💿", system: "Sony - PlayStation", core: "psx" }
     ];
 
     function resolveSystemInfo(dirName) {
       const lower = dirName.toLowerCase();
-      const match = SYSTEM_MAPPINGS.find(m => m.keywords.some(k => lower.includes(k)));
+      const match = SYSTEM_MAPPINGS.find(m => m.keywords.some(k => {
+        if (k === "nes") {
+          return /\bnes\b/i.test(lower) || (lower.includes("nes") && !lower.includes("snes") && !lower.includes("genesis"));
+        }
+        if (k === "gb") {
+          return (lower.includes("gb") || lower.includes("game boy")) && !lower.includes("gba") && !lower.includes("gbc") && !lower.includes("advance") && !lower.includes("color");
+        }
+        return lower.includes(k);
+      }));
       if (match) {
         return { icon: match.icon, system: match.system, core: match.core };
       }
@@ -525,7 +533,7 @@
 
     async function loadCategories() {
       showLoader("ĐANG TẢI DANH SÁCH MENU TỪ GITHUB...");
-      const cachedCategories = getCache("pandora_categories");
+      const cachedCategories = getCache("pandora_categories_v2");
       if (cachedCategories && cachedCategories.length > 0) {
         datList = cachedCategories;
         currentDatIdx = 0;
@@ -553,11 +561,11 @@
           };
         });
 
-        setCache("pandora_categories", datList);
+        setCache("pandora_categories_v2", datList);
         currentDatIdx = 0;
         await loadGameList();
       } catch (err) {
-        const stale = localStorage.getItem("pandora_categories");
+        const stale = localStorage.getItem("pandora_categories_v2");
         if (stale) {
           try {
             datList = JSON.parse(stale).data;
@@ -795,4 +803,4 @@
     window.onload = loadCategories;
   </script>
 </body>
-</html> 
+</html>
