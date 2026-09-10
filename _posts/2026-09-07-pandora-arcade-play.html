@@ -22,7 +22,12 @@
     #preview-img{width:100%;height:100%;object-fit:contain;border-radius:10px;filter:drop-shadow(0 6px 16px rgba(0,0,0,.85));transition:opacity .2s,transform .2s;opacity:1;}
     #preview-img.loading{opacity:.2;transform:scale(.98);}
     
-    #menu-dropdown{display:none;position:absolute;top:48px;left:10px;z-index:150;background:rgba(15,23,42,.96);border:2px solid #f97316;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.85);max-height:55vh;overflow-y:auto;min-width:240px;backdrop-filter:blur(12px);padding:6px;flex-direction:column;gap:4px;}
+    .fav-star-btn{position:absolute;top:10px;right:10px;z-index:20;font-size:26px;color:#64748b;cursor:pointer;transition:all .2s ease;filter:drop-shadow(0 2px 4px rgba(0,0,0,.9));line-height:1;padding:6px;background:rgba(15,23,42,.6);border-radius:50%;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.1);opacity:0;}
+    #preview-container:hover .fav-star-btn,.fav-star-btn.active{opacity:1;}
+    .fav-star-btn:hover{transform:scale(1.2);color:#fbbf24;}
+    .fav-star-btn.active{color:#fbbf24;filter:drop-shadow(0 0 10px #f59e0b);transform:scale(1.1);background:rgba(15,23,42,.85);border-color:#f59e0b;}
+    
+    #menu-dropdown{display:none;position:absolute;top:48px;left:10px;z-index:150;background:rgba(15,23,42,.96);border:2px solid #f97316;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.85);max-height:55vh;overflow-y:auto;min-width:240px;backdrop-filter:blur(12px);padding:6px;flex-direction:column;gap:4px;touch-action:pan-y;}
     #menu-dropdown.active{display:flex;animation:fd .15s ease-out;}
     @keyframes fd{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
     
@@ -92,6 +97,7 @@
       </svg>
     </div>
     <div id="preview-container" onclick="launchCurrentGame()" title="Nhấn để chơi">
+      <div id="fav-btn" class="fav-star-btn" onclick="event.stopPropagation();toggleCurrentFav()" title="Đánh dấu Yêu thích (Phím F hoặc Tay cầm Y)">☆</div>
       <img id="preview-img" src="" alt="Preview"/>
     </div>
   </main>
@@ -112,17 +118,160 @@
     const GITHUB_API="https://api.github.com/repos/longhai/games/contents/roms",
           EMU_URL="https://longhai.github.io/codes/2026/08/29/emulatorjs.html",
           ROM_BASE="https://longhai.github.io/games/roms/",
+          FBNEO_DAT_URL="https://raw.githubusercontent.com/libretro/FBNeo/master/dats/FinalBurn%20Neo%20(ClrMame%20Pro%20XML%2C%20Arcade%20only).dat",
           TTL=43200000,
           CAT_CACHE_VER="pandora_categories_v12";
 
     const LIBRETRO_BASE="https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/automatic/png/";
+
+    const POPULAR_ARCADE_MAP = {
+      "mslug": "Metal Slug - Super Vehicle-001",
+      "mslug2": "Metal Slug 2 - Super Vehicle-001/II",
+      "mslugx": "Metal Slug X - Super Vehicle-001",
+      "mslug3": "Metal Slug 3",
+      "mslug4": "Metal Slug 4",
+      "mslug5": "Metal Slug 5",
+      "kof94": "The King of Fighters '94",
+      "kof95": "The King of Fighters '95",
+      "kof96": "The King of Fighters '96",
+      "kof97": "The King of Fighters '97",
+      "kof98": "The King of Fighters '98 - The Slugfest",
+      "kof99": "The King of Fighters '99 - Millennium Battle",
+      "kof2000": "The King of Fighters 2000",
+      "kof2001": "The King of Fighters 2001",
+      "kof2002": "The King of Fighters 2002 - Challenge to Ultimate Match",
+      "kof2003": "The King of Fighters 2003",
+      "sf2": "Street Fighter II: The World Warrior",
+      "sf2ce": "Street Fighter II' - Champion Edition",
+      "sf2hf": "Street Fighter II' - Hyper Fighting",
+      "ssf2": "Super Street Fighter II: The New Challengers",
+      "ssf2t": "Super Street Fighter II Turbo",
+      "sfa": "Street Fighter Alpha: Warriors' Dreams",
+      "sfa2": "Street Fighter Alpha 2",
+      "sfa3": "Street Fighter Alpha 3",
+      "sfiii": "Street Fighter III: New Generation",
+      "sfiii2": "Street Fighter III 2nd Impact: Giant Attack",
+      "sfiii3": "Street Fighter III 3rd Strike: Fight for the Future",
+      "dino": "Cadillacs and Dinosaurs",
+      "punisher": "The Punisher",
+      "wof": "Warriors of Fate",
+      "captcomm": "Captain Commando",
+      "ffight": "Final Fight",
+      "knights": "Knights of the Round",
+      "kod": "King of Dragons",
+      "3wonders": "Three Wonders",
+      "msh": "Marvel Super Heroes",
+      "mshvsf": "Marvel Super Heroes Vs. Street Fighter",
+      "mvsc": "Marvel Vs. Capcom: Clash of Super Heroes",
+      "xmvsf": "X-Men Vs. Street Fighter",
+      "xmcota": "X-Men: Children of the Atom",
+      "vsav": "Vampire Savior: The Lord of Vampire",
+      "dstlk": "Darkstalkers: The Night Warriors",
+      "nwarr": "Night Warriors: Darkstalkers' Revenge",
+      "samsho": "Samurai Shodown",
+      "samsho2": "Samurai Shodown II",
+      "samsho3": "Samurai Shodown III",
+      "samsho4": "Samurai Shodown IV: Amakusa's Revenge",
+      "samsho5": "Samurai Shodown V",
+      "samsh5sp": "Samurai Shodown V Special",
+      "fatfury1": "Fatal Fury: King of Fighters",
+      "fatfury2": "Fatal Fury 2",
+      "fatfury3": "Fatal Fury 3: Road to the Final Victory",
+      "fatfursp": "Fatal Fury Special",
+      "rbff1": "Real Bout Fatal Fury",
+      "rbffspec": "Real Bout Fatal Fury Special",
+      "rbff2": "Real Bout Fatal Fury 2: The Newcomers",
+      "garou": "Garou: Mark of the Wolves",
+      "aof": "Art of Fighting",
+      "aof2": "Art of Fighting 2",
+      "aof3": "Art of Fighting 3: Path of the Warrior",
+      "lastblade": "The Last Blade",
+      "lastbl2": "The Last Blade 2",
+      "neobomb": "Neo Bomberman",
+      "pbobble": "Puzzle Bobble / Bust-A-Move",
+      "pbobble2": "Puzzle Bobble 2 / Bust-A-Move Again",
+      "puzzledp": "Puzzle De Pon!",
+      "magdrop2": "Magical Drop II",
+      "magdrop3": "Magical Drop III",
+      "spinmast": "Spin Master",
+      "tengai": "Tengai / Sengoku Blade",
+      "sengoku": "Sengoku",
+      "sengoku2": "Sengoku 2",
+      "sengoku3": "Sengoku 3",
+      "strhoop": "Street Hoop / Dunk Dream",
+      "windj": "Windjammers / Flying Power Disc",
+      "shocktro": "Shock Troopers",
+      "shocktr2": "Shock Troopers: 2nd Squad",
+      "tumblp": "Tumble Pop",
+      "snowbro": "Snow Bros. - Nick & Tom",
+      "snowbro2": "Snow Bros. 2 - With New Elves",
+      "caveman": "Caveman Ninja / Joe & Mac",
+      "twincob2": "Twin Cobra II",
+      "boulderd": "Boulder Dash",
+      "bublbobl": "Bubble Bobble",
+      "p47": "P-47 - The Phantom Fighter",
+      "raiden": "Raiden",
+      "1941": "1941: Counter Attack",
+      "1942": "1942",
+      "1943": "1943: The Battle of Midway",
+      "1943kai": "1943 Kai: Midway Kaisen",
+      "1944": "1944: The Loop Master",
+      "19xx": "19XX: The War Against Destiny",
+      "carrier": "Carrier Air Wing",
+      "strider": "Strider",
+      "ghouls": "Ghouls'n Ghosts",
+      "gng": "Ghosts'n Goblins",
+      "mercs": "Mercs",
+      "unquad": "U.N. Squadron",
+      "willow": "Willow",
+      "mmatrix": "Mars Matrix: Hyper Solid Shooting",
+      "gigawing": "Giga Wing",
+      "progear": "Progear",
+      "simpsons": "The Simpsons",
+      "tmnt": "Teenage Mutant Ninja Turtles",
+      "tmnt2": "Teenage Mutant Ninja Turtles: Turtles in Time",
+      "xmen": "X-Men",
+      "avsp": "Alien vs. Predator",
+      "batman": "Batman",
+      "popeye": "Popeye",
+      "pacman": "Pac-Man",
+      "mspacman": "Ms. Pac-Man",
+      "donkeykong": "Donkey Kong",
+      "dkong": "Donkey Kong",
+      "mario": "Mario Bros.",
+      "contra": "Contra",
+      "scontra": "Super Contra",
+      "twinkle": "Twinkle Star Sprites",
+      "wakuwak7": "Waku Waku 7",
+      "ninjamas": "Ninja Master's",
+      "kabukikl": "Kabuki Klash",
+      "matrime": "Matrimlee",
+      "blazstar": "Blazing Star",
+      "pulstar": "Pulstar",
+      "zedblade": "Zed Blade / OPERATION RAGNAROK",
+      "sonicwi": "Sonic Wings / Aero Fighters",
+      "sonicwi2": "Aero Fighters 2",
+      "sonicwi3": "Aero Fighters 3",
+      "stakwin": "Stakes Winner",
+      "stakwin2": "Stakes Winner 2",
+      "tophunter": "Top Hunter: Patty & Cathy",
+      "mutnat": "Mutation Nation",
+      "cyberlip": "Cyber-Lip",
+      "rotd": "Rage of the Dragons",
+      "kizuna": "Kizuna Encounter: Super Tag Battle",
+      "doubledr": "Double Dragon",
+      "gowcaizr": "Voltage Fighter Gowcaizer",
+      "ganryu": "Ganryu / Musashi Ganryuki",
+      "karnovr": "Karnov's Revenge / Fighter's History Dynamite",
+      "savagere": "Savage Reign"
+    };
 
     const SYSTEMS=[
       {k:["arcade","cps1","cps2","cps3","fbneo","fba","mame"], l:LIBRETRO_BASE+"FBNeo%20-%20Arcade%20Games.png", s:"FBNeo - Arcade Games", c:"arcade"},
       {k:["neogeo","neo geo"], l:LIBRETRO_BASE+"SNK%20-%20Neo%20Geo.png", s:"SNK - Neo Geo", c:"arcade"},
       {k:["mega drive","megadrive","genesis","sega"], l:LIBRETRO_BASE+"Sega%20-%20Mega%20Drive%20-%20Genesis.png", s:"Sega - Mega Drive - Genesis", c:"segaMD"},
       {k:["snes","super famicom","super nintendo","sfc"], l:LIBRETRO_BASE+"Nintendo%20-%20Super%20Nintendo%20Entertainment%20System.png", s:"Nintendo - Super Nintendo Entertainment System", c:"snes"},
-      {k:["famicon","famicom","nes"], l:LIBRETRO_BASE+"Nintendo%20-%20Nintendo%20Entertainment%20System.png", s:"Nintendo - Nintendo Entertainment System", c:"nes"},
+      {k:["famicom","famicon","nes"], l:LIBRETRO_BASE+"Nintendo%20-%20Nintendo%20Entertainment%20System.png", s:"Nintendo - Nintendo Entertainment System", c:"nes"},
       {k:["gba","game boy advance"], l:LIBRETRO_BASE+"Nintendo%20-%20Game%20Boy%20Advance.png", s:"Nintendo - Game Boy Advance", c:"gba"},
       {k:["gbc","game boy color"], l:LIBRETRO_BASE+"Nintendo%20-%20Game%20Boy%20Color.png", s:"Nintendo - Game Boy Color", c:"gbc"},
       {k:["gb","game boy"], l:LIBRETRO_BASE+"Nintendo%20-%20Game%20Boy.png", s:"Nintendo - Game Boy", c:"gb"},
@@ -132,7 +281,26 @@
     ];
 
     const getCache=k=>{try{const r=localStorage.getItem(k);if(!r)return null;const i=JSON.parse(r);if(Date.now()-i.t<TTL)return i.d;}catch(e){}return null;};
-    const setCache=(k,d)=>{try{localStorage.setItem(k,JSON.stringify({t:Date.now(),d}));}catch(e){}};
+    
+    function decodeHTMLEntities(str){
+      if(!str)return"";
+      return str.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#039;/g,"'").replace(/&apos;/g,"'");
+    }
+
+    const setCache=(k,d)=>{
+      try{
+        localStorage.setItem(k,JSON.stringify({t:Date.now(),d}));
+      }catch(e){
+        try{
+          Object.keys(localStorage).forEach(key => {
+            if(key.startsWith('pandora_games_') || key.startsWith('pandora_categories_') || key.startsWith('fbneo_dat_map_')) {
+              localStorage.removeItem(key);
+            }
+          });
+          localStorage.setItem(k,JSON.stringify({t:Date.now(),d}));
+        }catch(err){}
+      }
+    };
 
     const resolveSys=d=>{
       const l=d.toLowerCase(),m=SYSTEMS.find(s=>s.k.some(k=>k==="nes"?((/\bnes\b/i).test(l)||(l.includes("nes")&&!l.includes("snes"))):(k==="gb"?(l.includes("gb")&&!l.includes("gba")&&!l.includes("gbc")):l.includes(k))));
@@ -142,6 +310,89 @@
     const $=id=>document.getElementById(id),H_TOP=6,H_BOT=54,S_Y0=60,S_H=48,S_GAP=6,isMobile=()=>window.innerWidth<820||window.innerHeight>window.innerWidth;
     let datList=[],currentDatIdx=0,isCurved=localStorage.getItem('pandora_curved')!==null?localStorage.getItem('pandora_curved')==='true':!isMobile(),NUM=5;
     let allGames=[],filteredGames=[],selIdx=0,topIdx=0,slots=[],searchQuery="",gamepadConnected=false,gpLastTime=0,lastGpBtn={};
+    let favorites=JSON.parse(localStorage.getItem('pandora_favs')||'[]');
+    let showFavOnly=false;
+    let fbneoDatMap=Object.assign({}, POPULAR_ARCADE_MAP);
+
+    // Optimized Single-Pass Regex for Fast DAT Parsing (<50ms on Mobile)
+    async function loadFbneoDat(){
+      const c = getCache("fbneo_dat_map_v3");
+      if(c && Object.keys(c).length > 50){ 
+        fbneoDatMap = Object.assign({}, POPULAR_ARCADE_MAP, c); 
+        return fbneoDatMap; 
+      }
+      try {
+        const r = await fetch(FBNEO_DAT_URL);
+        if(!r.ok) return fbneoDatMap;
+        const text = await r.text();
+        const map = {};
+        
+        // Fast Regex: avoids multi-line backtracking
+        const xmlRegex = /<game\s+name="([^"]+)"[^\>]*>\s*<description>([^<]+)<\/description>/gi;
+        let m;
+        while((m = xmlRegex.exec(text)) !== null){
+          map[m[1].toLowerCase()] = decodeHTMLEntities(m[2].trim());
+        }
+        
+        if(Object.keys(map).length > 0){
+          fbneoDatMap = Object.assign({}, POPULAR_ARCADE_MAP, map);
+          setCache("fbneo_dat_map_v3", map);
+        }
+      } catch(e) {
+        console.warn("Lỗi tải FBNeo DAT:", e);
+      }
+      return fbneoDatMap;
+    }
+
+    function getDisplayName(romName){
+      if(!romName) return "";
+      const key = romName.toLowerCase().trim();
+      let name = romName;
+      if(fbneoDatMap && fbneoDatMap[key]){
+        name = fbneoDatMap[key];
+      } else if(POPULAR_ARCADE_MAP[key]){
+        name = POPULAR_ARCADE_MAP[key];
+      }
+      return decodeHTMLEntities(name);
+    }
+
+    function updateAllGameNames(){
+      let changed = false;
+      allGames.forEach(g => {
+        const romName = cleanGameTitle(g.fullName);
+        const mappedName = getDisplayName(romName);
+        if(mappedName && mappedName !== g.name){
+          g.name = mappedName;
+          changed = true;
+        }
+      });
+      if(changed){
+        filterGames(true);
+        render();
+      }
+    }
+
+    function getGameKey(g){
+      const cat=datList[currentDatIdx];
+      return cat && g?.fullName ? `${cat.name}:${g.fullName}` : '';
+    }
+
+    function isFav(g){
+      const k=getGameKey(g);
+      return k ? favorites.includes(k) : false;
+    }
+
+    function toggleCurrentFav(){
+      const g=filteredGames[selIdx];
+      if(!g?.fullName)return;
+      const k=getGameKey(g);
+      if(!k)return;
+      const idx=favorites.indexOf(k);
+      if(idx===-1) favorites.push(k);
+      else favorites.splice(idx,1);
+      localStorage.setItem('pandora_favs',JSON.stringify(favorites));
+      render();
+    }
 
     function calcNum(){
       const c=$('svg-container'),h=c?.clientHeight||(window.innerHeight*.55);
@@ -186,7 +437,9 @@
 
     function switchDat(i){
       if(i===currentDatIdx&&allGames.length)return closeMenuModal();
-      currentDatIdx=i;closeMenuModal();
+      currentDatIdx=i;
+      localStorage.setItem('pandora_last_cat', datList[currentDatIdx]?.name || '');
+      closeMenuModal();
       showLoader("ĐANG TẢI...");loadGameList();
     }
 
@@ -194,6 +447,7 @@
       if(!datList.length)return;updateSvg();
       const p=getParams(),xl0=getX(H_TOP,p),xl1=getX(H_BOT,p),sx=(xl0+xl1)/2+18,clr=isCurved?'#f97316':'#38bdf8';
       const logoUrl=datList[currentDatIdx]?.logo||(LIBRETRO_BASE+"FBNeo%20-%20Arcade%20Games.png");
+      const rx = xl0 + p.W;
 
       $('hg').innerHTML=`
         <polygon points="${xl0.toFixed(1)},${H_TOP} ${(xl0+p.W).toFixed(1)},${H_TOP} ${(xl1+p.W).toFixed(1)},${H_BOT} ${xl1.toFixed(1)},${H_BOT}" fill="url(#gh)" stroke="#475569" stroke-width="1.5"/>
@@ -202,9 +456,10 @@
           <image href="${logoUrl}" x="${sx}" y="${H_TOP+9}" width="30" height="30" preserveAspectRatio="xMidYMid meet"/>
         </g>
         <text id="cnt-txt" x="${sx+36}" y="${H_TOP+31}" fill="#fbbf24" font-size="15" font-weight="bold" font-family="Orbitron">GAME: 0 / 0</text>
-        <g id="btn-search" style="cursor:pointer" onclick="openSearchBox()"><text x="${sx+190}" y="${H_TOP+31}" font-size="15" fill="#38bdf8">🔍</text></g>
-        <text id="gp-icon-status" x="${sx+215}" y="${H_TOP+31}" font-size="15" fill="#4ade80" style="display:${gamepadConnected?'block':'none'}">🎮</text>
-        <g id="btn-toggle" style="cursor:pointer"><text x="${(xl0+p.W-25).toFixed(1)}" y="${H_TOP+32}" fill="${clr}" font-size="20" font-weight="900" font-family="Orbitron" text-anchor="middle">${isCurved?')':'|'}</text></g>`;
+        <g id="btn-search" style="cursor:pointer" onclick="openSearchBox()"><text x="${(rx-105).toFixed(1)}" y="${H_TOP+31}" font-size="15" fill="#38bdf8">🔍</text></g>
+        <g id="btn-fav-filter" style="cursor:pointer" onclick="toggleFavFilter()" title="Lọc Game Yêu thích (Phím V hoặc Tay cầm X)"><text x="${(rx-80).toFixed(1)}" y="${H_TOP+31}" font-size="16" fill="${showFavOnly?'#fbbf24':'#64748b'}">★</text></g>
+        <text id="gp-icon-status" x="${(rx-55).toFixed(1)}" y="${H_TOP+31}" font-size="15" fill="#4ade80" style="display:${gamepadConnected?'block':'none'}">🎮</text>
+        <g id="btn-toggle" style="cursor:pointer"><text x="${(rx-25).toFixed(1)}" y="${H_TOP+32}" fill="${clr}" font-size="20" font-weight="900" font-family="Orbitron" text-anchor="middle">${isCurved?')':'|'}</text></g>`;
 
       $('btn-toggle').onclick=e=>{e.stopPropagation();isCurved=!isCurved;localStorage.setItem('pandora_curved',isCurved);drawHeader();drawSlots();render();};
     }
@@ -229,14 +484,18 @@
 
     async function loadCategories(){
       showLoader("ĐANG TẢI DANH SÁCH SYSTEM...");
-      const c=getCache(CAT_CACHE_VER);if(c?.length){datList=c;currentDatIdx=0;return loadGameList();}
+      const c=getCache(CAT_CACHE_VER);if(c?.length){datList=c;
+        const lastCat=localStorage.getItem('pandora_last_cat');
+        const foundIdx=datList.findIndex(item=>item.name===lastCat);
+        currentDatIdx=foundIdx!==-1?foundIdx:0;
+        return loadGameList();
+      }
       try{
         const r=await fetch(GITHUB_API);if(!r.ok)throw new Error("HTTP "+r.status);
         const items=await r.json(),folders=items.filter(i=>i.type==="dir");
         
         datList=folders.map(f=>{
           const info=resolveSys(f.name);
-          // Sử dụng Git Trees API endpoint để mở rộng giới hạn từ 1000 lên 100.000 files
           const treeApiUrl = f.git_url ? `${f.git_url}?recursive=1` : f.url;
           return{
             name:f.name,
@@ -246,7 +505,11 @@
             url:treeApiUrl
           };
         });
-        setCache(CAT_CACHE_VER,datList);currentDatIdx=0;await loadGameList();
+        setCache(CAT_CACHE_VER,datList);
+        const lastCat=localStorage.getItem('pandora_last_cat');
+        const foundIdx=datList.findIndex(item=>item.name===lastCat);
+        currentDatIdx=foundIdx!==-1?foundIdx:0;
+        await loadGameList();
       }catch(e){showError("LỖI DANH SÁCH: "+e.message);}
     }
 
@@ -266,48 +529,147 @@
         if($('search-input')) $('search-input').value="";
         
         const cat=datList[currentDatIdx];if(!cat)return;
-        const ck="pandora_games_v5_"+cat.name,c=getCache(ck);
-        if(c?.length){allGames=c;filterGames();$('loader').style.display='none';return requestAnimationFrame(()=>{drawHeader();drawSlots();render();});}
+
+        if(cat.core === "arcade" || cat.name.toLowerCase().includes("arcade") || cat.name.toLowerCase().includes("neogeo")){
+          loadFbneoDat().then(() => updateAllGameNames());
+        }
+
+        const ck="pandora_games_v7_"+cat.name, c=getCache(ck);
+        if(c?.length){
+          allGames=c;
+          updateAllGameNames();
+          filterGames(false);
+          restoreSavedGamePos();
+          $('loader').style.display='none';
+          return requestAnimationFrame(()=>{drawHeader();drawSlots();render();});
+        }
         
         const r=await fetch(cat.url);if(!r.ok)throw new Error("HTTP "+r.status);
         const data=await r.json();
         
         let files = [];
         if(Array.isArray(data.tree)){
-          // Git Trees API trả về tất cả các file (kể cả trên 1,000 files)
           files = data.tree.filter(item => item.type === "blob").map(item => item.path);
         }else if(Array.isArray(data)){
-          // Fallback nếu dùng Contents API
           files = data.map(i => i.name);
         }
         
         allGames=files.filter(n=>n&&!n.endsWith(".gitkeep")).map(f=>{
+          const romName = cleanGameTitle(f);
+          const displayName = getDisplayName(romName);
           return {
-            name: cleanGameTitle(f),
+            name: displayName,
             fullName: f
           };
         });
         
         if(!allGames.length)allGames=[{name:"Chưa có ROMs",fullName:""}];else setCache(ck,allGames);
-        filterGames();$('loader').style.display='none';requestAnimationFrame(()=>{drawHeader();drawSlots();render();});
+        filterGames(false);restoreSavedGamePos();$('loader').style.display='none';requestAnimationFrame(()=>{drawHeader();drawSlots();render();});
       }catch(e){showError("LỖI LOAD GAME: "+e.message);}
     }
 
-    function filterGames(){const q=searchQuery.toLowerCase().trim();filteredGames=!q?[...allGames]:allGames.filter(g=>g.name.toLowerCase().includes(q));selIdx=topIdx=0;}
-    function updatePreview(g){
-      if(!g)return;const img=$('preview-img'),cat=datList[currentDatIdx];if(!cat)return;img.classList.add('loading');
-      const sys=encodeURIComponent(cat.system),cleanName=g.name.replace(/&/g,'_').replace(/[/\\?%*:|"<>]/g,'_'),name=encodeURIComponent(cleanName);
-      const base=`https://thumbnails.libretro.com/${sys}`,types=['Named_Snaps','Named_Boxarts','Named_Titles'];let step=0;
-      img.dataset.targetName=name;
-      const tryNext=()=>{if(step<types.length)img.src=`${base}/${types[step++]}/${name}.png`;else{img.src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23f97316' stroke-width='1.5'%3E%3Crect x='2' y='2' width='20' height='20' rx='4'/%3E%3Cpath d='M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z'/%3E%3Cpath d='m21 15-5-5L5 21'/%3E%3C/svg%3E";img.classList.remove('loading');}};
-      img.onload=()=>img.classList.remove('loading');img.onerror=()=>{if(img.dataset.targetName===name)tryNext();};tryNext();
+    function restoreSavedGamePos(){
+      const cat=datList[currentDatIdx];
+      if(!cat)return;
+      const lastGameName=localStorage.getItem(`pandora_last_game_${cat.name}`);
+      if(lastGameName){
+        const idx=filteredGames.findIndex(g=>g.fullName===lastGameName);
+        if(idx!==-1)selIdx=idx;
+      }
     }
 
-    const buildEmuUrl=(g,c)=>(!g?.fullName||!c)?"":`${EMU_URL}?core=${c.core||"arcade"}&rom=${ROM_BASE}${encodeURIComponent(c.name)}/${encodeURIComponent(g.fullName)}`;
+    function toggleFavFilter(){
+      showFavOnly=!showFavOnly;
+      filterGames(true);
+      drawHeader();
+      drawSlots();
+      render();
+    }
+
+    function filterGames(preserveSelection=true){
+      const current=filteredGames[selIdx];
+      const q=searchQuery.toLowerCase().trim();
+      let list=allGames;
+      if(q)list=list.filter(g=>g.name.toLowerCase().includes(q));
+      if(showFavOnly)list=list.filter(g=>isFav(g));
+      filteredGames=list;
+      
+      if(preserveSelection){
+        if(current?.fullName){
+          const idx=filteredGames.findIndex(g=>g.fullName===current.fullName);
+          if(idx!==-1){
+            selIdx=idx;
+            return;
+          }
+        }
+        const cat=datList[currentDatIdx];
+        if(cat){
+          const lastGameName=localStorage.getItem(`pandora_last_game_${cat.name}`);
+          if(lastGameName){
+            const idx=filteredGames.findIndex(g=>g.fullName===lastGameName);
+            if(idx!==-1){
+              selIdx=idx;
+              return;
+            }
+          }
+        }
+      }
+      selIdx=topIdx=0;
+    }
+    
+    function updatePreview(g){
+      if(!g){
+        $('preview-img').src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+        $('fav-btn').style.display='none';
+        return;
+      }
+      $('fav-btn').style.display='block';
+      const img=$('preview-img'),cat=datList[currentDatIdx];if(!cat)return;img.classList.add('loading');
+      const sys=encodeURIComponent(cat.system);
+      const rawName=decodeHTMLEntities(g.name);
+      
+      // Standard Libretro filename cleaning rules
+      const clean1=rawName.replace(/&/g,'_').replace(/[/\\?%*:|"<>]/g,'_'),clean2=rawName.replace(/[/\\?%*:|"<>]/g,'_');
+      const base=`https://thumbnails.libretro.com/${sys}`,types=['Named_Snaps','Named_Boxarts','Named_Titles'];
+      const candidates=[];
+      types.forEach(t=>{
+        candidates.push(`${base}/${t}/${encodeURIComponent(clean1)}.png`);
+        if(clean1!==clean2) candidates.push(`${base}/${t}/${encodeURIComponent(clean2)}.png`);
+      });
+      let step=0;
+      img.dataset.targetName=encodeURIComponent(clean1);
+      const targetKey=img.dataset.targetName;
+      const tryNext=()=>{
+        if(step<candidates.length) img.src=candidates[step++];
+        else{
+          img.src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23f97316' stroke-width='1.5'%3E%3Crect x='2' y='2' width='20' height='20' rx='4'/%3E%3Cpath d='M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z'/%3E%3Cpath d='m21 15-5-5L5 21'/%3E%3C/svg%3E";
+          img.classList.remove('loading');
+        }
+      };
+      img.onload=()=>{
+        if(img.dataset.targetName===targetKey) img.classList.remove('loading');
+      };
+      img.onerror=()=>{if(img.dataset.targetName===targetKey)tryNext();};
+      tryNext();
+    }
+
+    const buildEmuUrl=(g,c)=>{
+      if(!g?.fullName||!c)return "";
+      const safeRomPath = g.fullName.split('/').map(encodeURIComponent).join('/');
+      return `${EMU_URL}?core=${c.core||"arcade"}&rom=${ROM_BASE}${encodeURIComponent(c.name)}/${safeRomPath}`;
+    };
 
     function launchCurrentGame(){const g=filteredGames[selIdx],c=datList[currentDatIdx];if(!g?.fullName)return;$('player-title').textContent=`${g.name.toUpperCase()} [${c.name}]`;$('game-frame').src=buildEmuUrl(g,c);$('game-player-modal').classList.add('active');}
     function openGameInNewTab(){const u=buildEmuUrl(filteredGames[selIdx],datList[currentDatIdx]);if(u)window.open(u,'_blank');}
-    function closeGamePlayer(){$('game-frame').src="";$('game-player-modal').classList.remove('active');if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});}
+    function closeGamePlayer(){
+      $('game-frame').src="";
+      $('game-player-modal').classList.remove('active');
+      if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
+      
+      gpLastTime=performance.now()+400;
+      lastGpBtn={dir:true,cat:true,home:true,favY:true,favX:true,confirm:true};
+      render();
+    }
     function toggleFullscreen(){const m=$('game-player-modal');if(!document.fullscreenElement)m.requestFullscreen().catch(()=>{});else document.exitFullscreen().catch(()=>{});}
 
     function openSearchBox(){$('search-box-modal').classList.add('active');$('search-input').focus();}
@@ -315,27 +677,52 @@
     function onSearchInput(v){searchQuery=v;filterGames();drawSlots();render();}
 
     function render(){
-      if(!filteredGames.length){if($('cnt-txt'))$('cnt-txt').textContent=`GAME: 0 / 0`;return slots.forEach(s=>s.g.style.display="none");}
+      const countLabel = showFavOnly ? 'YÊU THÍCH' : 'GAME';
+      if(!filteredGames.length){
+        if($('cnt-txt'))$('cnt-txt').textContent=`${countLabel}: 0 / 0`;
+        slots.forEach(s=>s.g.style.display="none");
+        updatePreview(null);
+        return;
+      }
       if(selIdx<topIdx)topIdx=selIdx;else if(selIdx>=topIdx+NUM)topIdx=selIdx-NUM+1;
       topIdx=Math.max(0,Math.min(topIdx,Math.max(0,filteredGames.length-NUM)));
-      if($('cnt-txt'))$('cnt-txt').textContent=`GAME: ${selIdx+1} / ${filteredGames.length}`;
+      if($('cnt-txt'))$('cnt-txt').textContent=`${countLabel}: ${selIdx+1} / ${filteredGames.length}`;
       
+      const cat=datList[currentDatIdx];
+      if(cat && filteredGames[selIdx]?.fullName){
+        localStorage.setItem(`pandora_last_game_${cat.name}`, filteredGames[selIdx].fullName);
+      }
+
       const maxLen = isCurved ? 46 : 64;
       slots.forEach((s,i)=>{
         const idx=topIdx+i,a=idx===selIdx;
         if(idx<filteredGames.length){
           s.g.style.display="block";
-          const nameStr = filteredGames[idx].name;
+          const gameObj = filteredGames[idx];
+          const nameStr = gameObj.name;
           s.txt.textContent = nameStr.length > maxLen ? nameStr.slice(0, maxLen - 2) + "..." : nameStr;
           s.poly.setAttribute("fill",a?"url(#ga)":"url(#gn)");s.poly.setAttribute("stroke",a?"#fef08a":"#475569");s.poly.setAttribute("stroke-width",a?"2.5":"1.5");
           a?s.poly.setAttribute("filter","url(#gw)"):s.poly.removeAttribute("filter");
           s.line.setAttribute("stroke",a?"#fef08a":"#60a5fa");s.line.setAttribute("stroke-width",a?"5":"4");s.txt.setAttribute("class",a?"ta":"tn");
         }else s.g.style.display="none";
       });
-      if(filteredGames[selIdx])updatePreview(filteredGames[selIdx]);
+      if(filteredGames[selIdx]){
+        updatePreview(filteredGames[selIdx]);
+        const favBtn=$('fav-btn');
+        if(favBtn){
+          if(isFav(filteredGames[selIdx])){
+            favBtn.classList.add('active');
+            favBtn.textContent="★";
+          }else{
+            favBtn.classList.remove('active');
+            favBtn.textContent="☆";
+          }
+        }
+      }
     }
 
     const move=st=>{const n=selIdx+st;if(n>=0&&n<filteredGames.length){selIdx=n;render();}};
+    const jumpToFirst=()=>{if(filteredGames.length){selIdx=0;render();}};
     let resizeTimer;window.onresize=()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(datList.length){drawHeader();drawSlots();render();}},100);};
 
     let touchY=0,svgC=$('svg-container');
@@ -358,27 +745,54 @@
       
       if(e.key==='ArrowDown'){e.preventDefault();move(1);}
       else if(e.key==='ArrowUp'){e.preventDefault();move(-1);}
+      else if(e.key==='Home'){e.preventDefault();jumpToFirst();}
+      else if(e.key==='f'||e.key==='F'){e.preventDefault();toggleCurrentFav();}
+      else if(e.key==='v'||e.key==='V'){e.preventDefault();toggleFavFilter();}
       else if(e.key==='Enter'){e.preventDefault();launchCurrentGame();}
       else if(e.key==='/'){e.preventDefault();openSearchBox();}
     };
 
+    // Safe & Resilient Gamepad Polling Loop
     function pollGamepad(){
-      const gp=navigator.getGamepads?navigator.getGamepads()[0]:null;
-      const isConnected=!!gp?.connected;
-      if(isConnected!==gamepadConnected){
-        gamepadConnected=isConnected;
-        const icon=$('gp-icon-status');
-        if(icon)icon.style.display=isConnected?'block':'none';
-      }
-      if(isConnected){
-        if($('game-player-modal').classList.contains('active')){
-          if((gp.buttons[8]?.pressed&&gp.buttons[9]?.pressed)||gp.buttons[16]?.pressed)closeGamePlayer();
-        }else if(!$('search-box-modal').classList.contains('active') && !$('menu-dropdown').classList.contains('active')){
-          const now=performance.now(),ay=gp.axes[1]??0,ax=gp.axes[0]??0,u=gp.buttons[12]?.pressed||ay<-0.55,d=gp.buttons[13]?.pressed||ay>0.55,l=gp.buttons[14]?.pressed||ax<-0.55,r=gp.buttons[15]?.pressed||ax>0.55;
-          if(u||d){if(!lastGpBtn.dir||now-gpLastTime>160){move(u?-1:1);gpLastTime=now;lastGpBtn.dir=true;}}else lastGpBtn.dir=false;
-          if((l||r)&&!lastGpBtn.cat){lastGpBtn.cat=true;if(datList.length)switchDat((currentDatIdx+(r?1:-1)+datList.length)%datList.length);}else if(!l&&!r)lastGpBtn.cat=false;
-          if((gp.buttons[0]?.pressed||gp.buttons[9]?.pressed)&&!lastGpBtn.confirm){lastGpBtn.confirm=true;launchCurrentGame();}else if(!gp.buttons[0]?.pressed&&!gp.buttons[9]?.pressed)lastGpBtn.confirm=false;
+      try {
+        const gamepads = navigator.getGamepads ? Array.from(navigator.getGamepads()) : [];
+        const gp = gamepads.find(g => g && g.connected);
+        const isConnected = !!gp;
+        
+        if(isConnected!==gamepadConnected){
+          gamepadConnected=isConnected;
+          const icon=$('gp-icon-status');
+          if(icon)icon.style.display=isConnected?'block':'none';
         }
+        if(isConnected && gp){
+          if($('game-player-modal').classList.contains('active')){
+            if((gp.buttons[8]?.pressed&&gp.buttons[9]?.pressed)||gp.buttons[16]?.pressed){
+              closeGamePlayer();
+            }
+          }else if(!$('search-box-modal').classList.contains('active') && !$('menu-dropdown').classList.contains('active')){
+            const now=performance.now();
+            if(now < gpLastTime){
+              requestAnimationFrame(pollGamepad);
+              return;
+            }
+            const ay=gp.axes[1]??0,ax=gp.axes[0]??0,u=gp.buttons[12]?.pressed||ay<-0.55,d=gp.buttons[13]?.pressed||ay>0.55,l=gp.buttons[14]?.pressed||ax<-0.55,r=gp.buttons[15]?.pressed||ax>0.55;
+            if(u||d){if(!lastGpBtn.dir||now-gpLastTime>160){move(u?-1:1);gpLastTime=now;lastGpBtn.dir=true;}}else lastGpBtn.dir=false;
+            if((l||r)&&!lastGpBtn.cat){lastGpBtn.cat=true;if(datList.length)switchDat((currentDatIdx+(r?1:-1)+datList.length)%datList.length);}else if(!l&&!r)lastGpBtn.cat=false;
+            
+            const homePressed = gp.buttons[16]?.pressed;
+            if(homePressed && !lastGpBtn.home){lastGpBtn.home=true;jumpToFirst();}else if(!homePressed)lastGpBtn.home=false;
+            
+            const yPressed = gp.buttons[3]?.pressed;
+            if(yPressed && !lastGpBtn.favY){lastGpBtn.favY=true;toggleCurrentFav();}else if(!yPressed)lastGpBtn.favY=false;
+
+            const xPressed = gp.buttons[2]?.pressed;
+            if(xPressed && !lastGpBtn.favX){lastGpBtn.favX=true;toggleFavFilter();}else if(!xPressed)lastGpBtn.favX=false;
+
+            if((gp.buttons[0]?.pressed||gp.buttons[9]?.pressed)&&!lastGpBtn.confirm){lastGpBtn.confirm=true;launchCurrentGame();}else if(!gp.buttons[0]?.pressed&&!gp.buttons[9]?.pressed)lastGpBtn.confirm=false;
+          }
+        }
+      } catch(err) {
+        console.warn("Gamepad polling error:", err);
       }
       requestAnimationFrame(pollGamepad);
     }
