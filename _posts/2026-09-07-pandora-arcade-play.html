@@ -115,12 +115,11 @@
   </div>
 
   <script>
-    const GITHUB_API="https://api.github.com/repos/longhai/games/contents/roms",
+    const GITHUB_API="https://api.github.com/repos/longhai/emu/contents/roms",
           EMU_URL="https://longhai.github.io/codes/2026/08/29/emulatorjs.html",
-          ROM_BASE="https://longhai.github.io/games/roms/",
-          FBNEO_DAT_URL="https://raw.githubusercontent.com/libretro/FBNeo/master/dats/FinalBurn%20Neo%20(ClrMame%20Pro%20XML%2C%20Arcade%20only).dat",
+          FBNEO_DAT_URL="https://raw.githubusercontent.com/longhai/emu/refs/heads/main/arcade.dat",
           TTL=43200000,
-          CAT_CACHE_VER="pandora_categories_v12";
+          CAT_CACHE_VER="pandora_categories_v1";
 
     const LIBRETRO_BASE="https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/automatic/png/";
 
@@ -172,9 +171,9 @@
     let showFavOnly=false;
     let fbneoDatMap={};
 
-    // Optimized Single-Pass Regex for Fast DAT Parsing (<50ms on Mobile)
     async function loadFbneoDat(){
-      const c = getCache("fbneo_dat_map_v3");
+      const cacheKey = "fbneo_dat_map_v4";
+      const c = getCache(cacheKey);
       if(c && Object.keys(c).length > 50){ 
         fbneoDatMap = c; 
         return fbneoDatMap; 
@@ -185,16 +184,24 @@
         const text = await r.text();
         const map = {};
         
-        // Fast Regex: avoids multi-line backtracking
-        const xmlRegex = /<game\s+name="([^"]+)"[^\>]*>\s*<description>([^<]+)<\/description>/gi;
+        // Quét 1-pass siêu tốc 2 trạng thái: Bắt thẻ <game>/<machine> và <description> tách biệt
+        // Giải quyết hoàn toàn trường hợp có thẻ <comment>, <year>,... chen ở giữa
+        const xmlRegex = /(?:<game|<machine)\s+[^>]*?\bname="([^"]+)"|<description>([^<]+)<\/description>/gi;
         let m;
+        let currentGameKey = null;
+
         while((m = xmlRegex.exec(text)) !== null){
-          map[m[1].toLowerCase()] = decodeHTMLEntities(m[2].trim());
+          if(m[1]){
+            currentGameKey = m[1].toLowerCase().trim();
+          } else if(m[2] && currentGameKey){
+            map[currentGameKey] = decodeHTMLEntities(m[2].trim());
+            currentGameKey = null;
+          }
         }
         
         if(Object.keys(map).length > 0){
           fbneoDatMap = map;
-          setCache("fbneo_dat_map_v3", map);
+          setCache(cacheKey, map);
         }
       } catch(e) {
         console.warn("Lỗi tải FBNeo DAT:", e);
@@ -352,6 +359,7 @@
         
         datList=folders.map(f=>{
           const info=resolveSys(f.name);
+          // Sử dụng git_url kèm ?recursive=1 để lấy toàn bộ tệp (vượt giới hạn 1000 items)
           const treeApiUrl = f.git_url ? `${f.git_url}?recursive=1` : f.url;
           return{
             name:f.name,
@@ -400,14 +408,17 @@
           return requestAnimationFrame(()=>{drawHeader();drawSlots();render();});
         }
         
+        // Gọi Git Trees API (?recursive=1) lấy trọn vẹn danh sách ROMs mà không bị trần 1000 file
         const r=await fetch(cat.url);if(!r.ok)throw new Error("HTTP "+r.status);
         const data=await r.json();
         
         let files = [];
         if(Array.isArray(data.tree)){
+          // Đọc dữ liệu từ Git Trees API
           files = data.tree.filter(item => item.type === "blob").map(item => item.path);
         }else if(Array.isArray(data)){
-          files = data.map(i => i.name);
+          // Fallback nếu API trả về dạng mảng /contents/
+          files = data.filter(i => i.type === "file" || i.type === "blob").map(i => i.name || i.path);
         }
         
         allGames=files.filter(n=>n&&!n.endsWith(".gitkeep")).map(f=>{
@@ -484,7 +495,6 @@
       const sys=encodeURIComponent(cat.system);
       const rawName=decodeHTMLEntities(g.name);
       
-      // Standard Libretro filename cleaning rules
       const clean1=rawName.replace(/&/g,'_').replace(/[/\\?%*:|"<>]/g,'_'),clean2=rawName.replace(/[/\\?%*:|"<>]/g,'_');
       const base=`https://thumbnails.libretro.com/${sys}`,types=['Named_Snaps','Named_Boxarts','Named_Titles'];
       const candidates=[];
@@ -512,7 +522,9 @@
     const buildEmuUrl=(g,c)=>{
       if(!g?.fullName||!c)return "";
       const safeRomPath = g.fullName.split('/').map(encodeURIComponent).join('/');
-      return `${EMU_URL}?core=${c.core||"arcade"}&rom=${ROM_BASE}${encodeURIComponent(c.name)}/${safeRomPath}`;
+      // Dựng trực tiếp URL raw của GitHub từ c.name và g.fullName mà không cần biến ROM_BASE
+      const romUrl = `https://raw.githubusercontent.com/longhai/emu/main/roms/${encodeURIComponent(c.name)}/${safeRomPath}`;
+      return `${EMU_URL}?core=${c.core||"arcade"}&rom=${romUrl}`;
     };
 
     function launchCurrentGame(){const g=filteredGames[selIdx],c=datList[currentDatIdx];if(!g?.fullName)return;$('player-title').textContent=`${g.name.toUpperCase()} [${c.name}]`;$('game-frame').src=buildEmuUrl(g,c);$('game-player-modal').classList.add('active');}
@@ -608,7 +620,6 @@
       else if(e.key==='/'){e.preventDefault();openSearchBox();}
     };
 
-    // Safe & Resilient Gamepad Polling Loop
     function pollGamepad(){
       try {
         const gamepads = navigator.getGamepads ? Array.from(navigator.getGamepads()) : [];
