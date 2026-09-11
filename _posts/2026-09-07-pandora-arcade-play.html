@@ -89,6 +89,7 @@
 
   <script>
     const GITHUB_API = "https://api.github.com/repos/longhai/games/contents/roms";
+    const DAT_URL = "https://raw.githubusercontent.com/longhai/emu/main/arcade.dat"; // Link file .dat cố định/riêng
     const EMULATOR_URL = "https://longhai.github.io/codes/2026/08/29/emulatorjs.html";
     const ASSETS_BASE = "https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/dot-art/png/";
     const THUMBNAILS_BASE = "https://thumbnails.libretro.com/";
@@ -101,7 +102,6 @@
 
     const repoInfo = parseRepoInfo();
     const getRawBaseUrl = () => `https://raw.githubusercontent.com/${repoInfo.owner}/${repoInfo.repo}/main/${repoInfo.folder}`;
-    const getDatUrl = () => `https://raw.githubusercontent.com/${repoInfo.owner}/${repoInfo.repo}/main/arcade.dat`;
 
     const SYSTEM_PROFILES = [
       { keys: ["arcade","cps1","cps2","cps3","fbneo","fba","mame"], logo: "FBNeo%20-%20Arcade%20Games.png", name: "FBNeo - Arcade Games", core: "arcade" },
@@ -155,7 +155,7 @@
       const cached = getCache("fbneo_dat_m");
       if (cached) { datNameMap = cached; return; }
       try {
-        const resp = await fetch(getDatUrl());
+        const resp = await fetch(DAT_URL);
         if (!resp.ok) return;
         const text = await resp.text();
         const parsed = {}, regex = /(?:<game|<machine)\s+[^>]*?\bname="([^"]+)"|<description>([^<]+)<\/description>/gi;
