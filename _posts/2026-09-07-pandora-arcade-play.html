@@ -5,79 +5,59 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Pandora Arcade</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@600;700;800&display=swap');
-    :root{--p:#ea580c;--y:#fbbf24;--bg:#0f172a;}
-    *{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-tap-highlight-color:transparent;}
-    body{font-family:'Rajdhani',sans-serif;background:radial-gradient(circle at 50% 30%,#c2410c,#7f1d1d 40%,#050101);height:100vh;height:100dvh;width:100vw;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#e2e8f0;touch-action:none;}
-    
-    #loader{position:fixed;inset:0;z-index:100;background:rgba(5,1,1,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--y);font:700 14px 'Orbitron',sans-serif;letter-spacing:1.5px;padding:20px;text-align:center;backdrop-filter:blur(10px);}
-    .spin{width:44px;height:44px;border:4px solid #f97316;border-top-color:transparent;border-radius:50%;animation:sp .75s linear infinite;margin-bottom:14px;box-shadow:0 0 15px rgba(249,115,22,.5);}
-    @keyframes sp{to{transform:rotate(360deg);}}
-    
-    main{width:100%;height:100vh;height:100dvh;max-width:1320px;display:flex;align-items:center;justify-content:center;gap:12px;padding:10px;overflow:hidden;}
-    #svg-container{flex:1.25;width:100%;height:100%;min-height:0;display:flex;align-items:center;justify-content:center;order:1;touch-action:none;position:relative;overflow:hidden;}
-    svg{width:100%;height:100%;filter:drop-shadow(0 10px 20px rgba(0,0,0,.9));}
-    
-    #preview-container{flex:1.1;width:100%;max-width:680px;aspect-ratio:4/3;max-height:80vh;background:rgba(15,23,42,.94);border:2px solid var(--p);border-radius:16px;box-shadow:0 0 30px rgba(234,88,12,.35),inset 0 0 25px #000;display:flex;align-items:center;justify-content:center;padding:10px;position:relative;overflow:hidden;backdrop-filter:blur(12px);order:2;cursor:pointer;}
-    #preview-img{width:100%;height:100%;object-fit:contain;border-radius:10px;filter:drop-shadow(0 6px 16px rgba(0,0,0,.85));transition:opacity .2s,transform .2s;opacity:1;}
-    #preview-img.loading{opacity:.2;transform:scale(.98);}
-    
-    .fav-star-btn{position:absolute;top:10px;right:10px;z-index:20;font-size:26px;color:#64748b;cursor:pointer;transition:all .2s ease;filter:drop-shadow(0 2px 4px rgba(0,0,0,.9));line-height:1;padding:6px;background:rgba(15,23,42,.6);border-radius:50%;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.1);opacity:0;}
-    #preview-container:hover .fav-star-btn,.fav-star-btn.active{opacity:1;}
-    .fav-star-btn:hover{transform:scale(1.2);color:#fbbf24;}
-    .fav-star-btn.active{color:#fbbf24;filter:drop-shadow(0 0 10px #f59e0b);transform:scale(1.1);background:rgba(15,23,42,.85);border-color:#f59e0b;}
-    
-    #menu-dropdown{display:none;position:absolute;top:44px;left:10px;z-index:150;background:rgba(15,23,42,.95);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.7);max-height:60vh;overflow-y:auto;min-width:180px;backdrop-filter:blur(12px);padding:4px;flex-direction:column;gap:2px;touch-action:pan-y;}
-    #menu-dropdown.active{display:flex;animation:fd .15s ease-out;}
-    @keyframes fd{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
-    
-    .menu-item{display:flex;align-items:center;gap:10px;padding:6px 10px;color:#cbd5e1;font:700 14px 'Rajdhani',sans-serif;border-radius:6px;cursor:pointer;background:transparent;transition:all .15s;border-left:3px solid transparent;}
-    .menu-item:hover,.menu-item.active{background:rgba(56,189,248,0.15);border-left-color:#38bdf8;color:#fff;}
-    .menu-logo{width:22px;height:22px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6));flex-shrink:0;background:none;}
-    
-    #inline-search-bar{display:none;position:absolute;z-index:120;background:rgba(15,23,42,0.96);border:1.5px solid #38bdf8;border-radius:8px;padding:0 8px;align-items:center;gap:6px;box-shadow:0 0 15px rgba(56,189,248,0.4),inset 0 0 10px rgba(0,0,0,0.5);backdrop-filter:blur(8px);transition:all 0.15s ease;}
-    #inline-search-bar.active{display:flex;animation:fdSearch .15s ease-out;}
-    @keyframes fdSearch{from{opacity:0;transform:scaleX(0.92);}to{opacity:1;transform:scaleX(1);}}
-    .search-icon-svg{width:16px;height:16px;fill:#38bdf8;flex-shrink:0;}
-    #search-input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:#fff;font:700 15px 'Rajdhani','Orbitron',sans-serif;}
-    #search-input::placeholder{color:#64748b;font-weight:600;}
-    .clear-btn{cursor:pointer;color:#94a3b8;font-size:14px;font-weight:bold;padding:2px 6px;border-radius:4px;transition:all .15s;}
-    .clear-btn:hover{color:#ef4444;background:rgba(239,68,68,0.15);}
-    
-    #game-player-modal{display:none;position:fixed;inset:0;z-index:200;background:#000;flex-direction:column;}
-    #game-player-modal.active{display:flex;}
-    #player-toolbar{height:46px;background:#0f172a;border-bottom:2px solid var(--p);display:flex;align-items:center;justify-content:space-between;padding:0 10px;gap:8px;box-shadow:0 2px 10px rgba(0,0,0,.8);}
-    #player-title{color:var(--y);font:700 12px 'Orbitron',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;}
-    .player-btns{display:flex;gap:6px;flex-shrink:0;}
-    .player-btn{background:#1e293b;border:1px solid var(--p);color:#fff;padding:5px 9px;border-radius:6px;cursor:pointer;font:700 11px 'Orbitron',sans-serif;transition:all .2s;display:flex;align-items:center;gap:4px;}
-    .player-btn:hover{background:var(--p);}
-    #game-frame{width:100%;height:calc(100% - 46px);border:none;background:#000;}
-    
-    .tn{font:700 18px 'Rajdhani',sans-serif;fill:#e2e8f0;}
-    .ta{font:800 20px 'Rajdhani',sans-serif;fill:#fff;filter:drop-shadow(0 2px 4px rgba(0,0,0,.95));}
-    
-    @media(max-width:820px),(max-aspect-ratio:1/1){
-      main{flex-direction:column;justify-content:flex-start;gap:6px;padding:6px;height:100vh;height:100dvh;}
-      #preview-container{order:1;width:100%;max-width:100%;height:28vh;min-height:160px;max-height:240px;aspect-ratio:auto;flex-shrink:0;border-radius:12px;}
-      #svg-container{order:2;flex:1;width:100%;height:100%;min-height:0;max-height:none;}
-      .btn-lbl{display:none;}
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@600;700;800&display=swap');
+    :root { --p:#ea580c; --pg:rgba(234,88,12,.4); --a:#fbbf24; --ca:#38bdf8; --bg:#050101; --panel:rgba(15,23,42,.94); }
+    * { box-sizing:border-box; margin:0; padding:0; user-select:none; -webkit-tap-highlight-color:transparent; }
+    body { font-family:'Rajdhani',sans-serif; background:radial-gradient(circle at 50% 30%,#c2410c,#7f1d1d 40%,var(--bg)); height:100vh; height:100dvh; width:100vw; overflow:hidden; display:flex; align-items:center; justify-content:center; color:#e2e8f0; touch-action:none; }
+    #loader { position:fixed; inset:0; z-index:200; background:rgba(5,1,1,.95); display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--a); font:700 14px 'Orbitron',sans-serif; letter-spacing:1px; }
+    .spin { width:38px; height:38px; border:4px solid var(--p); border-top-color:transparent; border-radius:50%; animation:s .75s linear infinite; margin-bottom:12px; }
+    @keyframes s { to { transform:rotate(360deg); } }
+    main { width:100%; height:100vh; height:100dvh; max-width:1320px; display:flex; align-items:center; justify-content:center; gap:12px; padding:10px; }
+    #svg-container { flex:1.25; width:100%; height:100%; display:flex; align-items:center; justify-content:center; order:1; position:relative; overflow:hidden; }
+    svg { width:100%; height:100%; filter:drop-shadow(0 10px 20px rgba(0,0,0,.9)); }
+    #preview-container { flex:1.1; width:100%; max-width:680px; aspect-ratio:4/3; max-height:80vh; background:var(--panel); border:2px solid var(--p); border-radius:16px; box-shadow:0 0 30px var(--pg),inset 0 0 25px #000; display:flex; align-items:center; justify-content:center; padding:10px; position:relative; overflow:hidden; backdrop-filter:blur(12px); order:2; cursor:pointer; }
+    #preview-img { width:100%; height:100%; object-fit:contain; border-radius:10px; transition:opacity .2s,transform .2s; }
+    #preview-img.loading { opacity:.2; transform:scale(.98); }
+    .fav-star-btn { position:absolute; top:10px; right:10px; z-index:20; font-size:24px; color:#64748b; cursor:pointer; transition:all .2s; padding:4px; background:rgba(15,23,42,.6); border-radius:50%; backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,.1); opacity:0; line-height:1; }
+    #preview-container:hover .fav-star-btn, .fav-star-btn.active { opacity:1; }
+    .fav-star-btn:hover, .fav-star-btn.active { color:var(--a); border-color:var(--a); transform:scale(1.1); background:rgba(15,23,42,.85); }
+    #menu-dropdown { display:none; position:absolute; top:44px; left:10px; z-index:150; background:rgba(15,23,42,.96); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.8); max-height:60vh; overflow-y:auto; min-width:180px; backdrop-filter:blur(12px); padding:4px; flex-direction:column; gap:2px; }
+    #menu-dropdown.active { display:flex; }
+    .menu-item { display:flex; align-items:center; gap:10px; padding:7px 12px; color:#cbd5e1; font:700 14px 'Rajdhani',sans-serif; border-radius:6px; cursor:pointer; transition:all .15s; border-left:3px solid transparent; }
+    .menu-item:hover, .menu-item.active { background:rgba(56,189,248,.15); border-left-color:var(--ca); color:#fff; }
+    .menu-logo { width:24px; height:24px; object-fit:contain; flex-shrink:0; }
+    #inline-search-bar { display:none; position:absolute; z-index:120; background:rgba(15,23,42,.96); border:1.5px solid var(--ca); border-radius:8px; padding:0 8px; align-items:center; gap:6px; box-shadow:0 0 15px rgba(56,189,248,.4); backdrop-filter:blur(8px); }
+    #inline-search-bar.active { display:flex; }
+    #search-input { flex:1; min-width:0; background:transparent; border:none; outline:none; color:#fff; font:700 15px 'Rajdhani',sans-serif; }
+    .clear-btn { cursor:pointer; color:#94a3b8; font-size:14px; font-weight:700; padding:2px 6px; }
+    .clear-btn:hover { color:#ef4444; }
+    #game-player-modal { display:none; position:fixed; inset:0; z-index:300; background:#000; flex-direction:column; }
+    #game-player-modal.active { display:flex; }
+    #player-toolbar { height:46px; background:#0f172a; border-bottom:2px solid var(--p); display:flex; align-items:center; justify-content:space-between; padding:0 10px; gap:8px; }
+    #player-title { color:var(--a); font:700 12px 'Orbitron',sans-serif; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; }
+    .player-btn { background:#1e293b; border:1px solid var(--p); color:#fff; padding:5px 9px; border-radius:6px; cursor:pointer; font:700 11px 'Orbitron',sans-serif; }
+    .player-btn:hover { background:var(--p); }
+    #game-frame { width:100%; height:calc(100% - 46px); border:none; background:#000; }
+    .tn { font:700 18px 'Rajdhani',sans-serif; fill:#e2e8f0; }
+    .ta { font:800 20px 'Rajdhani',sans-serif; fill:#fff; filter:drop-shadow(0 2px 4px rgba(0,0,0,.95)); }
+    @media (max-width:820px),(max-aspect-ratio:1/1) {
+      main { flex-direction:column; justify-flex-start; gap:6px; padding:6px; }
+      #preview-container { order:1; width:100%; height:28vh; min-height:160px; max-height:240px; aspect-ratio:auto; flex-shrink:0; }
+      #svg-container { order:2; flex:1; }
+      .btn-lbl { display:none; }
     }
   </style>
 </head>
 <body>
-  <div id="loader"><div class="spin"></div><p id="ld-t">ĐANG TẢI DỮ LIỆU...</p></div>
-
+  <div id="loader"><div class="spin"></div><p id="ld-t">ĐANG TẢI...</p></div>
   <main>
     <div id="svg-container">
       <div id="menu-dropdown"></div>
-
-      <!-- Inline Search Bar -->
       <div id="inline-search-bar">
-        <svg class="search-icon-svg" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="var(--ca)"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
         <input type="text" id="search-input" placeholder="Nhập tên game..." oninput="onSearchInput(this.value)" autocomplete="off"/>
-        <span class="clear-btn" onclick="closeInlineSearch(true)" title="Đóng & Xóa tìm kiếm">✕</span>
+        <span class="clear-btn" onclick="closeInlineSearch(true)">✕</span>
       </div>
-
       <svg id="svg" viewBox="0 0 540 650" preserveAspectRatio="none">
         <defs>
           <linearGradient id="gn"><stop offset="0%" stop-color="#1e293b"/><stop offset="50%" stop-color="#334155"/><stop offset="100%" stop-color="#1e293b"/></linearGradient>
@@ -90,15 +70,15 @@
       </svg>
     </div>
     <div id="preview-container" onclick="launchCurrentGame()" title="Nhấn để chơi">
-      <div id="fav-btn" class="fav-star-btn" onclick="event.stopPropagation();toggleCurrentFav()" title="Đánh dấu Yêu thích (Phím F hoặc Tay cầm Y)">☆</div>
-      <img id="preview-img" src="" alt="Preview"/>
+      <div id="fav-btn" class="fav-star-btn" onclick="event.stopPropagation();toggleCurrentFav();">☆</div>
+      <img id="preview-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Preview"/>
     </div>
   </main>
 
   <div id="game-player-modal">
     <div id="player-toolbar">
       <span id="player-title">PANDORA ARCADE</span>
-      <div class="player-btns">
+      <div style="display:flex;gap:6px">
         <button class="player-btn" onclick="openGameInNewTab()">🔗 <span class="btn-lbl">Tab Mới</span></button>
         <button class="player-btn" onclick="toggleFullscreen()">⛶ <span class="btn-lbl">Toàn Màn</span></button>
         <button class="player-btn" onclick="closeGamePlayer()">✕ <span class="btn-lbl">Đóng</span></button>
@@ -108,570 +88,557 @@
   </div>
 
   <script>
-    const GITHUB_API="https://api.github.com/repos/longhai/games/contents/roms",
-          EMU_URL="https://longhai.github.io/codes/2026/08/29/emulatorjs.html",
-          TTL=43200000,
-          CAT_CACHE_VER="pandora_categories_v1";
+    const GITHUB_API = "https://api.github.com/repos/longhai/emu/contents/roms";
+    const EMULATOR_URL = "https://longhai.github.io/codes/2026/08/29/emulatorjs.html";
+    const ASSETS_BASE = "https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/automatic/png/";
+    const THUMBNAILS_BASE = "https://thumbnails.libretro.com/";
+    const CACHE_TTL = 43200000;
 
-    const parseGithubApi = api => {
-      const m = api.match(/repos\/([^\/]+)\/([^\/]+)(?:\/contents\/?(.*))?/);
-      if (m) {
-        const owner = m[1], repo = m[2], path = m[3] ? m[3].replace(/\/$/, '') : 'roms';
-        return {
-          owner, repo, path,
-          rawBase: `https://raw.githubusercontent.com/${owner}/${repo}/main/${path}`,
-          repoRawRoot: `https://raw.githubusercontent.com/${owner}/${repo}/main`
-        };
-      }
-      return {
-        owner: 'longhai', repo: 'games', path: 'roms',
-        rawBase: 'https://raw.githubusercontent.com/longhai/games/main/roms',
-        repoRawRoot: 'https://raw.githubusercontent.com/longhai/games/main'
-      };
+    const parseRepoInfo = () => {
+      const match = GITHUB_API.match(/github\.com\/repos\/([^\/]+)\/([^\/]+)\/contents\/(.+)$/i);
+      return match ? { owner: match[1], repo: match[2], folder: match[3] } : { owner: "longhai", repo: "games", folder: "roms" };
     };
 
-    const ghInfo = parseGithubApi(GITHUB_API);
-    const FBNEO_DAT_URL = `${ghInfo.repoRawRoot}/arcade.dat`;
-    const LIBRETRO_BASE="https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/automatic/png/";
+    const repoInfo = parseRepoInfo();
+    const getRawBaseUrl = () => `https://raw.githubusercontent.com/${repoInfo.owner}/${repoInfo.repo}/main/${repoInfo.folder}`;
+    const getDatUrl = () => `https://raw.githubusercontent.com/${repoInfo.owner}/${repoInfo.repo}/main/arcade.dat`;
 
-    const SYSTEMS=[
-      {k:["arcade","cps1","cps2","cps3","fbneo","fba","mame"], l:LIBRETRO_BASE+"FBNeo%20-%20Arcade%20Games.png", s:"FBNeo - Arcade Games", c:"arcade"},
-      {k:["neogeo","neo geo"], l:LIBRETRO_BASE+"SNK%20-%20Neo%20Geo.png", s:"SNK - Neo Geo", c:"arcade"},
-      {k:["mega drive","megadrive","genesis","sega"], l:LIBRETRO_BASE+"Sega%20-%20Mega%20Drive%20-%20Genesis.png", s:"Sega - Mega Drive - Genesis", c:"segaMD"},
-      {k:["snes","super famicom","super nintendo","sfc"], l:LIBRETRO_BASE+"Nintendo%20-%20Super%20Nintendo%20Entertainment%20System.png", s:"Nintendo - Super Nintendo Entertainment System", c:"snes"},
-      {k:["famicom","famicon","nes"], l:LIBRETRO_BASE+"Nintendo%20-%20Nintendo%20Entertainment%20System.png", s:"Nintendo - Nintendo Entertainment System", c:"nes"},
-      {k:["gba","game boy advance"], l:LIBRETRO_BASE+"Nintendo%20-%20Game%20Boy%20Advance.png", s:"Nintendo - Game Boy Advance", c:"gba"},
-      {k:["gbc","game boy color"], l:LIBRETRO_BASE+"Nintendo%20-%20Game%20Boy%20Color.png", s:"Nintendo - Game Boy Color", c:"gbc"},
-      {k:["gb","game boy"], l:LIBRETRO_BASE+"Nintendo%20-%20Game%20Boy.png", s:"Nintendo - Game Boy", c:"gb"},
-      {k:["n64","nintendo 64"], l:LIBRETRO_BASE+"Nintendo%20-%20Nintendo%2064.png", s:"Nintendo - Nintendo 64", c:"n64"},
-      {k:["psx","ps1","playstation"], l:LIBRETRO_BASE+"Sony%20-%20PlayStation.png", s:"Sony - PlayStation", c:"psx"},
-      {k:["pce","pc engine","turbografx"], l:LIBRETRO_BASE+"NEC%20-%20PC%20Engine%20-%20TurboGrafx-16.png", s:"NEC - PC Engine - TurboGrafx-16", c:"pce"}
+    const SYSTEM_PROFILES = [
+      { keys: ["arcade","cps1","cps2","cps3","fbneo","fba","mame"], logo: "FBNeo%20-%20Arcade%20Games.png", name: "FBNeo - Arcade Games", core: "arcade" },
+      { keys: ["neogeo","neo geo"], logo: "SNK%20-%20Neo%20Geo.png", name: "SNK - Neo Geo", core: "arcade" },
+      { keys: ["mega drive","megadrive","genesis","sega"], logo: "Sega%20-%20Mega%20Drive%20-%20Genesis.png", name: "Sega - Mega Drive - Genesis", core: "segaMD" },
+      { keys: ["snes","super famicom","super nintendo","sfc"], logo: "Nintendo%20-%20Super%20Nintendo%20Entertainment%20System.png", name: "Nintendo - Super Nintendo Entertainment System", core: "snes" },
+      { keys: ["famicom","famicon","nes"], logo: "Nintendo%20-%20Nintendo%20Entertainment%20System.png", name: "Nintendo - Nintendo Entertainment System", core: "nes" },
+      { keys: ["gba","game boy advance"], logo: "Nintendo%20-%20Game%20Boy%20Advance.png", name: "Nintendo - Game Boy Advance", core: "gba" },
+      { keys: ["gbc","game boy color"], logo: "Nintendo%20-%20Game%20Boy%20Color.png", name: "Nintendo - Game Boy Color", core: "gbc" },
+      { keys: ["gb","game boy"], logo: "Nintendo%20-%20Game%20Boy.png", name: "Nintendo - Game Boy", core: "gb" },
+      { keys: ["n64","nintendo 64"], logo: "Nintendo%20-%20Nintendo%2064.png", name: "Nintendo - Nintendo 64", core: "n64" },
+      { keys: ["psx","ps1","playstation"], logo: "Sony%20-%20PlayStation.png", name: "Sony - PlayStation", core: "psx" },
+      { keys: ["pce","pc engine","turbografx"], logo: "NEC%20-%20PC%20Engine%20-%20TurboGrafx-16.png", name: "NEC - PC Engine - TurboGrafx-16", core: "pce" }
     ];
 
-    const getCache=k=>{try{const r=localStorage.getItem(k);if(!r)return null;const i=JSON.parse(r);if(Date.now()-i.t<TTL)return i.d;}catch(e){}return null;};
-    
-    function decodeHTMLEntities(str){
-      if(!str)return"";
-      return str.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#039;/g,"'").replace(/&apos;/g,"'");
-    }
+    let datList = [], currentDatIdx = 0, allGames = [], filteredGames = [], selIdx = 0, topIdx = 0, slots = [], searchQuery = "", showFavOnly = false, datNameMap = {};
+    let favorites = JSON.parse(localStorage.getItem('pandora_favs') || '[]');
+    let isCurved = localStorage.getItem('pandora_curved') !== null ? localStorage.getItem('pandora_curved') === 'true' : !(window.innerWidth < 820 || window.innerHeight > window.innerWidth);
+    let numSlots = 5, gamepadConnected = false, gpLastTime = 0, lastGpBtn = {}, resizeTimer = null;
 
-    const setCache=(k,d)=>{
-      try{
-        localStorage.setItem(k,JSON.stringify({t:Date.now(),d}));
-      }catch(e){
-        try{
-          Object.keys(localStorage).forEach(key => {
-            if(key.startsWith('pandora_games_') || key.startsWith('pandora_categories_') || key.startsWith('fbneo_dat_map_')) {
-              localStorage.removeItem(key);
-            }
-          });
-          localStorage.setItem(k,JSON.stringify({t:Date.now(),d}));
-        }catch(err){}
-      }
-    };
+    const $ = id => document.getElementById(id);
 
-    const resolveSys=d=>{
-      const l=d.toLowerCase(),m=SYSTEMS.find(s=>s.k.some(k=>k==="nes"?((/\bnes\b/i).test(l)||(l.includes("nes")&&!l.includes("snes"))):(k==="gb"?(l.includes("gb")&&!l.includes("gba")&&!l.includes("gbc")):l.includes(k))));
-      return m?{logo:m.l,system:m.s,core:m.c}:{logo:LIBRETRO_BASE+"FBNeo%20-%20Arcade%20Games.png",system:d,core:"arcade"};
-    };
-
-    const $=id=>document.getElementById(id),H_TOP=6,H_BOT=54,S_Y0=60,S_H=48,S_GAP=6,isMobile=()=>window.innerWidth<820||window.innerHeight>window.innerWidth;
-    let datList=[],currentDatIdx=0,isCurved=localStorage.getItem('pandora_curved')!==null?localStorage.getItem('pandora_curved')==='true':!isMobile(),NUM=5;
-    let allGames=[],filteredGames=[],selIdx=0,topIdx=0,slots=[],searchQuery="",gamepadConnected=false,gpLastTime=0,lastGpBtn={};
-    let favorites=JSON.parse(localStorage.getItem('pandora_favs')||'[]');
-    let showFavOnly=false;
-    let fbneoDatMap={};
-
-    async function loadFbneoDat(){
-      const ck = "fbneo_dat_map_v4", c = getCache(ck);
-      if(c && Object.keys(c).length > 50){ fbneoDatMap = c; return fbneoDatMap; }
+    function getCache(k) {
       try {
-        const r = await fetch(FBNEO_DAT_URL);
-        if(!r.ok) return fbneoDatMap;
-        const text = await r.text();
-        const map = {};
-        const regex = /(?:<game|<machine)\s+[^>]*?\bname="([^"]+)"|<description>([^<]+)<\/description>/gi;
-        let m, curKey = null;
-        while((m = regex.exec(text)) !== null){
-          if(m[1]) curKey = m[1].toLowerCase().trim();
-          else if(m[2] && curKey){
-            map[curKey] = decodeHTMLEntities(m[2].trim());
-            curKey = null;
-          }
-        }
-        if(Object.keys(map).length > 0){
-          fbneoDatMap = map;
-          setCache(ck, map);
-        }
-      } catch(e){}
-      return fbneoDatMap;
+        const item = JSON.parse(localStorage.getItem(k));
+        if (item && Date.now() - item.t < CACHE_TTL) return item.d;
+      } catch (e) {} return null;
     }
 
-    function getDisplayName(romName){
-      if(!romName) return "";
-      const key = romName.toLowerCase().trim();
-      let name = romName;
-      if(fbneoDatMap && fbneoDatMap[key]) name = fbneoDatMap[key];
-      return decodeHTMLEntities(name);
+    function setCache(k, d) {
+      try { localStorage.setItem(k, JSON.stringify({ t: Date.now(), d })); }
+      catch (e) {
+        try {
+          Object.keys(localStorage).forEach(x => { if (x.startsWith('pandora_g_') || x.startsWith('pandora_c_')) localStorage.removeItem(x); });
+          localStorage.setItem(k, JSON.stringify({ t: Date.now(), d }));
+        } catch (err) {}
+      }
     }
 
-    function updateAllGameNames(){
+    function resolveSys(f) {
+      const lower = f.toLowerCase();
+      const match = SYSTEM_PROFILES.find(s => s.keys.some(k => k === "nes" ? (/\bnes\b/i).test(lower) : lower.includes(k)));
+      return match ? { logo: ASSETS_BASE + match.logo, system: match.name, core: match.core } : { logo: ASSETS_BASE + "FBNeo%20-%20Arcade%20Games.png", system: f, core: "arcade" };
+    }
+
+    function cleanTitle(n) {
+      return n.split('/').pop().replace(/(\.(zip|7z|nes|sfc|smc|md|bin|gba|gbc|gb|iso|cue|chd|pce|z64|v64|n64|a26))+$/i, '');
+    }
+
+    async function loadDatMap() {
+      const cached = getCache("fbneo_dat_m");
+      if (cached) { datNameMap = cached; return; }
+      try {
+        const resp = await fetch(getDatUrl());
+        if (!resp.ok) return;
+        const text = await resp.text();
+        const parsed = {}, regex = /(?:<game|<machine)\s+[^>]*?\bname="([^"]+)"|<description>([^<]+)<\/description>/gi;
+        let match, key = null;
+        while ((match = regex.exec(text))) {
+          if (match[1]) key = match[1].toLowerCase().trim();
+          else if (match[2] && key) { parsed[key] = match[2].trim(); key = null; }
+        }
+        if (Object.keys(parsed).length) { datNameMap = parsed; setCache("fbneo_dat_m", parsed); }
+      } catch (e) {}
+    }
+
+    const getDisplayName = r => r ? (datNameMap[r.toLowerCase().trim()] || r) : "";
+    const showLoader = m => { $('loader').style.display = 'flex'; $('ld-t').innerText = m; };
+    const hideLoader = () => { $('loader').style.display = 'none'; };
+
+    function calcNumSlots() {
+      const h = $('svg-container')?.clientHeight || (window.innerHeight * 0.55);
+      numSlots = Math.max(5, Math.min(12, Math.floor((h - 70) / 54)));
+    }
+
+    function updateSvgViewBox() {
+      calcNumSlots();
+      $('svg').setAttribute('viewBox', `0 0 540 ${64 + numSlots * 54}`);
+    }
+
+    function getGeom() {
+      calcNumSlots();
+      const s = !isCurved, X0 = s ? 8 : 14, X1 = s ? 8 : 85, W = s ? 515 : 435;
+      const Y_MID = (70 + (numSlots - 1) * 54 + 48) / 2;
+      return { X0, X1, W, Y_MID, HALF_H: Y_MID - 6 };
+    }
+
+    function getX(y, p) {
+      if (!isCurved) return p.X0;
+      return p.X0 + (p.X1 - p.X0) * (1 - Math.pow(Math.max(-1, Math.min(1, (y - p.Y_MID) / p.HALF_H)), 2));
+    }
+
+    async function loadCategories() {
+      showLoader("ĐANG TẢI SYSTEM...");
+      const cached = getCache("pandora_cats");
+      if (cached?.length) {
+        datList = cached;
+        currentDatIdx = Math.max(0, datList.findIndex(i => i.name === localStorage.getItem("pandora_last_cat")));
+        return loadGameList();
+      }
+      try {
+        const resp = await fetch(GITHUB_API);
+        const items = await resp.json();
+        datList = items.filter(i => i.type === "dir").map(f => {
+          const info = resolveSys(f.name);
+          return { name: f.name, logo: info.logo, system: info.system, core: info.core, url: f.git_url ? `${f.git_url}?recursive=1` : f.url };
+        });
+        setCache("pandora_cats", datList);
+        currentDatIdx = Math.max(0, datList.findIndex(i => i.name === localStorage.getItem("pandora_last_cat")));
+        await loadGameList();
+      } catch (e) { showLoader("LỖI TẢI: " + e.message); }
+    }
+
+    async function loadGameList() {
+      selIdx = topIdx = 0; searchQuery = "";
+      if ($('search-input')) $('search-input').value = "";
+      const cat = datList[currentDatIdx];
+      if (!cat) return;
+
+      if (cat.core === "arcade") loadDatMap().then(() => updateNames());
+
+      const cacheKey = "pandora_g_" + cat.name;
+      const cached = getCache(cacheKey);
+      if (cached?.length) {
+        allGames = cached;
+        updateNames();
+        filterGames(false);
+        restorePos();
+        hideLoader();
+        return drawAll();
+      }
+
+      try {
+        const resp = await fetch(cat.url);
+        const data = await resp.json();
+        const files = (data.tree || data).map(i => i.path || i.name).filter(n => n && !n.endsWith(".gitkeep"));
+        allGames = files.length ? files.map(f => ({ name: getDisplayName(cleanTitle(f)), fullName: f })) : [{ name: "Chưa có ROMs", fullName: "" }];
+        if (files.length) setCache(cacheKey, allGames);
+        filterGames(false);
+        restorePos();
+        hideLoader();
+        drawAll();
+      } catch (e) { showLoader("LỖI GAME: " + e.message); }
+    }
+
+    function updateNames() {
       let changed = false;
       allGames.forEach(g => {
-        const romName = cleanGameTitle(g.fullName);
-        const mappedName = getDisplayName(romName);
-        if(mappedName && mappedName !== g.name){
-          g.name = mappedName;
-          changed = true;
-        }
+        const d = getDisplayName(cleanTitle(g.fullName));
+        if (d && d !== g.name) { g.name = d; changed = true; }
       });
-      if(changed){ filterGames(true); render(); }
+      if (changed) { filterGames(true); render(); }
     }
 
-    function getGameKey(g){
-      const cat=datList[currentDatIdx];
-      return cat && g?.fullName ? `${cat.name}:${g.fullName}` : '';
+    function restorePos() {
+      const cat = datList[currentDatIdx];
+      const last = cat && localStorage.getItem("pandora_lg_" + cat.name);
+      if (last) {
+        const idx = filteredGames.findIndex(g => g.fullName === last);
+        if (idx !== -1) {
+          selIdx = idx;
+          return;
+        }
+      }
+      selIdx = 0;
+      topIdx = 0;
     }
 
-    function isFav(g){
-      const k=getGameKey(g);
-      return k ? favorites.includes(k) : false;
-    }
+    const getGameKey = g => datList[currentDatIdx] && g?.fullName ? `${datList[currentDatIdx].name}:${g.fullName}` : '';
+    const isFav = g => favorites.includes(getGameKey(g));
 
-    function toggleCurrentFav(){
-      const g=filteredGames[selIdx];
-      if(!g?.fullName)return;
-      const k=getGameKey(g);
-      if(!k)return;
-      const idx=favorites.indexOf(k);
-      if(idx===-1) favorites.push(k);
-      else favorites.splice(idx,1);
-      localStorage.setItem('pandora_favs',JSON.stringify(favorites));
+    function toggleCurrentFav() {
+      const k = getGameKey(filteredGames[selIdx]);
+      if (!k) return;
+      const idx = favorites.indexOf(k);
+      if (idx === -1) favorites.push(k); else favorites.splice(idx, 1);
+      localStorage.setItem('pandora_favs', JSON.stringify(favorites));
+      filterGames(true);
       render();
     }
 
-    function calcNum(){
-      const c=$('svg-container'),h=c?.clientHeight||(window.innerHeight*.55);
-      const calculated=Math.floor((h-S_Y0-10)/(S_H+S_GAP));
-      NUM=Math.max(5,Math.min(isMobile()?12:12,calculated));
+    function toggleFavFilter() {
+      showFavOnly = !showFavOnly;
+      filterGames(true);
+      drawAll();
     }
-    
-    function updateSvg(){calcNum();$('svg').setAttribute('viewBox',`0 0 540 ${S_Y0+NUM*(S_H+S_GAP)+4}`);}
-    function getParams(){
-      calcNum();
-      const s=!isCurved,X0=s?8:14,X1=s?8:85,W=s?515:435,Y_MID=(H_TOP+S_Y0+(NUM-1)*(S_H+S_GAP)+S_H)/2;
-      return{X0,X1,W,Y_MID,HALF_H:Y_MID-H_TOP};
-    }
-    const getX=(y,p)=>isCurved?(p.X0+(p.X1-p.X0)*(1-Math.pow(Math.max(-1,Math.min(1,(y-p.Y_MID)/p.HALF_H)),2))):p.X0;
 
-    function renderMenuList(){
-      $('menu-dropdown').innerHTML=datList.map((item,i)=>
-        `<div class="menu-item ${i===currentDatIdx?'active':''}" onclick="switchDat(${i})">
-          <img src="${item.logo}" alt="${item.name}" class="menu-logo" onerror="this.onerror=null;this.src='${LIBRETRO_BASE}FBNeo%20-%20Arcade%20Games.png';" />
+    function filterGames(preserve = true) {
+      const current = filteredGames[selIdx];
+      const q = searchQuery.toLowerCase().trim();
+      let list = allGames;
+      if (q) list = list.filter(g => g.name.toLowerCase().includes(q));
+      if (showFavOnly) list = list.filter(g => isFav(g));
+      filteredGames = list;
+
+      if (preserve && current?.fullName) {
+        const idx = filteredGames.findIndex(g => g.fullName === current.fullName);
+        if (idx !== -1) {
+          selIdx = idx;
+          return;
+        }
+      }
+      
+      restorePos();
+    }
+
+    function renderMenuList() {
+      $('menu-dropdown').innerHTML = datList.map((item, i) =>
+        `<div class="menu-item ${i === currentDatIdx ? 'active' : ''}" onclick="switchCat(${i})">
+          <img src="${item.logo}" alt="${item.name}" class="menu-logo" onerror="this.onerror=null;this.src='${ASSETS_BASE}FBNeo%20-%20Arcade%20Games.png';" />
           <span>${item.name}</span>
         </div>`
       ).join('');
     }
 
-    function toggleMenuModal(e){
-      if(e)e.stopPropagation();
-      renderMenuList();
-      $('menu-dropdown').classList.toggle('active');
-    }
+    const toggleMenuModal = e => { if (e) e.stopPropagation(); renderMenuList(); $('menu-dropdown').classList.toggle('active'); };
+    const closeMenuModal = () => $('menu-dropdown').classList.remove('active');
 
-    function closeMenuModal(){$('menu-dropdown').classList.remove('active');}
-
-    document.addEventListener('click',e=>{
-      if(!e.target.closest('#menu-dropdown')&&!e.target.closest('#btn-menu')) closeMenuModal();
-      if(!e.target.closest('#inline-search-bar')&&!e.target.closest('#btn-search')) closeInlineSearch(false);
-    });
-
-    function switchDat(i){
-      if(i===currentDatIdx&&allGames.length)return closeMenuModal();
-      currentDatIdx=i;
-      localStorage.setItem('pandora_last_cat', datList[currentDatIdx]?.name || '');
+    function switchCat(i) {
+      if (i === currentDatIdx) return closeMenuModal();
+      currentDatIdx = i;
+      localStorage.setItem("pandora_last_cat", datList[currentDatIdx]?.name || '');
       closeMenuModal();
-      showLoader("ĐANG TẢI...");loadGameList();
+      showLoader("ĐANG TẢI...");
+      loadGameList();
     }
 
-    function drawHeader(){
-      if(!datList.length)return;updateSvg();
-      const p=getParams(),xl0=getX(H_TOP,p),xl1=getX(H_BOT,p),sx=(xl0+xl1)/2+18,clr=isCurved?'#f97316':'#38bdf8';
-      const logoUrl=datList[currentDatIdx]?.logo||(LIBRETRO_BASE+"FBNeo%20-%20Arcade%20Games.png");
+    function drawAll() {
+      requestAnimationFrame(() => {
+        drawHeader();
+        drawSlots();
+        render();
+      });
+    }
+
+    function drawHeader() {
+      if (!datList.length) return;
+      updateSvgViewBox();
+      const p = getGeom(), xl0 = getX(6, p), xl1 = getX(54, p), sx = (xl0 + xl1) / 2 + 18, clr = isCurved ? '#f97316' : '#38bdf8';
+      const logoUrl = datList[currentDatIdx]?.logo || (ASSETS_BASE + "FBNeo%20-%20Arcade%20Games.png");
       const rx = xl0 + p.W;
 
-      $('hg').innerHTML=`
-        <polygon points="${xl0.toFixed(1)},${H_TOP} ${(xl0+p.W).toFixed(1)},${H_TOP} ${(xl1+p.W).toFixed(1)},${H_BOT} ${xl1.toFixed(1)},${H_BOT}" fill="url(#gh)" stroke="#475569" stroke-width="1.5"/>
-        <line x1="${xl0.toFixed(1)}" y1="${H_TOP}" x2="${xl1.toFixed(1)}" y2="${H_BOT}" stroke="#38bdf8" stroke-width="4"/>
-        <g id="btn-menu" style="cursor:pointer" onclick="toggleMenuModal(event)">
-          <image href="${logoUrl}" x="${sx}" y="${H_TOP+9}" width="30" height="30" preserveAspectRatio="xMidYMid meet"/>
-        </g>
-        <text id="cnt-txt" x="${sx+36}" y="${H_TOP+31}" fill="#fbbf24" font-size="15" font-weight="bold" font-family="Orbitron">GAME: 0 / 0</text>
+      $('hg').innerHTML = `
+        <polygon points="${xl0.toFixed(1)},6 ${(xl0 + p.W).toFixed(1)},6 ${(xl1 + p.W).toFixed(1)},54 ${xl1.toFixed(1)},54" fill="url(#gh)" stroke="#475569" stroke-width="1.5"/>
+        <line x1="${xl0.toFixed(1)}" y1="6" x2="${xl1.toFixed(1)}" y2="54" stroke="#38bdf8" stroke-width="4"/>
+        <g style="cursor:pointer" onclick="toggleMenuModal(event)"><image href="${logoUrl}" x="${sx}" y="15" width="30" height="30"/></g>
+        <text id="cnt-txt" x="${sx + 36}" y="37" fill="#fbbf24" font-size="15" font-weight="bold" font-family="Orbitron">GAME: 0 / 0</text>
         
-        <!-- Search Button SVG -->
-        <g id="btn-search" style="cursor:pointer" onclick="toggleInlineSearch(event)" title="Tìm kiếm (Phím /)" transform="translate(${(rx-116).toFixed(1)}, ${H_TOP+14})">
+        <g style="cursor:pointer" onclick="toggleInlineSearch(event)" transform="translate(${(rx - 116).toFixed(1)}, 20)">
           <rect width="26" height="26" fill="transparent"/>
-          <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="#38bdf8" transform="scale(0.95)"/>
+          <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="#38bdf8"/>
         </g>
         
-        <!-- Favorite Filter SVG -->
-        <g id="btn-fav-filter" style="cursor:pointer" onclick="toggleFavFilter()" title="Lọc Game Yêu thích (Phím V hoặc Tay cầm X)" transform="translate(${(rx-86).toFixed(1)}, ${H_TOP+14})">
+        <g style="cursor:pointer" onclick="toggleFavFilter()" transform="translate(${(rx - 86).toFixed(1)}, 20)">
           <rect width="26" height="26" fill="transparent"/>
-          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="${showFavOnly?'#fbbf24':'#64748b'}" transform="scale(0.95)"/>
+          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="${showFavOnly ? '#fbbf24' : '#64748b'}"/>
         </g>
         
-        <!-- Gamepad Indicator SVG -->
-        <g id="gp-icon-status" transform="translate(${(rx-56).toFixed(1)}, ${H_TOP+14})" style="display:${gamepadConnected?'block':'none'}">
-          <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H9v2H7v-2H5v-2h2V9h2v2h2v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" fill="#4ade80" transform="scale(0.95)"/>
+        <g id="gp-icon-status" transform="translate(${(rx - 56).toFixed(1)}, 20)" style="display:${gamepadConnected ? 'block' : 'none'}">
+          <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H9v2H7v-2H5v-2h2V9h2v2h2v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" fill="#4ade80"/>
         </g>
         
-        <!-- Curve / Layout Mode SVG -->
-        <g id="btn-toggle" style="cursor:pointer" transform="translate(${(rx-28).toFixed(1)}, ${H_TOP+14})" title="Thay đổi kiểu giao diện (Cong / Thẳng)">
+        <g id="btn-toggle" style="cursor:pointer" transform="translate(${(rx - 28).toFixed(1)}, 20)">
           <rect width="26" height="26" fill="transparent"/>
           ${isCurved ? 
             `<path d="M 5,5 Q 14,13 5,21" fill="none" stroke="${clr}" stroke-width="2.5" stroke-linecap="round"/>
-             <line x1="8" y1="7" x2="21" y2="7" stroke="${clr}" stroke-width="2" stroke-linecap="round"/>
-             <line x1="12" y1="13" x2="22" y2="13" stroke="${clr}" stroke-width="2" stroke-linecap="round"/>
-             <line x1="8" y1="19" x2="21" y2="19" stroke="${clr}" stroke-width="2" stroke-linecap="round"/>` : 
-            `<line x1="5" y1="5" x2="5" y2="21" stroke="${clr}" stroke-width="2.5" stroke-linecap="round"/>
-             <line x1="9" y1="7" x2="21" y2="7" stroke="${clr}" stroke-width="2" stroke-linecap="round"/>
-             <line x1="9" y1="13" x2="21" y2="13" stroke="${clr}" stroke-width="2" stroke-linecap="round"/>
-             <line x1="9" y1="19" x2="21" y2="19" stroke="${clr}" stroke-width="2" stroke-linecap="round"/>`
+             <line x1="8" y1="7" x2="21" y2="7" stroke="${clr}" stroke-width="2"/><line x1="12" y1="13" x2="22" y2="13" stroke="${clr}" stroke-width="2"/><line x1="8" y1="19" x2="21" y2="19" stroke="${clr}" stroke-width="2"/>` : 
+            `<line x1="5" y1="5" x2="5" y2="21" stroke="${clr}" stroke-width="2.5"/><line x1="9" y1="7" x2="21" y2="7" stroke="${clr}" stroke-width="2"/><line x1="9" y1="13" x2="21" y2="13" stroke="${clr}" stroke-width="2"/><line x1="9" y1="19" x2="21" y2="19" stroke="${clr}" stroke-width="2"/>`
           }
         </g>`;
 
-      $('btn-toggle').onclick=e=>{e.stopPropagation();isCurved=!isCurved;localStorage.setItem('pandora_curved',isCurved);drawHeader();drawSlots();render();};
-      positionInlineSearch();
+      $('btn-toggle').onclick = e => { e.stopPropagation(); isCurved = !isCurved; localStorage.setItem('pandora_curved', isCurved); drawAll(); };
+      posSearch();
     }
 
-    function positionInlineSearch(){
+    function posSearch() {
       const bar = $('inline-search-bar');
-      if(!bar || !bar.classList.contains('active')) return;
-      const c = $('svg-container');
-      if(!c) return;
-      const p = getParams(), xl0 = getX(H_TOP, p), rx = xl0 + p.W, sx = (xl0 + getX(H_BOT, p))/2 + 18;
-      
-      const svgX = sx + 32, svgY = H_TOP + 4, svgW = Math.max(130, (rx - 112) - svgX), svgH = 38;
-      const rect = c.getBoundingClientRect(), viewBoxH = S_Y0 + NUM * (S_H + S_GAP) + 4;
-      const scaleX = rect.width / 540, scaleY = rect.height / viewBoxH;
-      
-      bar.style.left = `${svgX * scaleX}px`;
-      bar.style.top = `${svgY * scaleY}px`;
-      bar.style.width = `${svgW * scaleX}px`;
-      bar.style.height = `${svgH * scaleY}px`;
+      if (!bar?.classList.contains('active')) return;
+      const c = $('svg-container'), p = getGeom(), xl0 = getX(6, p), rx = xl0 + p.W, sx = (xl0 + getX(54, p)) / 2 + 18;
+      const rect = c.getBoundingClientRect(), scaleX = rect.width / 540, scaleY = rect.height / (64 + numSlots * 54);
+      bar.style.left = `${(sx + 32) * scaleX}px`; bar.style.top = `${10 * scaleY}px`;
+      bar.style.width = `${Math.max(130, (rx - 112) - (sx + 32)) * scaleX}px`; bar.style.height = `${38 * scaleY}px`;
     }
 
-    function openInlineSearch(){
+    function toggleInlineSearch(e) {
+      if (e) e.stopPropagation();
       const bar = $('inline-search-bar'), input = $('search-input');
-      if(!bar || !input) return;
-      bar.classList.add('active');
-      positionInlineSearch();
-      input.focus();
-      if(input.value) input.select();
+      if (bar.classList.contains('active')) { bar.classList.remove('active'); }
+      else { bar.classList.add('active'); posSearch(); input.focus(); }
     }
 
-    function closeInlineSearch(clear = false){
-      const bar = $('inline-search-bar');
-      if(bar) bar.classList.remove('active');
-      if(clear){
-        const input = $('search-input');
-        if(input){ input.value = ""; onSearchInput(""); }
-      }
+    function closeInlineSearch(clear = false) {
+      $('inline-search-bar').classList.remove('active');
+      if (clear && $('search-input')) { $('search-input').value = ""; onSearchInput(""); }
     }
 
-    function toggleInlineSearch(e){
-      if(e) e.stopPropagation();
-      const bar = $('inline-search-bar');
-      if(bar && bar.classList.contains('active')) closeInlineSearch(false);
-      else openInlineSearch();
-    }
+    function drawSlots() {
+      const p = getGeom(), grp = $('sg'), defs = $('cd');
+      grp.innerHTML = defs.innerHTML = ''; slots = [];
 
-    function drawSlots(){
-      const p=getParams(),grp=$('sg'),defs=$('cd');grp.innerHTML=defs.innerHTML='';slots=[];
-      for(let i=0;i<NUM;i++){
-        const y0=S_Y0+i*(S_H+S_GAP),y1=y0+S_H,xl0=getX(y0,p),xl1=getX(y1,p);
-        defs.innerHTML+=`<clipPath id="c${i}"><polygon points="${xl0.toFixed(1)},${y0} ${(xl0+p.W-12).toFixed(1)},${y0} ${(xl1+p.W-12).toFixed(1)},${y1} ${xl1.toFixed(1)},${y1}"/></clipPath>`;
-        const el=document.createElementNS("http://www.w3.org/2000/svg","g");el.style.cursor="pointer";
-        el.innerHTML=`
-          <polygon points="${xl0.toFixed(1)},${y0} ${(xl0+p.W).toFixed(1)},${y0} ${(xl1+p.W).toFixed(1)},${y1} ${xl1.toFixed(1)},${y1}" fill="url(#gn)" stroke="#475569" stroke-width="1.5"/>
+      for (let i = 0; i < numSlots; i++) {
+        const y0 = 60 + i * 54, y1 = y0 + 48, xl0 = getX(y0, p), xl1 = getX(y1, p);
+        defs.innerHTML += `<clipPath id="c${i}"><polygon points="${xl0.toFixed(1)},${y0} ${(xl0 + p.W - 12).toFixed(1)},${y0} ${(xl1 + p.W - 12).toFixed(1)},${y1} ${xl1.toFixed(1)},${y1}"/></clipPath>`;
+
+        const el = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        el.style.cursor = "pointer";
+        el.innerHTML = `
+          <polygon points="${xl0.toFixed(1)},${y0} ${(xl0 + p.W).toFixed(1)},${y0} ${(xl1 + p.W).toFixed(1)},${y1} ${xl1.toFixed(1)},${y1}" fill="url(#gn)" stroke="#475569" stroke-width="1.5"/>
           <line x1="${xl0.toFixed(1)}" y1="${y0}" x2="${xl1.toFixed(1)}" y2="${y1}" stroke="#60a5fa" stroke-width="4"/>
-          <text x="${(xl0+xl1)/2+18}" y="${y0+30}" class="tn" clip-path="url(#c${i})"></text>`;
-        el.onclick=()=>{if(topIdx+i<filteredGames.length){if(selIdx===topIdx+i)launchCurrentGame();else{selIdx=topIdx+i;render();}}};
-        grp.appendChild(el);slots.push({poly:el.querySelector('polygon'),line:el.querySelector('line'),txt:el.querySelector('text'),g:el});
-      }
-    }
+          <text x="${(xl0 + xl1) / 2 + 18}" y="${y0 + 30}" class="tn" clip-path="url(#c${i})"></text>`;
 
-    const showLoader=m=>{$('loader').style.display='flex';$('ld-t').innerText=m;$('ld-t').style.color="#fbbf24";},
-          showError=m=>{$('loader').style.display='flex';$('ld-t').innerText=m;$('ld-t').style.color="#ef4444";};
-
-    async function loadCategories(){
-      showLoader("ĐANG TẢI DANH SÁCH SYSTEM...");
-      const c=getCache(CAT_CACHE_VER);if(c?.length){datList=c;
-        const lastCat=localStorage.getItem('pandora_last_cat');
-        const foundIdx=datList.findIndex(item=>item.name===lastCat);
-        currentDatIdx=foundIdx!==-1?foundIdx:0;
-        return loadGameList();
-      }
-      try{
-        const r=await fetch(GITHUB_API);if(!r.ok)throw new Error("HTTP "+r.status);
-        const items=await r.json(),folders=items.filter(i=>i.type==="dir");
-        
-        datList=folders.map(f=>{
-          const info=resolveSys(f.name);
-          const treeApiUrl = f.git_url ? `${f.git_url}?recursive=1` : f.url;
-          return{ name:f.name, logo:info.logo, system:info.system, core:info.core, url:treeApiUrl };
-        });
-        setCache(CAT_CACHE_VER,datList);
-        const lastCat=localStorage.getItem('pandora_last_cat');
-        const foundIdx=datList.findIndex(item=>item.name===lastCat);
-        currentDatIdx=foundIdx!==-1?foundIdx:0;
-        await loadGameList();
-      }catch(e){showError("LỖI DANH SÁCH: "+e.message);}
-    }
-
-    function cleanGameTitle(filename){
-      let name = filename.split('/').pop();
-      const extRegex = /(\.(zip|7z|nes|sfc|smc|md|bin|gba|gbc|gb|iso|cue|chd|pce|z64|v64|n64|a26))+$/i;
-      while(extRegex.test(name)){ name = name.replace(extRegex, ''); }
-      return name;
-    }
-
-    async function loadGameList(){
-      try{
-        selIdx=topIdx=0; searchQuery="";
-        if($('search-input')) $('search-input').value="";
-        
-        const cat=datList[currentDatIdx];if(!cat)return;
-
-        if(cat.core === "arcade" || cat.name.toLowerCase().includes("arcade") || cat.name.toLowerCase().includes("neogeo")){
-          loadFbneoDat().then(() => updateAllGameNames());
-        }
-
-        const ck="pandora_games_v7_"+cat.name, c=getCache(ck);
-        if(c?.length){
-          allGames=c; updateAllGameNames(); filterGames(false); restoreSavedGamePos();
-          $('loader').style.display='none';
-          return requestAnimationFrame(()=>{drawHeader();drawSlots();render();});
-        }
-        
-        const r=await fetch(cat.url);if(!r.ok)throw new Error("HTTP "+r.status);
-        const data=await r.json();
-        
-        let files = [];
-        if(Array.isArray(data.tree)) files = data.tree.filter(item => item.type === "blob").map(item => item.path);
-        else if(Array.isArray(data)) files = data.filter(i => i.type === "file" || i.type === "blob").map(i => i.name || i.path);
-        
-        allGames=files.filter(n=>n&&!n.endsWith(".gitkeep")).map(f=>{
-          const romName = cleanGameTitle(f);
-          return { name: getDisplayName(romName), fullName: f };
-        });
-        
-        if(!allGames.length)allGames=[{name:"Chưa có ROMs",fullName:""}];else setCache(ck,allGames);
-        filterGames(false);restoreSavedGamePos();$('loader').style.display='none';requestAnimationFrame(()=>{drawHeader();drawSlots();render();});
-      }catch(e){showError("LỖI LOAD GAME: "+e.message);}
-    }
-
-    function restoreSavedGamePos(){
-      const cat=datList[currentDatIdx];
-      if(!cat)return;
-      const lastGameName=localStorage.getItem(`pandora_last_game_${cat.name}`);
-      if(lastGameName){
-        const idx=filteredGames.findIndex(g=>g.fullName===lastGameName);
-        if(idx!==-1)selIdx=idx;
-      }
-    }
-
-    function toggleFavFilter(){
-      showFavOnly=!showFavOnly;
-      filterGames(true); drawHeader(); drawSlots(); render();
-    }
-
-    function filterGames(preserveSelection=true){
-      const current=filteredGames[selIdx], q=searchQuery.toLowerCase().trim();
-      let list=allGames;
-      if(q)list=list.filter(g=>g.name.toLowerCase().includes(q));
-      if(showFavOnly)list=list.filter(g=>isFav(g));
-      filteredGames=list;
-      
-      if(preserveSelection){
-        if(current?.fullName){
-          const idx=filteredGames.findIndex(g=>g.fullName===current.fullName);
-          if(idx!==-1){ selIdx=idx; return; }
-        }
-        const cat=datList[currentDatIdx];
-        if(cat){
-          const lastGameName=localStorage.getItem(`pandora_last_game_${cat.name}`);
-          if(lastGameName){
-            const idx=filteredGames.findIndex(g=>g.fullName===lastGameName);
-            if(idx!==-1){ selIdx=idx; return; }
+        el.onclick = () => {
+          if (topIdx + i < filteredGames.length) {
+            if (selIdx === topIdx + i) launchCurrentGame();
+            else { selIdx = topIdx + i; render(); }
           }
-        }
+        };
+        grp.appendChild(el);
+        slots.push({ poly: el.querySelector('polygon'), line: el.querySelector('line'), txt: el.querySelector('text'), g: el });
       }
-      selIdx=topIdx=0;
     }
-    
-    function updatePreview(g){
-      if(!g){
-        $('preview-img').src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
-        $('fav-btn').style.display='none';
-        return;
-      }
-      $('fav-btn').style.display='block';
-      const img=$('preview-img'),cat=datList[currentDatIdx];if(!cat)return;img.classList.add('loading');
-      const sys=encodeURIComponent(cat.system), rawName=decodeHTMLEntities(g.name);
-      
-      const clean1=rawName.replace(/&/g,'_').replace(/[/\\?%*:|"<>]/g,'_'),clean2=rawName.replace(/[/\\?%*:|"<>]/g,'_');
-      const base=`https://thumbnails.libretro.com/${sys}`,types=['Named_Snaps','Named_Boxarts','Named_Titles'];
-      const candidates=[];
-      types.forEach(t=>{
-        candidates.push(`${base}/${t}/${encodeURIComponent(clean1)}.png`);
-        if(clean1!==clean2) candidates.push(`${base}/${t}/${encodeURIComponent(clean2)}.png`);
-      });
-      let step=0;
-      img.dataset.targetName=encodeURIComponent(clean1);
-      const targetKey=img.dataset.targetName;
-      const tryNext=()=>{
-        if(step<candidates.length) img.src=candidates[step++];
-        else{
-          img.src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23f97316' stroke-width='1.5'%3E%3Crect x='2' y='2' width='20' height='20' rx='4'/%3E%3Cpath d='M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z'/%3E%3Cpath d='m21 15-5-5L5 21'/%3E%3C/svg%3E";
+
+    function updatePreview(g) {
+      const img = $('preview-img'), favBtn = $('fav-btn');
+      if (!g) { img.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; favBtn.style.display = 'none'; return; }
+      favBtn.style.display = 'block';
+
+      const cat = datList[currentDatIdx];
+      if (!cat) return;
+      img.classList.add('loading');
+
+      const sys = encodeURIComponent(cat.system), rawName = g.name;
+      const clean1 = rawName.replace(/&/g, '_').replace(/[/\\?%*:|"<>]/g, '_');
+      const base = `${THUMBNAILS_BASE}${sys}`;
+      const candidates = ['Named_Snaps', 'Named_Boxarts', 'Named_Titles'].map(t => `${base}/${t}/${encodeURIComponent(clean1)}.png`);
+
+      let step = 0, targetKey = encodeURIComponent(clean1);
+      img.dataset.targetName = targetKey;
+
+      const tryNext = () => {
+        if (step < candidates.length) img.src = candidates[step++];
+        else {
+          img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23f97316' stroke-width='1.5'%3E%3Crect x='2' y='2' width='20' height='20' rx='4'/%3E%3Cpath d='M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z'/%3E%3Cpath d='m21 15-5-5L5 21'/%3E%3C/svg%3E";
           img.classList.remove('loading');
         }
       };
-      img.onload=()=>{ if(img.dataset.targetName===targetKey) img.classList.remove('loading'); };
-      img.onerror=()=>{ if(img.dataset.targetName===targetKey) tryNext(); };
+
+      img.onload = () => { if (img.dataset.targetName === targetKey) img.classList.remove('loading'); };
+      img.onerror = () => { if (img.dataset.targetName === targetKey) tryNext(); };
       tryNext();
     }
 
-    const buildEmuUrl=(g,c)=>{
-      if(!g?.fullName||!c)return "";
-      const safeRomPath = g.fullName.split('/').map(encodeURIComponent).join('/');
-      const romUrl = `${ghInfo.rawBase}/${encodeURIComponent(c.name)}/${safeRomPath}`;
-      return `${EMU_URL}?core=${c.core||"arcade"}&rom=${romUrl}`;
-    };
+    function buildEmuUrl(g, c) {
+      if (!g?.fullName || !c) return "";
+      const path = g.fullName.split('/').map(encodeURIComponent).join('/');
+      return `${EMULATOR_URL}?core=${c.core || "arcade"}&rom=${getRawBaseUrl()}/${encodeURIComponent(c.name)}/${path}`;
+    }
 
-    function launchCurrentGame(){const g=filteredGames[selIdx],c=datList[currentDatIdx];if(!g?.fullName)return;$('player-title').textContent=`${g.name.toUpperCase()} [${c.name}]`;$('game-frame').src=buildEmuUrl(g,c);$('game-player-modal').classList.add('active');}
-    function openGameInNewTab(){const u=buildEmuUrl(filteredGames[selIdx],datList[currentDatIdx]);if(u)window.open(u,'_blank');}
-    function closeGamePlayer(){
-      $('game-frame').src="";
+    function launchCurrentGame() {
+      const g = filteredGames[selIdx], c = datList[currentDatIdx];
+      if (!g?.fullName) return;
+      $('player-title').textContent = `${g.name.toUpperCase()} [${c.name}]`;
+      $('game-frame').src = buildEmuUrl(g, c);
+      $('game-player-modal').classList.add('active');
+    }
+
+    function openGameInNewTab() {
+      const u = buildEmuUrl(filteredGames[selIdx], datList[currentDatIdx]);
+      if (u) window.open(u, '_blank');
+    }
+
+    function closeGamePlayer() {
+      $('game-frame').src = "";
       $('game-player-modal').classList.remove('active');
-      if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});
-      
-      gpLastTime=performance.now()+400;
-      lastGpBtn={dir:true,cat:true,home:true,favY:true,favX:true,confirm:true};
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      gpLastTime = performance.now() + 400;
+      lastGpBtn = { dir: true, cat: true, home: true, favY: true, favX: true, confirm: true };
       render();
     }
-    function toggleFullscreen(){const m=$('game-player-modal');if(!document.fullscreenElement)m.requestFullscreen().catch(()=>{});else document.exitFullscreen().catch(()=>{});}
 
-    function onSearchInput(v){searchQuery=v;filterGames();drawSlots();render();}
+    function toggleFullscreen() {
+      const m = $('game-player-modal');
+      if (!document.fullscreenElement) m.requestFullscreen().catch(() => {});
+      else document.exitFullscreen().catch(() => {});
+    }
 
-    function render(){
-      const countLabel = showFavOnly ? 'YÊU THÍCH' : 'GAME';
-      if(!filteredGames.length){
-        if($('cnt-txt'))$('cnt-txt').textContent=`${countLabel}: 0 / 0`;
-        slots.forEach(s=>s.g.style.display="none");
+    function onSearchInput(val) {
+      searchQuery = val;
+      filterGames(false);
+      drawSlots();
+      render();
+    }
+
+    function render() {
+      const label = showFavOnly ? 'YÊU THÍCH' : 'GAME';
+      if (!filteredGames.length) {
+        if ($('cnt-txt')) $('cnt-txt').textContent = `${label}: 0 / 0`;
+        slots.forEach(s => s.g.style.display = "none");
         updatePreview(null);
         return;
       }
-      if(selIdx<topIdx)topIdx=selIdx;else if(selIdx>=topIdx+NUM)topIdx=selIdx-NUM+1;
-      topIdx=Math.max(0,Math.min(topIdx,Math.max(0,filteredGames.length-NUM)));
-      if($('cnt-txt'))$('cnt-txt').textContent=`${countLabel}: ${selIdx+1} / ${filteredGames.length}`;
-      
-      const cat=datList[currentDatIdx];
-      if(cat && filteredGames[selIdx]?.fullName){
-        localStorage.setItem(`pandora_last_game_${cat.name}`, filteredGames[selIdx].fullName);
+
+      if (selIdx < topIdx) topIdx = selIdx;
+      else if (selIdx >= topIdx + numSlots) topIdx = selIdx - numSlots + 1;
+      topIdx = Math.max(0, Math.min(topIdx, Math.max(0, filteredGames.length - numSlots)));
+
+      if ($('cnt-txt')) $('cnt-txt').textContent = `${label}: ${selIdx + 1} / ${filteredGames.length}`;
+      if (datList[currentDatIdx] && filteredGames[selIdx]?.fullName) {
+        localStorage.setItem("pandora_lg_" + datList[currentDatIdx].name, filteredGames[selIdx].fullName);
       }
 
       const maxLen = isCurved ? 46 : 64;
-      slots.forEach((s,i)=>{
-        const idx=topIdx+i,a=idx===selIdx;
-        if(idx<filteredGames.length){
-          s.g.style.display="block";
-          const gameObj = filteredGames[idx], nameStr = gameObj.name;
-          s.txt.textContent = nameStr.length > maxLen ? nameStr.slice(0, maxLen - 2) + "..." : nameStr;
-          s.poly.setAttribute("fill",a?"url(#ga)":"url(#gn)");s.poly.setAttribute("stroke",a?"#fef08a":"#475569");s.poly.setAttribute("stroke-width",a?"2.5":"1.5");
-          a?s.poly.setAttribute("filter","url(#gw)"):s.poly.removeAttribute("filter");
-          s.line.setAttribute("stroke",a?"#fef08a":"#60a5fa");s.line.setAttribute("stroke-width",a?"5":"4");s.txt.setAttribute("class",a?"ta":"tn");
-        }else s.g.style.display="none";
+      slots.forEach((s, i) => {
+        const idx = topIdx + i, active = idx === selIdx;
+        if (idx < filteredGames.length) {
+          s.g.style.display = "block";
+          const str = filteredGames[idx].name;
+          s.txt.textContent = str.length > maxLen ? str.slice(0, maxLen - 2) + "..." : str;
+          s.poly.setAttribute("fill", active ? "url(#ga)" : "url(#gn)");
+          s.poly.setAttribute("stroke", active ? "#fef08a" : "#475569");
+          s.poly.setAttribute("stroke-width", active ? "2.5" : "1.5");
+          if (active) s.poly.setAttribute("filter", "url(#gw)"); else s.poly.removeAttribute("filter");
+          s.line.setAttribute("stroke", active ? "#fef08a" : "#60a5fa");
+          s.line.setAttribute("stroke-width", active ? "5" : "4");
+          s.txt.setAttribute("class", active ? "ta" : "tn");
+        } else s.g.style.display = "none";
       });
-      if(filteredGames[selIdx]){
+
+      if (filteredGames[selIdx]) {
         updatePreview(filteredGames[selIdx]);
-        const favBtn=$('fav-btn');
-        if(favBtn){
-          if(isFav(filteredGames[selIdx])){ favBtn.classList.add('active'); favBtn.textContent="★"; }
-          else{ favBtn.classList.remove('active'); favBtn.textContent="☆"; }
+        const favBtn = $('fav-btn');
+        if (favBtn) {
+          const active = isFav(filteredGames[selIdx]);
+          favBtn.classList.toggle('active', active);
+          favBtn.textContent = active ? "★" : "☆";
         }
       }
     }
 
-    const move=st=>{const n=selIdx+st;if(n>=0&&n<filteredGames.length){selIdx=n;render();}};
-    const jumpToFirst=()=>{if(filteredGames.length){selIdx=0;render();}};
-    let resizeTimer;window.onresize=()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>{if(datList.length){drawHeader();drawSlots();render();positionInlineSearch();}},100);};
-
-    let touchY=0,svgC=$('svg-container');
-    svgC.addEventListener('touchstart',e=>{if(e.touches.length)touchY=e.touches[0].clientY;},{passive:true});
-    svgC.addEventListener('touchmove',e=>{if(!filteredGames.length||!e.touches.length)return;const d=touchY-e.touches[0].clientY;if(Math.abs(d)>28){move(d>0?1:-1);touchY=e.touches[0].clientY;}},{passive:true});
-
-    window.onwheel=e=>{
-      if($('game-player-modal').classList.contains('active')||$('menu-dropdown').classList.contains('active'))return;
-      move(e.deltaY>0?1:-1);
+    const moveSelection = step => {
+      const n = selIdx + step;
+      if (n >= 0 && n < filteredGames.length) { selIdx = n; render(); }
     };
 
-    window.onkeydown=e=>{
-      if($('game-player-modal').classList.contains('active')){if(e.key==='Escape')closeGamePlayer();return;}
-      if($('inline-search-bar')?.classList.contains('active')){
-        if(e.key==='Escape'){closeInlineSearch(true);return;}
-        if(e.key==='Enter'){e.preventDefault();closeInlineSearch(false);if(filteredGames.length)launchCurrentGame();return;}
+    function bindEvents() {
+      window.onresize = () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => { if (datList.length) { drawAll(); posSearch(); } }, 100);
+      };
+
+      document.addEventListener('click', e => {
+        if (!e.target.closest('#menu-dropdown') && !e.target.closest('#btn-menu')) closeMenuModal();
+        if (!e.target.closest('#inline-search-bar') && !e.target.closest('#btn-search')) closeInlineSearch(false);
+      });
+
+      let touchY = 0, svgC = $('svg-container');
+      if (svgC) {
+        svgC.addEventListener('touchstart', e => { if (e.touches.length) touchY = e.touches[0].clientY; }, { passive: true });
+        svgC.addEventListener('touchmove', e => {
+          if (!filteredGames.length || !e.touches.length) return;
+          const d = touchY - e.touches[0].clientY;
+          if (Math.abs(d) > 28) { moveSelection(d > 0 ? 1 : -1); touchY = e.touches[0].clientY; }
+        }, { passive: true });
       }
-      if($('menu-dropdown').classList.contains('active')){if(e.key==='Escape')closeMenuModal();return;}
-      
-      if(e.key==='ArrowDown'){e.preventDefault();move(1);}
-      else if(e.key==='ArrowUp'){e.preventDefault();move(-1);}
-      else if(e.key==='Home'){e.preventDefault();jumpToFirst();}
-      else if(e.key==='f'||e.key==='F'){e.preventDefault();toggleCurrentFav();}
-      else if(e.key==='V'||e.key==='v'){e.preventDefault();toggleFavFilter();}
-      else if(e.key==='Enter'){e.preventDefault();launchCurrentGame();}
-      else if(e.key==='/'){e.preventDefault();openInlineSearch();}
-    };
 
-    function pollGamepad(){
+      window.onwheel = e => {
+        if ($('game-player-modal').classList.contains('active') || $('menu-dropdown').classList.contains('active')) return;
+        moveSelection(e.deltaY > 0 ? 1 : -1);
+      };
+
+      window.onkeydown = e => {
+        if ($('game-player-modal').classList.contains('active')) { if (e.key === 'Escape') closeGamePlayer(); return; }
+        if ($('inline-search-bar')?.classList.contains('active')) {
+          if (e.key === 'Escape') return closeInlineSearch(true);
+          if (e.key === 'Enter') { e.preventDefault(); closeInlineSearch(false); if (filteredGames.length) launchCurrentGame(); return; }
+        }
+        if ($('menu-dropdown').classList.contains('active')) { if (e.key === 'Escape') closeMenuModal(); return; }
+
+        if (e.key === 'ArrowDown') { e.preventDefault(); moveSelection(1); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); moveSelection(-1); }
+        else if (e.key === 'Home') { e.preventDefault(); if (filteredGames.length) { selIdx = 0; render(); } }
+        else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleCurrentFav(); }
+        else if (e.key === 'v' || e.key === 'V') { e.preventDefault(); toggleFavFilter(); }
+        else if (e.key === 'Enter') { e.preventDefault(); launchCurrentGame(); }
+        else if (e.key === '/') { e.preventDefault(); toggleInlineSearch(); }
+      };
+    }
+
+    function pollGamepad() {
       try {
         const gamepads = navigator.getGamepads ? Array.from(navigator.getGamepads()) : [];
         const gp = gamepads.find(g => g && g.connected);
         const isConnected = !!gp;
-        
-        if(isConnected!==gamepadConnected){
-          gamepadConnected=isConnected;
-          const icon=$('gp-icon-status');
-          if(icon)icon.style.display=isConnected?'block':'none';
+
+        if (isConnected !== gamepadConnected) {
+          gamepadConnected = isConnected;
+          if ($('gp-icon-status')) $('gp-icon-status').style.display = isConnected ? 'block' : 'none';
         }
-        if(isConnected && gp){
-          if($('game-player-modal').classList.contains('active')){
-            if(gp.buttons[16]?.pressed) closeGamePlayer();
-          }else if(!$('inline-search-bar')?.classList.contains('active') && !$('menu-dropdown').classList.contains('active')){
-            const now=performance.now();
-            if(now < gpLastTime){ requestAnimationFrame(pollGamepad); return; }
-            const ay=gp.axes[1]??0,ax=gp.axes[0]??0,u=gp.buttons[12]?.pressed||ay<-0.55,d=gp.buttons[13]?.pressed||ay>0.55,l=gp.buttons[14]?.pressed||ax<-0.55,r=gp.buttons[15]?.pressed||ax>0.55;
-            if(u||d){if(!lastGpBtn.dir||now-gpLastTime>160){move(u?-1:1);gpLastTime=now;lastGpBtn.dir=true;}}else lastGpBtn.dir=false;
-            if((l||r)&&!lastGpBtn.cat){lastGpBtn.cat=true;if(datList.length)switchDat((currentDatIdx+(r?1:-1)+datList.length)%datList.length);}else if(!l&&!r)lastGpBtn.cat=false;
-            
-            const homePressed = gp.buttons[16]?.pressed;
-            if(homePressed && !lastGpBtn.home){lastGpBtn.home=true;jumpToFirst();}else if(!homePressed)lastGpBtn.home=false;
-            
-            const yPressed = gp.buttons[3]?.pressed;
-            if(yPressed && !lastGpBtn.favY){lastGpBtn.favY=true;toggleCurrentFav();}else if(!yPressed)lastGpBtn.favY=false;
 
-            const xPressed = gp.buttons[2]?.pressed;
-            if(xPressed && !lastGpBtn.favX){lastGpBtn.favX=true;toggleFavFilter();}else if(!xPressed)lastGpBtn.favX=false;
+        if (isConnected && gp) {
+          if ($('game-player-modal').classList.contains('active')) {
+            if (gp.buttons[16]?.pressed) closeGamePlayer();
+          } else if (!$('inline-search-bar')?.classList.contains('active') && !$('menu-dropdown').classList.contains('active')) {
+            const now = performance.now();
+            if (now >= gpLastTime) {
+              const ay = gp.axes[1] ?? 0, ax = gp.axes[0] ?? 0;
+              const u = gp.buttons[12]?.pressed || ay < -0.55, d = gp.buttons[13]?.pressed || ay > 0.55;
+              const l = gp.buttons[14]?.pressed || ax < -0.55, r = gp.buttons[15]?.pressed || ax > 0.55;
 
-            if((gp.buttons[0]?.pressed||gp.buttons[9]?.pressed)&&!lastGpBtn.confirm){lastGpBtn.confirm=true;launchCurrentGame();}else if(!gp.buttons[0]?.pressed&&!gp.buttons[9]?.pressed)lastGpBtn.confirm=false;
+              if (u || d) {
+                if (!lastGpBtn.dir || now - gpLastTime > 160) { moveSelection(u ? -1 : 1); gpLastTime = now; lastGpBtn.dir = true; }
+              } else lastGpBtn.dir = false;
+
+              if ((l || r) && !lastGpBtn.cat) {
+                lastGpBtn.cat = true;
+                if (datList.length) switchCat((currentDatIdx + (r ? 1 : -1) + datList.length) % datList.length);
+              } else if (!l && !r) lastGpBtn.cat = false;
+
+              const hm = gp.buttons[16]?.pressed;
+              if (hm && !lastGpBtn.home) { lastGpBtn.home = true; if (filteredGames.length) { selIdx = 0; render(); } } else if (!hm) lastGpBtn.home = false;
+
+              const yP = gp.buttons[3]?.pressed;
+              if (yP && !lastGpBtn.favY) { lastGpBtn.favY = true; toggleCurrentFav(); } else if (!yP) lastGpBtn.favY = false;
+
+              const xP = gp.buttons[2]?.pressed;
+              if (xP && !lastGpBtn.favX) { lastGpBtn.favX = true; toggleFavFilter(); } else if (!xP) lastGpBtn.favX = false;
+
+              const confirm = gp.buttons[0]?.pressed || gp.buttons[9]?.pressed;
+              if (confirm && !lastGpBtn.confirm) { lastGpBtn.confirm = true; launchCurrentGame(); } else if (!confirm) lastGpBtn.confirm = false;
+            }
           }
         }
-      } catch(err) {}
+      } catch (e) {}
       requestAnimationFrame(pollGamepad);
     }
 
-    requestAnimationFrame(pollGamepad);
-    window.onload=loadCategories;
+    window.onload = () => { bindEvents(); loadCategories(); requestAnimationFrame(pollGamepad); };
   </script>
 </body>
 </html>
