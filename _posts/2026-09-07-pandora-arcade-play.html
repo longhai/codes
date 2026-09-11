@@ -14,7 +14,7 @@
     @keyframes s { to { transform:rotate(360deg); } }
     main { width:100%; height:100vh; height:100dvh; max-width:1320px; display:flex; align-items:center; justify-content:center; gap:12px; padding:10px; }
     #svg-container { flex:1.25; width:100%; height:100%; display:flex; align-items:center; justify-content:center; order:1; position:relative; overflow:hidden; }
-    svg { width:100%; height:100%; filter:drop-shadow(0 10px 20px rgba(0,0,0,.9)); }
+    #svg { width:100%; height:100%; filter:drop-shadow(0 10px 20px rgba(0,0,0,.9)); }
     #preview-container { flex:1.1; width:100%; max-width:680px; aspect-ratio:4/3; max-height:80vh; background:var(--panel); border:2px solid var(--p); border-radius:16px; box-shadow:0 0 30px var(--pg),inset 0 0 25px #000; display:flex; align-items:center; justify-content:center; padding:10px; position:relative; overflow:hidden; backdrop-filter:blur(12px); order:2; cursor:pointer; }
     #preview-img { width:100%; height:100%; object-fit:contain; border-radius:10px; transition:opacity .2s,transform .2s; }
     #preview-img.loading { opacity:.2; transform:scale(.98); }
@@ -28,6 +28,7 @@
     .menu-logo { width:24px; height:24px; object-fit:contain; flex-shrink:0; }
     #inline-search-bar { display:none; position:absolute; z-index:120; background:rgba(15,23,42,.96); border:1.5px solid var(--ca); border-radius:8px; padding:0 8px; align-items:center; gap:6px; box-shadow:0 0 15px rgba(56,189,248,.4); backdrop-filter:blur(8px); }
     #inline-search-bar.active { display:flex; }
+    #inline-search-bar svg { width:18px; height:18px; flex-shrink:0; filter:none; }
     #search-input { flex:1; min-width:0; background:transparent; border:none; outline:none; color:#fff; font:700 15px 'Rajdhani',sans-serif; }
     .clear-btn { cursor:pointer; color:#94a3b8; font-size:14px; font-weight:700; padding:2px 6px; }
     .clear-btn:hover { color:#ef4444; }
@@ -293,7 +294,7 @@
       const current = filteredGames[selIdx];
       const q = searchQuery.toLowerCase().trim();
       let list = allGames;
-      if (q) list = list.filter(g => g.name.toLowerCase().includes(q));
+      if (q) list = list.filter(g => g.name.toLowerCase().includes(q) || g.fullName.toLowerCase().includes(q));
       if (showFavOnly) list = list.filter(g => isFav(g));
       filteredGames = list;
 
@@ -305,7 +306,12 @@
         }
       }
       
-      restorePos();
+      if (q) {
+        selIdx = 0;
+        topIdx = 0;
+      } else {
+        restorePos();
+      }
     }
 
     function renderMenuList() {
@@ -382,8 +388,10 @@
       if (!bar?.classList.contains('active')) return;
       const c = $('svg-container'), p = getGeom(), xl0 = getX(6, p), rx = xl0 + p.W, sx = (xl0 + getX(54, p)) / 2 + 18;
       const rect = c.getBoundingClientRect(), scaleX = rect.width / 540, scaleY = rect.height / (64 + numSlots * 54);
-      bar.style.left = `${(sx + 32) * scaleX}px`; bar.style.top = `${10 * scaleY}px`;
-      bar.style.width = `${Math.max(130, (rx - 112) - (sx + 32)) * scaleX}px`; bar.style.height = `${38 * scaleY}px`;
+      bar.style.left = `${(sx + 32) * scaleX}px`;
+      bar.style.top = `${10 * scaleY}px`;
+      bar.style.width = `${Math.max(130, (rx - 112) - (sx + 32)) * scaleX}px`;
+      bar.style.height = `${Math.min(42, Math.max(30, 38 * scaleY))}px`;
     }
 
     function toggleInlineSearch(e) {
@@ -577,6 +585,9 @@
         if ($('inline-search-bar')?.classList.contains('active')) {
           if (e.key === 'Escape') return closeInlineSearch(true);
           if (e.key === 'Enter') { e.preventDefault(); closeInlineSearch(false); if (filteredGames.length) launchCurrentGame(); return; }
+          if (e.key === 'ArrowDown') { e.preventDefault(); moveSelection(1); return; }
+          if (e.key === 'ArrowUp') { e.preventDefault(); moveSelection(-1); return; }
+          return; // Ngăn chặn các phím tắt khác (như f, v, /) khi đang gõ tìm kiếm
         }
         if ($('menu-dropdown').classList.contains('active')) { if (e.key === 'Escape') closeMenuModal(); return; }
 
