@@ -1,3 +1,4 @@
+html
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -6,54 +7,54 @@
   <title>Pandora Arcade</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@600;700;800&display=swap');
-    :root { --p:#ea580c; --pg:rgba(234,88,12,.4); --a:#fbbf24; --ca:#38bdf8; --bg:#050101; --panel:rgba(15,23,42,.94); }
-    * { box-sizing:border-box; margin:0; padding:0; user-select:none; -webkit-tap-highlight-color:transparent; }
-    body { font-family:'Rajdhani',sans-serif; background:radial-gradient(circle at 50% 30%,#c2410c,#7f1d1d 40%,var(--bg)); height:100vh; height:100dvh; width:100vw; overflow:hidden; display:flex; align-items:center; justify-content:center; color:#e2e8f0; touch-action:none; }
-    #loader { position:fixed; inset:0; z-index:200; background:rgba(5,1,1,.95); display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--a); font:700 14px 'Orbitron',sans-serif; letter-spacing:1px; }
-    .spin { width:38px; height:38px; border:4px solid var(--p); border-top-color:transparent; border-radius:50%; animation:s .75s linear infinite; margin-bottom:12px; }
-    @keyframes s { to { transform:rotate(360deg); } }
-    main { width:100%; height:100vh; height:100dvh; max-width:1320px; display:flex; align-items:center; justify-content:center; gap:12px; padding:10px; }
-    #svg-container { flex:1.25; width:100%; height:100%; display:flex; align-items:center; justify-content:center; order:1; position:relative; overflow:hidden; }
-    #svg { width:100%; height:100%; filter:drop-shadow(0 10px 20px rgba(0,0,0,.9)); }
-    #preview-container { flex:1.1; width:100%; max-width:680px; aspect-ratio:4/3; max-height:80vh; background:var(--panel); border:2px solid var(--p); border-radius:16px; box-shadow:0 0 30px var(--pg),inset 0 0 25px #000; display:flex; align-items:center; justify-content:center; padding:10px; position:relative; overflow:hidden; backdrop-filter:blur(12px); order:2; cursor:pointer; }
-    #preview-img { width:100%; height:100%; object-fit:contain; border-radius:10px; transition:opacity .2s,transform .2s; }
-    #preview-img.loading { opacity:.2; transform:scale(.98); }
-    .fav-star-btn { position:absolute; top:10px; right:10px; z-index:20; font-size:24px; color:#64748b; cursor:pointer; transition:all .2s; padding:4px; background:rgba(15,23,42,.6); border-radius:50%; backdrop-filter:blur(4px); border:1px solid rgba(255,255,255,.1); opacity:0; line-height:1; }
-    #preview-container:hover .fav-star-btn, .fav-star-btn.active { opacity:1; }
-    .fav-star-btn:hover, .fav-star-btn.active { color:var(--a); border-color:var(--a); transform:scale(1.1); background:rgba(15,23,42,.85); }
+    :root { --p: #ea580c; --pg: rgba(234,88,12,.4); --a: #fbbf24; --ca: #38bdf8; --bg: #050101; --panel: rgba(15,23,42,.94); }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Rajdhani', sans-serif; background: radial-gradient(circle at 50% 30%, #c2410c, #7f1d1d 40%, var(--bg)); height: 100vh; height: 100dvh; width: 100vw; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #e2e8f0; touch-action: none; }
+    #loader { position: fixed; inset: 0; z-index: 200; background: rgba(5,1,1,.95); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--a); font: 700 14px 'Orbitron', sans-serif; letter-spacing: 1px; padding: 20px; text-align: center; }
+    .spin { width: 38px; height: 38px; border: 4px solid var(--p); border-top-color: transparent; border-radius: 50%; animation: s .75s linear infinite; margin-bottom: 12px; }
+    @keyframes s { to { transform: rotate(360deg); } }
+    main { width: 100%; height: 100vh; height: 100dvh; max-width: 1320px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 10px; }
+    #svg-container { flex: 1.25; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; order: 1; position: relative; overflow: hidden; }
+    #svg { width: 100%; height: 100%; filter: drop-shadow(0 10px 20px rgba(0,0,0,.9)); }
     
-    /* Header Logo Button HTML overlay for un-distorted scaling */
-    #header-logo-btn { position:absolute; z-index:125; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:transform .15s; }
-    #header-logo-btn:hover { transform:scale(1.08); }
-    #header-logo-img { width:26px; height:26px; object-fit:contain; flex-shrink:0; filter:drop-shadow(0 2px 4px rgba(0,0,0,.6)); }
+    #preview-container { flex: 1.1; width: 100%; max-width: 680px; aspect-ratio: 4/3; max-height: 80vh; background: var(--panel); border: 2px solid var(--p); border-radius: 16px; box-shadow: 0 0 30px var(--pg), inset 0 0 25px #000; display: flex; align-items: center; justify-content: center; padding: 10px; position: relative; overflow: hidden; backdrop-filter: blur(12px); order: 2; cursor: pointer; }
+    #preview-img { width: 100%; height: 100%; object-fit: contain; border-radius: 10px; transition: opacity .15s ease, transform .15s ease; }
+    #preview-img.loading { opacity: 0; transform: scale(.98); }
+    .fav-star-btn { position: absolute; top: 10px; right: 10px; z-index: 20; font-size: 28px; color: #e2e8f0; cursor: pointer; transition: all .2s ease; opacity: 0.2; line-height: 1; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.9)); }
+    #preview-container:hover .fav-star-btn { opacity: 0.55; }
+    .fav-star-btn.active, #preview-container:hover .fav-star-btn.active { opacity: 1; color: var(--a); transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(251,191,36,0.8)); }
+    
+    #header-logo-btn { position: absolute; z-index: 125; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform .15s; }
+    #header-logo-btn:hover { transform: scale(1.08); }
+    #header-logo-img { width: 26px; height: 26px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 2px 4px rgba(0,0,0,.6)); }
 
-    #menu-dropdown { display:none; position:absolute; top:44px; left:10px; z-index:150; background:rgba(15,23,42,.96); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.8); max-height:60vh; overflow-y:auto; min-width:180px; backdrop-filter:blur(12px); padding:4px; flex-direction:column; gap:2px; }
-    #menu-dropdown.active { display:flex; }
-    .menu-item { display:flex; align-items:center; gap:10px; padding:7px 12px; color:#cbd5e1; font:700 14px 'Rajdhani',sans-serif; border-radius:6px; cursor:pointer; transition:all .15s; border-left:3px solid transparent; }
-    .menu-item:hover, .menu-item.active { background:rgba(56,189,248,.15); border-left-color:var(--ca); color:#fff; }
-    .menu-logo { width:24px; height:24px; object-fit:contain; flex-shrink:0; }
+    #menu-dropdown { display: none; position: absolute; top: 44px; left: 10px; z-index: 150; background: rgba(15,23,42,.96); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.8); max-height: 60vh; overflow-y: auto; min-width: 180px; backdrop-filter: blur(12px); padding: 4px; flex-direction: column; gap: 2px; }
+    #menu-dropdown.active { display: flex; }
+    .menu-item { display: flex; align-items: center; gap: 10px; padding: 7px 12px; color: #cbd5e1; font: 700 14px 'Rajdhani', sans-serif; border-radius: 6px; cursor: pointer; transition: all .15s; border-left: 3px solid transparent; }
+    .menu-item:hover, .menu-item.active { background: rgba(56,189,248,.15); border-left-color: var(--ca); color: #fff; }
+    .menu-logo { width: 24px; height: 24px; object-fit: contain; flex-shrink: 0; }
     
-    #inline-search-bar { display:none; position:absolute; z-index:120; background:rgba(15,23,42,.96); border:1.5px solid var(--ca); border-radius:8px; padding:0 8px; align-items:center; gap:6px; box-shadow:0 0 15px rgba(56,189,248,.4); backdrop-filter:blur(8px); }
-    #inline-search-bar.active { display:flex; }
-    #inline-search-bar svg { width:18px; height:18px; flex-shrink:0; filter:none; }
-    #search-input { flex:1; min-width:0; background:transparent; border:none; outline:none; color:#fff; font:700 15px 'Rajdhani',sans-serif; }
-    .clear-btn { cursor:pointer; color:#94a3b8; font-size:14px; font-weight:700; padding:2px 6px; }
-    .clear-btn:hover { color:#ef4444; }
+    #inline-search-bar { display: none; position: absolute; z-index: 120; background: rgba(15,23,42,.96); border: 1.5px solid var(--ca); border-radius: 8px; padding: 0 8px; align-items: center; gap: 6px; box-shadow: 0 0 15px rgba(56,189,248,.4); backdrop-filter: blur(8px); }
+    #inline-search-bar.active { display: flex; }
+    #inline-search-bar svg { width: 18px; height: 18px; flex-shrink: 0; filter: none; }
+    #search-input { flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: #fff; font: 700 15px 'Rajdhani', sans-serif; }
+    .clear-btn { cursor: pointer; color: #94a3b8; font-size: 14px; font-weight: 700; padding: 2px 6px; }
+    .clear-btn:hover { color: #ef4444; }
     
-    #game-player-modal { display:none; position:fixed; inset:0; z-index:300; background:#000; flex-direction:column; }
-    #game-player-modal.active { display:flex; }
-    #player-toolbar { height:46px; background:#0f172a; border-bottom:2px solid var(--p); display:flex; align-items:center; justify-content:space-between; padding:0 10px; gap:8px; }
-    #player-title { color:var(--a); font:700 12px 'Orbitron',sans-serif; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; }
-    .player-btn { background:#1e293b; border:1px solid var(--p); color:#fff; padding:5px 9px; border-radius:6px; cursor:pointer; font:700 11px 'Orbitron',sans-serif; }
-    .player-btn:hover { background:var(--p); }
-    #game-frame { width:100%; height:calc(100% - 46px); border:none; background:#000; }
-    .tn { font:700 18px 'Rajdhani',sans-serif; fill:#e2e8f0; }
-    .ta { font:800 20px 'Rajdhani',sans-serif; fill:#fff; filter:drop-shadow(0 2px 4px rgba(0,0,0,.95)); }
+    #game-player-modal { display: none; position: fixed; inset: 0; z-index: 300; background: #000; flex-direction: column; }
+    #game-player-modal.active { display: flex; }
+    #player-toolbar { height: 46px; background: #0f172a; border-bottom: 2px solid var(--p); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; gap: 8px; }
+    #player-title { color: var(--a); font: 700 12px 'Orbitron', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+    .player-btn { background: #1e293b; border: 1px solid var(--p); color: #fff; padding: 5px 9px; border-radius: 6px; cursor: pointer; font: 700 11px 'Orbitron', sans-serif; }
+    .player-btn:hover { background: var(--p); }
+    #game-frame { width: 100%; height: calc(100% - 46px); border: none; background: #000; }
+    .tn { font: 700 18px 'Rajdhani', sans-serif; fill: #e2e8f0; }
+    .ta { font: 800 20px 'Rajdhani', sans-serif; fill: #fff; filter: drop-shadow(0 2px 4px rgba(0,0,0,.95)); }
     @media (max-width:820px),(max-aspect-ratio:1/1) {
-      main { flex-direction:column; justify-flex-start; gap:6px; padding:6px; }
-      #preview-container { order:1; width:100%; height:28vh; min-height:160px; max-height:240px; aspect-ratio:auto; flex-shrink:0; }
-      #svg-container { order:2; flex:1; }
-      .btn-lbl { display:none; }
+      main { flex-direction: column; justify-content: flex-start; gap: 6px; padding: 6px; }
+      #preview-container { order: 1; width: 100%; height: 28vh; min-height: 160px; max-height: 240px; aspect-ratio: auto; flex-shrink: 0; }
+      #svg-container { order: 2; flex: 1; }
+      .btn-lbl { display: none; }
     }
   </style>
 </head>
@@ -101,235 +102,296 @@
 
   <script>
     const GITHUB_API = "https://api.github.com/repos/longhai/emu/contents/roms";
-    const DAT_URL = "https://raw.githubusercontent.com/longhai/emu/main/arcade.dat";
     const EMULATOR_URL = "https://longhai.github.io/codes/2026/08/29/emulatorjs.html";
     const ASSETS_BASE = "https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/dot-art/png/";
-    const THUMBNAILS_BASE = "https://thumbnails.libretro.com/";
     const CACHE_TTL = 43200000;
+    const EMPTY_GIF = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+    const PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23f97316' stroke-width='1.5'%3E%3Crect x='2' y='2' width='20' height='20' rx='4'/%3E%3Cpath d='M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z'/%3E%3Cpath d='m21 15-5-5L5 21'/%3E%3C/svg%3E";
 
-    const parseRepoInfo = () => {
-      const match = GITHUB_API.match(/github\.com\/repos\/([^\/]+)\/([^\/]+)\/contents\/(.+)$/i);
-      return match ? { owner: match[1], repo: match[2], folder: match[3] } : { owner: "longhai", repo: "games", folder: "roms" };
-    };
+    const repoInfo = (() => {
+      const m = GITHUB_API.match(/github\.com\/repos\/([^\/]+)\/([^\/]+)\/contents\/(.+)$/i);
+      return m ? { owner: m[1], repo: m[2], folder: m[3] } : { owner: "longhai", repo: "emu", folder: "roms" };
+    })();
 
-    const repoInfo = parseRepoInfo();
-    const getRawBaseUrl = () => `https://raw.githubusercontent.com/${repoInfo.owner}/${repoInfo.repo}/main/${repoInfo.folder}`;
+    const getRepoRawBase = () => `https://raw.githubusercontent.com/${repoInfo.owner}/${repoInfo.repo}/main/`;
 
     const SYSTEM_PROFILES = [
-      { keys: ["arcade","cps1","cps2","cps3","fbneo","fba","mame"], logo: "FBNeo%20-%20Arcade%20Games.png", name: "FBNeo - Arcade Games", core: "arcade" },
-      { keys: ["neogeo","neo geo"], logo: "SNK%20-%20Neo%20Geo.png", name: "SNK - Neo Geo", core: "arcade" },
-      { keys: ["mega drive","megadrive","genesis","sega"], logo: "Sega%20-%20Mega%20Drive%20-%20Genesis.png", name: "Sega - Mega Drive - Genesis", core: "segaMD" },
-      { keys: ["snes","super famicom","super nintendo","sfc"], logo: "Nintendo%20-%20Super%20Nintendo%20Entertainment%20System.png", name: "Nintendo - Super Nintendo Entertainment System", core: "snes" },
-      { keys: ["famicom","famicon","nes"], logo: "Nintendo%20-%20Nintendo%20Entertainment%20System.png", name: "Nintendo - Nintendo Entertainment System", core: "nes" },
-      { keys: ["gba","game boy advance"], logo: "Nintendo%20-%20Game%20Boy%20Advance.png", name: "Nintendo - Game Boy Advance", core: "gba" },
-      { keys: ["gbc","game boy color"], logo: "Nintendo%20-%20Game%20Boy%20Color.png", name: "Nintendo - Game Boy Color", core: "gbc" },
-      { keys: ["gb","game boy"], logo: "Nintendo%20-%20Game%20Boy.png", name: "Nintendo - Game Boy", core: "gb" },
-      { keys: ["n64","nintendo 64"], logo: "Nintendo%20-%20Nintendo%2064.png", name: "Nintendo - Nintendo 64", core: "n64" },
-      { keys: ["psx","ps1","playstation"], logo: "Sony%20-%20PlayStation.png", name: "Sony - PlayStation", core: "psx" },
-      { keys: ["pce","pc engine","turbografx"], logo: "NEC%20-%20PC%20Engine%20-%20TurboGrafx-16.png", name: "NEC - PC Engine - TurboGrafx-16", core: "pce" }
+      { keys: ["arcade","cps1","cps2","cps3","fbneo","fba","mame"], logo: "FBNeo - Arcade Games.png", name: "Arcade", core: "arcade", libretroSys: "FBNeo - Arcade Games" },
+      { keys: ["neogeo","neo geo","ng"], logo: "SNK - Neo Geo.png", name: "Neo Geo", core: "arcade", libretroSys: "SNK - Neo Geo" },
+      { keys: ["mega drive","megadrive","genesis","sega","md"], logo: "Sega - Mega Drive - Genesis.png", name: "Mega Drive", core: "segaMD", libretroSys: "Sega - Mega Drive - Genesis" },
+      { keys: ["snes","super famicom","super famicon","super nintendo","sfc"], logo: "Nintendo - Super Nintendo Entertainment System.png", name: "SNES", core: "snes", libretroSys: "Nintendo - Super Nintendo Entertainment System" },
+      { keys: ["famicom","famicon","nes","fc"], logo: "Nintendo - Nintendo Entertainment System.png", name: "NES", core: "nes", libretroSys: "Nintendo - Nintendo Entertainment System" },
+      { keys: ["gba","game boy advance"], logo: "Nintendo - Game Boy Advance.png", name: "GBA", core: "gba", libretroSys: "Nintendo - Game Boy Advance" },
+      { keys: ["gbc","game boy color"], logo: "Nintendo - Game Boy Color.png", name: "GBC", core: "gbc", libretroSys: "Nintendo - Game Boy Color" },
+      { keys: ["gb","game boy"], logo: "Nintendo - Game Boy.png", name: "GB", core: "gb", libretroSys: "Nintendo - Game Boy" },
+      { keys: ["n64","nintendo 64"], logo: "Nintendo - Nintendo 64.png", name: "N64", core: "n64", libretroSys: "Nintendo - Nintendo 64" },
+      { keys: ["psx","ps1","playstation","sony - playstation","sony playstation"], logo: "Sony - PlayStation.png", name: "PlayStation", core: "psx", libretroSys: "Sony - PlayStation" },
+      { keys: ["pce","pc engine","pc-engine","turbografx","tg16","tg-16","turbografx-16","turbografx 16"], logo: "NEC - PC Engine - TurboGrafx 16.png", name: "PC Engine", core: "pce", libretroSys: "NEC - PC Engine - TurboGrafx 16" }
     ];
 
-    let datList = [], currentDatIdx = 0, allGames = [], filteredGames = [], selIdx = 0, topIdx = 0, slots = [], searchQuery = "", showFavOnly = false, datNameMap = {};
-    let favorites = JSON.parse(localStorage.getItem('pandora_favs') || '[]');
-    let isCurved = localStorage.getItem('pandora_curved') !== null ? localStorage.getItem('pandora_curved') === 'true' : !(window.innerWidth < 820 || window.innerHeight > window.innerWidth);
-    let numSlots = 5, gamepadConnected = false, gpLastTime = 0, lastGpBtn = {}, resizeTimer = null;
+    const imgCache = new Map();
+    const failedUrls = new Set();
+    let currentPreviewToken = 0;
+
+    const state = {
+      datList: [], currentDatIdx: 0, allGames: [], filteredGames: [], selIdx: 0, topIdx: 0, slots: [],
+      searchQuery: "", showFavOnly: false, datNameMap: {},
+      favorites: JSON.parse(localStorage.getItem('pandora_favs') || '[]'),
+      isCurved: localStorage.getItem('pandora_curved') !== null ? localStorage.getItem('pandora_curved') === 'true' : !(window.innerWidth < 820 || window.innerHeight > window.innerWidth),
+      numSlots: 5, gamepadConnected: false, gpLastTime: 0, lastGpBtn: {}, resizeTimer: null
+    };
 
     const $ = id => document.getElementById(id);
 
-    function getCache(k) {
-      try {
-        const item = JSON.parse(localStorage.getItem(k));
-        if (item && Date.now() - item.t < CACHE_TTL) return item.d;
-      } catch (e) {} return null;
+    const Storage = {
+      get(k) {
+        try {
+          const item = JSON.parse(localStorage.getItem(k));
+          if (item && Date.now() - item.t < CACHE_TTL) return item.d;
+        } catch (e) {} return null;
+      },
+      set(k, d) {
+        try { localStorage.setItem(k, JSON.stringify({ t: Date.now(), d })); }
+        catch (e) {
+          try {
+            Object.keys(localStorage).forEach(x => { if (x.startsWith('pandora_g_') || x.startsWith('pandora_c_')) localStorage.removeItem(x); });
+            localStorage.setItem(k, JSON.stringify({ t: Date.now(), d }));
+          } catch (err) {}
+        }
+      }
+    };
+
+    function resolveSys(f) {
+      const rawLower = f.toLowerCase(), normName = rawLower.replace(/[^a-z0-9]/g, '');
+      const match = SYSTEM_PROFILES.find(s => s.keys.some(k => {
+        const kLow = k.toLowerCase();
+        if (kLow.length <= 3) return new RegExp(`\\b${kLow}\\b`, 'i').test(rawLower);
+        const kNorm = kLow.replace(/[^a-z0-9]/g, '');
+        return rawLower.includes(kLow) || (kNorm && normName.includes(kNorm));
+      }));
+      return match ? { logo: ASSETS_BASE + match.logo, system: match.name, core: match.core, libretroSys: match.libretroSys }
+                   : { logo: ASSETS_BASE + "FBNeo%20-%20Arcade%20Games.png", system: f, core: "arcade", libretroSys: "FBNeo - Arcade Games" };
     }
 
-    function setCache(k, d) {
-      try { localStorage.setItem(k, JSON.stringify({ t: Date.now(), d })); }
-      catch (e) {
+    const cleanTitle = n => n.split('/').pop().replace(/(\.(zip|7z|nes|sfc|smc|md|bin|gba|gbc|gb|iso|cue|chd|pce|z64|v64|n64|a26))+$/i, '');
+
+    function capitalizeTitle(str) {
+      if (!str) return "";
+      return str.split(/(\s+|-)/).map(part => {
+        if (!part || /^\s+$/.test(part) || part === '-') return part;
+        if (/^(NES|SNES|GBA|GBC|GB|N64|PSX|PS1|PCE|FBNeo|CPS1|CPS2|CPS3|MAME|SNK|FBA)$/i.test(part)) return part.toUpperCase();
+        return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+      }).join('');
+    }
+
+    function decodeXmlEntities(str) {
+      return str ? str.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;|&#39;/g, "'").trim() : "";
+    }
+
+    function addDatEntry(map, key, desc) {
+      if (!key || !desc) return;
+      const kLow = key.toLowerCase().trim();
+      map[kLow] = desc;
+      const kNoExt = kLow.replace(/\.[^/.]+$/, ''), normKey = kLow.replace(/[^a-z0-9]/g, '');
+      if (kNoExt) map[kNoExt] = desc;
+      if (normKey) map[normKey] = desc;
+      const cleanDesc = desc.replace(/[\(\[\<].*?[\)\]\>]/g, '').toLowerCase().trim(), normDesc = cleanDesc.replace(/[^a-z0-9]/g, '');
+      if (normDesc && !map[normDesc]) map[normDesc] = desc;
+    }
+
+    function parseDatContent(text) {
+      const parsed = {}; if (!text) return parsed;
+      const blockRegex = /<(?:game|machine)\s+[^>]*?\bname=["']([^"']+)["'][^>]*>([\s\S]*?)<\/(?:game|machine)>/gi;
+      let m, xmlFound = false;
+
+      while ((m = blockRegex.exec(text)) !== null) {
+        xmlFound = true;
+        const descMatch = /<description>([\s\S]*?)<\/description>/i.exec(m[2]);
+        if (descMatch && descMatch[1]) addDatEntry(parsed, m[1].trim(), decodeXmlEntities(descMatch[1]));
+      }
+
+      if (!xmlFound) {
+        const clrRegex = /(?:game|machine)\s*\(\s*name\s+["']?([^"'\r\n]+)["']?\s+description\s+["']([^"']+)["']/gi;
+        while ((m = clrRegex.exec(text)) !== null) addDatEntry(parsed, m[1].trim(), decodeXmlEntities(m[2]));
+        if (!Object.keys(parsed).length) {
+          let curr = null; const tagRegex = /<(?:game|machine)\s+[^>]*?\bname=["']([^"']+)["']|<description>([\s\S]*?)<\/description>/gi;
+          while ((m = tagRegex.exec(text)) !== null) {
+            if (m[1]) curr = m[1].trim();
+            else if (m[2] && curr) { addDatEntry(parsed, curr, decodeXmlEntities(m[2])); curr = null; }
+          }
+        }
+      }
+      return parsed;
+    }
+
+    async function loadDatMap(catName = "arcade") {
+      const catInfo = state.datList[state.currentDatIdx], rawCat = catInfo?.name || catName, cleanCat = rawCat.toLowerCase().trim();
+      const cacheKey = "pandora_dat_v3_" + cleanCat, cached = Storage.get(cacheKey);
+      if (cached && Object.keys(cached).length > 0) { state.datNameMap = cached; return; }
+
+      const coreName = catInfo?.core ? catInfo.core.toLowerCase().trim() : "", dataBaseUrl = `${getRepoRawBase()}data/`;
+      const urls = Array.from(new Set([
+        `${dataBaseUrl}${encodeURIComponent(rawCat)}.dat`,
+        `${dataBaseUrl}${encodeURIComponent(cleanCat)}.dat`,
+        coreName ? `${dataBaseUrl}${encodeURIComponent(coreName)}.dat` : null,
+        `${dataBaseUrl}arcade.dat`
+      ])).filter(Boolean);
+
+      for (const url of urls) {
         try {
-          Object.keys(localStorage).forEach(x => { if (x.startsWith('pandora_g_') || x.startsWith('pandora_c_')) localStorage.removeItem(x); });
-          localStorage.setItem(k, JSON.stringify({ t: Date.now(), d }));
-        } catch (err) {}
+          const resp = await fetch(url);
+          if (!resp.ok) continue;
+          const parsed = parseDatContent(await resp.text());
+          if (Object.keys(parsed).length > 0) {
+            state.datNameMap = parsed; Storage.set(cacheKey, parsed); return;
+          }
+        } catch (e) {}
       }
     }
 
-    function resolveSys(f) {
-      const lower = f.toLowerCase();
-      const match = SYSTEM_PROFILES.find(s => s.keys.some(k => k === "nes" ? (/\bnes\b/i).test(lower) : lower.includes(k)));
-      return match ? { logo: ASSETS_BASE + match.logo, system: match.name, core: match.core } : { logo: ASSETS_BASE + "FBNeo%20-%20Arcade%20Games.png", system: f, core: "arcade" };
+    function getDisplayName(r) {
+      if (!r) return "";
+      const raw = r.toLowerCase().trim(), clean = cleanTitle(r).toLowerCase().trim();
+      const noTag = clean.replace(/[\(\[\<].*?[\)\]\>]/g, '').trim();
+      const keysToTry = [raw, clean, noTag, clean.replace(/_/g, ' '), raw.replace(/\.[^/.]+$/, ''), clean.replace(/[^a-z0-9]/g, ''), noTag.replace(/[^a-z0-9]/g, '')];
+      for (const k of keysToTry) if (k && state.datNameMap[k]) return state.datNameMap[k];
+      return r;
     }
 
-    function cleanTitle(n) {
-      return n.split('/').pop().replace(/(\.(zip|7z|nes|sfc|smc|md|bin|gba|gbc|gb|iso|cue|chd|pce|z64|v64|n64|a26))+$/i, '');
-    }
-
-    async function loadDatMap() {
-      const cached = getCache("fbneo_dat_m");
-      if (cached) { datNameMap = cached; return; }
-      try {
-        const resp = await fetch(DAT_URL);
-        if (!resp.ok) return;
-        const text = await resp.text();
-        const parsed = {}, regex = /(?:<game|<machine)\s+[^>]*?\bname="([^"]+)"|<description>([^<]+)<\/description>/gi;
-        let match, key = null;
-        while ((match = regex.exec(text))) {
-          if (match[1]) key = match[1].toLowerCase().trim();
-          else if (match[2] && key) { parsed[key] = match[2].trim(); key = null; }
-        }
-        if (Object.keys(parsed).length) { datNameMap = parsed; setCache("fbneo_dat_m", parsed); }
-      } catch (e) {}
-    }
-
-    const getDisplayName = r => r ? (datNameMap[r.toLowerCase().trim()] || r) : "";
     const showLoader = m => { $('loader').style.display = 'flex'; $('ld-t').innerText = m; };
     const hideLoader = () => { $('loader').style.display = 'none'; };
 
     function calcNumSlots() {
       const h = $('svg-container')?.clientHeight || (window.innerHeight * 0.55);
-      numSlots = Math.max(5, Math.min(12, Math.floor((h - 70) / 54)));
+      state.numSlots = Math.max(5, Math.min(12, Math.floor((h - 70) / 54)));
     }
 
     function updateSvgViewBox() {
       calcNumSlots();
-      $('svg').setAttribute('viewBox', `0 0 540 ${64 + numSlots * 54}`);
+      $('svg').setAttribute('viewBox', `0 0 540 ${64 + state.numSlots * 54}`);
     }
 
     function getGeom() {
       calcNumSlots();
-      const s = !isCurved, X0 = s ? 8 : 14, X1 = s ? 8 : 85, W = s ? 515 : 435;
-      const Y_MID = (70 + (numSlots - 1) * 54 + 48) / 2;
+      const s = !state.isCurved, X0 = s ? 8 : 14, X1 = s ? 8 : 85, W = s ? 515 : 435;
+      const Y_MID = (70 + (state.numSlots - 1) * 54 + 48) / 2;
       return { X0, X1, W, Y_MID, HALF_H: Y_MID - 6 };
     }
 
     function getX(y, p) {
-      if (!isCurved) return p.X0;
+      if (!state.isCurved) return p.X0;
       return p.X0 + (p.X1 - p.X0) * (1 - Math.pow(Math.max(-1, Math.min(1, (y - p.Y_MID) / p.HALF_H)), 2));
+    }
+
+    function getSvgScale() {
+      const c = $('svg-container'); if (!c) return { scaleX: 1, scaleY: 1 };
+      const rect = c.getBoundingClientRect();
+      return { scaleX: rect.width / 540, scaleY: rect.height / (64 + state.numSlots * 54) };
     }
 
     async function loadCategories() {
       showLoader("ĐANG TẢI SYSTEM...");
-      const cached = getCache("pandora_cats");
+      const lastCat = localStorage.getItem("pandora_last_cat");
+      const processCats = list => list.map(i => ({ ...i, displayName: capitalizeTitle(i.system || i.name) })).sort((a, b) => a.displayName.localeCompare(b.displayName, 'vi', { sensitivity: 'base' }));
+
+      const cached = Storage.get("pandora_cats_v3");
       if (cached?.length) {
-        datList = cached;
-        currentDatIdx = Math.max(0, datList.findIndex(i => i.name === localStorage.getItem("pandora_last_cat")));
+        state.datList = processCats(cached);
+        state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
         return loadGameList();
       }
       try {
         const resp = await fetch(GITHUB_API);
+        if (!resp.ok) throw new Error(`Lỗi HTTP ${resp.status}`);
         const items = await resp.json();
-        datList = items.filter(i => i.type === "dir").map(f => {
+        if (!Array.isArray(items)) throw new Error("Dữ liệu không hợp lệ");
+
+        state.datList = processCats(items.filter(i => i.type === "dir").map(f => {
           const info = resolveSys(f.name);
-          return { name: f.name, logo: info.logo, system: info.system, core: info.core, url: f.git_url ? `${f.git_url}?recursive=1` : f.url };
-        });
-        setCache("pandora_cats", datList);
-        currentDatIdx = Math.max(0, datList.findIndex(i => i.name === localStorage.getItem("pandora_last_cat")));
+          return { name: f.name, logo: info.logo, system: info.system, core: info.core, libretroSys: info.libretroSys, url: f.git_url ? `${f.git_url}?recursive=1` : f.url };
+        }));
+        Storage.set("pandora_cats_v3", state.datList);
+        state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
         await loadGameList();
       } catch (e) { showLoader("LỖI TẢI: " + e.message); }
     }
 
     async function loadGameList() {
-      selIdx = topIdx = 0; searchQuery = "";
+      state.selIdx = state.topIdx = 0; state.searchQuery = "";
       if ($('search-input')) $('search-input').value = "";
-      const cat = datList[currentDatIdx];
+      const cat = state.datList[state.currentDatIdx];
       if (!cat) return;
 
-      if (cat.core === "arcade") loadDatMap().then(() => updateNames());
-
-      const cacheKey = "pandora_g_" + cat.name;
-      const cached = getCache(cacheKey);
+      await loadDatMap(cat.name);
+      const cacheKey = "pandora_g_" + cat.name, cached = Storage.get(cacheKey);
       if (cached?.length) {
-        allGames = cached;
-        updateNames();
-        filterGames(false);
-        restorePos();
-        hideLoader();
-        return drawAll();
+        state.allGames = cached; updateNames(); filterGames(false); restorePos(); hideLoader(); return drawAll();
       }
 
       try {
         const resp = await fetch(cat.url);
+        if (!resp.ok) throw new Error(`Lỗi HTTP ${resp.status}`);
         const data = await resp.json();
-        const files = (data.tree || data).map(i => i.path || i.name).filter(n => n && !n.endsWith(".gitkeep"));
-        allGames = files.length ? files.map(f => ({ name: getDisplayName(cleanTitle(f)), fullName: f })) : [{ name: "Chưa có ROMs", fullName: "" }];
-        if (files.length) setCache(cacheKey, allGames);
-        filterGames(false);
-        restorePos();
-        hideLoader();
-        drawAll();
+        const fileList = Array.isArray(data.tree) ? data.tree.filter(i => i.type === "blob").map(i => i.path) : (Array.isArray(data) ? data.filter(i => i.type !== "dir").map(i => i.path || i.name) : []);
+        const catPrefix = `roms/${cat.name}/`.toLowerCase();
+        const files = fileList.filter(n => n && !n.endsWith(".gitkeep")).map(f => f.toLowerCase().startsWith(catPrefix) ? f.slice(catPrefix.length) : f);
+
+        state.allGames = files.length ? files.map(f => ({ name: getDisplayName(cleanTitle(f)), fullName: f })) : [{ name: "Chưa có ROMs", fullName: "" }];
+        if (files.length) Storage.set(cacheKey, state.allGames);
+        filterGames(false); restorePos(); hideLoader(); drawAll();
       } catch (e) { showLoader("LỖI GAME: " + e.message); }
     }
 
     function updateNames() {
-      let changed = false;
-      allGames.forEach(g => {
+      let changed = false; const cat = state.datList[state.currentDatIdx];
+      state.allGames.forEach(g => {
         const d = getDisplayName(cleanTitle(g.fullName));
         if (d && d !== g.name) { g.name = d; changed = true; }
       });
-      if (changed) { filterGames(true); render(); }
+      if (changed) { if (cat) Storage.set("pandora_g_" + cat.name, state.allGames); filterGames(true); render(); }
     }
 
     function restorePos() {
-      const cat = datList[currentDatIdx];
-      const last = cat && localStorage.getItem("pandora_lg_" + cat.name);
+      const cat = state.datList[state.currentDatIdx], last = cat && localStorage.getItem("pandora_lg_" + cat.name);
       if (last) {
-        const idx = filteredGames.findIndex(g => g.fullName === last);
-        if (idx !== -1) {
-          selIdx = idx;
-          return;
-        }
+        const idx = state.filteredGames.findIndex(g => g.fullName === last);
+        if (idx !== -1) { state.selIdx = idx; return; }
       }
-      selIdx = 0;
-      topIdx = 0;
+      state.selIdx = state.topIdx = 0;
     }
 
-    const getGameKey = g => datList[currentDatIdx] && g?.fullName ? `${datList[currentDatIdx].name}:${g.fullName}` : '';
-    const isFav = g => favorites.includes(getGameKey(g));
+    const getGameKey = g => state.datList[state.currentDatIdx] && g?.fullName ? `${state.datList[state.currentDatIdx].name}:${g.fullName}` : '';
+    const isFav = g => state.favorites.includes(getGameKey(g));
 
     function toggleCurrentFav() {
-      const k = getGameKey(filteredGames[selIdx]);
-      if (!k) return;
-      const idx = favorites.indexOf(k);
-      if (idx === -1) favorites.push(k); else favorites.splice(idx, 1);
-      localStorage.setItem('pandora_favs', JSON.stringify(favorites));
-      filterGames(true);
-      render();
+      const k = getGameKey(state.filteredGames[state.selIdx]); if (!k) return;
+      const idx = state.favorites.indexOf(k);
+      if (idx === -1) state.favorites.push(k); else state.favorites.splice(idx, 1);
+      localStorage.setItem('pandora_favs', JSON.stringify(state.favorites));
+      filterGames(true); render();
     }
 
-    function toggleFavFilter() {
-      showFavOnly = !showFavOnly;
-      filterGames(true);
-      drawAll();
-    }
+    function toggleFavFilter() { state.showFavOnly = !state.showFavOnly; filterGames(true); drawAll(); }
 
     function filterGames(preserve = true) {
-      const current = filteredGames[selIdx];
-      const q = searchQuery.toLowerCase().trim();
-      let list = allGames;
+      const current = state.filteredGames[state.selIdx], q = state.searchQuery.toLowerCase().trim();
+      let list = state.allGames;
       if (q) list = list.filter(g => g.name.toLowerCase().includes(q) || g.fullName.toLowerCase().includes(q));
-      if (showFavOnly) list = list.filter(g => isFav(g));
-      filteredGames = list;
+      if (state.showFavOnly) list = list.filter(g => isFav(g));
+      state.filteredGames = list;
 
       if (preserve && current?.fullName) {
-        const idx = filteredGames.findIndex(g => g.fullName === current.fullName);
-        if (idx !== -1) {
-          selIdx = idx;
-          return;
-        }
+        const idx = state.filteredGames.findIndex(g => g.fullName === current.fullName);
+        if (idx !== -1) { state.selIdx = idx; return; }
       }
-      
-      if (q) {
-        selIdx = 0;
-        topIdx = 0;
-      } else {
-        restorePos();
-      }
+      if (q) { state.selIdx = state.topIdx = 0; } else { restorePos(); }
     }
 
     function renderMenuList() {
-      $('menu-dropdown').innerHTML = datList.map((item, i) =>
-        `<div class="menu-item ${i === currentDatIdx ? 'active' : ''}" onclick="switchCat(${i})">
-          <img src="${item.logo}" alt="${item.name}" class="menu-logo" onerror="this.onerror=null;this.src='${ASSETS_BASE}FBNeo%20-%20Arcade%20Games.png';" />
-          <span>${item.name}</span>
+      $('menu-dropdown').innerHTML = state.datList.map((item, i) =>
+        `<div class="menu-item ${i === state.currentDatIdx ? 'active' : ''}" onclick="switchCat(${i})">
+          <img src="${item.logo}" alt="${item.displayName}" class="menu-logo" onerror="this.onerror=null;this.src='${ASSETS_BASE}FBNeo%20-%20Arcade%20Games.png';" />
+          <span>${item.displayName}</span>
         </div>`
       ).join('');
     }
@@ -338,88 +400,67 @@
     const closeMenuModal = () => $('menu-dropdown').classList.remove('active');
 
     function switchCat(i) {
-      if (i === currentDatIdx) return closeMenuModal();
-      currentDatIdx = i;
-      localStorage.setItem("pandora_last_cat", datList[currentDatIdx]?.name || '');
-      closeMenuModal();
-      showLoader("ĐANG TẢI...");
-      loadGameList();
+      if (i === state.currentDatIdx) return closeMenuModal();
+      state.currentDatIdx = i;
+      localStorage.setItem("pandora_last_cat", state.datList[state.currentDatIdx]?.name || '');
+      closeMenuModal(); showLoader("ĐANG TẢI..."); loadGameList();
     }
 
     function drawAll() {
-      requestAnimationFrame(() => {
-        drawHeader();
-        drawSlots();
-        render();
-      });
+      requestAnimationFrame(() => { drawHeader(); drawSlots(); render(); });
     }
 
     function drawHeader() {
-      if (!datList.length) return;
+      if (!state.datList.length) return;
       updateSvgViewBox();
-      const p = getGeom(), xl0 = getX(6, p), xl1 = getX(54, p), sx = (xl0 + xl1) / 2 + 16, clr = isCurved ? '#f97316' : '#38bdf8';
-      const logoUrl = datList[currentDatIdx]?.logo || (ASSETS_BASE + "FBNeo%20-%20Arcade%20Games.png");
-      const rx = xl0 + p.W;
+      const p = getGeom(), xl0 = getX(6, p), xl1 = getX(54, p), sx = (xl0 + xl1) / 2 + 16, clr = state.isCurved ? '#f97316' : '#38bdf8', rx = xl0 + p.W;
+      const logoUrl = state.datList[state.currentDatIdx]?.logo || (ASSETS_BASE + "FBNeo%20-%20Arcade%20Games.png");
 
-      // Update HTML Header Logo Image
       const logoImg = $('header-logo-img');
       if (logoImg) {
         logoImg.src = logoUrl;
         logoImg.onerror = function() { this.src = ASSETS_BASE + "FBNeo%20-%20Arcade%20Games.png"; };
       }
 
-      // Increased gap between logo button and cnt-txt (x = sx + 48)
       $('hg').innerHTML = `
         <polygon points="${xl0.toFixed(1)},6 ${(xl0 + p.W).toFixed(1)},6 ${(xl1 + p.W).toFixed(1)},54 ${xl1.toFixed(1)},54" fill="url(#gh)" stroke="#475569" stroke-width="1.5"/>
         <line x1="${xl0.toFixed(1)}" y1="6" x2="${xl1.toFixed(1)}" y2="54" stroke="#38bdf8" stroke-width="4"/>
         <text id="cnt-txt" x="${sx + 48}" y="37" fill="#fbbf24" font-size="15" font-weight="bold" font-family="Orbitron">GAME: 0 / 0</text>
-        
         <g id="btn-search" style="cursor:pointer" onclick="toggleInlineSearch(event)" transform="translate(${(rx - 116).toFixed(1)}, 20)">
           <rect width="26" height="26" fill="transparent"/>
           <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="#38bdf8"/>
         </g>
-        
         <g style="cursor:pointer" onclick="toggleFavFilter()" transform="translate(${(rx - 86).toFixed(1)}, 20)">
           <rect width="26" height="26" fill="transparent"/>
-          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="${showFavOnly ? '#fbbf24' : '#64748b'}"/>
+          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="${state.showFavOnly ? '#fbbf24' : '#64748b'}"/>
         </g>
-        
-        <g id="gp-icon-status" transform="translate(${(rx - 56).toFixed(1)}, 20)" style="display:${gamepadConnected ? 'block' : 'none'}">
+        <g id="gp-icon-status" transform="translate(${(rx - 56).toFixed(1)}, 20)" style="display:${state.gamepadConnected ? 'block' : 'none'}">
           <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H9v2H7v-2H5v-2h2V9h2v2h2v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" fill="#4ade80"/>
         </g>
-        
         <g id="btn-toggle" style="cursor:pointer" transform="translate(${(rx - 28).toFixed(1)}, 20)">
           <rect width="26" height="26" fill="transparent"/>
-          ${isCurved ? 
+          ${state.isCurved ? 
             `<path d="M 5,5 Q 14,13 5,21" fill="none" stroke="${clr}" stroke-width="2.5" stroke-linecap="round"/>
              <line x1="8" y1="7" x2="21" y2="7" stroke="${clr}" stroke-width="2"/><line x1="12" y1="13" x2="22" y2="13" stroke="${clr}" stroke-width="2"/><line x1="8" y1="19" x2="21" y2="19" stroke="${clr}" stroke-width="2"/>` : 
             `<line x1="5" y1="5" x2="5" y2="21" stroke="${clr}" stroke-width="2.5"/><line x1="9" y1="7" x2="21" y2="7" stroke="${clr}" stroke-width="2"/><line x1="9" y1="13" x2="21" y2="13" stroke="${clr}" stroke-width="2"/><line x1="9" y1="19" x2="21" y2="19" stroke="${clr}" stroke-width="2"/>`
           }
         </g>`;
 
-      $('btn-toggle').onclick = e => { e.stopPropagation(); isCurved = !isCurved; localStorage.setItem('pandora_curved', isCurved); drawAll(); };
-      posHeaderLogo();
-      posSearch();
+      $('btn-toggle').onclick = e => { e.stopPropagation(); state.isCurved = !state.isCurved; localStorage.setItem('pandora_curved', state.isCurved); drawAll(); };
+      posHeaderLogo(); posSearch();
     }
 
     function posHeaderLogo() {
-      const btn = $('header-logo-btn');
-      if (!btn) return;
-      const c = $('svg-container'), p = getGeom(), xl0 = getX(6, p), xl1 = getX(54, p), sx = (xl0 + xl1) / 2 + 16;
-      const rect = c.getBoundingClientRect(), scaleX = rect.width / 540, scaleY = rect.height / (64 + numSlots * 54);
-      btn.style.left = `${(sx) * scaleX}px`;
-      btn.style.top = `${15 * scaleY}px`;
-      btn.style.width = `${26 * scaleX}px`;
-      btn.style.height = `${26 * scaleY}px`;
+      const btn = $('header-logo-btn'); if (!btn) return;
+      const p = getGeom(), xl0 = getX(6, p), xl1 = getX(54, p), sx = (xl0 + xl1) / 2 + 16, { scaleX, scaleY } = getSvgScale();
+      btn.style.left = `${sx * scaleX}px`; btn.style.top = `${15 * scaleY}px`;
+      btn.style.width = `${26 * scaleX}px`; btn.style.height = `${26 * scaleY}px`;
     }
 
     function posSearch() {
-      const bar = $('inline-search-bar');
-      if (!bar?.classList.contains('active')) return;
-      const c = $('svg-container'), p = getGeom(), xl0 = getX(6, p), rx = xl0 + p.W, sx = (xl0 + getX(54, p)) / 2 + 16;
-      const rect = c.getBoundingClientRect(), scaleX = rect.width / 540, scaleY = rect.height / (64 + numSlots * 54);
-      bar.style.left = `${(sx + 32) * scaleX}px`;
-      bar.style.top = `${10 * scaleY}px`;
+      const bar = $('inline-search-bar'); if (!bar?.classList.contains('active')) return;
+      const p = getGeom(), xl0 = getX(6, p), rx = xl0 + p.W, sx = (xl0 + getX(54, p)) / 2 + 16, { scaleX, scaleY } = getSvgScale();
+      bar.style.left = `${(sx + 32) * scaleX}px`; bar.style.top = `${10 * scaleY}px`;
       bar.style.width = `${Math.max(130, (rx - 112) - (sx + 32)) * scaleX}px`;
       bar.style.height = `${Math.min(42, Math.max(30, 38 * scaleY))}px`;
     }
@@ -427,7 +468,7 @@
     function toggleInlineSearch(e) {
       if (e) e.stopPropagation();
       const bar = $('inline-search-bar'), input = $('search-input');
-      if (bar.classList.contains('active')) { bar.classList.remove('active'); }
+      if (bar.classList.contains('active')) bar.classList.remove('active');
       else { bar.classList.add('active'); posSearch(); input.focus(); }
     }
 
@@ -437,10 +478,8 @@
     }
 
     function drawSlots() {
-      const p = getGeom(), grp = $('sg'), defs = $('cd');
-      grp.innerHTML = defs.innerHTML = ''; slots = [];
-
-      for (let i = 0; i < numSlots; i++) {
+      const p = getGeom(), grp = $('sg'), defs = $('cd'); grp.innerHTML = defs.innerHTML = ''; state.slots = [];
+      for (let i = 0; i < state.numSlots; i++) {
         const y0 = 60 + i * 54, y1 = y0 + 48, xl0 = getX(y0, p), xl1 = getX(y1, p);
         defs.innerHTML += `<clipPath id="c${i}"><polygon points="${xl0.toFixed(1)},${y0} ${(xl0 + p.W - 12).toFixed(1)},${y0} ${(xl1 + p.W - 12).toFixed(1)},${y1} ${xl1.toFixed(1)},${y1}"/></clipPath>`;
 
@@ -452,62 +491,131 @@
           <text x="${(xl0 + xl1) / 2 + 18}" y="${y0 + 30}" class="tn" clip-path="url(#c${i})"></text>`;
 
         el.onclick = () => {
-          if (topIdx + i < filteredGames.length) {
-            if (selIdx === topIdx + i) launchCurrentGame();
-            else { selIdx = topIdx + i; render(); }
+          if (state.topIdx + i < state.filteredGames.length) {
+            if (state.selIdx === state.topIdx + i) launchCurrentGame();
+            else { state.selIdx = state.topIdx + i; render(); }
           }
         };
         grp.appendChild(el);
-        slots.push({ poly: el.querySelector('polygon'), line: el.querySelector('line'), txt: el.querySelector('text'), g: el });
+        state.slots.push({ poly: el.querySelector('polygon'), line: el.querySelector('line'), txt: el.querySelector('text'), g: el });
+      }
+    }
+
+    function getPreviewCandidates(g) {
+      if (!g?.fullName) return [];
+      const cat = state.datList[state.currentDatIdx]; if (!cat) return [];
+      const catFolder = encodeURIComponent(cat.name);
+      const rawFullName = g.fullName.split('/').pop();
+      const cleanFullNameNoExt = cleanTitle(rawFullName);
+      const cleanDisplayName = cleanTitle(g.name);
+      const libretroSystem = cat.libretroSys || cat.system || cat.name;
+      const libretroBaseUrl = `https://thumbnails.libretro.com/${encodeURIComponent(libretroSystem)}`;
+      const snapBaseUrl = `${getRepoRawBase()}snap/${catFolder}/`;
+
+      const candidateSet = new Set();
+      if (cleanFullNameNoExt) candidateSet.add(`${snapBaseUrl}${encodeURIComponent(cleanFullNameNoExt)}.png`);
+      if (cleanDisplayName) candidateSet.add(`${snapBaseUrl}${encodeURIComponent(cleanDisplayName)}.png`);
+      if (cleanFullNameNoExt) candidateSet.add(`${libretroBaseUrl}/Named_Snaps/${encodeURIComponent(cleanFullNameNoExt)}.png`);
+      if (cleanDisplayName) candidateSet.add(`${libretroBaseUrl}/Named_Snaps/${encodeURIComponent(cleanDisplayName)}.png`);
+      if (cleanFullNameNoExt) candidateSet.add(`${libretroBaseUrl}/Named_Boxarts/${encodeURIComponent(cleanFullNameNoExt)}.png`);
+      if (cleanDisplayName) candidateSet.add(`${libretroBaseUrl}/Named_Boxarts/${encodeURIComponent(cleanDisplayName)}.png`);
+      if (cleanFullNameNoExt) candidateSet.add(`${snapBaseUrl}${encodeURIComponent(cleanFullNameNoExt)}.jpg`);
+
+      return Array.from(candidateSet).filter(url => !failedUrls.has(url));
+    }
+
+    function preloadNeighbors() {
+      for (const offset of [1, 2, 3, -1, -2]) {
+        const targetIdx = state.selIdx + offset;
+        if (targetIdx >= 0 && targetIdx < state.filteredGames.length) {
+          const targetGame = state.filteredGames[targetIdx], k = getGameKey(targetGame);
+          if (k && !imgCache.has(k)) {
+            const candidates = getPreviewCandidates(targetGame);
+            if (candidates.length > 0) {
+              const url = candidates[0], temp = new Image();
+              temp.onload = () => imgCache.set(k, url);
+              temp.onerror = () => failedUrls.add(url);
+              temp.src = url;
+            }
+          }
+        }
       }
     }
 
     function updatePreview(g) {
       const img = $('preview-img'), favBtn = $('fav-btn');
-      if (!g) { img.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; favBtn.style.display = 'none'; return; }
-      favBtn.style.display = 'block';
+      if (!g) { 
+        img.src = EMPTY_GIF; 
+        if (favBtn) favBtn.style.display = 'none'; 
+        return; 
+      }
+      if (favBtn) favBtn.style.display = 'block';
 
-      const cat = datList[currentDatIdx];
-      if (!cat) return;
+      const key = getGameKey(g), token = ++currentPreviewToken;
+
+      if (imgCache.has(key)) {
+        img.src = imgCache.get(key);
+        img.classList.remove('loading');
+        preloadNeighbors();
+        return;
+      }
+
+      img.src = EMPTY_GIF;
       img.classList.add('loading');
 
-      const sys = encodeURIComponent(cat.system), rawName = g.name;
-      const clean1 = rawName.replace(/&/g, '_').replace(/[/\\?%*:|"<>]/g, '_');
-      const base = `${THUMBNAILS_BASE}${sys}`;
-      const candidates = ['Named_Snaps', 'Named_Boxarts', 'Named_Titles'].map(t => `${base}/${t}/${encodeURIComponent(clean1)}.png`);
+      const candidates = getPreviewCandidates(g);
+      if (!candidates.length) {
+        img.src = PLACEHOLDER_SVG;
+        img.classList.remove('loading');
+        return;
+      }
 
-      let step = 0, targetKey = encodeURIComponent(clean1);
-      img.dataset.targetName = targetKey;
-
+      let step = 0;
       const tryNext = () => {
-        if (step < candidates.length) img.src = candidates[step++];
-        else {
-          img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23f97316' stroke-width='1.5'%3E%3Crect x='2' y='2' width='20' height='20' rx='4'/%3E%3Cpath d='M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z'/%3E%3Cpath d='m21 15-5-5L5 21'/%3E%3C/svg%3E";
+        if (token !== currentPreviewToken) return;
+        if (step < candidates.length) {
+          const url = candidates[step++];
+          const tempImg = new Image();
+          tempImg.onload = () => {
+            if (token !== currentPreviewToken) return;
+            imgCache.set(key, url);
+            img.src = url;
+            img.classList.remove('loading');
+            preloadNeighbors();
+          };
+          tempImg.onerror = () => {
+            failedUrls.add(url);
+            if (token === currentPreviewToken) tryNext();
+          };
+          tempImg.src = url;
+        } else {
+          imgCache.set(key, PLACEHOLDER_SVG);
+          img.src = PLACEHOLDER_SVG;
           img.classList.remove('loading');
         }
       };
-
-      img.onload = () => { if (img.dataset.targetName === targetKey) img.classList.remove('loading'); };
-      img.onerror = () => { if (img.dataset.targetName === targetKey) tryNext(); };
       tryNext();
     }
 
     function buildEmuUrl(g, c) {
       if (!g?.fullName || !c) return "";
-      const path = g.fullName.split('/').map(encodeURIComponent).join('/');
-      return `${EMULATOR_URL}?core=${c.core || "arcade"}&rom=${getRawBaseUrl()}/${encodeURIComponent(c.name)}/${path}`;
+      let cleanPath = g.fullName;
+      const catPrefix = `roms/${c.name}/`.toLowerCase();
+      if (cleanPath.toLowerCase().startsWith(catPrefix)) cleanPath = cleanPath.slice(catPrefix.length);
+      const path = cleanPath.split('/').map(encodeURIComponent).join('/');
+      return `${EMULATOR_URL}?core=${c.core || "arcade"}&rom=${getRepoRawBase()}roms/${encodeURIComponent(c.name)}/${path}`;
     }
 
     function launchCurrentGame() {
-      const g = filteredGames[selIdx], c = datList[currentDatIdx];
+      const g = state.filteredGames[state.selIdx], c = state.datList[state.currentDatIdx];
       if (!g?.fullName) return;
-      $('player-title').textContent = `${g.name.toUpperCase()} [${c.name}]`;
+      $('player-title').textContent = `${g.name.toUpperCase()} [${c.displayName || c.name}]`;
       $('game-frame').src = buildEmuUrl(g, c);
       $('game-player-modal').classList.add('active');
     }
 
     function openGameInNewTab() {
-      const u = buildEmuUrl(filteredGames[selIdx], datList[currentDatIdx]);
+      const u = buildEmuUrl(state.filteredGames[state.selIdx], state.datList[state.currentDatIdx]);
       if (u) window.open(u, '_blank');
     }
 
@@ -515,8 +623,8 @@
       $('game-frame').src = "";
       $('game-player-modal').classList.remove('active');
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-      gpLastTime = performance.now() + 400;
-      lastGpBtn = { dir: true, cat: true, home: true, favY: true, favX: true, confirm: true };
+      state.gpLastTime = performance.now() + 400;
+      state.lastGpBtn = { dir: true, cat: true, home: true, favY: true, favX: true, confirm: true };
       render();
     }
 
@@ -527,36 +635,34 @@
     }
 
     function onSearchInput(val) {
-      searchQuery = val;
-      filterGames(false);
-      drawSlots();
-      render();
+      state.searchQuery = val;
+      filterGames(false); drawSlots(); render();
     }
 
     function render() {
-      const label = showFavOnly ? 'YÊU THÍCH' : 'GAME';
-      if (!filteredGames.length) {
+      const label = state.showFavOnly ? 'YÊU THÍCH' : 'GAME';
+      if (!state.filteredGames.length) {
         if ($('cnt-txt')) $('cnt-txt').textContent = `${label}: 0 / 0`;
-        slots.forEach(s => s.g.style.display = "none");
+        state.slots.forEach(s => s.g.style.display = "none");
         updatePreview(null);
         return;
       }
 
-      if (selIdx < topIdx) topIdx = selIdx;
-      else if (selIdx >= topIdx + numSlots) topIdx = selIdx - numSlots + 1;
-      topIdx = Math.max(0, Math.min(topIdx, Math.max(0, filteredGames.length - numSlots)));
+      if (state.selIdx < state.topIdx) state.topIdx = state.selIdx;
+      else if (state.selIdx >= state.topIdx + state.numSlots) state.topIdx = state.selIdx - state.numSlots + 1;
+      state.topIdx = Math.max(0, Math.min(state.topIdx, Math.max(0, state.filteredGames.length - state.numSlots)));
 
-      if ($('cnt-txt')) $('cnt-txt').textContent = `${label}: ${selIdx + 1} / ${filteredGames.length}`;
-      if (datList[currentDatIdx] && filteredGames[selIdx]?.fullName) {
-        localStorage.setItem("pandora_lg_" + datList[currentDatIdx].name, filteredGames[selIdx].fullName);
+      if ($('cnt-txt')) $('cnt-txt').textContent = `${label}: ${state.selIdx + 1} / ${state.filteredGames.length}`;
+      if (state.datList[state.currentDatIdx] && state.filteredGames[state.selIdx]?.fullName) {
+        localStorage.setItem("pandora_lg_" + state.datList[state.currentDatIdx].name, state.filteredGames[state.selIdx].fullName);
       }
 
-      const maxLen = isCurved ? 46 : 64;
-      slots.forEach((s, i) => {
-        const idx = topIdx + i, active = idx === selIdx;
-        if (idx < filteredGames.length) {
+      const maxLen = state.isCurved ? 46 : 64;
+      state.slots.forEach((s, i) => {
+        const idx = state.topIdx + i, active = idx === state.selIdx;
+        if (idx < state.filteredGames.length) {
           s.g.style.display = "block";
-          const str = filteredGames[idx].name;
+          const str = state.filteredGames[idx].name;
           s.txt.textContent = str.length > maxLen ? str.slice(0, maxLen - 2) + "..." : str;
           s.poly.setAttribute("fill", active ? "url(#ga)" : "url(#gn)");
           s.poly.setAttribute("stroke", active ? "#fef08a" : "#475569");
@@ -568,11 +674,11 @@
         } else s.g.style.display = "none";
       });
 
-      if (filteredGames[selIdx]) {
-        updatePreview(filteredGames[selIdx]);
+      if (state.filteredGames[state.selIdx]) {
+        updatePreview(state.filteredGames[state.selIdx]);
         const favBtn = $('fav-btn');
         if (favBtn) {
-          const active = isFav(filteredGames[selIdx]);
+          const active = isFav(state.filteredGames[state.selIdx]);
           favBtn.classList.toggle('active', active);
           favBtn.textContent = active ? "★" : "☆";
         }
@@ -580,19 +686,15 @@
     }
 
     const moveSelection = step => {
-      const n = selIdx + step;
-      if (n >= 0 && n < filteredGames.length) { selIdx = n; render(); }
+      const n = state.selIdx + step;
+      if (n >= 0 && n < state.filteredGames.length) { state.selIdx = n; render(); }
     };
 
     function bindEvents() {
       window.onresize = () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => { 
-          if (datList.length) { 
-            drawAll(); 
-            posHeaderLogo(); 
-            posSearch(); 
-          } 
+        clearTimeout(state.resizeTimer);
+        state.resizeTimer = setTimeout(() => { 
+          if (state.datList.length) { drawAll(); posHeaderLogo(); posSearch(); } 
         }, 100);
       };
 
@@ -605,7 +707,7 @@
       if (svgC) {
         svgC.addEventListener('touchstart', e => { if (e.touches.length) touchY = e.touches[0].clientY; }, { passive: true });
         svgC.addEventListener('touchmove', e => {
-          if (!filteredGames.length || !e.touches.length) return;
+          if (!state.filteredGames.length || !e.touches.length) return;
           const d = touchY - e.touches[0].clientY;
           if (Math.abs(d) > 28) { moveSelection(d > 0 ? 1 : -1); touchY = e.touches[0].clientY; }
         }, { passive: true });
@@ -620,7 +722,7 @@
         if ($('game-player-modal').classList.contains('active')) { if (e.key === 'Escape') closeGamePlayer(); return; }
         if ($('inline-search-bar')?.classList.contains('active')) {
           if (e.key === 'Escape') return closeInlineSearch(true);
-          if (e.key === 'Enter') { e.preventDefault(); closeInlineSearch(false); if (filteredGames.length) launchCurrentGame(); return; }
+          if (e.key === 'Enter') { e.preventDefault(); closeInlineSearch(false); if (state.filteredGames.length) launchCurrentGame(); return; }
           if (e.key === 'ArrowDown') { e.preventDefault(); moveSelection(1); return; }
           if (e.key === 'ArrowUp') { e.preventDefault(); moveSelection(-1); return; }
           return;
@@ -629,7 +731,7 @@
 
         if (e.key === 'ArrowDown') { e.preventDefault(); moveSelection(1); }
         else if (e.key === 'ArrowUp') { e.preventDefault(); moveSelection(-1); }
-        else if (e.key === 'Home') { e.preventDefault(); if (filteredGames.length) { selIdx = 0; render(); } }
+        else if (e.key === 'Home') { e.preventDefault(); if (state.filteredGames.length) { state.selIdx = 0; render(); } }
         else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleCurrentFav(); }
         else if (e.key === 'v' || e.key === 'V') { e.preventDefault(); toggleFavFilter(); }
         else if (e.key === 'Enter') { e.preventDefault(); launchCurrentGame(); }
@@ -643,8 +745,8 @@
         const gp = gamepads.find(g => g && g.connected);
         const isConnected = !!gp;
 
-        if (isConnected !== gamepadConnected) {
-          gamepadConnected = isConnected;
+        if (isConnected !== state.gamepadConnected) {
+          state.gamepadConnected = isConnected;
           if ($('gp-icon-status')) $('gp-icon-status').style.display = isConnected ? 'block' : 'none';
         }
 
@@ -653,31 +755,31 @@
             if (gp.buttons[16]?.pressed) closeGamePlayer();
           } else if (!$('inline-search-bar')?.classList.contains('active') && !$('menu-dropdown').classList.contains('active')) {
             const now = performance.now();
-            if (now >= gpLastTime) {
+            if (now >= state.gpLastTime) {
               const ay = gp.axes[1] ?? 0, ax = gp.axes[0] ?? 0;
               const u = gp.buttons[12]?.pressed || ay < -0.55, d = gp.buttons[13]?.pressed || ay > 0.55;
               const l = gp.buttons[14]?.pressed || ax < -0.55, r = gp.buttons[15]?.pressed || ax > 0.55;
 
               if (u || d) {
-                if (!lastGpBtn.dir || now - gpLastTime > 160) { moveSelection(u ? -1 : 1); gpLastTime = now; lastGpBtn.dir = true; }
-              } else lastGpBtn.dir = false;
+                if (!state.lastGpBtn.dir || now - state.gpLastTime > 160) { moveSelection(u ? -1 : 1); state.gpLastTime = now; state.lastGpBtn.dir = true; }
+              } else state.lastGpBtn.dir = false;
 
-              if ((l || r) && !lastGpBtn.cat) {
-                lastGpBtn.cat = true;
-                if (datList.length) switchCat((currentDatIdx + (r ? 1 : -1) + datList.length) % datList.length);
-              } else if (!l && !r) lastGpBtn.cat = false;
+              if ((l || r) && !state.lastGpBtn.cat) {
+                state.lastGpBtn.cat = true;
+                if (state.datList.length) switchCat((state.currentDatIdx + (r ? 1 : -1) + state.datList.length) % state.datList.length);
+              } else if (!l && !r) state.lastGpBtn.cat = false;
 
               const hm = gp.buttons[16]?.pressed;
-              if (hm && !lastGpBtn.home) { lastGpBtn.home = true; if (filteredGames.length) { selIdx = 0; render(); } } else if (!hm) lastGpBtn.home = false;
+              if (hm && !state.lastGpBtn.home) { state.lastGpBtn.home = true; if (state.filteredGames.length) { state.selIdx = 0; render(); } } else if (!hm) state.lastGpBtn.home = false;
 
               const yP = gp.buttons[3]?.pressed;
-              if (yP && !lastGpBtn.favY) { lastGpBtn.favY = true; toggleCurrentFav(); } else if (!yP) lastGpBtn.favY = false;
+              if (yP && !state.lastGpBtn.favY) { state.lastGpBtn.favY = true; toggleCurrentFav(); } else if (!yP) state.lastGpBtn.favY = false;
 
               const xP = gp.buttons[2]?.pressed;
-              if (xP && !lastGpBtn.favX) { lastGpBtn.favX = true; toggleFavFilter(); } else if (!xP) lastGpBtn.favX = false;
+              if (xP && !state.lastGpBtn.favX) { state.lastGpBtn.favX = true; toggleFavFilter(); } else if (!xP) state.lastGpBtn.favX = false;
 
               const confirm = gp.buttons[0]?.pressed || gp.buttons[9]?.pressed;
-              if (confirm && !lastGpBtn.confirm) { lastGpBtn.confirm = true; launchCurrentGame(); } else if (!confirm) lastGpBtn.confirm = false;
+              if (confirm && !state.lastGpBtn.confirm) { state.lastGpBtn.confirm = true; launchCurrentGame(); } else if (!confirm) state.lastGpBtn.confirm = false;
             }
           }
         }
