@@ -74,7 +74,7 @@ layout: null
 
   <main id="ws" class="show-ed">
     <div class="pane pane-ed">
-      <input id="title" class="title" placeholder="Tiêu đề (tên file)..." oninput="pv()">
+      <input id="title" class="title" placeholder="Tiêu đề (tự lấy từ <title> nếu bỏ trống)..." oninput="pv()">
       <textarea id="content" placeholder="Mã HTML/CSS/JS..." oninput="pv()"></textarea>
     </div>
     <div class="pane pane-prev"><iframe id="frame"></iframe></div>
@@ -108,7 +108,15 @@ function uploadFile(e){
   reader.onload = function(evt){
     let text = evt.target.result;
     text = text.replace(/^---[\s\S]*?---\s*/m,'').replace(/^```[a-z]*\n?/i,'').replace(/\n?```$/i,'');
-    if(!title.value.trim()) title.value = file.name.replace(/\.(html|htm|txt|md)$/i, '');
+    
+    // Ưu tiên trích xuất thẻ <title> từ file tải lên
+    const match = text.match(/<title>(.*?)<\/title>/i);
+    if(match && match[1].trim()) {
+      title.value = match[1].trim();
+    } else if(!title.value.trim()) {
+      title.value = file.name.replace(/\.(html|htm|txt|md)$/i, '');
+    }
+    
     content.value = text.trim();
     pv();
   };
@@ -167,9 +175,23 @@ async function delPost(){
 }
 
 async function subForm(){
-  if(!C.token || !title.value.trim()) return alert('Thiếu Token hoặc Tiêu đề!');
+  if(!C.token) return alert('Thiếu Token!');
+
+  let t = title.value.trim();
+
+  // Tự động trích xuất tiêu đề từ thẻ <title> nếu chưa nhập tiêu đề
+  if(!t) {
+    const match = content.value.match(/<title>(.*?)<\/title>/i);
+    if(match && match[1].trim()) {
+      t = match[1].trim();
+      title.value = t;
+    }
+  }
+
+  if(!t) return alert('Thiếu Tiêu đề (hoặc không tìm thấy thẻ <title> trong nội dung)!');
+
   subBtn.disabled = true;
-  const t = title.value.trim(), day = new Date().toISOString().split('T')[0];
+  const day = new Date().toISOString().split('T')[0];
   const slug = toSlug(t);
   const path = cPath || `_posts/${day}-${slug}.html`;
   const payload = {message:`Save: ${t}`, content: btoa(unescape(encodeURIComponent(content.value)))};
