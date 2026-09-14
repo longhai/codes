@@ -6,20 +6,56 @@
   <title>Pandora Arcade</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@600;700;800&display=swap');
-    :root { --p: #ea580c; --pg: rgba(234,88,12,.4); --a: #fbbf24; --ca: #38bdf8; --bg: #050101; --panel: rgba(15,23,42,.94); }
+    :root { 
+      --p: #ea580c; 
+      --pg: rgba(234,88,12,.4); 
+      --a: #fbbf24; 
+      --ca: #38bdf8; 
+      --bg: #050101; 
+      --panel: rgba(15,23,42,.94); 
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
-    body { font-family: 'Rajdhani', sans-serif; background: radial-gradient(circle at 50% 30%, #c2410c, #7f1d1d 40%, var(--bg)); height: 100vh; height: 100dvh; width: 100vw; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #e2e8f0; touch-action: none; }
-    #loader { position: fixed; inset: 0; z-index: 200; background: rgba(5,1,1,.95); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--a); font: 700 14px 'Orbitron', sans-serif; letter-spacing: 1px; padding: 20px; text-align: center; }
-    .spin { width: 38px; height: 38px; border: 4px solid var(--p); border-top-color: transparent; border-radius: 50%; animation: s .75s linear infinite; margin-bottom: 12px; }
+    body { 
+      font-family: 'Rajdhani', sans-serif; 
+      background: radial-gradient(circle at 50% 30%, #c2410c, #7f1d1d 40%, var(--bg)); 
+      height: 100vh; height: 100dvh; width: 100vw; 
+      overflow: hidden; display: flex; align-items: center; justify-content: center; 
+      color: #e2e8f0; touch-action: none; 
+    }
+    #loader { 
+      position: fixed; inset: 0; z-index: 200; background: rgba(5,1,1,.95); 
+      display: flex; flex-direction: column; align-items: center; justify-content: center; 
+      color: var(--a); font: 700 14px 'Orbitron', sans-serif; letter-spacing: 1px; padding: 20px; text-align: center;
+    }
+    .spin { 
+      width: 38px; height: 38px; border: 4px solid var(--p); border-top-color: transparent; 
+      border-radius: 50%; animation: s .75s linear infinite; margin-bottom: 12px; 
+    }
     @keyframes s { to { transform: rotate(360deg); } }
-    main { width: 100%; height: 100vh; height: 100dvh; max-width: 1320px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 10px; }
-    #svg-container { flex: 1.25; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; order: 1; position: relative; overflow: hidden; }
+    main { 
+      width: 100%; height: 100vh; height: 100dvh; max-width: 1320px; 
+      display: flex; align-items: center; justify-content: center; gap: 12px; padding: 10px; 
+    }
+    #svg-container { 
+      flex: 1.25; width: 100%; height: 100%; display: flex; align-items: center; 
+      justify-content: center; order: 1; position: relative; overflow: hidden; 
+    }
     #svg { width: 100%; height: 100%; filter: drop-shadow(0 10px 20px rgba(0,0,0,.9)); }
     
-    #preview-container { flex: 1.1; width: 100%; max-width: 680px; aspect-ratio: 4/3; max-height: 80vh; background: var(--panel); border: 2px solid var(--p); border-radius: 16px; box-shadow: 0 0 30px var(--pg), inset 0 0 25px #000; display: flex; align-items: center; justify-content: center; padding: 10px; position: relative; overflow: hidden; backdrop-filter: blur(12px); order: 2; cursor: pointer; }
+    #preview-container { 
+      flex: 1.1; width: 100%; max-width: 680px; aspect-ratio: 4/3; max-height: 80vh; 
+      background: var(--panel); border: 2px solid var(--p); border-radius: 16px; 
+      box-shadow: 0 0 30px var(--pg), inset 0 0 25px #000; display: flex; align-items: center; 
+      justify-content: center; padding: 10px; position: relative; overflow: hidden; 
+      backdrop-filter: blur(12px); order: 2; cursor: pointer; 
+    }
     #preview-img { width: 100%; height: 100%; object-fit: contain; border-radius: 10px; transition: opacity .15s ease, transform .15s ease; }
-    #preview-img.loading { opacity: 0; transform: scale(.98); }
-    .fav-star-btn { position: absolute; top: 10px; right: 10px; z-index: 20; font-size: 28px; color: #e2e8f0; cursor: pointer; transition: all .2s ease; opacity: 0.2; line-height: 1; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.9)); }
+    #preview-img.loading { opacity: .4; transform: scale(.98); }
+    .fav-star-btn { 
+      position: absolute; top: 10px; right: 10px; z-index: 20; font-size: 28px; color: #e2e8f0; 
+      cursor: pointer; transition: all .2s ease; opacity: 0.2; line-height: 1; 
+      filter: drop-shadow(0 2px 5px rgba(0,0,0,0.9)); 
+    }
     #preview-container:hover .fav-star-btn { opacity: 0.55; }
     .fav-star-btn.active, #preview-container:hover .fav-star-btn.active { opacity: 1; color: var(--a); transform: scale(1.15); filter: drop-shadow(0 0 8px rgba(251,191,36,0.8)); }
     
@@ -27,13 +63,22 @@
     #header-logo-btn:hover { transform: scale(1.08); }
     #header-logo-img { width: 26px; height: 26px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 2px 4px rgba(0,0,0,.6)); }
 
-    #menu-dropdown { display: none; position: absolute; top: 44px; left: 10px; z-index: 150; background: rgba(15,23,42,.96); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.8); max-height: 60vh; overflow-y: auto; min-width: 180px; backdrop-filter: blur(12px); padding: 4px; flex-direction: column; gap: 2px; }
+    #menu-dropdown { 
+      display: none; position: absolute; top: 44px; left: 10px; z-index: 150; 
+      background: rgba(15,23,42,.96); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.8); 
+      max-height: 60vh; overflow-y: auto; min-width: 180px; backdrop-filter: blur(12px); 
+      padding: 4px; flex-direction: column; gap: 2px; 
+    }
     #menu-dropdown.active { display: flex; }
     .menu-item { display: flex; align-items: center; gap: 10px; padding: 7px 12px; color: #cbd5e1; font: 700 14px 'Rajdhani', sans-serif; border-radius: 6px; cursor: pointer; transition: all .15s; border-left: 3px solid transparent; }
     .menu-item:hover, .menu-item.active { background: rgba(56,189,248,.15); border-left-color: var(--ca); color: #fff; }
     .menu-logo { width: 24px; height: 24px; object-fit: contain; flex-shrink: 0; }
     
-    #inline-search-bar { display: none; position: absolute; z-index: 120; background: rgba(15,23,42,.96); border: 1.5px solid var(--ca); border-radius: 8px; padding: 0 8px; align-items: center; gap: 6px; box-shadow: 0 0 15px rgba(56,189,248,.4); backdrop-filter: blur(8px); }
+    #inline-search-bar { 
+      display: none; position: absolute; z-index: 120; background: rgba(15,23,42,.96); 
+      border: 1.5px solid var(--ca); border-radius: 8px; padding: 0 8px; align-items: center; 
+      gap: 6px; box-shadow: 0 0 15px rgba(56,189,248,.4); backdrop-filter: blur(8px); 
+    }
     #inline-search-bar.active { display: flex; }
     #inline-search-bar svg { width: 18px; height: 18px; flex-shrink: 0; filter: none; }
     #search-input { flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: #fff; font: 700 15px 'Rajdhani', sans-serif; }
@@ -101,6 +146,7 @@
 
   <script>
     const GITHUB_API = "https://api.github.com/repos/longhai/emu/contents/roms";
+    const GITHUB_TREE_API = "https://api.github.com/repos/longhai/emu/git/trees/main?recursive=1";
     const EMULATOR_URL = "https://longhai.github.io/codes/2026/08/29/emulatorjs.html";
     const ASSETS_BASE = "https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/dot-art/png/";
     const CACHE_TTL = 43200000;
@@ -133,7 +179,7 @@
     let currentPreviewToken = 0;
 
     const state = {
-      datList: [], currentDatIdx: 0, allGames: [], filteredGames: [], selIdx: 0, topIdx: 0, slots: [],
+      datList: [], currentDatIdx: 0, gamesByCat: {}, allGames: [], filteredGames: [], selIdx: 0, topIdx: 0, slots: [],
       searchQuery: "", showFavOnly: false, datNameMap: {},
       favorites: JSON.parse(localStorage.getItem('pandora_favs') || '[]'),
       isCurved: localStorage.getItem('pandora_curved') !== null ? localStorage.getItem('pandora_curved') === 'true' : !(window.innerWidth < 820 || window.innerHeight > window.innerWidth),
@@ -153,7 +199,7 @@
         try { localStorage.setItem(k, JSON.stringify({ t: Date.now(), d })); }
         catch (e) {
           try {
-            Object.keys(localStorage).forEach(x => { if (x.startsWith('pandora_g_') || x.startsWith('pandora_c_')) localStorage.removeItem(x); });
+            Object.keys(localStorage).forEach(x => { if (x.startsWith('pandora_')) localStorage.removeItem(x); });
             localStorage.setItem(k, JSON.stringify({ t: Date.now(), d }));
           } catch (err) {}
         }
@@ -168,8 +214,8 @@
         const kNorm = kLow.replace(/[^a-z0-9]/g, '');
         return rawLower.includes(kLow) || (kNorm && normName.includes(kNorm));
       }));
-      return match ? { logo: ASSETS_BASE + match.logo, system: match.name, core: match.core, libretroSys: match.libretroSys }
-                   : { logo: ASSETS_BASE + "FBNeo%20-%20Arcade%20Games.png", system: f, core: "arcade", libretroSys: "FBNeo - Arcade Games" };
+      return match ? { logo: ASSETS_BASE + encodeURIComponent(match.logo), system: match.name, core: match.core, libretroSys: match.libretroSys } 
+                   : { logo: ASSETS_BASE + "FBNeo - Arcade Games.png", system: f, core: "arcade", libretroSys: f };
     }
 
     const cleanTitle = n => n.split('/').pop().replace(/(\.(zip|7z|nes|sfc|smc|md|bin|gba|gbc|gb|iso|cue|chd|pce|z64|v64|n64|a26))+$/i, '');
@@ -184,65 +230,68 @@
     }
 
     function decodeXmlEntities(str) {
-      return str ? str.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;|&#39;/g, "'").trim() : "";
+      if (!str) return "";
+      return str.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;|&#39;/g, "'").trim();
     }
 
     function addDatEntry(map, key, desc) {
       if (!key || !desc) return;
       const kLow = key.toLowerCase().trim();
       map[kLow] = desc;
-      const kNoExt = kLow.replace(/\.[^/.]+$/, ''), normKey = kLow.replace(/[^a-z0-9]/g, '');
+      const kNoExt = kLow.replace(/\.[^/.]+$/, '');
       if (kNoExt) map[kNoExt] = desc;
+      const normKey = kLow.replace(/[^a-z0-9]/g, '');
       if (normKey) map[normKey] = desc;
-      const cleanDesc = desc.replace(/[\(\[\<].*?[\)\]\>]/g, '').toLowerCase().trim(), normDesc = cleanDesc.replace(/[^a-z0-9]/g, '');
+      const cleanDesc = desc.replace(/[\(\[\<].*?[\)\]\>]/g, '').toLowerCase().trim();
+      const normDesc = cleanDesc.replace(/[^a-z0-9]/g, '');
       if (normDesc && !map[normDesc]) map[normDesc] = desc;
     }
 
     function parseDatContent(text) {
       const parsed = {}; if (!text) return parsed;
       const blockRegex = /<(?:game|machine)\s+[^>]*?\bname=["']([^"']+)["'][^>]*>([\s\S]*?)<\/(?:game|machine)>/gi;
-      let m, xmlFound = false;
+      let match, xmlFound = false;
 
-      while ((m = blockRegex.exec(text)) !== null) {
+      while ((match = blockRegex.exec(text)) !== null) {
         xmlFound = true;
-        const descMatch = /<description>([\s\S]*?)<\/description>/i.exec(m[2]);
-        if (descMatch && descMatch[1]) addDatEntry(parsed, m[1].trim(), decodeXmlEntities(descMatch[1]));
+        const descMatch = /<description>([\s\S]*?)<\/description>/i.exec(match[2]);
+        if (descMatch && descMatch[1]) addDatEntry(parsed, match[1].trim(), decodeXmlEntities(descMatch[1]));
       }
 
       if (!xmlFound) {
-        const clrRegex = /(?:game|machine)\s*\(\s*name\s+["']?([^"'\r\n]+)["']?\s+description\s+["']([^"']+)["']/gi;
-        while ((m = clrRegex.exec(text)) !== null) addDatEntry(parsed, m[1].trim(), decodeXmlEntities(m[2]));
-        if (!Object.keys(parsed).length) {
-          let curr = null; const tagRegex = /<(?:game|machine)\s+[^>]*?\bname=["']([^"']+)["']|<description>([\s\S]*?)<\/description>/gi;
-          while ((m = tagRegex.exec(text)) !== null) {
-            if (m[1]) curr = m[1].trim();
-            else if (m[2] && curr) { addDatEntry(parsed, curr, decodeXmlEntities(m[2])); curr = null; }
-          }
-        }
+        const clrMameRegex = /(?:game|machine)\s*\(\s*name\s+["']?([^"'\r\n]+)["']?\s+description\s+["']([^"']+)["']/gi;
+        while ((match = clrMameRegex.exec(text)) !== null) addDatEntry(parsed, match[1].trim(), decodeXmlEntities(match[2]));
       }
       return parsed;
     }
 
     async function loadDatMap(catName = "arcade") {
-      const catInfo = state.datList[state.currentDatIdx], rawCat = catInfo?.name || catName, cleanCat = rawCat.toLowerCase().trim();
-      const cacheKey = "pandora_dat_v3_" + cleanCat, cached = Storage.get(cacheKey);
+      const catInfo = state.datList[state.currentDatIdx];
+      const rawCatName = catInfo?.name || catName;
+      const cleanCat = rawCatName.toLowerCase().trim();
+      const cacheKey = "pandora_dat_v4_" + cleanCat;
+      const cached = Storage.get(cacheKey);
       if (cached && Object.keys(cached).length > 0) { state.datNameMap = cached; return; }
 
-      const coreName = catInfo?.core ? catInfo.core.toLowerCase().trim() : "", dataBaseUrl = `${getRepoRawBase()}data/`;
-      const urls = Array.from(new Set([
-        `${dataBaseUrl}${encodeURIComponent(rawCat)}.dat`,
+      const coreName = catInfo?.core ? catInfo.core.toLowerCase().trim() : "";
+      const dataBaseUrl = `${getRepoRawBase()}data/`;
+      const urlsToTry = Array.from(new Set([
+        `${dataBaseUrl}${encodeURIComponent(rawCatName)}.dat`,
         `${dataBaseUrl}${encodeURIComponent(cleanCat)}.dat`,
         coreName ? `${dataBaseUrl}${encodeURIComponent(coreName)}.dat` : null,
         `${dataBaseUrl}arcade.dat`
       ])).filter(Boolean);
 
-      for (const url of urls) {
+      for (const url of urlsToTry) {
         try {
           const resp = await fetch(url);
           if (!resp.ok) continue;
-          const parsed = parseDatContent(await resp.text());
+          const text = await resp.text();
+          const parsed = parseDatContent(text);
           if (Object.keys(parsed).length > 0) {
-            state.datNameMap = parsed; Storage.set(cacheKey, parsed); return;
+            state.datNameMap = parsed;
+            Storage.set(cacheKey, parsed);
+            return;
           }
         } catch (e) {}
       }
@@ -250,10 +299,12 @@
 
     function getDisplayName(r) {
       if (!r) return "";
-      const raw = r.toLowerCase().trim(), clean = cleanTitle(r).toLowerCase().trim();
+      const clean = cleanTitle(r).toLowerCase().trim();
       const noTag = clean.replace(/[\(\[\<].*?[\)\]\>]/g, '').trim();
-      const keysToTry = [raw, clean, noTag, clean.replace(/_/g, ' '), raw.replace(/\.[^/.]+$/, ''), clean.replace(/[^a-z0-9]/g, ''), noTag.replace(/[^a-z0-9]/g, '')];
-      for (const k of keysToTry) if (k && state.datNameMap[k]) return state.datNameMap[k];
+      const keysToTry = [r.toLowerCase().trim(), clean, noTag, clean.replace(/_/g, ' ')];
+      for (const k of keysToTry) {
+        if (k && state.datNameMap[k]) return state.datNameMap[k];
+      }
       return r;
     }
 
@@ -282,72 +333,93 @@
       return p.X0 + (p.X1 - p.X0) * (1 - Math.pow(Math.max(-1, Math.min(1, (y - p.Y_MID) / p.HALF_H)), 2));
     }
 
-    function getSvgScale() {
-      const c = $('svg-container'); if (!c) return { scaleX: 1, scaleY: 1 };
-      const rect = c.getBoundingClientRect();
-      return { scaleX: rect.width / 540, scaleY: rect.height / (64 + state.numSlots * 54) };
-    }
-
-    async function loadCategories() {
-      showLoader("ĐANG TẢI SYSTEM...");
+    async function loadFullDatabase() {
+      showLoader("ĐANG TẢI DỮ LIỆU...");
       const lastCat = localStorage.getItem("pandora_last_cat");
       const processCats = list => list.map(i => ({ ...i, displayName: capitalizeTitle(i.system || i.name) })).sort((a, b) => a.displayName.localeCompare(b.displayName, 'vi', { sensitivity: 'base' }));
 
-      const cached = Storage.get("pandora_cats_v3");
-      if (cached?.length) {
-        state.datList = processCats(cached);
-        state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
-        return loadGameList();
-      }
-      try {
-        const resp = await fetch(GITHUB_API);
-        if (!resp.ok) throw new Error(`Lỗi HTTP ${resp.status}`);
-        const items = await resp.json();
-        if (!Array.isArray(items)) throw new Error("Dữ liệu không hợp lệ");
+      const cacheKey = "pandora_full_db_v5";
+      const cached = Storage.get(cacheKey);
 
-        state.datList = processCats(items.filter(i => i.type === "dir").map(f => {
-          const info = resolveSys(f.name);
-          return { name: f.name, logo: info.logo, system: info.system, core: info.core, libretroSys: info.libretroSys, url: f.git_url ? `${f.git_url}?recursive=1` : f.url };
-        }));
-        Storage.set("pandora_cats_v3", state.datList);
+      if (cached?.datList?.length && cached?.gamesByCat) {
+        state.datList = processCats(cached.datList);
+        state.gamesByCat = cached.gamesByCat;
         state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
-        await loadGameList();
+        const currCat = state.datList[state.currentDatIdx];
+        state.allGames = state.gamesByCat[currCat?.name] || [];
+        filterGames(false);
+        restorePos();
+        hideLoader();
+        drawAll();
+        if (currCat) loadDatMap(currCat.name).then(() => updateNames());
+        return;
+      }
+
+      try {
+        let resp = await fetch(GITHUB_TREE_API);
+        if (!resp.ok) resp = await fetch(`https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/git/trees/master?recursive=1`);
+        if (!resp.ok) throw new Error(`Lỗi GitHub API (${resp.status})`);
+        
+        const treeData = await resp.json();
+        const gamesByCat = {};
+        const catMap = new Map();
+
+        if (Array.isArray(treeData.tree)) {
+          treeData.tree.forEach(item => {
+            if (item.type === "blob" && item.path.toLowerCase().startsWith("roms/")) {
+              const parts = item.path.split('/');
+              if (parts.length >= 3) {
+                const catName = parts[1];
+                const relPath = parts.slice(2).join('/');
+                if (relPath && !relPath.endsWith('.gitkeep')) {
+                  if (!gamesByCat[catName]) gamesByCat[catName] = [];
+                  gamesByCat[catName].push(relPath);
+                  if (!catMap.has(catName)) {
+                    const info = resolveSys(catName);
+                    catMap.set(catName, { name: catName, logo: info.logo, system: info.system, core: info.core, libretroSys: info.libretroSys });
+                  }
+                }
+              }
+            }
+          });
+        }
+
+        const rawCatList = Array.from(catMap.values());
+        state.datList = processCats(rawCatList);
+        state.gamesByCat = {};
+
+        for (const catName in gamesByCat) {
+          state.gamesByCat[catName] = gamesByCat[catName].map(f => ({
+            name: cleanTitle(f),
+            fullName: f
+          }));
+        }
+
+        Storage.set(cacheKey, { datList: rawCatList, gamesByCat: state.gamesByCat });
+
+        state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
+        const currCat = state.datList[state.currentDatIdx];
+        state.allGames = state.gamesByCat[currCat?.name] || [];
+
+        filterGames(false);
+        restorePos();
+        hideLoader();
+        drawAll();
+
+        if (currCat) {
+          await loadDatMap(currCat.name);
+          updateNames();
+        }
       } catch (e) { showLoader("LỖI TẢI: " + e.message); }
     }
 
-    async function loadGameList() {
-      state.selIdx = state.topIdx = 0; state.searchQuery = "";
-      if ($('search-input')) $('search-input').value = "";
-      const cat = state.datList[state.currentDatIdx];
-      if (!cat) return;
-
-      await loadDatMap(cat.name);
-      const cacheKey = "pandora_g_" + cat.name, cached = Storage.get(cacheKey);
-      if (cached?.length) {
-        state.allGames = cached; updateNames(); filterGames(false); restorePos(); hideLoader(); return drawAll();
-      }
-
-      try {
-        const resp = await fetch(cat.url);
-        if (!resp.ok) throw new Error(`Lỗi HTTP ${resp.status}`);
-        const data = await resp.json();
-        const fileList = Array.isArray(data.tree) ? data.tree.filter(i => i.type === "blob").map(i => i.path) : (Array.isArray(data) ? data.filter(i => i.type !== "dir").map(i => i.path || i.name) : []);
-        const catPrefix = `roms/${cat.name}/`.toLowerCase();
-        const files = fileList.filter(n => n && !n.endsWith(".gitkeep")).map(f => f.toLowerCase().startsWith(catPrefix) ? f.slice(catPrefix.length) : f);
-
-        state.allGames = files.length ? files.map(f => ({ name: getDisplayName(cleanTitle(f)), fullName: f })) : [{ name: "Chưa có ROMs", fullName: "" }];
-        if (files.length) Storage.set(cacheKey, state.allGames);
-        filterGames(false); restorePos(); hideLoader(); drawAll();
-      } catch (e) { showLoader("LỖI GAME: " + e.message); }
-    }
-
     function updateNames() {
-      let changed = false; const cat = state.datList[state.currentDatIdx];
+      let changed = false;
       state.allGames.forEach(g => {
         const d = getDisplayName(cleanTitle(g.fullName));
         if (d && d !== g.name) { g.name = d; changed = true; }
       });
-      if (changed) { if (cat) Storage.set("pandora_g_" + cat.name, state.allGames); filterGames(true); render(); }
+      if (changed) { filterGames(true); render(); }
     }
 
     function restorePos() {
@@ -363,17 +435,24 @@
     const isFav = g => state.favorites.includes(getGameKey(g));
 
     function toggleCurrentFav() {
-      const k = getGameKey(state.filteredGames[state.selIdx]); if (!k) return;
+      const k = getGameKey(state.filteredGames[state.selIdx]);
+      if (!k) return;
       const idx = state.favorites.indexOf(k);
       if (idx === -1) state.favorites.push(k); else state.favorites.splice(idx, 1);
       localStorage.setItem('pandora_favs', JSON.stringify(state.favorites));
-      filterGames(true); render();
+      filterGames(true);
+      render();
     }
 
-    function toggleFavFilter() { state.showFavOnly = !state.showFavOnly; filterGames(true); drawAll(); }
+    function toggleFavFilter() {
+      state.showFavOnly = !state.showFavOnly;
+      filterGames(true);
+      drawAll();
+    }
 
     function filterGames(preserve = true) {
-      const current = state.filteredGames[state.selIdx], q = state.searchQuery.toLowerCase().trim();
+      const current = state.filteredGames[state.selIdx];
+      const q = state.searchQuery.toLowerCase().trim();
       let list = state.allGames;
       if (q) list = list.filter(g => g.name.toLowerCase().includes(q) || g.fullName.toLowerCase().includes(q));
       if (state.showFavOnly) list = list.filter(g => isFav(g));
@@ -401,8 +480,21 @@
     function switchCat(i) {
       if (i === state.currentDatIdx) return closeMenuModal();
       state.currentDatIdx = i;
-      localStorage.setItem("pandora_last_cat", state.datList[state.currentDatIdx]?.name || '');
-      closeMenuModal(); showLoader("ĐANG TẢI..."); loadGameList();
+      const cat = state.datList[i];
+      if (!cat) return;
+      
+      localStorage.setItem("pandora_last_cat", cat.name || '');
+      closeMenuModal();
+      
+      state.allGames = state.gamesByCat[cat.name] || [];
+      state.searchQuery = "";
+      if ($('search-input')) $('search-input').value = "";
+      
+      filterGames(false);
+      restorePos();
+      drawAll();
+
+      loadDatMap(cat.name).then(() => updateNames());
     }
 
     function drawAll() {
@@ -412,8 +504,9 @@
     function drawHeader() {
       if (!state.datList.length) return;
       updateSvgViewBox();
-      const p = getGeom(), xl0 = getX(6, p), xl1 = getX(54, p), sx = (xl0 + xl1) / 2 + 16, clr = state.isCurved ? '#f97316' : '#38bdf8', rx = xl0 + p.W;
+      const p = getGeom(), xl0 = getX(6, p), xl1 = getX(54, p), sx = (xl0 + xl1) / 2 + 16, clr = state.isCurved ? '#f97316' : '#38bdf8';
       const logoUrl = state.datList[state.currentDatIdx]?.logo || (ASSETS_BASE + "FBNeo%20-%20Arcade%20Games.png");
+      const rx = xl0 + p.W;
 
       const logoImg = $('header-logo-img');
       if (logoImg) {
@@ -425,17 +518,21 @@
         <polygon points="${xl0.toFixed(1)},6 ${(xl0 + p.W).toFixed(1)},6 ${(xl1 + p.W).toFixed(1)},54 ${xl1.toFixed(1)},54" fill="url(#gh)" stroke="#475569" stroke-width="1.5"/>
         <line x1="${xl0.toFixed(1)}" y1="6" x2="${xl1.toFixed(1)}" y2="54" stroke="#38bdf8" stroke-width="4"/>
         <text id="cnt-txt" x="${sx + 48}" y="37" fill="#fbbf24" font-size="15" font-weight="bold" font-family="Orbitron">GAME: 0 / 0</text>
+        
         <g id="btn-search" style="cursor:pointer" onclick="toggleInlineSearch(event)" transform="translate(${(rx - 116).toFixed(1)}, 20)">
           <rect width="26" height="26" fill="transparent"/>
           <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="#38bdf8"/>
         </g>
+        
         <g style="cursor:pointer" onclick="toggleFavFilter()" transform="translate(${(rx - 86).toFixed(1)}, 20)">
           <rect width="26" height="26" fill="transparent"/>
           <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="${state.showFavOnly ? '#fbbf24' : '#64748b'}"/>
         </g>
+        
         <g id="gp-icon-status" transform="translate(${(rx - 56).toFixed(1)}, 20)" style="display:${state.gamepadConnected ? 'block' : 'none'}">
           <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H9v2H7v-2H5v-2h2V9h2v2h2v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" fill="#4ade80"/>
         </g>
+        
         <g id="btn-toggle" style="cursor:pointer" transform="translate(${(rx - 28).toFixed(1)}, 20)">
           <rect width="26" height="26" fill="transparent"/>
           ${state.isCurved ? 
@@ -446,20 +543,26 @@
         </g>`;
 
       $('btn-toggle').onclick = e => { e.stopPropagation(); state.isCurved = !state.isCurved; localStorage.setItem('pandora_curved', state.isCurved); drawAll(); };
-      posHeaderLogo(); posSearch();
+      posHeaderLogo();
+      posSearch();
     }
 
     function posHeaderLogo() {
       const btn = $('header-logo-btn'); if (!btn) return;
-      const p = getGeom(), xl0 = getX(6, p), xl1 = getX(54, p), sx = (xl0 + xl1) / 2 + 16, { scaleX, scaleY } = getSvgScale();
-      btn.style.left = `${sx * scaleX}px`; btn.style.top = `${15 * scaleY}px`;
-      btn.style.width = `${26 * scaleX}px`; btn.style.height = `${26 * scaleY}px`;
+      const c = $('svg-container'), p = getGeom(), xl0 = getX(6, p), xl1 = getX(54, p), sx = (xl0 + xl1) / 2 + 16;
+      const rect = c.getBoundingClientRect(), scaleX = rect.width / 540, scaleY = rect.height / (64 + state.numSlots * 54);
+      btn.style.left = `${(sx) * scaleX}px`;
+      btn.style.top = `${15 * scaleY}px`;
+      btn.style.width = `${26 * scaleX}px`;
+      btn.style.height = `${26 * scaleY}px`;
     }
 
     function posSearch() {
       const bar = $('inline-search-bar'); if (!bar?.classList.contains('active')) return;
-      const p = getGeom(), xl0 = getX(6, p), rx = xl0 + p.W, sx = (xl0 + getX(54, p)) / 2 + 16, { scaleX, scaleY } = getSvgScale();
-      bar.style.left = `${(sx + 32) * scaleX}px`; bar.style.top = `${10 * scaleY}px`;
+      const c = $('svg-container'), p = getGeom(), xl0 = getX(6, p), rx = xl0 + p.W, sx = (xl0 + getX(54, p)) / 2 + 16;
+      const rect = c.getBoundingClientRect(), scaleX = rect.width / 540, scaleY = rect.height / (64 + state.numSlots * 54);
+      bar.style.left = `${(sx + 32) * scaleX}px`;
+      bar.style.top = `${10 * scaleY}px`;
       bar.style.width = `${Math.max(130, (rx - 112) - (sx + 32)) * scaleX}px`;
       bar.style.height = `${Math.min(42, Math.max(30, 38 * scaleY))}px`;
     }
@@ -467,7 +570,7 @@
     function toggleInlineSearch(e) {
       if (e) e.stopPropagation();
       const bar = $('inline-search-bar'), input = $('search-input');
-      if (bar.classList.contains('active')) bar.classList.remove('active');
+      if (bar.classList.contains('active')) { bar.classList.remove('active'); }
       else { bar.classList.add('active'); posSearch(); input.focus(); }
     }
 
@@ -477,7 +580,9 @@
     }
 
     function drawSlots() {
-      const p = getGeom(), grp = $('sg'), defs = $('cd'); grp.innerHTML = defs.innerHTML = ''; state.slots = [];
+      const p = getGeom(), grp = $('sg'), defs = $('cd');
+      grp.innerHTML = defs.innerHTML = ''; state.slots = [];
+
       for (let i = 0; i < state.numSlots; i++) {
         const y0 = 60 + i * 54, y1 = y0 + 48, xl0 = getX(y0, p), xl1 = getX(y1, p);
         defs.innerHTML += `<clipPath id="c${i}"><polygon points="${xl0.toFixed(1)},${y0} ${(xl0 + p.W - 12).toFixed(1)},${y0} ${(xl1 + p.W - 12).toFixed(1)},${y1} ${xl1.toFixed(1)},${y1}"/></clipPath>`;
@@ -501,37 +606,47 @@
     }
 
     function getPreviewCandidates(g) {
-      if (!g?.fullName) return [];
-      const cat = state.datList[state.currentDatIdx]; if (!cat) return [];
+      if (!g) return [];
+      const cat = state.datList[state.currentDatIdx];
+      if (!cat) return [];
+
       const catFolder = encodeURIComponent(cat.name);
-      const rawFullName = g.fullName.split('/').pop();
-      const cleanFullNameNoExt = cleanTitle(rawFullName);
-      const cleanDisplayName = cleanTitle(g.name);
-      const libretroSystem = cat.libretroSys || cat.system || cat.name;
-      const libretroBaseUrl = `https://thumbnails.libretro.com/${encodeURIComponent(libretroSystem)}`;
-      const snapBaseUrl = `${getRepoRawBase()}snap/${catFolder}/`;
+      const cleanName = cleanTitle(g.fullName);
+      const fileBase = g.fullName ? g.fullName.split('/').pop().replace(/\.[^/.]+$/, '') : '';
+      const namesToTry = Array.from(new Set([cleanName, fileBase, g.name])).filter(Boolean);
 
-      const candidateSet = new Set();
-      if (cleanFullNameNoExt) candidateSet.add(`${snapBaseUrl}${encodeURIComponent(cleanFullNameNoExt)}.png`);
-      if (cleanDisplayName) candidateSet.add(`${snapBaseUrl}${encodeURIComponent(cleanDisplayName)}.png`);
-      if (cleanFullNameNoExt) candidateSet.add(`${libretroBaseUrl}/Named_Snaps/${encodeURIComponent(cleanFullNameNoExt)}.png`);
-      if (cleanDisplayName) candidateSet.add(`${libretroBaseUrl}/Named_Snaps/${encodeURIComponent(cleanDisplayName)}.png`);
-      if (cleanFullNameNoExt) candidateSet.add(`${libretroBaseUrl}/Named_Boxarts/${encodeURIComponent(cleanFullNameNoExt)}.png`);
-      if (cleanDisplayName) candidateSet.add(`${libretroBaseUrl}/Named_Boxarts/${encodeURIComponent(cleanDisplayName)}.png`);
-      if (cleanFullNameNoExt) candidateSet.add(`${snapBaseUrl}${encodeURIComponent(cleanFullNameNoExt)}.jpg`);
+      const candidates = new Set();
+      const snapBaseUrl = `${getRepoRawBase()}snap/`;
 
-      return Array.from(candidateSet).filter(url => !failedUrls.has(url));
+      for (const n of namesToTry) {
+        candidates.add(`${snapBaseUrl}${catFolder}/${encodeURIComponent(n)}.png`);
+        candidates.add(`${snapBaseUrl}arcade/${encodeURIComponent(n)}.png`);
+      }
+
+      const sysName = cat.libretroSys || cat.system || cat.name;
+      const libretroSnapBase = `https://thumbnails.libretro.com/${encodeURIComponent(sysName)}/Named_Snaps/`;
+      const libretroBoxBase = `https://thumbnails.libretro.com/${encodeURIComponent(sysName)}/Named_Titles/`;
+
+      for (const n of namesToTry) {
+        candidates.add(`${libretroSnapBase}${encodeURIComponent(n)}.png`);
+        candidates.add(`${libretroBoxBase}${encodeURIComponent(n)}.png`);
+      }
+
+      return Array.from(candidates).filter(url => !failedUrls.has(url));
     }
 
     function preloadNeighbors() {
-      for (const offset of [1, 2, 3, -1, -2]) {
+      const offsets = [1, 2, 3, -1, -2];
+      for (const offset of offsets) {
         const targetIdx = state.selIdx + offset;
         if (targetIdx >= 0 && targetIdx < state.filteredGames.length) {
-          const targetGame = state.filteredGames[targetIdx], k = getGameKey(targetGame);
+          const targetGame = state.filteredGames[targetIdx];
+          const k = getGameKey(targetGame);
           if (k && !imgCache.has(k)) {
             const candidates = getPreviewCandidates(targetGame);
             if (candidates.length > 0) {
-              const url = candidates[0], temp = new Image();
+              const url = candidates[0];
+              const temp = new Image();
               temp.onload = () => imgCache.set(k, url);
               temp.onerror = () => failedUrls.add(url);
               temp.src = url;
@@ -550,7 +665,8 @@
       }
       if (favBtn) favBtn.style.display = 'block';
 
-      const key = getGameKey(g), token = ++currentPreviewToken;
+      const key = getGameKey(g);
+      const token = ++currentPreviewToken;
 
       if (imgCache.has(key)) {
         img.src = imgCache.get(key);
@@ -570,6 +686,7 @@
       }
 
       let step = 0;
+
       const tryNext = () => {
         if (token !== currentPreviewToken) return;
         if (step < candidates.length) {
@@ -593,6 +710,7 @@
           img.classList.remove('loading');
         }
       };
+
       tryNext();
     }
 
@@ -600,7 +718,9 @@
       if (!g?.fullName || !c) return "";
       let cleanPath = g.fullName;
       const catPrefix = `roms/${c.name}/`.toLowerCase();
-      if (cleanPath.toLowerCase().startsWith(catPrefix)) cleanPath = cleanPath.slice(catPrefix.length);
+      if (cleanPath.toLowerCase().startsWith(catPrefix)) {
+        cleanPath = cleanPath.slice(catPrefix.length);
+      }
       const path = cleanPath.split('/').map(encodeURIComponent).join('/');
       return `${EMULATOR_URL}?core=${c.core || "arcade"}&rom=${getRepoRawBase()}roms/${encodeURIComponent(c.name)}/${path}`;
     }
@@ -635,7 +755,9 @@
 
     function onSearchInput(val) {
       state.searchQuery = val;
-      filterGames(false); drawSlots(); render();
+      filterGames(false);
+      drawSlots();
+      render();
     }
 
     function render() {
@@ -693,7 +815,11 @@
       window.onresize = () => {
         clearTimeout(state.resizeTimer);
         state.resizeTimer = setTimeout(() => { 
-          if (state.datList.length) { drawAll(); posHeaderLogo(); posSearch(); } 
+          if (state.datList.length) { 
+            drawAll(); 
+            posHeaderLogo(); 
+            posSearch(); 
+          } 
         }, 100);
       };
 
@@ -730,6 +856,20 @@
 
         if (e.key === 'ArrowDown') { e.preventDefault(); moveSelection(1); }
         else if (e.key === 'ArrowUp') { e.preventDefault(); moveSelection(-1); }
+        else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          if (state.datList.length > 0) {
+            const nextIdx = (state.currentDatIdx - 1 + state.datList.length) % state.datList.length;
+            switchCat(nextIdx);
+          }
+        }
+        else if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          if (state.datList.length > 0) {
+            const nextIdx = (state.currentDatIdx + 1) % state.datList.length;
+            switchCat(nextIdx);
+          }
+        }
         else if (e.key === 'Home') { e.preventDefault(); if (state.filteredGames.length) { state.selIdx = 0; render(); } }
         else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleCurrentFav(); }
         else if (e.key === 'v' || e.key === 'V') { e.preventDefault(); toggleFavFilter(); }
@@ -786,7 +926,7 @@
       requestAnimationFrame(pollGamepad);
     }
 
-    window.onload = () => { bindEvents(); loadCategories(); requestAnimationFrame(pollGamepad); };
+    window.onload = () => { bindEvents(); loadFullDatabase(); requestAnimationFrame(pollGamepad); };
   </script>
 </body>
 </html>
