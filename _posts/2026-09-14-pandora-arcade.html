@@ -18,7 +18,7 @@
     #svg-container{flex:1.25;width:100%;height:100%;display:flex;align-items:center;justify-content:center;order:1;position:relative;overflow:hidden}
     #svg{width:100%;height:100%;filter:drop-shadow(0 10px 20px rgba(0,0,0,.9))}
     
-    #preview-container{flex:1.1;width:100%;max-width:680px;aspect-ratio:4/3;max-height:80vh;background:var(--panel);border:2px solid var(--p);border-radius:16px;box-shadow:0 0 30px var(--pg),inset 0 0 25px #000;display:flex;align-items:center;justify-content:center;padding:10px;position:relative;overflow:hidden;backdrop-filter:blur(12px);order:2;cursor:pointer}
+    #preview-container{flex:1.1;width:100%;max-width:680px;aspect-ratio:4/3;max-height:80vh;background:var(--panel);border:2px solid var(--p);border-radius:16px;box-shadow:0 0 30px var(--pg),inset 0 0 25px #000;display:flex;align-items:center;justify-content:center;padding:10px;position:relative;overflow:hidden;backdrop-filter:blur(12px);order:2;cursor:default}
     #preview-img{width:100%;height:100%;object-fit:contain;border-radius:10px;transition:opacity .15s,transform .15s}
     #preview-img.loading{opacity:.4;transform:scale(.98)}
     
@@ -93,7 +93,7 @@
         <g id="hg"></g><g id="sg"></g>
       </svg>
     </div>
-    <div id="preview-container" onclick="launchCurrentGame()" title="Nhấn để chơi">
+    <div id="preview-container">
       <div class="preview-badges">
         <svg id="gp-badge" viewBox="0 0 24 24" title="Tay cầm đã kết nối">
           <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H9v2H7v-2H5v-2h2V9h2v2h2v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
@@ -256,7 +256,6 @@
       return { map, order };
     }
 
-    // FIX CHÍNH XÁC TÊN FILE .DAT
     async function loadDatMap(catName = "arcade") {
       const catInfo = state.datList[state.currentDatIdx];
       const sysName = catInfo?.name || catName;
@@ -390,7 +389,6 @@
                     if (cleanName) {
                       gamesByCat[sysKey].push({ name: cleanName, fullName: fileName, romUrl: buildDirectRomUrl(source, item.path), path: item.path, core: info.core });
                       
-                      // LƯU LẠI FOLDER GỐC ĐỂ TẢI ĐÚNG FILE .DAT
                       if (!catMap.has(sysKey)) {
                         catMap.set(sysKey, { 
                           name: sysKey, 
