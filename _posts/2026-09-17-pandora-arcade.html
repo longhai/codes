@@ -35,21 +35,28 @@
     #header-logo-btn:hover{transform:scale(1.08)}
     #header-logo-img{width:26px;height:26px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
 
-    #menu-dropdown{display:none;position:absolute;top:44px;left:10px;z-index:250;background:rgba(15,23,42,.98);border:1px solid var(--ca);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.9);max-height:70vh;overflow-y:auto;min-width:220px;backdrop-filter:blur(12px);padding:8px;flex-direction:column;gap:4px}
+    /* DROPDOWN MENU CHỌN HỆ GAME (DÙNG POSITION: FIXED ĐỂ KHÔNG BỊ TRÀN/CẮT) */
+    #menu-dropdown{display:none;position:fixed;z-index:9999;background:rgba(15,23,42,.98);border:1.5px solid var(--ca);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.9);min-width:210px;max-width:280px;max-height:calc(100vh - 100px);overflow-y:auto;backdrop-filter:blur(12px);padding:8px;flex-direction:column;gap:4px;scrollbar-width:thin;scrollbar-color:var(--ca) transparent}
+    #menu-dropdown::-webkit-scrollbar{width:5px}
+    #menu-dropdown::-webkit-scrollbar-thumb{background:var(--ca);border-radius:4px}
+    #menu-dropdown::-webkit-scrollbar-track{background:transparent}
     #menu-dropdown.active{display:flex}
-    .menu-item{display:flex;align-items:center;gap:10px;padding:8px 12px;color:#cbd5e1;font:700 14px 'Rajdhani',sans-serif;border-radius:6px;cursor:pointer;transition:all .15s;border-left:3px solid transparent}
-    .menu-item:hover,.menu-item.active{background:rgba(56,189,248,.15);border-left-color:var(--ca);color:#fff}
-    .menu-logo{width:24px;height:24px;object-fit:contain;flex-shrink:0}
+    
+    .menu-header{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:4px;font-size:12px;color:var(--a);font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .menu-item{display:flex;align-items:center;gap:10px;padding:8px 10px;color:#e2e8f0;font:700 14px 'Rajdhani',sans-serif;border-radius:6px;cursor:pointer;transition:all .15s}
+    .menu-item:hover,.menu-item.active{background:rgba(56,189,248,.2);color:#fff}
+    .menu-item.active{border-left:3px solid var(--ca)}
+    .menu-logo{width:20px;height:20px;object-fit:contain;flex-shrink:0}
 
     /* MENU TÀI KHOẢN & CÀI ĐẶT */
-    #user-menu-dropdown{display:none;position:absolute;top:50px;right:10px;z-index:260;background:rgba(15,23,42,.98);border:1.5px solid var(--ca);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.9);min-width:210px;backdrop-filter:blur(12px);padding:8px;flex-direction:column;gap:4px}
+    #user-menu-dropdown{display:none;position:fixed;z-index:9999;background:rgba(15,23,42,.98);border:1.5px solid var(--ca);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.9);min-width:210px;backdrop-filter:blur(12px);padding:8px;flex-direction:column;gap:4px}
     #user-menu-dropdown.active{display:flex}
     .user-menu-header{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:4px;font-size:12px;color:var(--a);font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .user-menu-item{display:flex;align-items:center;gap:10px;padding:8px 10px;color:#e2e8f0;font:700 14px 'Rajdhani',sans-serif;border-radius:6px;cursor:pointer;transition:all .15s}
     .user-menu-item:hover{background:rgba(56,189,248,.2);color:#fff}
     .user-menu-item svg{width:18px;height:18px;fill:currentColor;flex-shrink:0}
     
-    #inline-search-bar{display:none;position:absolute;z-index:120;background:rgba(15,23,42,.96);border:1.5px solid var(--ca);border-radius:8px;padding:0 8px;align-items:center;gap:6px;box-shadow:0 0 15px rgba(56,189,248,.4);backdrop-filter:blur(8px)}
+    #inline-search-bar{display:none;position:fixed;z-index:9999;background:rgba(15,23,42,.96);border:1.5px solid var(--ca);border-radius:8px;padding:0 8px;align-items:center;gap:6px;box-shadow:0 0 15px rgba(56,189,248,.4);backdrop-filter:blur(8px)}
     #inline-search-bar.active{display:flex}
     #inline-search-bar svg{width:18px;height:18px;flex-shrink:0}
     #search-input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:#fff;font:700 15px 'Rajdhani',sans-serif}
@@ -72,46 +79,47 @@
       #preview-container{order:1;width:100%;height:28vh;min-height:160px;max-height:240px;aspect-ratio:auto;flex-shrink:0}
       #svg-container{order:2;flex:1}
       .btn-lbl{display:none}
-      #menu-dropdown{position:fixed;top:50%!important;left:50%!important;transform:translate(-50%,-50%);width:88vw;max-width:340px;max-height:75vh;border-color:var(--p);box-shadow:0 0 40px rgba(0,0,0,.95),0 0 15px var(--pg)}
     }
   </style>
 </head>
 <body>
   <div id="loader"><div class="spin"></div><p id="ld-t">ĐANG TẢI...</p></div>
+
+  <!-- CÁC MENU DROPDOWN ĐƯỢC ĐẶT TRỰC TIẾP TRONG BODY ĐỂ TRÁNH BỊ ẨN KHUNG -->
+  <div id="menu-dropdown"></div>
+
+  <div id="user-menu-dropdown">
+    <div id="user-menu-name" class="user-menu-header">Khách (Chưa đăng nhập)</div>
+    <div class="user-menu-item" onclick="handleAuthClick()">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+      <span id="auth-btn-text">Đăng nhập Google</span>
+    </div>
+    <div class="user-menu-item" onclick="toggleFavFilter(); closeUserMenu();">
+      <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+      <span id="fav-menu-text">Lọc Game Yêu Thích</span>
+    </div>
+    <div class="user-menu-item" onclick="toggleLayoutMode(); closeUserMenu();">
+      <svg viewBox="0 0 24 24"><path d="M3 5v14h18V5H3zm16 12H5V7h14v10z"/></svg>
+      <span id="layout-menu-text">Chuyển Giao Diện</span>
+    </div>
+    <div class="user-menu-item" onclick="reloadDatabase(); closeUserMenu();">
+      <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+      <span>Cập Nhật Dữ Liệu</span>
+    </div>
+  </div>
+
+  <div id="inline-search-bar">
+    <svg viewBox="0 0 24 24" fill="var(--ca)"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+    <input type="text" id="search-input" placeholder="Nhập tên game..." oninput="onSearchInput(this.value)" autocomplete="off"/>
+    <span class="clear-btn" onclick="closeInlineSearch(true)">✕</span>
+  </div>
+
   <main>
     <div id="svg-container">
       <div id="header-logo-btn" onclick="toggleMenuModal(event)" title="Chọn Hệ Máy">
         <img id="header-logo-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo" />
       </div>
 
-      <div id="menu-dropdown"></div>
-
-      <!-- DROPDOWN MENU TÀI KHOẢN & CÀI ĐẶT -->
-      <div id="user-menu-dropdown">
-        <div id="user-menu-name" class="user-menu-header">Khách (Chưa đăng nhập)</div>
-        <div class="user-menu-item" onclick="handleAuthClick()">
-          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-          <span id="auth-btn-text">Đăng nhập Google</span>
-        </div>
-        <div class="user-menu-item" onclick="toggleFavFilter(); closeUserMenu();">
-          <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-          <span id="fav-menu-text">Lọc Game Yêu Thích</span>
-        </div>
-        <div class="user-menu-item" onclick="toggleLayoutMode(); closeUserMenu();">
-          <svg viewBox="0 0 24 24"><path d="M3 5v14h18V5H3zm16 12H5V7h14v10z"/></svg>
-          <span id="layout-menu-text">Chuyển Giao Diện</span>
-        </div>
-        <div class="user-menu-item" onclick="reloadDatabase(); closeUserMenu();">
-          <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-          <span>Cập Nhật Dữ Liệu</span>
-        </div>
-      </div>
-
-      <div id="inline-search-bar">
-        <svg viewBox="0 0 24 24" fill="var(--ca)"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-        <input type="text" id="search-input" placeholder="Nhập tên game..." oninput="onSearchInput(this.value)" autocomplete="off"/>
-        <span class="clear-btn" onclick="closeInlineSearch(true)">✕</span>
-      </div>
       <svg id="svg" viewBox="0 0 540 650" preserveAspectRatio="none">
         <defs>
           <linearGradient id="gn"><stop offset="0%" stop-color="#1e293b"/><stop offset="50%" stop-color="#334155"/><stop offset="100%" stop-color="#1e293b"/></linearGradient>
@@ -226,8 +234,13 @@
       closeMenuModal();
       closeInlineSearch();
       const menu = $('user-menu-dropdown');
+      const btn = $('btn-cloud');
+      if (btn && !menu.classList.contains('active')) {
+        const rect = btn.getBoundingClientRect();
+        menu.style.top = `${rect.bottom + 6}px`;
+        menu.style.right = `${window.innerWidth - rect.right}px`;
+      }
       
-      // Cập nhật trạng thái text trong menu
       if (currentUserProfile) {
         $('user-menu-name').textContent = currentUserProfile.name || 'Đã Đăng Nhập';
         $('auth-btn-text').textContent = 'Đăng xuất';
@@ -703,15 +716,42 @@
     }
 
     function renderMenuList() {
-      $('menu-dropdown').innerHTML = state.datList.map((item, i) =>
+      const headerHtml = `<div class="menu-header">Danh Sách Hệ Máy (${state.datList.length})</div>`;
+      const itemsHtml = state.datList.map((item, i) =>
         `<div class="menu-item ${i === state.currentDatIdx ? 'active' : ''}" onclick="switchCat(${i})">
           <img src="${item.logo}" alt="${item.displayName}" class="menu-logo" onerror="this.onerror=null;this.src='${ASSETS_BASE}FBNeo%20-%20Arcade%20Games.png';" />
           <span>${item.displayName}</span>
         </div>`
       ).join('');
+
+      $('menu-dropdown').innerHTML = headerHtml + itemsHtml;
     }
 
-    const toggleMenuModal = e => { if (e) e.stopPropagation(); closeUserMenu(); renderMenuList(); $('menu-dropdown').classList.toggle('active'); };
+    function posGameMenu() {
+      const menu = $('menu-dropdown');
+      const btn = $('header-logo-btn');
+      if (!menu || !btn) return;
+
+      const rectB = btn.getBoundingClientRect();
+      menu.style.top = `${rectB.bottom + 6}px`;
+      menu.style.left = `${rectB.left}px`;
+    }
+
+    const toggleMenuModal = e => { 
+      if (e) e.stopPropagation(); 
+      closeUserMenu(); 
+      closeInlineSearch();
+
+      const menu = $('menu-dropdown');
+      if (menu.classList.contains('active')) {
+        menu.classList.remove('active');
+      } else {
+        renderMenuList(); 
+        posGameMenu();
+        menu.classList.add('active'); 
+      }
+    };
+    
     const closeMenuModal = () => $('menu-dropdown').classList.remove('active');
 
     function switchCat(i) {
@@ -732,7 +772,6 @@
       requestAnimationFrame(() => { drawHeader(); drawSlots(); render(); });
     }
 
-    // --- HEADER BẢN GỌN MỚI ---
     function drawHeader() {
       if (!state.datList.length) return;
       updateSvgViewBox();
@@ -746,7 +785,6 @@
         logoImg.onerror = function() { this.src = ASSETS_BASE + "FBNeo%20-%20Arcade%20Games.png"; };
       }
 
-      // CHỈ GIỮ NÚT TÌM KIẾM VÀ AVATAR TRÊN HEADER
       let authIconMarkup = "";
       if (accessToken && currentUserProfile?.picture) {
         authIconMarkup = `
@@ -777,6 +815,7 @@
       `;
 
       posHeaderLogo(); posSearch();
+      if ($('menu-dropdown').classList.contains('active')) posGameMenu();
     }
 
     function posHeaderLogo() {
@@ -789,16 +828,20 @@
 
     function posSearch() {
       const bar = $('inline-search-bar'); if (!bar?.classList.contains('active')) return;
-      const c = $('svg-container'), p = getGeom(), xl0 = getX(6, p), rx = xl0 + p.W, sx = (xl0 + getX(54, p)) / 2 + 16;
-      const rect = c.getBoundingClientRect(), scaleX = rect.width / 540, scaleY = rect.height / (64 + state.numSlots * 54);
-      bar.style.left = `${(sx + 24) * scaleX}px`; bar.style.top = `${10 * scaleY}px`;
-      bar.style.width = `${Math.max(130, (rx - 80) - (sx + 24)) * scaleX}px`;
-      bar.style.height = `${Math.min(42, Math.max(30, 38 * scaleY))}px`;
+      const btn = $('btn-search');
+      if (btn) {
+        const rect = btn.getBoundingClientRect();
+        bar.style.top = `${rect.top}px`;
+        bar.style.right = `${window.innerWidth - rect.left + 8}px`;
+        bar.style.width = `220px`;
+        bar.style.height = `${rect.height}px`;
+      }
     }
 
     function toggleInlineSearch(e) {
       if (e) e.stopPropagation();
       closeUserMenu();
+      closeMenuModal();
       const bar = $('inline-search-bar'), input = $('search-input');
       if (bar.classList.contains('active')) bar.classList.remove('active');
       else { bar.classList.add('active'); posSearch(); input.focus(); }
