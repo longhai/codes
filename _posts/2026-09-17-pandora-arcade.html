@@ -33,9 +33,9 @@
 
     #header-logo-btn{position:absolute;z-index:125;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s}
     #header-logo-btn:hover{transform:scale(1.08)}
-    #header-logo-img{width:26px;height:26px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+    #header-logo-img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
 
-    /* MENU CHỌN HỆ GAME (TỰ ĐỘNG CO GIẢN & TÍNH CHIỀU CAO THEO MÀN HÌNH) */
+    /* MENU CHỌN HỆ GAME - HIỂN THỊ TỰ ĐỘNG BÊN DƯỚI LOGO */
     #menu-dropdown{
       display:none;
       position:fixed;
@@ -73,6 +73,7 @@
     .user-menu-item:hover{background:rgba(56,189,248,.2);color:#fff}
     .user-menu-item svg{width:18px;height:18px;fill:currentColor;flex-shrink:0}
     
+    /* Ô TÌM KIẾM - ĐÃ TÍNH TOÁN ĐẶT GIỮA THANH HEADER */
     #inline-search-bar{display:none;position:absolute;z-index:120;background:rgba(15,23,42,.96);border:1.5px solid var(--ca);border-radius:8px;padding:0 8px;align-items:center;gap:6px;box-shadow:0 0 15px rgba(56,189,248,.4);backdrop-filter:blur(8px)}
     #inline-search-bar.active{display:flex}
     #inline-search-bar svg{width:18px;height:18px;flex-shrink:0}
@@ -96,7 +97,6 @@
       #preview-container{order:1;width:100%;height:28vh;min-height:160px;max-height:240px;aspect-ratio:auto;flex-shrink:0}
       #svg-container{order:2;flex:1}
       .btn-lbl{display:none}
-      #inline-search-bar{top:8px !important;left:50% !important;transform:translateX(-50%);width:90% !important;max-width:360px}
     }
   </style>
 </head>
@@ -743,20 +743,19 @@
       $('menu-dropdown').innerHTML = headerHtml + itemsHtml;
     }
 
-    /* ĐỊNH VỊ MENU TỰ ĐỘNG THEO NÚT LOGO VÀ CO GIẢN THEO MAN HINH */
+    /* ĐỊNH VỊ MENU TỰ ĐỘNG XUẤT HIỆN NGAY BÊN DƯỚI LOGO HỆ MÁY */
     function posGameMenu() {
       const menu = $('menu-dropdown');
       const btn = $('header-logo-btn');
       if (!menu || !btn) return;
 
       const rectB = btn.getBoundingClientRect();
-      const topPos = rectB.bottom + 8;
+      const topPos = rectB.bottom + 6;
       const leftPos = Math.max(10, rectB.left);
       
       menu.style.top = `${topPos}px`;
       menu.style.left = `${leftPos}px`;
       
-      // Tự động tính toán chiều cao tối đa khả dụng từ vị trí menu tới đáy màn hình
       const maxAvailableHeight = window.innerHeight - topPos - 16;
       menu.style.maxHeight = `${Math.max(180, maxAvailableHeight)}px`;
     }
@@ -842,22 +841,36 @@
       if ($('menu-dropdown').classList.contains('active')) posGameMenu();
     }
 
+    /* ĐỊNH VỊ NÚT LOGO CHUẨN XÁC NẰM GÓC TRÁI THANH HEADER */
     function posHeaderLogo() {
       const btn = $('header-logo-btn'); if (!btn) return;
-      const c = $('svg-container'), p = getGeom(), xl0 = getX(6, p), sx = (xl0 + getX(54, p)) / 2 + 16;
+      const c = $('svg-container'), p = getGeom(), xl0 = getX(6, p), xl1 = getX(54, p);
       const rect = c.getBoundingClientRect(), scaleX = rect.width / 540, scaleY = rect.height / (64 + state.numSlots * 54);
-      btn.style.left = `${sx * scaleX}px`; btn.style.top = `${15 * scaleY}px`;
-      btn.style.width = `${26 * scaleX}px`; btn.style.height = `${26 * scaleY}px`;
+      
+      const logoX = xl0 + 12;
+      const logoY = 14;
+      
+      btn.style.left = `${logoX * scaleX}px`; 
+      btn.style.top = `${logoY * scaleY}px`;
+      btn.style.width = `${32 * scaleX}px`; 
+      btn.style.height = `${32 * scaleY}px`;
     }
 
+    /* TÍNH TOÁN VỊ TRÍ NẰM CHÍNH GIỮA THANH TẠO CẢM GIÁC KHÔNG BỊ LỆCH HOẶC ĐÈ NÚT TÌM KIẾM/USER */
     function posSearch() {
       const bar = $('inline-search-bar'); if (!bar?.classList.contains('active')) return;
-      if (window.innerWidth <= 820) return; // Đã xử lý bằng CSS Media Query trên mobile
-      const c = $('svg-container'), p = getGeom(), xl0 = getX(6, p), rx = xl0 + p.W, sx = (xl0 + getX(54, p)) / 2 + 16;
+      const c = $('svg-container'), p = getGeom(), xl0 = getX(6, p), rx = xl0 + p.W;
       const rect = c.getBoundingClientRect(), scaleX = rect.width / 540, scaleY = rect.height / (64 + state.numSlots * 54);
-      bar.style.left = `${(sx + 24) * scaleX}px`; bar.style.top = `${10 * scaleY}px`;
-      bar.style.width = `${Math.max(130, (rx - 80) - (sx + 24)) * scaleX}px`;
-      bar.style.height = `${Math.min(42, Math.max(30, 38 * scaleY))}px`;
+      
+      // Bắt đầu ngay sau logo và kéo dài tới trước icon Tìm kiếm
+      const startX = xl0 + 50; 
+      const endX = rx - 76;
+      const widthVal = Math.max(120, endX - startX);
+
+      bar.style.left = `${startX * scaleX}px`; 
+      bar.style.top = `${10 * scaleY}px`;
+      bar.style.width = `${widthVal * scaleX}px`;
+      bar.style.height = `${38 * scaleY}px`;
     }
 
     function toggleInlineSearch(e) {
@@ -865,8 +878,13 @@
       closeUserMenu();
       closeMenuModal();
       const bar = $('inline-search-bar'), input = $('search-input');
-      if (bar.classList.contains('active')) bar.classList.remove('active');
-      else { bar.classList.add('active'); posSearch(); input.focus(); }
+      if (bar.classList.contains('active')) {
+        bar.classList.remove('active');
+      } else { 
+        bar.classList.add('active'); 
+        posSearch(); 
+        input.focus(); 
+      }
     }
 
     function closeInlineSearch(clear = false) {
@@ -874,7 +892,6 @@
       if (clear && $('search-input')) { $('search-input').value = ""; onSearchInput(""); }
     }
 
-    /* SỬA LỖI TẠO DOM CHO SVG CLIPPATH BẰNG CREATEELEMENTNS */
     function drawSlots() {
       const p = getGeom(), grp = $('sg'), defs = $('cd');
       grp.innerHTML = ''; defs.innerHTML = ''; state.slots = [];
