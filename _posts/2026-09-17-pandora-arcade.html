@@ -35,28 +35,45 @@
     #header-logo-btn:hover{transform:scale(1.08)}
     #header-logo-img{width:26px;height:26px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
 
-    /* DROPDOWN MENU CHỌN HỆ GAME (DÙNG POSITION: FIXED ĐỂ KHÔNG BỊ TRÀN/CẮT) */
-    #menu-dropdown{display:none;position:fixed;z-index:9999;background:rgba(15,23,42,.98);border:1.5px solid var(--ca);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.9);min-width:210px;max-width:280px;max-height:calc(100vh - 100px);overflow-y:auto;backdrop-filter:blur(12px);padding:8px;flex-direction:column;gap:4px;scrollbar-width:thin;scrollbar-color:var(--ca) transparent}
+    /* MENU CHỌN HỆ GAME (TỰ ĐỘNG CO GIẢN & TÍNH CHIỀU CAO THEO MÀN HÌNH) */
+    #menu-dropdown{
+      display:none;
+      position:fixed;
+      z-index:260;
+      background:rgba(15,23,42,.98);
+      border:1.5px solid var(--ca);
+      border-radius:12px;
+      box-shadow:0 10px 30px rgba(0,0,0,.9);
+      width:240px;
+      max-width:85vw;
+      overflow-y:auto;
+      backdrop-filter:blur(12px);
+      padding:8px;
+      flex-direction:column;
+      gap:4px;
+      scrollbar-width:thin;
+      scrollbar-color:var(--ca) transparent;
+    }
     #menu-dropdown::-webkit-scrollbar{width:5px}
     #menu-dropdown::-webkit-scrollbar-thumb{background:var(--ca);border-radius:4px}
     #menu-dropdown::-webkit-scrollbar-track{background:transparent}
     #menu-dropdown.active{display:flex}
     
-    .menu-header{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:4px;font-size:12px;color:var(--a);font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .menu-header{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:4px;font-size:12px;color:var(--a);font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:sticky;top:0;background:rgba(15,23,42,.98);z-index:2}
     .menu-item{display:flex;align-items:center;gap:10px;padding:8px 10px;color:#e2e8f0;font:700 14px 'Rajdhani',sans-serif;border-radius:6px;cursor:pointer;transition:all .15s}
     .menu-item:hover,.menu-item.active{background:rgba(56,189,248,.2);color:#fff}
     .menu-item.active{border-left:3px solid var(--ca)}
     .menu-logo{width:20px;height:20px;object-fit:contain;flex-shrink:0}
 
     /* MENU TÀI KHOẢN & CÀI ĐẶT */
-    #user-menu-dropdown{display:none;position:fixed;z-index:9999;background:rgba(15,23,42,.98);border:1.5px solid var(--ca);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.9);min-width:210px;backdrop-filter:blur(12px);padding:8px;flex-direction:column;gap:4px}
+    #user-menu-dropdown{display:none;position:absolute;top:50px;right:10px;z-index:260;background:rgba(15,23,42,.98);border:1.5px solid var(--ca);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.9);min-width:210px;backdrop-filter:blur(12px);padding:8px;flex-direction:column;gap:4px}
     #user-menu-dropdown.active{display:flex}
     .user-menu-header{padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:4px;font-size:12px;color:var(--a);font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .user-menu-item{display:flex;align-items:center;gap:10px;padding:8px 10px;color:#e2e8f0;font:700 14px 'Rajdhani',sans-serif;border-radius:6px;cursor:pointer;transition:all .15s}
     .user-menu-item:hover{background:rgba(56,189,248,.2);color:#fff}
     .user-menu-item svg{width:18px;height:18px;fill:currentColor;flex-shrink:0}
     
-    #inline-search-bar{display:none;position:fixed;z-index:9999;background:rgba(15,23,42,.96);border:1.5px solid var(--ca);border-radius:8px;padding:0 8px;align-items:center;gap:6px;box-shadow:0 0 15px rgba(56,189,248,.4);backdrop-filter:blur(8px)}
+    #inline-search-bar{display:none;position:absolute;z-index:120;background:rgba(15,23,42,.96);border:1.5px solid var(--ca);border-radius:8px;padding:0 8px;align-items:center;gap:6px;box-shadow:0 0 15px rgba(56,189,248,.4);backdrop-filter:blur(8px)}
     #inline-search-bar.active{display:flex}
     #inline-search-bar svg{width:18px;height:18px;flex-shrink:0}
     #search-input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:#fff;font:700 15px 'Rajdhani',sans-serif}
@@ -79,47 +96,47 @@
       #preview-container{order:1;width:100%;height:28vh;min-height:160px;max-height:240px;aspect-ratio:auto;flex-shrink:0}
       #svg-container{order:2;flex:1}
       .btn-lbl{display:none}
+      #inline-search-bar{top:8px !important;left:50% !important;transform:translateX(-50%);width:90% !important;max-width:360px}
     }
   </style>
 </head>
 <body>
   <div id="loader"><div class="spin"></div><p id="ld-t">ĐANG TẢI...</p></div>
-
-  <!-- CÁC MENU DROPDOWN ĐƯỢC ĐẶT TRỰC TIẾP TRONG BODY ĐỂ TRÁNH BỊ ẨN KHUNG -->
-  <div id="menu-dropdown"></div>
-
-  <div id="user-menu-dropdown">
-    <div id="user-menu-name" class="user-menu-header">Khách (Chưa đăng nhập)</div>
-    <div class="user-menu-item" onclick="handleAuthClick()">
-      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-      <span id="auth-btn-text">Đăng nhập Google</span>
-    </div>
-    <div class="user-menu-item" onclick="toggleFavFilter(); closeUserMenu();">
-      <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-      <span id="fav-menu-text">Lọc Game Yêu Thích</span>
-    </div>
-    <div class="user-menu-item" onclick="toggleLayoutMode(); closeUserMenu();">
-      <svg viewBox="0 0 24 24"><path d="M3 5v14h18V5H3zm16 12H5V7h14v10z"/></svg>
-      <span id="layout-menu-text">Chuyển Giao Diện</span>
-    </div>
-    <div class="user-menu-item" onclick="reloadDatabase(); closeUserMenu();">
-      <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-      <span>Cập Nhật Dữ Liệu</span>
-    </div>
-  </div>
-
-  <div id="inline-search-bar">
-    <svg viewBox="0 0 24 24" fill="var(--ca)"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-    <input type="text" id="search-input" placeholder="Nhập tên game..." oninput="onSearchInput(this.value)" autocomplete="off"/>
-    <span class="clear-btn" onclick="closeInlineSearch(true)">✕</span>
-  </div>
-
   <main>
     <div id="svg-container">
       <div id="header-logo-btn" onclick="toggleMenuModal(event)" title="Chọn Hệ Máy">
         <img id="header-logo-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo" />
       </div>
 
+      <!-- DROPDOWN MENU CHỌN HỆ GAME -->
+      <div id="menu-dropdown"></div>
+
+      <!-- DROPDOWN MENU TÀI KHOẢN & CÀI ĐẶT -->
+      <div id="user-menu-dropdown">
+        <div id="user-menu-name" class="user-menu-header">Khách (Chưa đăng nhập)</div>
+        <div class="user-menu-item" onclick="handleAuthClick()">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+          <span id="auth-btn-text">Đăng nhập Google</span>
+        </div>
+        <div class="user-menu-item" onclick="toggleFavFilter(); closeUserMenu();">
+          <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          <span id="fav-menu-text">Lọc Game Yêu Thích</span>
+        </div>
+        <div class="user-menu-item" onclick="toggleLayoutMode(); closeUserMenu();">
+          <svg viewBox="0 0 24 24"><path d="M3 5v14h18V5H3zm16 12H5V7h14v10z"/></svg>
+          <span id="layout-menu-text">Chuyển Giao Diện</span>
+        </div>
+        <div class="user-menu-item" onclick="reloadDatabase(); closeUserMenu();">
+          <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+          <span>Cập Nhật Dữ Liệu</span>
+        </div>
+      </div>
+
+      <div id="inline-search-bar">
+        <svg viewBox="0 0 24 24" fill="var(--ca)"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <input type="text" id="search-input" placeholder="Nhập tên game..." oninput="onSearchInput(this.value)" autocomplete="off"/>
+        <span class="clear-btn" onclick="closeInlineSearch(true)">✕</span>
+      </div>
       <svg id="svg" viewBox="0 0 540 650" preserveAspectRatio="none">
         <defs>
           <linearGradient id="gn"><stop offset="0%" stop-color="#1e293b"/><stop offset="50%" stop-color="#334155"/><stop offset="100%" stop-color="#1e293b"/></linearGradient>
@@ -234,12 +251,6 @@
       closeMenuModal();
       closeInlineSearch();
       const menu = $('user-menu-dropdown');
-      const btn = $('btn-cloud');
-      if (btn && !menu.classList.contains('active')) {
-        const rect = btn.getBoundingClientRect();
-        menu.style.top = `${rect.bottom + 6}px`;
-        menu.style.right = `${window.innerWidth - rect.right}px`;
-      }
       
       if (currentUserProfile) {
         $('user-menu-name').textContent = currentUserProfile.name || 'Đã Đăng Nhập';
@@ -424,6 +435,7 @@
     };
 
     function toggleCurrentFav() {
+      if (!state.filteredGames.length) return;
       const g = state.filteredGames[state.selIdx];
       if (!g?.fullName) return;
       const idx = state.favorites.indexOf(g.fullName);
@@ -581,6 +593,10 @@
           try {
             if (source.type === "github") {
               const resp = await fetch(`https://api.github.com/repos/${source.owner}/${source.repo}/git/trees/${source.branch || "main"}?recursive=1`);
+              if (resp.status === 403) {
+                alert("Đã vượt quá giới hạn truy cập GitHub API. Đang sử dụng dữ liệu bộ nhớ tạm.");
+                break;
+              }
               if (!resp.ok) continue;
               const treeData = await resp.json();
               if (Array.isArray(treeData.tree)) {
@@ -727,14 +743,22 @@
       $('menu-dropdown').innerHTML = headerHtml + itemsHtml;
     }
 
+    /* ĐỊNH VỊ MENU TỰ ĐỘNG THEO NÚT LOGO VÀ CO GIẢN THEO MAN HINH */
     function posGameMenu() {
       const menu = $('menu-dropdown');
       const btn = $('header-logo-btn');
       if (!menu || !btn) return;
 
       const rectB = btn.getBoundingClientRect();
-      menu.style.top = `${rectB.bottom + 6}px`;
-      menu.style.left = `${rectB.left}px`;
+      const topPos = rectB.bottom + 8;
+      const leftPos = Math.max(10, rectB.left);
+      
+      menu.style.top = `${topPos}px`;
+      menu.style.left = `${leftPos}px`;
+      
+      // Tự động tính toán chiều cao tối đa khả dụng từ vị trí menu tới đáy màn hình
+      const maxAvailableHeight = window.innerHeight - topPos - 16;
+      menu.style.maxHeight = `${Math.max(180, maxAvailableHeight)}px`;
     }
 
     const toggleMenuModal = e => { 
@@ -782,7 +806,7 @@
       const logoImg = $('header-logo-img');
       if (logoImg) {
         logoImg.src = logoUrl;
-        logoImg.onerror = function() { this.src = ASSETS_BASE + "FBNeo%20-%20Arcade%20Games.png"; };
+        logoImg.onerror = function() { this.src = ASSETS_BASE + "FBNeo - Arcade Games.png"; };
       }
 
       let authIconMarkup = "";
@@ -828,14 +852,12 @@
 
     function posSearch() {
       const bar = $('inline-search-bar'); if (!bar?.classList.contains('active')) return;
-      const btn = $('btn-search');
-      if (btn) {
-        const rect = btn.getBoundingClientRect();
-        bar.style.top = `${rect.top}px`;
-        bar.style.right = `${window.innerWidth - rect.left + 8}px`;
-        bar.style.width = `220px`;
-        bar.style.height = `${rect.height}px`;
-      }
+      if (window.innerWidth <= 820) return; // Đã xử lý bằng CSS Media Query trên mobile
+      const c = $('svg-container'), p = getGeom(), xl0 = getX(6, p), rx = xl0 + p.W, sx = (xl0 + getX(54, p)) / 2 + 16;
+      const rect = c.getBoundingClientRect(), scaleX = rect.width / 540, scaleY = rect.height / (64 + state.numSlots * 54);
+      bar.style.left = `${(sx + 24) * scaleX}px`; bar.style.top = `${10 * scaleY}px`;
+      bar.style.width = `${Math.max(130, (rx - 80) - (sx + 24)) * scaleX}px`;
+      bar.style.height = `${Math.min(42, Math.max(30, 38 * scaleY))}px`;
     }
 
     function toggleInlineSearch(e) {
@@ -852,15 +874,24 @@
       if (clear && $('search-input')) { $('search-input').value = ""; onSearchInput(""); }
     }
 
+    /* SỬA LỖI TẠO DOM CHO SVG CLIPPATH BẰNG CREATEELEMENTNS */
     function drawSlots() {
       const p = getGeom(), grp = $('sg'), defs = $('cd');
-      grp.innerHTML = defs.innerHTML = ''; state.slots = [];
+      grp.innerHTML = ''; defs.innerHTML = ''; state.slots = [];
+
+      const svgNS = "http://www.w3.org/2000/svg";
 
       for (let i = 0; i < state.numSlots; i++) {
         const y0 = 60 + i * 54, y1 = y0 + 48, xl0 = getX(y0, p), xl1 = getX(y1, p);
-        defs.innerHTML += `<clipPath id="c${i}"><polygon points="${xl0.toFixed(1)},${y0} ${(xl0 + p.W - 12).toFixed(1)},${y0} ${(xl1 + p.W - 12).toFixed(1)},${y1} ${xl1.toFixed(1)},${y1}"/></clipPath>`;
+        
+        const clip = document.createElementNS(svgNS, "clipPath");
+        clip.setAttribute("id", `c${i}`);
+        const clipPoly = document.createElementNS(svgNS, "polygon");
+        clipPoly.setAttribute("points", `${xl0.toFixed(1)},${y0} ${(xl0 + p.W - 12).toFixed(1)},${y0} ${(xl1 + p.W - 12).toFixed(1)},${y1} ${xl1.toFixed(1)},${y1}`);
+        clip.appendChild(clipPoly);
+        defs.appendChild(clip);
 
-        const el = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        const el = document.createElementNS(svgNS, "g");
         el.style.cursor = "pointer";
         el.innerHTML = `
           <polygon points="${xl0.toFixed(1)},${y0} ${(xl0 + p.W).toFixed(1)},${y0} ${(xl1 + p.W).toFixed(1)},${y1} ${xl1.toFixed(1)},${y1}" fill="url(#gn)" stroke="#475569" stroke-width="1.5"/>
@@ -1082,7 +1113,10 @@
     function bindEvents() {
       window.onresize = () => {
         clearTimeout(state.resizeTimer);
-        state.resizeTimer = setTimeout(() => { if (state.datList.length) { drawAll(); posHeaderLogo(); posSearch(); } }, 100);
+        state.resizeTimer = setTimeout(() => { 
+          if (state.datList.length) { drawAll(); posHeaderLogo(); posSearch(); } 
+          if ($('menu-dropdown').classList.contains('active')) posGameMenu();
+        }, 100);
       };
 
       document.addEventListener('click', e => {
