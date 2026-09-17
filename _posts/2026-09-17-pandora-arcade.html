@@ -4,9 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Pandora Arcade</title>
-  <!-- Google Identity Services & GAPI library -->
+  <!-- Google Identity Services library -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <script src="https://apis.google.com/js/api.js" async defer></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@600;700;800&display=swap');
     :root{--p:#ea580c;--pg:rgba(234,88,12,.4);--a:#fbbf24;--ca:#38bdf8;--bg:#050101;--panel:rgba(15,23,42,.94)}
@@ -35,7 +34,7 @@
     #header-logo-btn{position:absolute;z-index:125;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s}
     #header-logo-btn:hover{transform:scale(1.08)}
     #header-logo-img{width:26px;height:26px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
-    
+
     #menu-dropdown{display:none;position:absolute;top:44px;left:10px;z-index:250;background:rgba(15,23,42,.98);border:1px solid var(--ca);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.9);max-height:70vh;overflow-y:auto;min-width:220px;backdrop-filter:blur(12px);padding:8px;flex-direction:column;gap:4px}
     #menu-dropdown.active{display:flex}
     .menu-item{display:flex;align-items:center;gap:10px;padding:8px 12px;color:#cbd5e1;font:700 14px 'Rajdhani',sans-serif;border-radius:6px;cursor:pointer;transition:all .15s;border-left:3px solid transparent}
@@ -76,6 +75,7 @@
       <div id="header-logo-btn" onclick="toggleMenuModal(event)" title="Chọn Hệ Máy">
         <img id="header-logo-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo" />
       </div>
+
       <div id="menu-dropdown"></div>
       <div id="inline-search-bar">
         <svg viewBox="0 0 24 24" fill="var(--ca)"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
@@ -88,6 +88,9 @@
           <linearGradient id="ga"><stop offset="0%" stop-color="#dc2626"/><stop offset="50%" stop-color="#ea580c"/><stop offset="100%" stop-color="#dc2626"/></linearGradient>
           <linearGradient id="gh"><stop offset="0%" stop-color="#0f172a"/><stop offset="50%" stop-color="#1e293b"/><stop offset="100%" stop-color="#0f172a"/></linearGradient>
           <filter id="gw"><feGaussianBlur stdDeviation="3.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter>
+          <clipPath id="avatar-clip">
+            <circle cx="13" cy="13" r="12"/>
+          </clipPath>
           <g id="cd"></g>
         </defs>
         <g id="hg"></g><g id="sg"></g>
@@ -123,6 +126,7 @@
     let tokenClient = null;
     let accessToken = null;
     let driveFileId = null;
+    let currentUserProfile = null;
 
     const EMULATOR_URL = "https://longhai.github.io/codes/2026/08/29/emulatorjs.html";
     const ASSETS_BASE = "https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/dot-art/png/";
@@ -187,42 +191,46 @@
       numSlots: 5, gamepadConnected: false, gpLastTime: 0, lastGpBtn: {}, resizeTimer: null
     };
 
-    // --- GOOGLE DRIVE APPDATA ENGINE ---
+    // --- GOOGLE DRIVE & USER PROFILE ENGINE ---
     function initGoogleDriveAuth() {
-      if (typeof google === 'undefined') return;
+      if (typeof google === 'undefined' || !google.accounts) return;
       tokenClient = google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
-        scope: 'https://www.googleapis.com/auth/drive.appdata',
+        scope: 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.profile',
         callback: async (resp) => {
           if (resp.error) return;
           accessToken = resp.access_token;
-          updateAuthUI(true);
+          await fetchUserProfile();
+          drawHeader();
           await syncFavsFromDrive();
         },
       });
     }
 
-    function handleGoogleAuth() {
-      if (!accessToken) {
-        if (tokenClient) tokenClient.requestAccessToken();
-        else alert("Đang tải thư viện Google, vui lòng thử lại sau giây lát.");
-      } else {
-        accessToken = null;
-        driveFileId = null;
-        updateAuthUI(false);
+    async function fetchUserProfile() {
+      if (!accessToken) return;
+      try {
+        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        if (res.ok) currentUserProfile = await res.json();
+      } catch (e) {
+        console.error("Lỗi lấy thông tin người dùng:", e);
       }
     }
 
-    function updateAuthUI(isLoggedIn) {
-      const btn = $('btn-cloud');
-      if (!btn) return;
-      const path = btn.querySelector('path');
-      if (isLoggedIn) {
-        path.setAttribute('fill', '#4ade80'); // Xanh lá = Đã đồng bộ Cloud
-        btn.setAttribute('title', 'Đã kết nối Google Drive (Bấm để đăng xuất)');
+    function handleGoogleAuth(e) {
+      if (e) e.stopPropagation();
+      if (!accessToken) {
+        if (tokenClient) tokenClient.requestAccessToken({ prompt: 'consent' });
+        else alert("Đang tải thư viện Google, vui lòng thử lại sau giây lát.");
       } else {
-        path.setAttribute('fill', '#94a3b8'); // Xám = Chưa đăng nhập
-        btn.setAttribute('title', 'Đăng nhập Google để đồng bộ Cloud');
+        if (confirm(`Đăng xuất tài khoản [ ${currentUserProfile?.name || 'Google'} ]?`)) {
+          accessToken = null;
+          driveFileId = null;
+          currentUserProfile = null;
+          drawHeader();
+        }
       }
     }
 
@@ -230,7 +238,6 @@
       if (!accessToken) return;
       showLoader("ĐANG ĐỒNG BỘ CLOUD...");
       try {
-        // Tìm file trong AppData
         const listRes = await fetch("https://www.googleapis.com/drive/v3/files?spaces=appDataFolder", {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
@@ -244,14 +251,13 @@
           });
           const cloudFavs = await fileRes.json();
           if (Array.isArray(cloudFavs)) {
-            // Hợp nhất dữ liệu local và cloud
             const merged = Array.from(new Set([...state.favorites, ...cloudFavs]));
             state.favorites = merged;
             localStorage.setItem('pandora_favs', JSON.stringify(state.favorites));
-            if (merged.length > cloudFavs.length) await saveFavsToDrive(); // Cập nhật lại cloud nếu local có game mới
+            if (merged.length > cloudFavs.length) await saveFavsToDrive();
           }
         } else {
-          await saveFavsToDrive(); // Tạo file mới nếu chưa có
+          await saveFavsToDrive();
         }
       } catch (err) {
         console.error("Lỗi đồng bộ Drive:", err);
@@ -269,14 +275,12 @@
         const fileData = JSON.stringify(state.favorites);
 
         if (driveFileId) {
-          // Update file
           await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
             method: 'PATCH',
             headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
             body: fileData
           });
         } else {
-          // Create file
           const form = new FormData();
           form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
           form.append('file', new Blob([fileData], { type: 'application/json' }));
@@ -322,7 +326,7 @@
       if (idx !== -1) state.favorites.splice(idx, 1);
       else state.favorites.push(g.fullName);
       localStorage.setItem('pandora_favs', JSON.stringify(state.favorites));
-      saveFavsToDrive(); // Lưu lên Drive nếu đang đăng nhập
+      saveFavsToDrive();
       if (state.showFavOnly) filterGames(true);
       render();
     }
@@ -650,16 +654,29 @@
         logoImg.onerror = function() { this.src = ASSETS_BASE + "FBNeo%20-%20Arcade%20Games.png"; };
       }
 
+      // THAY ĐỔI: Đăng nhập thì vẽ Avatar, Chưa đăng nhập thì vẽ Đám mây
+      let authIconMarkup = "";
+      if (accessToken && currentUserProfile?.picture) {
+        authIconMarkup = `
+          <g id="btn-cloud" style="cursor:pointer" onclick="handleGoogleAuth(event)" title="Tài khoản: ${currentUserProfile.name || 'User'} (Bấm để Đăng xuất)" transform="translate(${(rx - 146).toFixed(1)}, 20)">
+            <rect width="26" height="26" fill="transparent"/>
+            <circle cx="13" cy="13" r="13" fill="#0f172a" stroke="#4ade80" stroke-width="1.5"/>
+            <image href="${currentUserProfile.picture}" x="1" y="1" width="24" height="24" clip-path="url(#avatar-clip)"/>
+          </g>`;
+      } else {
+        authIconMarkup = `
+          <g id="btn-cloud" style="cursor:pointer" onclick="handleGoogleAuth(event)" title="Đăng nhập Google để đồng bộ Cloud" transform="translate(${(rx - 146).toFixed(1)}, 20)">
+            <rect width="26" height="26" fill="transparent"/>
+            <path id="cloud-icon-path" d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z" fill="#94a3b8"/>
+          </g>`;
+      }
+
       $('hg').innerHTML = `
         <polygon points="${xl0.toFixed(1)},6 ${(xl0 + p.W).toFixed(1)},6 ${(xl1 + p.W).toFixed(1)},54 ${xl1.toFixed(1)},54" fill="url(#gh)" stroke="#475569" stroke-width="1.5"/>
         <line x1="${xl0.toFixed(1)}" y1="6" x2="${xl1.toFixed(1)}" y2="54" stroke="#38bdf8" stroke-width="4"/>
         <text id="cnt-txt" x="${sx + 48}" y="37" fill="#fbbf24" font-size="15" font-weight="bold" font-family="Orbitron">GAME: 0 / 0</text>
         
-        <!-- NÚT GOOGLE DRIVE CLOUD -->
-        <g id="btn-cloud" style="cursor:pointer" onclick="handleGoogleAuth()" title="Đăng nhập Google để đồng bộ Cloud" transform="translate(${(rx - 146).toFixed(1)}, 20)">
-          <rect width="26" height="26" fill="transparent"/>
-          <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z" fill="${accessToken ? '#4ade80' : '#94a3b8'}"/>
-        </g>
+        ${authIconMarkup}
 
         <g id="btn-reload" style="cursor:pointer" onclick="reloadDatabase()" title="Cập nhật danh sách (Xóa Cache)" transform="translate(${(rx - 116).toFixed(1)}, 20)">
           <rect width="26" height="26" fill="transparent"/>
@@ -1062,13 +1079,12 @@
       loadFullDatabase(); 
       requestAnimationFrame(pollGamepad);
       
-      // Chờ SDK Google nạp xong thì khởi tạo Auth
       const checkGSI = setInterval(() => {
         if (typeof google !== 'undefined' && google.accounts) {
           clearInterval(checkGSI);
           initGoogleDriveAuth();
         }
-      }, 200);
+      }, 100);
     };
   </script>
 </body>
