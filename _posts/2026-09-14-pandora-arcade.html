@@ -4,49 +4,55 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Pandora Arcade</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@600;700;800&display=swap');
     :root{--p:#ea580c;--pg:rgba(234,88,12,.4);--a:#fbbf24;--ca:#38bdf8;--bg:#050101;--panel:rgba(15,23,42,.94)}
     *{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-tap-highlight-color:transparent}
     body{font-family:'Rajdhani',sans-serif;background:radial-gradient(circle at 50% 30%,#c2410c,#7f1d1d 40%,var(--bg));height:100dvh;width:100vw;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#e2e8f0;touch-action:none}
-    
     #loader{position:fixed;inset:0;z-index:350;background:rgba(5,1,1,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--a);font:700 14px 'Orbitron',sans-serif;letter-spacing:1px;padding:20px;text-align:center}
-    .spin{width:38px;height:38px;border:4px solid var(--p);border-top-color:transparent;border-radius:50%;animation:s .75s linear infinite;margin-bottom:12px}
+    .spin{width:36px;height:36px;border:4px solid var(--p);border-top-color:transparent;border-radius:50%;animation:s .75s linear infinite;margin-bottom:10px}
     @keyframes s{to{transform:rotate(360deg)}}
-    
-    main{width:100%;height:100dvh;max-width:1320px;display:flex;align-items:center;justify-content:center;gap:12px;padding:10px}
+    main{width:100%;height:100dvh;max-width:1320px;display:flex;align-items:center;justify-content:center;gap:12px;padding:10px;will-change:transform}
     #svg-container{flex:1.25;width:100%;height:100%;display:flex;align-items:center;justify-content:center;order:1;position:relative;overflow:hidden}
-    #svg{width:100%;height:100%;filter:drop-shadow(0 10px 20px rgba(0,0,0,.9))}
-    
-    #preview-container{flex:1.1;width:100%;max-width:680px;aspect-ratio:4/3;max-height:80vh;background:var(--panel);border:2px solid var(--p);border-radius:16px;box-shadow:0 0 30px var(--pg),inset 0 0 25px #000;display:flex;align-items:center;justify-content:center;padding:10px;position:relative;overflow:hidden;backdrop-filter:blur(12px);order:2;cursor:default}
-    #preview-img{width:100%;height:100%;object-fit:contain;border-radius:10px;transition:opacity .15s,transform .15s}
+    #svg{width:100%;height:100%;filter:drop-shadow(0 10px 20px rgba(0,0,0,.9));transform:translateZ(0)}
+    #preview-container{flex:1.1;width:100%;max-width:680px;aspect-ratio:4/3;max-height:80vh;background:var(--panel);border:2px solid var(--p);border-radius:12px;box-shadow:0 0 25px var(--pg),inset 0 0 25px #000;display:flex;align-items:center;justify-content:center;padding:6px;position:relative;overflow:hidden;backdrop-filter:blur(12px);order:2;transform:translateZ(0)}
+    #preview-img{width:100%;height:100%;object-fit:contain;transition:opacity .15s,transform .15s;will-change:transform,opacity}
     #preview-img.loading{opacity:.4;transform:scale(.98)}
-    
-    .preview-badges{position:absolute;top:10px;right:10px;z-index:20;display:flex;align-items:center;gap:10px}
-    .fav-star-btn{font-size:28px;color:#e2e8f0;cursor:pointer;transition:all .2s;opacity:.3;line-height:1;filter:drop-shadow(0 2px 5px rgba(0,0,0,.9))}
-    #preview-container:hover .fav-star-btn{opacity:.6}
+    .preview-badges{position:absolute;top:8px;right:8px;z-index:20;display:flex;align-items:center;gap:8px;background:rgba(15,23,42,.6);padding:4px 8px;border-radius:20px;backdrop-filter:blur(4px)}
+    .fav-star-btn{font-size:24px;color:#e2e8f0;cursor:pointer;transition:all .2s;opacity:.5;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.9))}
+    #preview-container:hover .fav-star-btn{opacity:.8}
     .fav-star-btn.active,#preview-container:hover .fav-star-btn.active{opacity:1;color:var(--a);transform:scale(1.15);filter:drop-shadow(0 0 8px rgba(251,191,36,.8))}
-    
-    #gp-badge{width:22px;height:22px;fill:#4ade80;filter:drop-shadow(0 0 6px rgba(74,222,128,.8));display:none}
+    #gp-badge{width:20px;height:20px;fill:#4ade80;filter:drop-shadow(0 0 6px rgba(74,222,128,.8));display:none}
 
-    #header-logo-btn{position:absolute;z-index:125;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s}
-    #header-logo-btn:hover{transform:scale(1.08)}
-    #header-logo-img{width:26px;height:26px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
-    
-    /* FIX MENU DROPDOWN & OVERLAY */
-    #menu-dropdown{display:none;position:absolute;top:44px;left:10px;z-index:250;background:rgba(15,23,42,.98);border:1px solid var(--ca);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.9);max-height:70vh;overflow-y:auto;min-width:220px;backdrop-filter:blur(12px);padding:8px;flex-direction:column;gap:4px}
-    #menu-dropdown.active{display:flex}
-    .menu-item{display:flex;align-items:center;gap:10px;padding:8px 12px;color:#cbd5e1;font:700 14px 'Rajdhani',sans-serif;border-radius:6px;cursor:pointer;transition:all .15s;border-left:3px solid transparent}
-    .menu-item:hover,.menu-item.active{background:rgba(56,189,248,.15);border-left-color:var(--ca);color:#fff}
-    .menu-logo{width:24px;height:24px;object-fit:contain;flex-shrink:0}
-    
+    .hdr-btn-wrap{position:absolute;z-index:100;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s,filter .15s}
+    .hdr-btn-wrap:hover{transform:scale(1.1);filter:drop-shadow(0 0 6px var(--ca))}
+    .img-box{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:4px;overflow:hidden;flex-shrink:0}
+    .img-box img{width:100%;height:100%;object-fit:contain;display:block}
+    .avatar-box{border-radius:50%}
+    .avatar-box img{object-fit:cover;border:1.5px solid #4ade80;border-radius:50%;aspect-ratio:1/1}
+    .avatar-box svg{width:100%;height:100%;display:block}
+
+    .dropdown-menu{display:none;position:fixed;z-index:260;background:rgba(15,23,42,.98);border:1.5px solid var(--ca);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.9);max-height:60vh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;backdrop-filter:blur(12px);padding:8px;flex-direction:column;gap:4px;scrollbar-width:thin;scrollbar-color:var(--ca) transparent}
+    .dropdown-menu::-webkit-scrollbar{width:5px}
+    .dropdown-menu::-webkit-scrollbar-thumb{background:var(--ca);border-radius:4px}
+    .dropdown-menu.active{display:flex}
+    #menu-dropdown{width:250px;max-width:85vw}
+    #user-menu-dropdown{min-width:210px;max-height:70vh}
+    .menu-header{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.15);margin-bottom:6px;font-size:13px;color:var(--a);font-weight:bold;line-height:1.3;white-space:normal;word-break:break-word;position:sticky;top:0;background:#0f172a;z-index:10;display:flex;align-items:center;gap:10px}
+    .menu-item{display:flex;align-items:center;gap:10px;padding:8px 10px;color:#e2e8f0;font:700 14px 'Rajdhani',sans-serif;border-radius:6px;cursor:pointer;transition:all .15s}
+    .menu-item:hover,.menu-item.active{background:rgba(56,189,248,.2);color:#fff}
+    .menu-item.active{border-left:3px solid var(--ca)}
+    .menu-logo-box{width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;aspect-ratio:1/1}
+    .menu-logo-box img{width:100%;height:100%;object-fit:contain}
+    .menu-item svg{width:20px;height:20px;object-fit:contain;flex-shrink:0;fill:currentColor}
+
     #inline-search-bar{display:none;position:absolute;z-index:120;background:rgba(15,23,42,.96);border:1.5px solid var(--ca);border-radius:8px;padding:0 8px;align-items:center;gap:6px;box-shadow:0 0 15px rgba(56,189,248,.4);backdrop-filter:blur(8px)}
     #inline-search-bar.active{display:flex}
     #inline-search-bar svg{width:18px;height:18px;flex-shrink:0}
     #search-input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:#fff;font:700 15px 'Rajdhani',sans-serif}
     .clear-btn{cursor:pointer;color:#94a3b8;font:700 14px 'Rajdhani',sans-serif;padding:2px 6px}
     .clear-btn:hover{color:#ef4444}
-    
     #game-player-modal{display:none;position:fixed;inset:0;z-index:300;background:#000;flex-direction:column}
     #game-player-modal.active{display:flex}
     #player-toolbar{height:46px;background:#0f172a;border-bottom:2px solid var(--p);display:flex;align-items:center;justify-content:space-between;padding:0 10px;gap:8px}
@@ -54,18 +60,13 @@
     .player-btn{background:#1e293b;border:1px solid var(--p);color:#fff;padding:5px 9px;border-radius:6px;cursor:pointer;font:700 11px 'Orbitron',sans-serif}
     .player-btn:hover{background:var(--p)}
     #game-frame{width:100%;height:calc(100% - 46px);border:none;background:#000}
-    
     .tn{font:700 18px 'Rajdhani',sans-serif;fill:#e2e8f0}
     .ta{font:800 20px 'Rajdhani',sans-serif;fill:#fff;filter:drop-shadow(0 2px 4px rgba(0,0,0,.95))}
-    
     @media (max-width:820px),(max-aspect-ratio:1/1){
       main{flex-direction:column;justify-content:flex-start;gap:6px;padding:6px}
-      #preview-container{order:1;width:100%;height:28vh;min-height:160px;max-height:240px;aspect-ratio:auto;flex-shrink:0}
+      #preview-container{order:1;width:100%;height:32vh;min-height:180px;max-height:280px;aspect-ratio:auto;flex-shrink:0;padding:4px}
       #svg-container{order:2;flex:1}
       .btn-lbl{display:none}
-      
-      /* CĂN GIỮA MENU TRÊN MÀN HÌNH NHỎ */
-      #menu-dropdown{position:fixed;top:50%!important;left:50%!important;transform:translate(-50%,-50%);width:88vw;max-width:340px;max-height:75vh;border-color:var(--p);box-shadow:0 0 40px rgba(0,0,0,.95),0 0 15px var(--pg)}
     }
   </style>
 </head>
@@ -73,26 +74,68 @@
   <div id="loader"><div class="spin"></div><p id="ld-t">ĐANG TẢI...</p></div>
   <main>
     <div id="svg-container">
-      <div id="header-logo-btn" onclick="toggleMenuModal(event)" title="Chọn Hệ Máy">
-        <img id="header-logo-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Logo" />
+      <div id="hdr-logo-btn" class="hdr-btn-wrap" onclick="toggleMenuModal(event)" title="Chọn hệ máy">
+        <div class="img-box">
+          <img id="hdr-logo-img" src="" alt="System Logo" onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/dot-art/png/FBNeo%20-%20Arcade%20Games.png';" />
+        </div>
       </div>
-      <div id="menu-dropdown"></div>
+
+      <div id="hdr-search-btn" class="hdr-btn-wrap" onclick="toggleInlineSearch(event)" title="Tìm kiếm">
+        <svg viewBox="0 0 24 24" fill="#38bdf8" style="width:100%;height:100%"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      </div>
+
+      <div id="hdr-avatar-btn" class="hdr-btn-wrap" onclick="toggleUserMenu(event)" title="Tài khoản">
+        <div class="img-box avatar-box">
+          <img id="hdr-avatar-img" src="" alt="Avatar" style="display:none;" />
+          <svg id="hdr-avatar-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" fill="#38bdf8"/></svg>
+        </div>
+      </div>
+
+      <div id="menu-dropdown" class="dropdown-menu"></div>
+
+      <div id="user-menu-dropdown" class="dropdown-menu">
+        <div class="menu-header">
+          <div id="user-menu-avatar-wrap" class="img-box avatar-box" style="width:28px;height:28px;flex-shrink:0;display:none;">
+            <img id="user-menu-avatar-img" src="" alt="Avatar" />
+          </div>
+          <span id="user-menu-name">Khách (Chưa đăng nhập)</span>
+        </div>
+        <div class="menu-item" onclick="handleAuthClick()">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+          <span id="auth-btn-text">Đăng nhập Google</span>
+        </div>
+        <div class="menu-item" onclick="toggleFavFilter(); closeUserMenu();">
+          <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          <span id="fav-menu-text">Lọc Game Yêu Thích</span>
+        </div>
+        <div class="menu-item" onclick="toggleLayoutMode(); closeUserMenu();">
+          <svg viewBox="0 0 24 24"><path d="M3 5v14h18V5H3zm16 12H5V7h14v10z"/></svg>
+          <span id="layout-menu-text">Chuyển Giao Diện</span>
+        </div>
+        <div class="menu-item" onclick="reloadDatabase(); closeUserMenu();">
+          <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+          <span>Cập Nhật Dữ Liệu</span>
+        </div>
+      </div>
+
       <div id="inline-search-bar">
         <svg viewBox="0 0 24 24" fill="var(--ca)"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
         <input type="text" id="search-input" placeholder="Nhập tên game..." oninput="onSearchInput(this.value)" autocomplete="off"/>
         <span class="clear-btn" onclick="closeInlineSearch(true)">✕</span>
       </div>
+      
       <svg id="svg" viewBox="0 0 540 650" preserveAspectRatio="none">
         <defs>
           <linearGradient id="gn"><stop offset="0%" stop-color="#1e293b"/><stop offset="50%" stop-color="#334155"/><stop offset="100%" stop-color="#1e293b"/></linearGradient>
           <linearGradient id="ga"><stop offset="0%" stop-color="#dc2626"/><stop offset="50%" stop-color="#ea580c"/><stop offset="100%" stop-color="#dc2626"/></linearGradient>
           <linearGradient id="gh"><stop offset="0%" stop-color="#0f172a"/><stop offset="50%" stop-color="#1e293b"/><stop offset="100%" stop-color="#0f172a"/></linearGradient>
-          <filter id="gw"><feGaussianBlur stdDeviation="3.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter>
+          <filter id="gw" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="3" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter>
           <g id="cd"></g>
         </defs>
         <g id="hg"></g><g id="sg"></g>
       </svg>
     </div>
+    
     <div id="preview-container">
       <div class="preview-badges">
         <svg id="gp-badge" viewBox="0 0 24 24" title="Tay cầm đã kết nối">
@@ -117,6 +160,10 @@
   </div>
 
   <script>
+    const GOOGLE_CLIENT_ID = "2611223495-h3eq8j0sprp9tvhig1u9ihtm0jhnej3v.apps.googleusercontent.com"; 
+    const DRIVE_FILE_NAME = "pandora_favs.json";
+    let tokenClient = null, accessToken = null, driveFileId = null, currentUserProfile = null;
+
     const EMULATOR_URL = "https://longhai.github.io/codes/2026/08/29/emulatorjs.html";
     const ASSETS_BASE = "https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/dot-art/png/";
     const RAW_BASE = "https://raw.githubusercontent.com/longhai/emu/main/";
@@ -125,28 +172,25 @@
     const PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23f97316' stroke-width='1.5'%3E%3Crect x='2' y='2' width='20' height='20' rx='4'/%3E%3Cpath d='M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z'/%3E%3Cpath d='m21 15-5-5L5 21'/%3E%3C/svg%3E";
 
     const GAME_SOURCES = [
-      { type: "github", owner: "longhai", repo: "emu", branch: "main" },
-      { type: "github", owner: "longhai", repo: "ps1", branch: "main", defaultCat: "psx" }
+      { owner: "longhai", repo: "emu", branch: "main" },
+      { owner: "longhai", repo: "ps1", branch: "main", defaultCat: "psx" }
     ];
 
-    const VALID_ROM_EXTS = new Set([
-      'zip', '7z', 'rar', 'chd', 'iso', 'bin', 'pbp', 'cso', 'rvz', 'img', 'cue', 'z64', 'n64', 'v64', 
-      'nes', 'snes', 'smc', 'sfc', 'gba', 'gbc', 'gb', 'md', 'gen', 'smd', 'pce', 'gg', 'sms', 'a26', 
-      'a78', 'lnx', 'ngp', 'ngc', 'ws', 'wsc', 'm3u', 'gcm', 'gcz', 'wbfs', 'wad'
-    ]);
+    const VALID_ROM_EXTS = new Set(['zip','7z','rar','chd','iso','bin','pbp','cso','rvz','img','cue','z64','n64','v64','nes','snes','smc','sfc','gba','gbc','gb','md','gen','smd','pce','gg','sms','a26','a78','lnx','ngp','ngc','ws','wsc','m3u','gcm','gcz','wbfs','wad']);
 
+    /* Compact profiles: [keys, logo, name, core, libretroSys] */
     const SYSTEM_PROFILES = [
-      { keys: ["arcade","cps1","cps2","cps3","fbneo","fba","mame"], logo: "FBNeo - Arcade Games.png", name: "Arcade", core: "arcade", libretroSys: "FBNeo - Arcade Games" },
-      { keys: ["neogeo","neo geo","ng"], logo: "SNK - Neo Geo.png", name: "Neo Geo", core: "arcade", libretroSys: "SNK - Neo Geo" },
-      { keys: ["mega drive","megadrive","genesis","sega","md"], logo: "Sega - Mega Drive - Genesis.png", name: "Mega Drive", core: "segaMD", libretroSys: "Sega - Mega Drive - Genesis" },
-      { keys: ["snes","super famicom","super famicon","super nintendo","sfc"], logo: "Nintendo - Super Nintendo Entertainment System.png", name: "SNES", core: "snes", libretroSys: "Nintendo - Super Nintendo Entertainment System" },
-      { keys: ["famicom","famicon","nes","fc"], logo: "Nintendo - Nintendo Entertainment System.png", name: "NES", core: "nes", libretroSys: "Nintendo - Nintendo Entertainment System" },
-      { keys: ["gba","game boy advance"], logo: "Nintendo - Game Boy Advance.png", name: "GBA", core: "gba", libretroSys: "Nintendo - Game Boy Advance" },
-      { keys: ["gbc","game boy color"], logo: "Nintendo - Game Boy Color.png", name: "GBC", core: "gbc", libretroSys: "Nintendo - Game Boy Color" },
-      { keys: ["gb","game boy"], logo: "Nintendo - Game Boy.png", name: "GB", core: "gb", libretroSys: "Nintendo - Game Boy" },
-      { keys: ["n64","nintendo 64"], logo: "Nintendo - Nintendo 64.png", name: "N64", core: "n64", libretroSys: "Nintendo - Nintendo 64" },
-      { keys: ["psx","ps1","playstation","sony - playstation"], logo: "Sony - PlayStation.png", name: "PlayStation", core: "psx", libretroSys: "Sony - PlayStation" },
-      { keys: ["pce","pc engine","pc-engine","turbografx","tg16","tg-16"], logo: "NEC - PC Engine - TurboGrafx 16.png", name: "PC Engine", core: "pce", libretroSys: "NEC - PC Engine - TurboGrafx 16" }
+      [["arcade","cps1","cps2","cps3","fbneo","fba","mame"], "FBNeo - Arcade Games.png", "Arcade", "arcade", "FBNeo - Arcade Games"],
+      [["neogeo","neo geo","ng"], "SNK - Neo Geo.png", "Neo Geo", "arcade", "SNK - Neo Geo"],
+      [["mega drive","megadrive","genesis","sega","md"], "Sega - Mega Drive - Genesis.png", "Mega Drive", "segaMD", "Sega - Mega Drive - Genesis"],
+      [["snes","super famicom","super famicon","super nintendo","sfc"], "Nintendo - Super Nintendo Entertainment System.png", "SNES", "snes", "Nintendo - Super Nintendo Entertainment System"],
+      [["famicom","famicon","nes","fc"], "Nintendo - Nintendo Entertainment System.png", "NES", "nes", "Nintendo - Nintendo Entertainment System"],
+      [["gba","game boy advance"], "Nintendo - Game Boy Advance.png", "GBA", "gba", "Nintendo - Game Boy Advance"],
+      [["gbc","game boy color"], "Nintendo - Game Boy Color.png", "GBC", "gbc", "Nintendo - Game Boy Color"],
+      [["gb","game boy"], "Nintendo - Game Boy.png", "GB", "gb", "Nintendo - Game Boy"],
+      [["n64","nintendo 64"], "Nintendo - Nintendo 64.png", "N64", "n64", "Nintendo - Nintendo 64"],
+      [["psx","ps1","playstation","sony - playstation"], "Sony - PlayStation.png", "PlayStation", "psx", "Sony - PlayStation"],
+      [["pce","pc engine","pc-engine","turbografx","tg16","tg-16"], "NEC - PC Engine - TurboGrafx 16.png", "PC Engine", "pce", "NEC - PC Engine - TurboGrafx 16"]
     ];
 
     const $ = id => document.getElementById(id);
@@ -165,12 +209,16 @@
     const isGameFile = path => {
       if (!path) return false;
       const file = path.split('/').pop().trim().toLowerCase();
-      if (!file || file.startsWith('.') || ['license', 'readme', 'changelog', 'notice'].some(k => file.startsWith(k))) return false;
-      return VALID_ROM_EXTS.has(file.split('.').pop());
+      return file && !file.startsWith('.') && !['license', 'readme', 'changelog', 'notice'].some(k => file.startsWith(k)) && VALID_ROM_EXTS.has(file.split('.').pop());
     };
 
     const imgCache = new Map(), failedUrls = new Set();
     let currentPreviewToken = 0;
+
+    function cacheSet(k, v) {
+      if (imgCache.size >= 150) imgCache.delete(imgCache.keys().next().value);
+      imgCache.set(k, v);
+    }
 
     const state = {
       datList: [], currentDatIdx: 0, gamesByCat: {}, allGames: [], filteredGames: [], selIdx: 0, topIdx: 0, slots: [],
@@ -179,6 +227,127 @@
       isCurved: localStorage.getItem('pandora_curved') !== null ? localStorage.getItem('pandora_curved') === 'true' : !(window.innerWidth < 820 || window.innerHeight > window.innerWidth),
       numSlots: 5, gamepadConnected: false, gpLastTime: 0, lastGpBtn: {}, resizeTimer: null
     };
+
+    function toggleUserMenu(e) {
+      if (e) e.stopPropagation();
+      closeMenuModal(); closeInlineSearch();
+      const menu = $('user-menu-dropdown');
+      $('user-menu-name').textContent = currentUserProfile?.name || 'Khách (Chưa đăng nhập)';
+      $('user-menu-avatar-wrap').style.display = currentUserProfile?.picture ? 'flex' : 'none';
+      if (currentUserProfile?.picture) $('user-menu-avatar-img').src = currentUserProfile.picture;
+
+      $('auth-btn-text').textContent = currentUserProfile ? 'Đăng xuất' : 'Đăng nhập Google';
+      $('fav-menu-text').textContent = state.showFavOnly ? 'Hiện Tất Cả Game' : 'Chỉ Xem Yêu Thích';
+      $('layout-menu-text').textContent = state.isCurved ? 'Giao Diện Phẳng' : 'Giao Diện Cong';
+
+      if (menu.classList.contains('active')) closeUserMenu();
+      else { posMenu(menu, $('hdr-avatar-btn'), true); menu.classList.add('active'); }
+    }
+
+    function posMenu(menu, targetBtn, isRightAlign = false) {
+      if (!menu || !targetBtn) return;
+      const rect = targetBtn.getBoundingClientRect();
+      const topPos = rect.bottom + 6;
+      menu.style.top = `${topPos}px`;
+      if (isRightAlign) { menu.style.right = `${Math.max(10, window.innerWidth - rect.right)}px`; menu.style.left = 'auto'; }
+      else menu.style.left = `${Math.max(10, rect.left)}px`;
+      menu.style.maxHeight = `${Math.max(150, window.innerHeight - topPos - 16)}px`;
+    }
+
+    const closeUserMenu = () => $('user-menu-dropdown').classList.remove('active');
+    const closeMenuModal = () => $('menu-dropdown').classList.remove('active');
+    const handleAuthClick = () => { closeUserMenu(); handleGoogleAuth(); };
+
+    function toggleLayoutMode() {
+      state.isCurved = !state.isCurved;
+      localStorage.setItem('pandora_curved', state.isCurved);
+      drawAll();
+    }
+
+    function initGoogleDriveAuth() {
+      if (typeof google === 'undefined' || !google.accounts) return;
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.profile',
+        callback: async (resp) => {
+          if (resp.error) return;
+          accessToken = resp.access_token;
+          localStorage.setItem('pandora_google_token', accessToken);
+          await fetchUserProfile();
+          if (currentUserProfile) localStorage.setItem('pandora_google_user', JSON.stringify(currentUserProfile));
+          drawHeader(); await syncFavsFromDrive();
+        },
+      });
+
+      const savedToken = localStorage.getItem('pandora_google_token'), savedUser = localStorage.getItem('pandora_google_user');
+      if (savedToken && savedUser) {
+        accessToken = savedToken;
+        try { currentUserProfile = JSON.parse(savedUser); drawHeader(); syncFavsFromDrive(); } catch(e) {}
+      }
+    }
+
+    async function fetchUserProfile() {
+      if (!accessToken) return;
+      try {
+        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } });
+        if (res.ok) currentUserProfile = await res.json();
+      } catch (e) {}
+    }
+
+    function handleGoogleAuth() {
+      if (!accessToken) {
+        if (tokenClient) tokenClient.requestAccessToken({ prompt: 'consent' });
+        else alert("Đang tải thư viện Google, vui lòng thử lại sau giây lát.");
+      } else if (confirm(`Đăng xuất tài khoản [ ${currentUserProfile?.name || 'Google'} ]?`)) {
+        accessToken = driveFileId = currentUserProfile = null;
+        localStorage.removeItem('pandora_google_token'); localStorage.removeItem('pandora_google_user');
+        drawHeader();
+      }
+    }
+
+    async function syncFavsFromDrive() {
+      if (!accessToken) return;
+      showLoader("ĐANG ĐỒNG BỘ CLOUD...");
+      try {
+        const listRes = await fetch("https://www.googleapis.com/drive/v3/files?spaces=appDataFolder", { headers: { Authorization: `Bearer ${accessToken}` } });
+        if (listRes.status === 401) {
+          accessToken = currentUserProfile = null;
+          localStorage.removeItem('pandora_google_token'); localStorage.removeItem('pandora_google_user');
+          drawHeader(); return;
+        }
+        const listData = await listRes.json();
+        const file = listData.files?.find(f => f.name === DRIVE_FILE_NAME);
+
+        if (file) {
+          driveFileId = file.id;
+          const cloudFavs = await (await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } })).json();
+          if (Array.isArray(cloudFavs)) {
+            const merged = Array.from(new Set([...state.favorites, ...cloudFavs]));
+            state.favorites = merged;
+            localStorage.setItem('pandora_favs', JSON.stringify(state.favorites));
+            if (merged.length > cloudFavs.length) await saveFavsToDrive();
+          }
+        } else await saveFavsToDrive();
+      } catch (err) {} finally { hideLoader(); if (state.showFavOnly) filterGames(true); render(); }
+    }
+
+    async function saveFavsToDrive() {
+      if (!accessToken) return;
+      try {
+        const fileData = JSON.stringify(state.favorites);
+        if (driveFileId) {
+          await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
+            method: 'PATCH', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }, body: fileData
+          });
+        } else {
+          const form = new FormData();
+          form.append('metadata', new Blob([JSON.stringify({ name: DRIVE_FILE_NAME, parents: ['appDataFolder'] })], { type: 'application/json' }));
+          form.append('file', new Blob([fileData], { type: 'application/json' }));
+          const data = await (await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form })).json();
+          driveFileId = data.id;
+        }
+      } catch (err) {}
+    }
 
     const Storage = {
       get(k) {
@@ -190,24 +359,22 @@
       set(k, d) {
         try { localStorage.setItem(k, JSON.stringify({ t: Date.now(), d })); }
         catch (e) {
-          try {
-            Object.keys(localStorage).forEach(x => { if (x.startsWith('pandora_')) localStorage.removeItem(x); });
-            localStorage.setItem(k, JSON.stringify({ t: Date.now(), d }));
-          } catch (err) {}
+          Object.keys(localStorage).forEach(x => { if (x.startsWith('pandora_')) localStorage.removeItem(x); });
+          try { localStorage.setItem(k, JSON.stringify({ t: Date.now(), d })); } catch(err){}
         }
       },
-      clearCache() {
-        Object.keys(localStorage).forEach(k => { if (k.startsWith('pandora_full_db') || k.startsWith('pandora_dat_')) localStorage.removeItem(k); });
-      }
+      clearCache() { Object.keys(localStorage).forEach(k => { if (k.startsWith('pandora_full_db') || k.startsWith('pandora_dat_')) localStorage.removeItem(k); }); }
     };
 
     function toggleCurrentFav() {
+      if (!state.filteredGames.length) return;
       const g = state.filteredGames[state.selIdx];
       if (!g?.fullName) return;
       const idx = state.favorites.indexOf(g.fullName);
       if (idx !== -1) state.favorites.splice(idx, 1);
       else state.favorites.push(g.fullName);
       localStorage.setItem('pandora_favs', JSON.stringify(state.favorites));
+      saveFavsToDrive();
       if (state.showFavOnly) filterGames(true);
       render();
     }
@@ -217,26 +384,22 @@
       if (!cat || !state.filteredGames.length) { state.selIdx = state.topIdx = 0; return; }
       const last = localStorage.getItem("pandora_lg_" + cat.name);
       state.selIdx = last ? Math.max(0, state.filteredGames.findIndex(g => g.fullName === last)) : 0;
-      if (state.selIdx === -1) state.selIdx = 0;
     }
 
     function resolveSys(f) {
       const rawLower = f.toLowerCase(), normName = rawLower.replace(/[^a-z0-9]/g, '');
-      const match = SYSTEM_PROFILES.find(s => s.keys.some(k => {
+      const match = SYSTEM_PROFILES.find(([keys]) => keys.some(k => {
         const kLow = k.toLowerCase();
-        if (kLow.length <= 3) return new RegExp(`\\b${kLow}\\b`, 'i').test(rawLower);
-        return rawLower.includes(kLow) || normName.includes(kLow.replace(/[^a-z0-9]/g, ''));
+        return kLow.length <= 3 ? new RegExp(`\\b${kLow}\\b`, 'i').test(rawLower) : (rawLower.includes(kLow) || normName.includes(kLow.replace(/[^a-z0-9]/g, '')));
       }));
-      return match ? { isKnown: true, logo: ASSETS_BASE + encodeURIComponent(match.logo), system: match.name, core: match.core, libretroSys: match.libretroSys } 
+      return match ? { isKnown: true, logo: ASSETS_BASE + encodeURIComponent(match[1]), system: match[2], core: match[3], libretroSys: match[4] } 
                    : { isKnown: false, logo: ASSETS_BASE + "FBNeo - Arcade Games.png", system: f, core: "arcade", libretroSys: f };
     }
 
     function addDatEntry(map, orderMap, key, desc, idx) {
       if (!key || !desc) return;
-      const kLow = key.toLowerCase().trim();
-      map[kLow] = desc;
-      if (orderMap[kLow] === undefined) orderMap[kLow] = idx;
-      const kNoExt = kLow.replace(/\.[^/.]+$/, '');
+      const kLow = key.toLowerCase().trim(), kNoExt = kLow.replace(/\.[^/.]+$/, '');
+      map[kLow] = desc; if (orderMap[kLow] === undefined) orderMap[kLow] = idx;
       if (kNoExt) { map[kNoExt] = desc; if (orderMap[kNoExt] === undefined) orderMap[kNoExt] = idx; }
     }
 
@@ -258,37 +421,21 @@
 
     async function loadDatMap(catName = "arcade") {
       const catInfo = state.datList[state.currentDatIdx];
-      const sysName = catInfo?.name || catName;
-      const folder = catInfo?.folderName || sysName;
-      const cleanCat = sysName.toLowerCase().trim();
-      
-      const cacheKey = "pandora_dat_v9_" + cleanCat;
-      const cached = Storage.get(cacheKey);
-      if (cached?.map && Object.keys(cached.map).length > 0) { 
-        state.datNameMap = cached.map; 
-        state.datOrderMap = cached.order || {}; 
-        return; 
+      const sysName = catInfo?.name || catName, folder = catInfo?.folderName || sysName, cleanCat = sysName.toLowerCase().trim();
+      const cacheKey = "pandora_dat_v9_" + cleanCat, cached = Storage.get(cacheKey);
+
+      if (cached?.map && Object.keys(cached.map).length > 0) {
+        state.datNameMap = cached.map; state.datOrderMap = cached.order || {}; return;
       }
 
-      const dataBaseUrl = `${RAW_BASE}data/`;
-      const urlsToTry = Array.from(new Set([
-        `${dataBaseUrl}${encodeURIComponent(folder)}.dat`,
-        `${dataBaseUrl}${encodeURIComponent(folder.toLowerCase())}.dat`,
-        `${dataBaseUrl}${encodeURIComponent(sysName)}.dat`,
-        `${dataBaseUrl}${encodeURIComponent(cleanCat)}.dat`,
-        `${dataBaseUrl}arcade.dat`
-      ]));
-
-      for (const url of urlsToTry) {
+      for (const u of Array.from(new Set([folder, folder.toLowerCase(), sysName, cleanCat, 'arcade'].map(x => `${RAW_BASE}data/${encodeURIComponent(x)}.dat`)))) {
         try {
-          const resp = await fetch(url);
+          const resp = await fetch(u);
           if (!resp.ok) continue;
           const parsed = parseDatContent(await resp.text());
           if (Object.keys(parsed.map).length > 0) {
-            state.datNameMap = parsed.map; 
-            state.datOrderMap = parsed.order;
-            Storage.set(cacheKey, parsed); 
-            return;
+            state.datNameMap = parsed.map; state.datOrderMap = parsed.order;
+            Storage.set(cacheKey, parsed); return;
           }
         } catch (e) {}
       }
@@ -353,80 +500,44 @@
 
       try {
         const gamesByCat = {}, catMap = new Map();
-
         for (const source of GAME_SOURCES) {
           try {
-            if (source.type === "github") {
-              const resp = await fetch(`https://api.github.com/repos/${source.owner}/${source.repo}/git/trees/${source.branch || "main"}?recursive=1`);
-              if (!resp.ok) continue;
-              const treeData = await resp.json();
-              if (Array.isArray(treeData.tree)) {
-                const cueBases = new Set(treeData.tree.filter(i => i.type === "blob" && /\.(cue|m3u|ccd|gdi)$/i.test(i.path)).map(i => i.path.substring(0, i.path.lastIndexOf('.')).toLowerCase()));
+            const resp = await fetch(`https://api.github.com/repos/${source.owner}/${source.repo}/git/trees/${source.branch || "main"}?recursive=1`);
+            if (resp.status === 403) { alert("Đã vượt quá giới hạn truy cập GitHub API."); break; }
+            if (!resp.ok) continue;
+            const treeData = await resp.json();
+            if (Array.isArray(treeData.tree)) {
+              const cueBases = new Set(treeData.tree.filter(i => i.type === "blob" && /\.(cue|m3u|ccd|gdi)$/i.test(i.path)).map(i => i.path.substring(0, i.path.lastIndexOf('.')).toLowerCase()));
 
-                treeData.tree.forEach(item => {
-                  if (item.type === "blob" && isGameFile(item.path)) {
-                    const ext = item.path.split('.').pop().toLowerCase();
-                    const basePath = item.path.substring(0, item.path.lastIndexOf('.')).toLowerCase();
-                    if (['bin', 'img', 'wav'].includes(ext) && (cueBases.has(basePath) || /track\s*\d+/i.test(item.path))) return;
+              treeData.tree.forEach(item => {
+                if (item.type === "blob" && isGameFile(item.path)) {
+                  const ext = item.path.split('.').pop().toLowerCase();
+                  const basePath = item.path.substring(0, item.path.lastIndexOf('.')).toLowerCase();
+                  if (['bin', 'img', 'wav'].includes(ext) && (cueBases.has(basePath) || /track\s*\d+/i.test(item.path))) return;
 
-                    let catName = "", fileName = "";
-                    const parts = item.path.split('/');
-                    if (parts[0].toLowerCase() === "roms") {
-                      catName = parts.length >= 3 ? parts[1] : (source.defaultCat || "arcade");
-                      fileName = parts.slice(parts.length >= 3 ? 2 : 1).join('/');
-                    } else if (parts.length >= 2) {
-                      catName = parts[0]; fileName = parts.slice(1).join('/');
-                    } else if (source.defaultCat) {
-                      catName = source.defaultCat; fileName = item.path;
-                    } else return;
+                  let catName = "", fileName = "";
+                  const parts = item.path.split('/');
+                  if (parts[0].toLowerCase() === "roms") {
+                    catName = parts.length >= 3 ? parts[1] : (source.defaultCat || "arcade");
+                    fileName = parts.slice(parts.length >= 3 ? 2 : 1).join('/');
+                  } else if (parts.length >= 2) {
+                    catName = parts[0]; fileName = parts.slice(1).join('/');
+                  } else if (source.defaultCat) {
+                    catName = source.defaultCat; fileName = item.path;
+                  } else return;
 
-                    const info = resolveSys(catName);
-                    if (!info.isKnown && ['emu', 'main', 'roms'].includes(catName.toLowerCase())) return;
-                    const sysKey = info.system;
+                  const info = resolveSys(catName);
+                  if (!info.isKnown && ['emu', 'main', 'roms'].includes(catName.toLowerCase())) return;
+                  const sysKey = info.system;
 
-                    if (!gamesByCat[sysKey]) gamesByCat[sysKey] = [];
-                    const cleanName = cleanTitle(fileName);
-                    if (cleanName) {
-                      gamesByCat[sysKey].push({ name: cleanName, fullName: fileName, romUrl: buildDirectRomUrl(source, item.path), path: item.path, core: info.core });
-                      
-                      if (!catMap.has(sysKey)) {
-                        catMap.set(sysKey, { 
-                          name: sysKey, 
-                          folderName: catName, 
-                          logo: info.logo, 
-                          system: info.system, 
-                          core: info.core, 
-                          libretroSys: info.libretroSys 
-                        });
-                      }
-                    }
+                  if (!gamesByCat[sysKey]) gamesByCat[sysKey] = [];
+                  const cleanName = cleanTitle(fileName);
+                  if (cleanName) {
+                    gamesByCat[sysKey].push({ name: cleanName, fullName: fileName, romUrl: buildDirectRomUrl(source, item.path), path: item.path, core: info.core });
+                    if (!catMap.has(sysKey)) catMap.set(sysKey, { name: sysKey, folderName: catName, logo: info.logo, system: info.system, core: info.core, libretroSys: info.libretroSys });
                   }
-                });
-              }
-            } else if (source.type === "json" && source.url) {
-              const resp = await fetch(source.url);
-              if (resp.ok) {
-                const list = await resp.json();
-                if (Array.isArray(list)) {
-                  list.forEach(g => {
-                    const rawCat = g.cat || source.defaultCat || "arcade";
-                    const info = resolveSys(rawCat);
-                    const sysKey = info.system;
-                    if (!gamesByCat[sysKey]) gamesByCat[sysKey] = [];
-                    gamesByCat[sysKey].push({ ...g, core: info.core });
-                    if (!catMap.has(sysKey)) {
-                      catMap.set(sysKey, { 
-                        name: sysKey, 
-                        folderName: rawCat, 
-                        logo: info.logo, 
-                        system: info.system, 
-                        core: info.core, 
-                        libretroSys: info.libretroSys 
-                      });
-                    }
-                  });
                 }
-              }
+              });
             }
           } catch (err) {}
         }
@@ -468,7 +579,6 @@
       const map = new Map();
       state.allGames.forEach(g => map.set(`${g.romUrl || g.fullName}_${g.name}`, g));
       state.allGames = Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base', numeric: true }));
-
       filterGames(true); render();
     }
 
@@ -493,16 +603,29 @@
     }
 
     function renderMenuList() {
-      $('menu-dropdown').innerHTML = state.datList.map((item, i) =>
+      const headerHtml = `<div class="menu-header">Danh Sách Hệ Máy (${state.datList.length})</div>`;
+      const itemsHtml = state.datList.map((item, i) =>
         `<div class="menu-item ${i === state.currentDatIdx ? 'active' : ''}" onclick="switchCat(${i})">
-          <img src="${item.logo}" alt="${item.displayName}" class="menu-logo" onerror="this.onerror=null;this.src='${ASSETS_BASE}FBNeo%20-%20Arcade%20Games.png';" />
+          <div class="menu-logo-box">
+            <img src="${item.logo}" alt="${item.displayName}" onerror="this.onerror=null;this.src='${ASSETS_BASE}FBNeo%20-%20Arcade%20Games.png';" />
+          </div>
           <span>${item.displayName}</span>
         </div>`
       ).join('');
+      $('menu-dropdown').innerHTML = headerHtml + itemsHtml;
     }
 
-    const toggleMenuModal = e => { if (e) e.stopPropagation(); renderMenuList(); $('menu-dropdown').classList.toggle('active'); };
-    const closeMenuModal = () => $('menu-dropdown').classList.remove('active');
+    const toggleMenuModal = e => {
+      if (e) e.stopPropagation();
+      closeUserMenu(); closeInlineSearch();
+      const menu = $('menu-dropdown');
+      if (menu.classList.contains('active')) closeMenuModal();
+      else {
+        renderMenuList();
+        posMenu(menu, $('hdr-logo-btn'));
+        menu.classList.add('active');
+      }
+    };
 
     function switchCat(i) {
       if (i === state.currentDatIdx) return closeMenuModal();
@@ -525,68 +648,59 @@
     function drawHeader() {
       if (!state.datList.length) return;
       updateSvgViewBox();
-      const p = getGeom(), xl0 = getX(6, p), xl1 = getX(54, p), sx = (xl0 + xl1) / 2 + 16, clr = state.isCurved ? '#f97316' : '#38bdf8';
-      const logoUrl = state.datList[state.currentDatIdx]?.logo || (ASSETS_BASE + "FBNeo%20-%20Arcade%20Games.png");
-      const rx = xl0 + p.W;
-
-      const logoImg = $('header-logo-img');
-      if (logoImg) {
-        logoImg.src = logoUrl;
-        logoImg.onerror = function() { this.src = ASSETS_BASE + "FBNeo%20-%20Arcade%20Games.png"; };
-      }
+      const p = getGeom(), xl0 = getX(6, p), xl1 = getX(54, p), xlMid = getX(30, p);
 
       $('hg').innerHTML = `
         <polygon points="${xl0.toFixed(1)},6 ${(xl0 + p.W).toFixed(1)},6 ${(xl1 + p.W).toFixed(1)},54 ${xl1.toFixed(1)},54" fill="url(#gh)" stroke="#475569" stroke-width="1.5"/>
         <line x1="${xl0.toFixed(1)}" y1="6" x2="${xl1.toFixed(1)}" y2="54" stroke="#38bdf8" stroke-width="4"/>
-        <text id="cnt-txt" x="${sx + 48}" y="37" fill="#fbbf24" font-size="15" font-weight="bold" font-family="Orbitron">GAME: 0 / 0</text>
-        <g id="btn-reload" style="cursor:pointer" onclick="reloadDatabase()" title="Cập nhật danh sách (Xóa Cache)" transform="translate(${(rx - 116).toFixed(1)}, 20)">
-          <rect width="26" height="26" fill="transparent"/>
-          <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="#fbbf24"/>
-        </g>
-        <g id="btn-search" style="cursor:pointer" onclick="toggleInlineSearch(event)" title="Tìm kiếm" transform="translate(${(rx - 86).toFixed(1)}, 20)">
-          <rect width="26" height="26" fill="transparent"/>
-          <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="#38bdf8"/>
-        </g>
-        <g style="cursor:pointer" onclick="toggleFavFilter()" title="Lọc Yêu thích" transform="translate(${(rx - 56).toFixed(1)}, 20)">
-          <rect width="26" height="26" fill="transparent"/>
-          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="${state.showFavOnly ? '#fbbf24' : '#64748b'}"/>
-        </g>
-        <g id="btn-toggle" style="cursor:pointer" title="Chuyển kiểu giao diện" transform="translate(${(rx - 28).toFixed(1)}, 20)">
-          <rect width="26" height="26" fill="transparent"/>
-          ${state.isCurved ? 
-            `<path d="M 5,5 Q 14,13 5,21" fill="none" stroke="${clr}" stroke-width="2.5" stroke-linecap="round"/>
-             <line x1="8" y1="7" x2="21" y2="7" stroke="${clr}" stroke-width="2"/><line x1="12" y1="13" x2="22" y2="13" stroke="${clr}" stroke-width="2"/><line x1="8" y1="19" x2="21" y2="19" stroke="${clr}" stroke-width="2"/>` : 
-            `<line x1="5" y1="5" x2="5" y2="21" stroke="${clr}" stroke-width="2.5"/><line x1="9" y1="7" x2="21" y2="7" stroke="${clr}" stroke-width="2"/><line x1="9" y1="13" x2="21" y2="13" stroke="${clr}" stroke-width="2"/><line x1="9" y1="19" x2="21" y2="19" stroke="${clr}" stroke-width="2"/>`
-          }
-        </g>`;
+        <text id="cnt-txt" x="${(xlMid + 56).toFixed(1)}" y="30" dominant-baseline="central" fill="#fbbf24" font-size="15" font-weight="bold" font-family="Orbitron">GAME: 0 / 0</text>`;
 
-      const btnToggle = $('btn-toggle');
-      if (btnToggle) btnToggle.onclick = e => { e.stopPropagation(); state.isCurved = !state.isCurved; localStorage.setItem('pandora_curved', state.isCurved); drawAll(); };
-      posHeaderLogo(); posSearch();
+      updateHeaderOverlays();
+      if ($('menu-dropdown').classList.contains('active')) posMenu($('menu-dropdown'), $('hdr-logo-btn'));
+      if ($('user-menu-dropdown').classList.contains('active')) posMenu($('user-menu-dropdown'), $('hdr-avatar-btn'), true);
     }
 
-    function posHeaderLogo() {
-      const btn = $('header-logo-btn'); if (!btn) return;
-      const c = $('svg-container'), p = getGeom(), xl0 = getX(6, p), sx = (xl0 + getX(54, p)) / 2 + 16;
-      const rect = c.getBoundingClientRect(), scaleX = rect.width / 540, scaleY = rect.height / (64 + state.numSlots * 54);
-      btn.style.left = `${sx * scaleX}px`; btn.style.top = `${15 * scaleY}px`;
-      btn.style.width = `${26 * scaleX}px`; btn.style.height = `${26 * scaleY}px`;
+    function updateHeaderOverlays() {
+      if ($('hdr-logo-img')) $('hdr-logo-img').src = state.datList[state.currentDatIdx]?.logo || (ASSETS_BASE + "FBNeo - Arcade Games.png");
+      const aImg = $('hdr-avatar-img'), aSvg = $('hdr-avatar-svg');
+      if (currentUserProfile?.picture) { aImg.src = currentUserProfile.picture; aImg.style.display = 'block'; aSvg.style.display = 'none'; }
+      else { aImg.style.display = 'none'; aSvg.style.display = 'block'; }
+      posOverlays();
     }
 
-    function posSearch() {
-      const bar = $('inline-search-bar'); if (!bar?.classList.contains('active')) return;
-      const c = $('svg-container'), p = getGeom(), xl0 = getX(6, p), rx = xl0 + p.W, sx = (xl0 + getX(54, p)) / 2 + 16;
-      const rect = c.getBoundingClientRect(), scaleX = rect.width / 540, scaleY = rect.height / (64 + state.numSlots * 54);
-      bar.style.left = `${(sx + 32) * scaleX}px`; bar.style.top = `${10 * scaleY}px`;
-      bar.style.width = `${Math.max(130, (rx - 112) - (sx + 32)) * scaleX}px`;
-      bar.style.height = `${Math.min(42, Math.max(30, 38 * scaleY))}px`;
+    /* Consolidated header overlay math */
+    function posOverlays() {
+      const c = $('svg-container'); if (!c) return;
+      const p = getGeom(), xlMid = getX(30, p), rxMid = xlMid + p.W;
+      const rect = c.getBoundingClientRect();
+      const scaleX = rect.width / 540, scaleY = rect.height / (64 + state.numSlots * 54), scaleMin = Math.min(scaleX, scaleY);
+      const centerYPx = 30 * scaleY;
+
+      const setBtnPos = (btn, x, sz) => {
+        if (!btn) return;
+        const size = sz * scaleMin;
+        btn.style.left = `${x * scaleX}px`; btn.style.top = `${centerYPx - (size / 2)}px`;
+        btn.style.width = btn.style.height = `${size}px`;
+      };
+
+      setBtnPos($('hdr-logo-btn'), xlMid + 12, 34);
+      setBtnPos($('hdr-search-btn'), rxMid - 70, 28);
+      setBtnPos($('hdr-avatar-btn'), rxMid - 36, 32);
+
+      const bar = $('inline-search-bar');
+      if (bar?.classList.contains('active')) {
+        const startX = xlMid + 50, endX = rxMid - 76, barH = 36 * scaleY;
+        bar.style.left = `${startX * scaleX}px`; bar.style.top = `${centerYPx - (barH / 2)}px`;
+        bar.style.width = `${Math.max(120, endX - startX) * scaleX}px`; bar.style.height = `${barH}px`;
+      }
     }
 
     function toggleInlineSearch(e) {
       if (e) e.stopPropagation();
-      const bar = $('inline-search-bar'), input = $('search-input');
+      closeUserMenu(); closeMenuModal();
+      const bar = $('inline-search-bar');
       if (bar.classList.contains('active')) bar.classList.remove('active');
-      else { bar.classList.add('active'); posSearch(); input.focus(); }
+      else { bar.classList.add('active'); posOverlays(); $('search-input').focus(); }
     }
 
     function closeInlineSearch(clear = false) {
@@ -595,14 +709,18 @@
     }
 
     function drawSlots() {
-      const p = getGeom(), grp = $('sg'), defs = $('cd');
+      const p = getGeom(), grp = $('sg'), defs = $('cd'), svgNS = "http://www.w3.org/2000/svg";
       grp.innerHTML = defs.innerHTML = ''; state.slots = [];
 
       for (let i = 0; i < state.numSlots; i++) {
         const y0 = 60 + i * 54, y1 = y0 + 48, xl0 = getX(y0, p), xl1 = getX(y1, p);
-        defs.innerHTML += `<clipPath id="c${i}"><polygon points="${xl0.toFixed(1)},${y0} ${(xl0 + p.W - 12).toFixed(1)},${y0} ${(xl1 + p.W - 12).toFixed(1)},${y1} ${xl1.toFixed(1)},${y1}"/></clipPath>`;
+        
+        const clip = document.createElementNS(svgNS, "clipPath");
+        clip.setAttribute("id", `c${i}`);
+        clip.innerHTML = `<polygon points="${xl0.toFixed(1)},${y0} ${(xl0 + p.W - 12).toFixed(1)},${y0} ${(xl1 + p.W - 12).toFixed(1)},${y1} ${xl1.toFixed(1)},${y1}"/>`;
+        defs.appendChild(clip);
 
-        const el = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        const el = document.createElementNS(svgNS, "g");
         el.style.cursor = "pointer";
         el.innerHTML = `
           <polygon points="${xl0.toFixed(1)},${y0} ${(xl0 + p.W).toFixed(1)},${y0} ${(xl1 + p.W).toFixed(1)},${y1} ${xl1.toFixed(1)},${y1}" fill="url(#gn)" stroke="#475569" stroke-width="1.5"/>
@@ -622,51 +740,32 @@
 
     function getPreviewCandidates(g) {
       if (!g) return [];
-      const cat = state.datList[state.currentDatIdx];
-      if (!cat) return [];
-
-      const folderName = cat.folderName || cat.name;
-      const catFolder = encodeURIComponent(folderName);
-      const cleanName = cleanTitle(g.fullName);
-      const fileBase = g.fullName ? g.fullName.split('/').pop().replace(/\.[^/.]+$/, '') : '';
-      const namesToTry = Array.from(new Set([cleanName, fileBase, g.name])).filter(Boolean);
-
-      const candidates = new Set();
-      const snapBaseUrl = `${RAW_BASE}snap/`;
-      for (const n of namesToTry) {
-        candidates.add(`${snapBaseUrl}${catFolder}/${encodeURIComponent(n)}.png`);
-        candidates.add(`${snapBaseUrl}arcade/${encodeURIComponent(n)}.png`);
-      }
-
+      const cat = state.datList[state.currentDatIdx]; if (!cat) return [];
+      const catFolder = encodeURIComponent(cat.folderName || cat.name), fileBase = g.fullName ? g.fullName.split('/').pop().replace(/\.[^/.]+$/, '') : '';
+      const names = Array.from(new Set([cleanTitle(g.fullName), fileBase, g.name])).filter(Boolean);
       const sysName = cat.libretroSys || cat.system || cat.name;
-      const libretroSnapBase = `https://thumbnails.libretro.com/${encodeURIComponent(sysName)}/Named_Snaps/`;
-      const libretroTitles = `https://thumbnails.libretro.com/${encodeURIComponent(sysName)}/Named_Titles/`;
 
-      for (const n of namesToTry) {
-        candidates.add(`${libretroSnapBase}${encodeURIComponent(n)}.png`);
-        candidates.add(`${libretroTitles}${encodeURIComponent(n)}.png`);
-      }
-
-      return Array.from(candidates).filter(url => !failedUrls.has(url));
+      return names.flatMap(n => [
+        `${RAW_BASE}snap/${catFolder}/${encodeURIComponent(n)}.png`,
+        `${RAW_BASE}snap/arcade/${encodeURIComponent(n)}.png`,
+        `https://thumbnails.libretro.com/${encodeURIComponent(sysName)}/Named_Snaps/${encodeURIComponent(n)}.png`,
+        `https://thumbnails.libretro.com/${encodeURIComponent(sysName)}/Named_Titles/${encodeURIComponent(n)}.png`
+      ]).filter(url => !failedUrls.has(url));
     }
 
     function preloadNeighbors() {
-      for (const offset of [1, 2, 3, -1, -2]) {
-        const targetIdx = state.selIdx + offset;
-        if (targetIdx >= 0 && targetIdx < state.filteredGames.length) {
-          const targetGame = state.filteredGames[targetIdx];
-          const k = getGameKey(targetGame);
-          if (k && !imgCache.has(k)) {
-            const candidates = getPreviewCandidates(targetGame);
-            if (candidates.length > 0) {
-              const url = candidates[0], temp = new Image();
-              temp.onload = () => imgCache.set(k, url);
-              temp.onerror = () => failedUrls.add(url);
-              temp.src = url;
-            }
+      [1, 2, 3, -1, -2].forEach(offset => {
+        const targetGame = state.filteredGames[state.selIdx + offset], k = getGameKey(targetGame);
+        if (targetGame && k && !imgCache.has(k)) {
+          const cand = getPreviewCandidates(targetGame);
+          if (cand.length > 0) {
+            const temp = new Image();
+            temp.onload = () => cacheSet(k, cand[0]);
+            temp.onerror = () => failedUrls.add(cand[0]);
+            temp.src = cand[0];
           }
         }
-      }
+      });
     }
 
     function updatePreview(g) {
@@ -690,25 +789,20 @@
           const url = candidates[step++], tempImg = new Image();
           tempImg.onload = () => {
             if (token !== currentPreviewToken) return;
-            imgCache.set(key, url); img.src = url; img.classList.remove('loading'); preloadNeighbors();
+            cacheSet(key, url); img.src = url; img.classList.remove('loading'); preloadNeighbors();
           };
           tempImg.onerror = () => { failedUrls.add(url); if (token === currentPreviewToken) tryNext(); };
           tempImg.src = url;
-        } else {
-          imgCache.set(key, PLACEHOLDER_SVG); img.src = PLACEHOLDER_SVG; img.classList.remove('loading');
-        }
+        } else { cacheSet(key, PLACEHOLDER_SVG); img.src = PLACEHOLDER_SVG; img.classList.remove('loading'); }
       };
       tryNext();
     }
 
     function buildEmuUrl(g, c) {
-      if (!g) return "";
+      if (!g?.fullName) return "";
       let romUrl = g.romUrl || g.fullName;
-      if (!romUrl) return "";
       try { romUrl = decodeURIComponent(romUrl); } catch (e) {}
-      const safeRomUrl = encodeURI(romUrl);
-      const coreToUse = g.core || c?.core || "arcade";
-      return `${EMULATOR_URL}?core=${coreToUse}&rom=${safeRomUrl}`;
+      return `${EMULATOR_URL}?core=${g.core || c?.core || "arcade"}&rom=${encodeURI(romUrl)}`;
     }
 
     function launchCurrentGame() {
@@ -748,8 +842,7 @@
       if (!state.filteredGames.length) {
         if ($('cnt-txt')) $('cnt-txt').textContent = `${label}: 0 / 0`;
         state.slots.forEach(s => s.g.style.display = "none");
-        updatePreview(null);
-        return;
+        updatePreview(null); return;
       }
 
       if (state.selIdx < state.topIdx) state.topIdx = state.selIdx;
@@ -824,18 +917,30 @@
     function bindEvents() {
       window.onresize = () => {
         clearTimeout(state.resizeTimer);
-        state.resizeTimer = setTimeout(() => { if (state.datList.length) { drawAll(); posHeaderLogo(); posSearch(); } }, 100);
+        state.resizeTimer = setTimeout(() => { 
+          if (state.datList.length) drawAll(); 
+          if ($('menu-dropdown').classList.contains('active')) posMenu($('menu-dropdown'), $('hdr-logo-btn'));
+          if ($('user-menu-dropdown').classList.contains('active')) posMenu($('user-menu-dropdown'), $('hdr-avatar-btn'), true);
+        }, 100);
       };
 
       document.addEventListener('click', e => {
-        if (!e.target.closest('#menu-dropdown') && !e.target.closest('#header-logo-btn')) closeMenuModal();
-        if (!e.target.closest('#inline-search-bar') && !e.target.closest('#btn-search')) closeInlineSearch(false);
+        if (!e.target.closest('#menu-dropdown') && !e.target.closest('#hdr-logo-btn')) closeMenuModal();
+        if (!e.target.closest('#user-menu-dropdown') && !e.target.closest('#hdr-avatar-btn')) closeUserMenu();
+        if (!e.target.closest('#inline-search-bar') && !e.target.closest('#hdr-search-btn')) closeInlineSearch(false);
+      });
+
+      const blockMenuTouch = e => e.stopPropagation();
+      ['menu-dropdown', 'user-menu-dropdown'].forEach(id => {
+        const el = $(id);
+        if (el) { el.addEventListener('touchstart', blockMenuTouch, { passive: true }); el.addEventListener('touchmove', blockMenuTouch, { passive: true }); }
       });
 
       let touchY = 0, svgC = $('svg-container');
       if (svgC) {
         svgC.addEventListener('touchstart', e => { if (e.touches.length) touchY = e.touches[0].clientY; }, { passive: true });
         svgC.addEventListener('touchmove', e => {
+          if ($('menu-dropdown').classList.contains('active') || $('user-menu-dropdown').classList.contains('active')) return;
           if (!state.filteredGames.length || !e.touches.length) return;
           const d = touchY - e.touches[0].clientY;
           if (Math.abs(d) > 28) { moveSelection(d > 0 ? 1 : -1); touchY = e.touches[0].clientY; }
@@ -843,7 +948,7 @@
       }
 
       window.onwheel = e => {
-        if ($('game-player-modal').classList.contains('active') || $('menu-dropdown').classList.contains('active')) return;
+        if ($('game-player-modal').classList.contains('active') || $('menu-dropdown').classList.contains('active') || $('user-menu-dropdown').classList.contains('active')) return;
         moveSelection(e.deltaY > 0 ? 1 : -1);
       };
 
@@ -859,32 +964,26 @@
           return;
         }
         if ($('menu-dropdown').classList.contains('active')) { if (e.key === 'Escape') closeMenuModal(); return; }
+        if ($('user-menu-dropdown').classList.contains('active')) { if (e.key === 'Escape') closeUserMenu(); return; }
 
-        if (e.key === 'ArrowDown') { e.preventDefault(); moveSelection(1); }
-        else if (e.key === 'ArrowUp') { e.preventDefault(); moveSelection(-1); }
-        else if (e.key === 'PageDown') { e.preventDefault(); jumpByLetter(1); }
-        else if (e.key === 'PageUp') { e.preventDefault(); jumpByLetter(-1); }
-        else if (e.key === 'ArrowLeft') {
-          e.preventDefault();
-          if (state.datList.length > 0) switchCat((state.currentDatIdx - 1 + state.datList.length) % state.datList.length);
-        }
-        else if (e.key === 'ArrowRight') {
-          e.preventDefault();
-          if (state.datList.length > 0) switchCat((state.currentDatIdx + 1) % state.datList.length);
-        }
-        else if (e.key === 'Home') { e.preventDefault(); if (state.filteredGames.length) { state.selIdx = 0; render(); } }
-        else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleCurrentFav(); }
-        else if (e.key === 'v' || e.key === 'V') { e.preventDefault(); toggleFavFilter(); }
-        else if (e.key === 'r' || e.key === 'R') { e.preventDefault(); reloadDatabase(); }
-        else if (e.key === 'Enter') { e.preventDefault(); launchCurrentGame(); }
-        else if (e.key === '/') { e.preventDefault(); toggleInlineSearch(); }
+        const kMap = {
+          ArrowDown: () => moveSelection(1), ArrowUp: () => moveSelection(-1),
+          PageDown: () => jumpByLetter(1), PageUp: () => jumpByLetter(-1),
+          ArrowLeft: () => state.datList.length && switchCat((state.currentDatIdx - 1 + state.datList.length) % state.datList.length),
+          ArrowRight: () => state.datList.length && switchCat((state.currentDatIdx + 1) % state.datList.length),
+          Home: () => state.filteredGames.length && (state.selIdx = 0, render()),
+          f: toggleCurrentFav, F: toggleCurrentFav, v: toggleFavFilter, V: toggleFavFilter,
+          r: reloadDatabase, R: reloadDatabase, Enter: launchCurrentGame, '/': toggleInlineSearch
+        };
+        if (kMap[e.key]) { e.preventDefault(); kMap[e.key](); }
       };
     }
 
     function pollGamepad() {
       try {
-        const gamepads = navigator.getGamepads ? Array.from(navigator.getGamepads()) : [];
-        const gp = gamepads.find(g => g && g.connected);
+        const rawGps = navigator.getGamepads ? navigator.getGamepads() : null;
+        let gp = null;
+        if (rawGps) { for (let i = 0; i < rawGps.length; i++) { if (rawGps[i]?.connected) { gp = rawGps[i]; break; } } }
         const isConnected = !!gp;
 
         if (isConnected !== state.gamepadConnected) {
@@ -895,7 +994,7 @@
         if (isConnected && gp) {
           if ($('game-player-modal').classList.contains('active')) {
             if (gp.buttons[16]?.pressed) closeGamePlayer();
-          } else if (!$('inline-search-bar')?.classList.contains('active') && !$('menu-dropdown').classList.contains('active')) {
+          } else if (!$('inline-search-bar')?.classList.contains('active') && !$('menu-dropdown').classList.contains('active') && !$('user-menu-dropdown').classList.contains('active')) {
             const now = performance.now();
             if (now >= state.gpLastTime) {
               const ay = gp.axes[1] ?? 0, ax = gp.axes[0] ?? 0;
@@ -908,8 +1007,7 @@
 
               const l1 = gp.buttons[4]?.pressed, r1 = gp.buttons[5]?.pressed;
               if ((l1 || r1) && !state.lastGpBtn.page) {
-                state.lastGpBtn.page = true;
-                jumpByLetter(r1 ? 1 : -1);
+                state.lastGpBtn.page = true; jumpByLetter(r1 ? 1 : -1);
               } else if (!l1 && !r1) state.lastGpBtn.page = false;
 
               if ((l || r) && !state.lastGpBtn.cat) {
@@ -917,17 +1015,17 @@
                 if (state.datList.length) switchCat((state.currentDatIdx + (r ? 1 : -1) + state.datList.length) % state.datList.length);
               } else if (!l && !r) state.lastGpBtn.cat = false;
 
-              const hm = gp.buttons[16]?.pressed;
-              if (hm && !state.lastGpBtn.home) { state.lastGpBtn.home = true; if (state.filteredGames.length) { state.selIdx = 0; render(); } } else if (!hm) state.lastGpBtn.home = false;
+              const checkBtn = (btnIdx, stateKey, action) => {
+                const pressed = gp.buttons[btnIdx]?.pressed;
+                if (pressed && !state.lastGpBtn[stateKey]) { state.lastGpBtn[stateKey] = true; action(); }
+                else if (!pressed) state.lastGpBtn[stateKey] = false;
+              };
 
-              const yP = gp.buttons[3]?.pressed;
-              if (yP && !state.lastGpBtn.favY) { state.lastGpBtn.favY = true; toggleCurrentFav(); } else if (!yP) state.lastGpBtn.favY = false;
-
-              const xP = gp.buttons[2]?.pressed;
-              if (xP && !state.lastGpBtn.favX) { state.lastGpBtn.favX = true; toggleFavFilter(); } else if (!xP) state.lastGpBtn.favX = false;
-
-              const confirm = gp.buttons[0]?.pressed || gp.buttons[9]?.pressed;
-              if (confirm && !state.lastGpBtn.confirm) { state.lastGpBtn.confirm = true; launchCurrentGame(); } else if (!confirm) state.lastGpBtn.confirm = false;
+              checkBtn(16, 'home', () => { if (state.filteredGames.length) { state.selIdx = 0; render(); } });
+              checkBtn(3, 'favY', toggleCurrentFav);
+              checkBtn(2, 'favX', toggleFavFilter);
+              checkBtn(0, 'confirm', launchCurrentGame);
+              checkBtn(9, 'confirm', launchCurrentGame);
             }
           }
         }
@@ -935,7 +1033,14 @@
       requestAnimationFrame(pollGamepad);
     }
 
-    window.onload = () => { bindEvents(); loadFullDatabase(); requestAnimationFrame(pollGamepad); };
+    window.onload = () => { 
+      bindEvents(); loadFullDatabase(); requestAnimationFrame(pollGamepad);
+      const checkGSI = setInterval(() => {
+        if (typeof google !== 'undefined' && google.accounts) {
+          clearInterval(checkGSI); initGoogleDriveAuth();
+        }
+      }, 100);
+    };
   </script>
 </body>
 </html>
