@@ -185,6 +185,7 @@
             <div class="help-item"><span>Vào Game</span><span class="help-key">Enter</span></div>
             <div class="help-item"><span>Yêu Thích</span><span class="help-key">F</span></div>
             <div class="help-item"><span>Lọc Yêu Thích</span><span class="help-key">V</span></div>
+            <div class="help-item"><span>Lọc Game Chính</span><span class="help-key">C</span></div>
             <div class="help-item"><span>Tìm Kiếm</span><span class="help-key">/</span></div>
             <div class="help-item"><span>Cập Nhật Dữ Liệu</span><span class="help-key">R</span></div>
           </div>
@@ -199,6 +200,7 @@
             <div class="help-item"><span>Vào Game</span><span class="help-key">A / Start</span></div>
             <div class="help-item"><span>Đánh Dấu Yêu Thích</span><span class="help-key">Nút Y</span></div>
             <div class="help-item"><span>Lọc Yêu Thích</span><span class="help-key">Nút X</span></div>
+            <div class="help-item"><span>Lọc Game Chính</span><span class="help-key">Nút B / Select</span></div>
             <div class="help-item"><span>Thoát Game Đang Chơi</span><span class="help-key">Nút Home</span></div>
           </div>
         </div>
@@ -771,7 +773,6 @@
       posOverlays();
     }
 
-    /* Consolidated header overlay math */
     function posOverlays() {
       const c = $('svg-container'); if (!c) return;
       const p = getGeom(), xlMid = getX(30, p), rxMid = xlMid + p.W;
@@ -926,7 +927,7 @@
       $('game-player-modal').classList.remove('active');
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
       state.gpLastTime = performance.now() + 400;
-      state.lastGpBtn = { dir: true, cat: true, home: true, favY: true, favX: true, confirm: true };
+      state.lastGpBtn = { dir: true, cat: true, home: true, favY: true, favX: true, cloneB: true, cloneSelect: true, confirm: true };
       render();
     }
 
@@ -941,7 +942,7 @@
     }
 
     function render() {
-      const label = state.showFavOnly ? 'YÊU THÍCH' : 'GAME';
+      const label = state.showFavOnly ? 'YÊU THÍCH' : (state.showMainOnly ? 'GAME CHÍNH' : 'GAME');
       if (!state.filteredGames.length) {
         if ($('cnt-txt')) $('cnt-txt').textContent = `${label}: 0 / 0`;
         state.slots.forEach(s => s.g.style.display = "none");
@@ -1077,6 +1078,7 @@
           ArrowRight: () => state.datList.length && switchCat((state.currentDatIdx + 1) % state.datList.length),
           Home: () => state.filteredGames.length && (state.selIdx = 0, render()),
           f: toggleCurrentFav, F: toggleCurrentFav, v: toggleFavFilter, V: toggleFavFilter,
+          c: toggleMainOnlyFilter, C: toggleMainOnlyFilter,
           r: reloadDatabase, R: reloadDatabase, Enter: launchCurrentGame, '/': toggleInlineSearch
         };
         if (kMap[e.key]) { e.preventDefault(); kMap[e.key](); }
@@ -1128,6 +1130,8 @@
               checkBtn(16, 'home', () => { if (state.filteredGames.length) { state.selIdx = 0; render(); } });
               checkBtn(3, 'favY', toggleCurrentFav);
               checkBtn(2, 'favX', toggleFavFilter);
+              checkBtn(1, 'cloneB', toggleMainOnlyFilter);
+              checkBtn(8, 'cloneSelect', toggleMainOnlyFilter);
               checkBtn(0, 'confirm', launchCurrentGame);
               checkBtn(9, 'confirm', launchCurrentGame);
             }
