@@ -19,7 +19,7 @@
     #preview-container{flex:1.1;width:100%;max-width:680px;aspect-ratio:4/3;max-height:80vh;background:var(--panel);border:2px solid var(--p);border-radius:12px;box-shadow:0 0 25px var(--pg),inset 0 0 25px #000;display:flex;align-items:center;justify-content:center;padding:6px;position:relative;overflow:hidden;backdrop-filter:blur(12px);order:2;transform:translateZ(0)}
     #preview-img{width:100%;height:100%;object-fit:contain;transition:opacity .15s,transform .15s;will-change:transform,opacity}
     #preview-img.loading{opacity:.4;transform:scale(.98)}
-    .preview-badges{position:absolute;top:8px;right:8px;z-index:20;display:flex;align-items:center;gap:8px;background:rgba(15,23,42,.6);padding:4px 8px;border-radius:20px;backdrop-filter:blur(4px)}
+    .preview-badges{position:absolute;top:8px;right:8px;z-index:20;display:flex;align-items:center;gap:8px}
     .fav-star-btn{font-size:24px;color:#e2e8f0;cursor:pointer;transition:all .2s;opacity:.5;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.9))}
     #preview-container:hover .fav-star-btn{opacity:.8}
     .fav-star-btn.active,#preview-container:hover .fav-star-btn.active{opacity:1;color:var(--a);transform:scale(1.15);filter:drop-shadow(0 0 8px rgba(251,191,36,.8))}
@@ -577,7 +577,8 @@
       const cacheKey = "pandora_full_db_v12";
       if (!forceReload) {
         const cached = Storage.get(cacheKey);
-        if (cached?.datList?.length && cached?.gamesByCat) {
+        // Chỉ sử dụng cache khi cache đầy đủ (nhiều hơn 1 hệ máy)
+        if (cached?.datList?.length > 1 && cached?.gamesByCat) {
           state.datList = processCats(cached.datList);
           state.gamesByCat = cached.gamesByCat;
           state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
@@ -591,46 +592,55 @@
 
       try {
         const gamesByCat = {}, catMap = new Map();
-        for (const source of GAME_SOURCES) {
+
+        // Tải dữ liệu song song từ tất cả các nguồn
+        const sourcePromises = GAME_SOURCES.map(async (source) => {
           try {
             const resp = await fetch(`https://api.github.com/repos/${source.owner}/${source.repo}/git/trees/${source.branch || "main"}?recursive=1`);
-            if (resp.status === 403) { alert("Đã vượt quá giới hạn truy cập GitHub API."); break; }
-            if (!resp.ok) continue;
+            if (!resp.ok) return null;
             const treeData = await resp.json();
-            if (Array.isArray(treeData.tree)) {
-              const cueBases = new Set(treeData.tree.filter(i => i.type === "blob" && /\.(cue|m3u|ccd|gdi)$/i.test(i.path)).map(i => i.path.substring(0, i.path.lastIndexOf('.')).toLowerCase()));
+            return { source, treeData };
+          } catch (e) {
+            return null;
+          }
+        });
 
-              treeData.tree.forEach(item => {
-                if (item.type === "blob" && isGameFile(item.path)) {
-                  const ext = item.path.split('.').pop().toLowerCase();
-                  const basePath = item.path.substring(0, item.path.lastIndexOf('.')).toLowerCase();
-                  if (['bin', 'img', 'wav'].includes(ext) && (cueBases.has(basePath) || /track\s*\d+/i.test(item.path))) return;
+        const results = await Promise.all(sourcePromises);
 
-                  let catName = "", fileName = "";
-                  const parts = item.path.split('/');
-                  if (parts[0].toLowerCase() === "roms") {
-                    catName = parts.length >= 3 ? parts[1] : (source.defaultCat || "arcade");
-                    fileName = parts.slice(parts.length >= 3 ? 2 : 1).join('/');
-                  } else if (parts.length >= 2) {
-                    catName = parts[0]; fileName = parts.slice(1).join('/');
-                  } else if (source.defaultCat) {
-                    catName = source.defaultCat; fileName = item.path;
-                  } else return;
+        for (const res of results) {
+          if (!res || !Array.isArray(res.treeData?.tree)) continue;
+          const { source, treeData } = res;
+          const cueBases = new Set(treeData.tree.filter(i => i.type === "blob" && /\.(cue|m3u|ccd|gdi)$/i.test(i.path)).map(i => i.path.substring(0, i.path.lastIndexOf('.')).toLowerCase()));
 
-                  const info = resolveSys(catName);
-                  if (!info.isKnown && ['emu', 'main', 'roms'].includes(catName.toLowerCase())) return;
-                  const sysKey = info.system;
+          treeData.tree.forEach(item => {
+            if (item.type === "blob" && isGameFile(item.path)) {
+              const ext = item.path.split('.').pop().toLowerCase();
+              const basePath = item.path.substring(0, item.path.lastIndexOf('.')).toLowerCase();
+              if (['bin', 'img', 'wav'].includes(ext) && (cueBases.has(basePath) || /track\s*\d+/i.test(item.path))) return;
 
-                  if (!gamesByCat[sysKey]) gamesByCat[sysKey] = [];
-                  const cleanName = cleanTitle(fileName);
-                  if (cleanName) {
-                    gamesByCat[sysKey].push({ name: cleanName, fullName: fileName, romUrl: buildDirectRomUrl(source, item.path), path: item.path, core: info.core });
-                    if (!catMap.has(sysKey)) catMap.set(sysKey, { name: sysKey, folderName: catName, logo: info.logo, system: info.system, core: info.core, libretroSys: info.libretroSys });
-                  }
-                }
-              });
+              let catName = "", fileName = "";
+              const parts = item.path.split('/');
+              if (parts[0].toLowerCase() === "roms") {
+                catName = parts.length >= 3 ? parts[1] : (source.defaultCat || "arcade");
+                fileName = parts.slice(parts.length >= 3 ? 2 : 1).join('/');
+              } else if (parts.length >= 2) {
+                catName = parts[0]; fileName = parts.slice(1).join('/');
+              } else if (source.defaultCat) {
+                catName = source.defaultCat; fileName = item.path;
+              } else return;
+
+              const info = resolveSys(catName);
+              if (!info.isKnown && ['emu', 'main', 'roms'].includes(catName.toLowerCase())) return;
+              const sysKey = info.system;
+
+              if (!gamesByCat[sysKey]) gamesByCat[sysKey] = [];
+              const cleanName = cleanTitle(fileName);
+              if (cleanName) {
+                gamesByCat[sysKey].push({ name: cleanName, fullName: fileName, romUrl: buildDirectRomUrl(source, item.path), path: item.path, core: info.core });
+                if (!catMap.has(sysKey)) catMap.set(sysKey, { name: sysKey, folderName: catName, logo: info.logo, system: info.system, core: info.core, libretroSys: info.libretroSys });
+              }
             }
-          } catch (err) {}
+          });
         }
 
         const rawCatList = Array.from(catMap.values());
@@ -640,7 +650,11 @@
           state.gamesByCat[catName] = gamesByCat[catName].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base', numeric: true }));
         }
 
-        Storage.set(cacheKey, { datList: rawCatList, gamesByCat: state.gamesByCat });
+        // Chỉ lưu vào cache khi danh sách hệ máy tải về đầy đủ (> 1 hệ)
+        if (rawCatList.length > 1) {
+          Storage.set(cacheKey, { datList: rawCatList, gamesByCat: state.gamesByCat });
+        }
+
         state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
         const currCat = state.datList[state.currentDatIdx];
         state.allGames = state.gamesByCat[currCat?.name] || [];
