@@ -21,9 +21,14 @@
     #preview-img{width:100%;height:100%;object-fit:contain;transition:opacity .15s,transform .15s;will-change:transform,opacity}
     #preview-img.loading{opacity:.4;transform:scale(.98)}
     .preview-badges{position:absolute;top:8px;right:8px;z-index:20;display:flex;align-items:center;gap:8px}
-    .fav-star-btn{font-size:24px;color:#e2e8f0;cursor:pointer;transition:all .2s;opacity:.5;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.9))}
-    #preview-container:hover .fav-star-btn{opacity:.8}
+    .fav-star-btn{font-size:24px;color:#e2e8f0;cursor:pointer;transition:all .2s;opacity:.25;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.9))}
+    #preview-container:hover .fav-star-btn{opacity:.5}
     .fav-star-btn.active,#preview-container:hover .fav-star-btn.active{opacity:1;color:var(--a);transform:scale(1.15);filter:drop-shadow(0 0 8px rgba(251,191,36,.8))}
+    .preview-bottom-actions{position:absolute;bottom:10px;right:10px;z-index:20;display:flex;align-items:center;gap:8px}
+    .dl-btn{width:32px;height:32px;background:rgba(15,23,42,.75);border:1px solid var(--ca);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ca);transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.6);backdrop-filter:blur(4px);opacity:.4}
+    #preview-container:hover .dl-btn{opacity:.85}
+    .dl-btn:hover,#preview-container:hover .dl-btn:hover{opacity:1;background:var(--ca);color:#0f172a;transform:scale(1.12);box-shadow:0 0 10px rgba(56,189,248,.8)}
+    .dl-btn svg{width:18px;height:18px;fill:currentColor}
     #gp-badge{width:20px;height:20px;fill:#4ade80;filter:drop-shadow(0 0 6px rgba(74,222,128,.8));display:none}
     .hdr-btn-wrap{position:absolute;z-index:100;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s,filter .15s,opacity .2s;width:32px;height:32px;max-width:42px;max-height:42px;min-width:20px;min-height:20px;overflow:hidden;box-sizing:border-box;opacity:0;top:0;left:0}
     .hdr-btn-wrap.ready{opacity:1}
@@ -133,6 +138,11 @@
         <div id="fav-btn" class="fav-star-btn" onclick="event.stopPropagation();toggleCurrentFav();">☆</div>
       </div>
       <img id="preview-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Preview"/>
+      <div class="preview-bottom-actions">
+        <div id="dl-btn" class="dl-btn" onclick="event.stopPropagation();downloadCurrentGame();" title="Tải ROM Game">
+          <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        </div>
+      </div>
     </div>
   </main>
   <div id="help-modal">
@@ -861,9 +871,15 @@
     }
 
     function updatePreview(g) {
-      const img = $('preview-img'), favBtn = $('fav-btn');
-      if (!g || g.fullName?.startsWith('placeholder_')) { img.src = EMPTY_GIF; if (favBtn) favBtn.style.display = 'none'; return; }
+      const img = $('preview-img'), favBtn = $('fav-btn'), dlBtn = $('dl-btn');
+      if (!g || g.fullName?.startsWith('placeholder_')) {
+        img.src = EMPTY_GIF;
+        if (favBtn) favBtn.style.display = 'none';
+        if (dlBtn) dlBtn.style.display = 'none';
+        return;
+      }
       if (favBtn) favBtn.style.display = 'block';
+      if (dlBtn) dlBtn.style.display = 'flex';
 
       const key = getGameKey(g), token = ++currentPreviewToken;
 
@@ -888,6 +904,18 @@
       let romUrl = g.romUrl || g.fullName;
       try { romUrl = decodeURIComponent(romUrl); } catch (e) {}
       return `${EMULATOR_URL}?core=${g.core || c?.core || "arcade"}&rom=${encodeURI(romUrl)}`;
+    }
+
+    function downloadCurrentGame() {
+      const g = state.filteredGames[state.selIdx];
+      if (!g || !g.romUrl || g.fullName?.startsWith('placeholder_')) return;
+      const a = document.createElement('a');
+      a.href = g.romUrl;
+      a.download = g.fullName ? g.fullName.split('/').pop() : `${g.name}.zip`;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
 
     function launchCurrentGame() {
