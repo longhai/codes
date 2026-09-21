@@ -10,12 +10,17 @@
     :root{--p:#ea580c;--pg:rgba(234,88,12,.4);--a:#fbbf24;--ca:#38bdf8;--bg:#050101;--panel:rgba(15,23,42,.94)}
     *{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-tap-highlight-color:transparent}
     body{font-family:'Rajdhani',sans-serif;background:radial-gradient(circle at 50% 30%,#c2410c,#7f1d1d 40%,var(--bg));height:100dvh;width:100vw;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#e2e8f0;touch-action:none}
-    #loader{position:fixed;inset:0;z-index:350;background:rgba(5,1,1,.95);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--a);font:700 14px 'Orbitron',sans-serif;letter-spacing:1px;padding:20px;text-align:center}
-    .spin{width:36px;height:36px;border:4px solid var(--p);border-top-color:transparent;border-radius:50%;animation:s .75s linear infinite;margin-bottom:10px}
+    
+    /* Non-blocking overlay loader inside preview box */
+    #preview-loader{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);z-index:30;background:rgba(15,23,42,.92);border:1px solid var(--ca);border-radius:20px;padding:6px 16px;display:flex;align-items:center;gap:10px;color:var(--a);font:700 12px 'Orbitron',sans-serif;letter-spacing:1px;box-shadow:0 4px 15px rgba(0,0,0,.6);backdrop-filter:blur(6px);pointer-events:none;transition:opacity .2s;white-space:nowrap;max-width:92%}
+    #ld-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .spin{width:16px;height:16px;border:2.5px solid var(--p);border-top-color:transparent;border-radius:50%;animation:s .75s linear infinite;flex-shrink:0}
     @keyframes s{to{transform:rotate(360deg)}}
-    main{width:100%;height:100dvh;max-width:1320px;display:flex;align-items:center;justify-content:center;gap:12px;padding:30px;will-change:transform}
+    
+    main{width:100%;height:100dvh;max-width:1320px;display:flex;align-items:center;justify-content:center;gap:12px;padding:20px 30px;will-change:transform}
     #svg-container{flex:1.25;width:100%;height:100%;display:flex;align-items:center;justify-content:center;order:1;position:relative;overflow:hidden}
     #svg{width:100%;height:100%;filter:drop-shadow(0 10px 20px rgba(0,0,0,.9));transform:translateZ(0)}
+    
     #preview-container{flex:1.1;width:100%;max-width:680px;aspect-ratio:4/3;max-height:80vh;background:var(--panel);border:2px solid var(--p);border-radius:12px;box-shadow:0 0 25px var(--pg),inset 0 0 25px #000;display:flex;align-items:center;justify-content:center;padding:6px;position:relative;overflow:hidden;backdrop-filter:blur(12px);order:2;transform:translateZ(0)}
     #preview-img{width:100%;height:100%;object-fit:contain;transition:opacity .15s,transform .15s;will-change:transform,opacity}
     #preview-img.loading{opacity:.4;transform:scale(.98)}
@@ -25,20 +30,23 @@
     .fav-star-btn.active,#preview-container:hover .fav-star-btn.active{opacity:1;color:var(--a);transform:scale(1.15);filter:drop-shadow(0 0 8px rgba(251,191,36,.8))}
     #gp-badge{width:20px;height:20px;fill:#4ade80;filter:drop-shadow(0 0 6px rgba(74,222,128,.8));display:none}
 
-    .hdr-btn-wrap{position:absolute;z-index:100;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s,filter .15s}
-    .hdr-btn-wrap:hover{transform:scale(1.1);filter:drop-shadow(0 0 6px var(--ca))}
+    /* Header buttons locked positioning */
+    .hdr-btn-wrap{position:absolute;z-index:100;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s,filter .15s,opacity .2s;width:32px;height:32px;max-width:42px;max-height:42px;min-width:20px;min-height:20px;overflow:hidden;box-sizing:border-box;opacity:0;top:0;left:0}
+    .hdr-btn-wrap.ready{opacity:1}
+    .hdr-btn-wrap:hover{transform:translate(-50%,-50%) scale(1.12);filter:drop-shadow(0 0 6px var(--ca))}
     .img-box{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:4px;overflow:hidden;flex-shrink:0}
-    .img-box img{width:100%;height:100%;object-fit:contain;display:block}
+    .img-box img{width:100%;height:100%;object-fit:contain}
     .avatar-box{border-radius:50%}
-    .avatar-box img{object-fit:cover;border:1.5px solid #4ade80;border-radius:50%;aspect-ratio:1/1}
+    .avatar-box img{object-fit:cover;border:1.5px solid #4ade80;border-radius:50%;aspect-ratio:1/1;width:100%;height:100%}
     .avatar-box svg{width:100%;height:100%;display:block}
 
+    /* Dropdown Menus */
     .dropdown-menu{display:none;position:fixed;z-index:260;background:rgba(15,23,42,.98);border:1.5px solid var(--ca);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.9);max-height:60vh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;backdrop-filter:blur(12px);padding:8px;flex-direction:column;gap:4px;scrollbar-width:thin;scrollbar-color:var(--ca) transparent}
     .dropdown-menu::-webkit-scrollbar{width:5px}
     .dropdown-menu::-webkit-scrollbar-thumb{background:var(--ca);border-radius:4px}
     .dropdown-menu.active{display:flex}
-    #menu-dropdown{width:250px;max-width:85vw}
-    #user-menu-dropdown{min-width:210px;max-height:70vh}
+    #menu-dropdown{width:260px;max-width:88vw}
+    #user-menu-dropdown{min-width:220px;max-height:70vh}
     .menu-header{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.15);margin-bottom:6px;font-size:13px;color:var(--a);font-weight:bold;line-height:1.3;white-space:normal;word-break:break-word;position:sticky;top:0;background:#0f172a;z-index:10;display:flex;align-items:center;gap:10px}
     .menu-item{display:flex;align-items:center;gap:10px;padding:8px 10px;color:#e2e8f0;font:700 14px 'Rajdhani',sans-serif;border-radius:6px;cursor:pointer;transition:all .15s}
     .menu-item:hover,.menu-item.active{background:rgba(56,189,248,.2);color:#fff}
@@ -47,6 +55,7 @@
     .menu-logo-box img{width:100%;height:100%;object-fit:contain}
     .menu-item svg{width:20px;height:20px;object-fit:contain;flex-shrink:0;fill:currentColor}
 
+    /* Modal Help & Player */
     #help-modal{display:none;position:fixed;inset:0;z-index:320;background:rgba(5,1,1,.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:12px}
     #help-modal.active{display:flex}
     .help-card{width:100%;max-width:620px;max-height:85vh;background:rgba(15,23,42,.98);border:2px solid var(--ca);border-radius:14px;box-shadow:0 0 30px rgba(56,189,248,.3);display:flex;flex-direction:column;overflow:hidden}
@@ -67,6 +76,7 @@
     #search-input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:#fff;font:700 15px 'Rajdhani',sans-serif}
     .clear-btn{cursor:pointer;color:#94a3b8;font:700 14px 'Rajdhani',sans-serif;padding:2px 6px}
     .clear-btn:hover{color:#ef4444}
+    
     #game-player-modal{display:none;position:fixed;inset:0;z-index:300;background:#000;flex-direction:column}
     #game-player-modal.active{display:flex}
     #player-toolbar{height:46px;background:#0f172a;border-bottom:2px solid var(--p);display:flex;align-items:center;justify-content:space-between;padding:0 10px;gap:8px}
@@ -74,8 +84,10 @@
     .player-btn{background:#1e293b;border:1px solid var(--p);color:#fff;padding:5px 9px;border-radius:6px;cursor:pointer;font:700 11px 'Orbitron',sans-serif}
     .player-btn:hover{background:var(--p)}
     #game-frame{width:100%;height:calc(100% - 46px);border:none;background:#000}
+    
     .tn{font:700 18px 'Rajdhani',sans-serif;fill:#e2e8f0}
     .ta{font:800 20px 'Rajdhani',sans-serif;fill:#fff;filter:drop-shadow(0 2px 4px rgba(0,0,0,.95))}
+    
     @media (max-width:820px),(max-aspect-ratio:1/1){
       main{flex-direction:column;justify-content:flex-start;gap:6px;padding:6px}
       #preview-container{order:1;width:100%;height:32vh;min-height:180px;max-height:280px;aspect-ratio:auto;flex-shrink:0;padding:4px}
@@ -85,12 +97,12 @@
   </style>
 </head>
 <body>
-  <div id="loader"><div class="spin"></div><p id="ld-t">ĐANG TẢI...</p></div>
   <main>
     <div id="svg-container">
+      <!-- Header Action Buttons -->
       <div id="hdr-logo-btn" class="hdr-btn-wrap" onclick="toggleMenuModal(event)" title="Chọn hệ máy">
         <div class="img-box">
-          <img id="hdr-logo-img" src="" alt="System Logo" onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/dot-art/png/FBNeo%20-%20Arcade%20Games.png';" />
+          <img id="hdr-logo-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2338bdf8'%3E%3Cpath d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm-4 12v-2h2v2H8zm8 0h-2v-2h2v2zm2-5H6v-2h12v2z'/%3E%3C/svg%3E" alt="System Logo" onerror="this.onerror=null;this.src=FALLBACK_ARCADE_SVG;" />
         </div>
       </div>
 
@@ -105,6 +117,7 @@
         </div>
       </div>
 
+      <!-- Dropdown Menus -->
       <div id="menu-dropdown" class="dropdown-menu"></div>
 
       <div id="user-menu-dropdown" class="dropdown-menu">
@@ -140,12 +153,14 @@
         </div>
       </div>
 
+      <!-- Inline Search Input -->
       <div id="inline-search-bar">
         <svg viewBox="0 0 24 24" fill="var(--ca)"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
         <input type="text" id="search-input" placeholder="Nhập tên game..." oninput="onSearchInput(this.value)" autocomplete="off"/>
         <span class="clear-btn" onclick="closeInlineSearch(true)">✕</span>
       </div>
       
+      <!-- Main Interactive SVG Cabinet -->
       <svg id="svg" viewBox="0 0 540 650" preserveAspectRatio="none">
         <defs>
           <linearGradient id="gn"><stop offset="0%" stop-color="#1e293b"/><stop offset="50%" stop-color="#334155"/><stop offset="100%" stop-color="#1e293b"/></linearGradient>
@@ -158,7 +173,9 @@
       </svg>
     </div>
     
+    <!-- Preview Box -->
     <div id="preview-container">
+      <div id="preview-loader"><div class="spin"></div><span id="ld-t">ĐANG TẢI DỮ LIỆU...</span></div>
       <div class="preview-badges">
         <svg id="gp-badge" viewBox="0 0 24 24" title="Tay cầm đã kết nối">
           <path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H9v2H7v-2H5v-2h2V9h2v2h2v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
@@ -169,6 +186,7 @@
     </div>
   </main>
 
+  <!-- Modals -->
   <div id="help-modal">
     <div class="help-card">
       <div class="help-header">
@@ -240,6 +258,7 @@
     const CACHE_TTL = 43200000;
     const EMPTY_GIF = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
     const PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='none' stroke='%23f97316' stroke-width='1.5'%3E%3Crect x='2' y='2' width='20' height='20' rx='4'/%3E%3Cpath d='M8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z'/%3E%3Cpath d='m21 15-5-5L5 21'/%3E%3C/svg%3E";
+    const FALLBACK_ARCADE_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2338bdf8'%3E%3Cpath d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm-4 12v-2h2v2H8zm8 0h-2v-2h2v2zm2-5H6v-2h12v2z'/%3E%3C/svg%3E";
 
     const GAME_SOURCES = [
       { owner: "longhai", repo: "emu", branch: "main" },
@@ -248,7 +267,6 @@
 
     const VALID_ROM_EXTS = new Set(['zip','7z','rar','chd','iso','bin','pbp','cso','rvz','img','cue','z64','n64','v64','nes','snes','smc','sfc','gba','gbc','gb','md','gen','smd','pce','gg','sms','a26','a78','lnx','ngp','ngc','ws','wsc','m3u','gcm','gcz','wbfs','wad']);
 
-    /* Compact profiles: [keys, logo, name, core, libretroSys] */
     const SYSTEM_PROFILES = [
       [["arcade","cps1","cps2","cps3","fbneo","fba","mame"], "FBNeo - Arcade Games.png", "Arcade", "arcade", "FBNeo - Arcade Games"],
       [["neogeo","neo geo","ng"], "SNK - Neo Geo.png", "Neo Geo", "arcade", "SNK - Neo Geo"],
@@ -285,14 +303,53 @@
     const imgCache = new Map(), failedUrls = new Set();
     let currentPreviewToken = 0;
 
-    function cacheSet(k, v) {
-      if (imgCache.size >= 150) imgCache.delete(imgCache.keys().next().value);
-      imgCache.set(k, v);
+    const PERSISTENT_IMG_CACHE_KEY = "pandora_img_urls_v1";
+    let persistentImgMap = {};
+    try {
+      persistentImgMap = JSON.parse(localStorage.getItem(PERSISTENT_IMG_CACHE_KEY) || "{}");
+    } catch(e) { persistentImgMap = {}; }
+
+    function savePersistentImgMap() {
+      try {
+        const keys = Object.keys(persistentImgMap);
+        if (keys.length > 1200) {
+          keys.slice(0, 300).forEach(k => delete persistentImgMap[k]);
+        }
+        localStorage.setItem(PERSISTENT_IMG_CACHE_KEY, JSON.stringify(persistentImgMap));
+      } catch(e) {}
     }
 
+    function cacheSet(k, v) {
+      if (imgCache.size >= 200) imgCache.delete(imgCache.keys().next().value);
+      imgCache.set(k, v);
+      if (v && v !== PLACEHOLDER_SVG) {
+        persistentImgMap[k] = v;
+        savePersistentImgMap();
+      }
+    }
+
+    // Default placeholders for immediate rendering without waiting for networks
+    const initialPlaceholderGames = Array.from({ length: 8 }, (_, i) => ({
+      name: "",
+      fullName: `placeholder_${i}`
+    }));
+
     const state = {
-      datList: [], currentDatIdx: 0, gamesByCat: {}, allGames: [], filteredGames: [], selIdx: 0, topIdx: 0, slots: [],
-      searchQuery: "", showFavOnly: false, showMainOnly: false, datNameMap: {}, datOrderMap: {}, datCloneMap: {},
+      datList: SYSTEM_PROFILES.map(([_, img, name, core, sys]) => ({
+        name: name,
+        displayName: name,
+        logo: ASSETS_BASE + encodeURIComponent(img),
+        system: name,
+        core: core,
+        libretroSys: sys
+      })), 
+      currentDatIdx: 0, gamesByCat: {}, 
+      allGames: initialPlaceholderGames, 
+      filteredGames: initialPlaceholderGames, 
+      selIdx: 0, topIdx: 0, slots: [],
+      searchQuery: "", showFavOnly: false, 
+      showMainOnly: localStorage.getItem('pandora_show_main_only') === 'true',
+      datNameMap: {}, datOrderMap: {}, datCloneMap: {},
       favorites: JSON.parse(localStorage.getItem('pandora_favs') || '[]'),
       isCurved: localStorage.getItem('pandora_curved') !== null ? localStorage.getItem('pandora_curved') === 'true' : !(window.innerWidth < 820 || window.innerHeight > window.innerWidth),
       numSlots: 5, gamepadConnected: false, gpLastTime: 0, lastGpBtn: {}, resizeTimer: null
@@ -321,10 +378,17 @@
     function posMenu(menu, targetBtn, isRightAlign = false) {
       if (!menu || !targetBtn) return;
       const rect = targetBtn.getBoundingClientRect();
-      const topPos = rect.bottom + 6;
+      const topPos = rect.bottom + 8;
       menu.style.top = `${topPos}px`;
-      if (isRightAlign) { menu.style.right = `${Math.max(10, window.innerWidth - rect.right)}px`; menu.style.left = 'auto'; }
-      else menu.style.left = `${Math.max(10, rect.left)}px`;
+      if (isRightAlign) {
+        const rightVal = Math.max(10, window.innerWidth - rect.right - 10);
+        menu.style.right = `${rightVal}px`;
+        menu.style.left = 'auto';
+      } else {
+        const leftVal = Math.max(10, Math.min(rect.left - 10, window.innerWidth - 270));
+        menu.style.left = `${leftVal}px`;
+        menu.style.right = 'auto';
+      }
       menu.style.maxHeight = `${Math.max(150, window.innerHeight - topPos - 16)}px`;
     }
 
@@ -381,7 +445,7 @@
 
     async function syncFavsFromDrive() {
       if (!accessToken) return;
-      showLoader("ĐANG ĐỒNG BỘ CLOUD...");
+      showLoader("ĐỒNG BỘ CLOUD...");
       try {
         const listRes = await fetch("https://www.googleapis.com/drive/v3/files?spaces=appDataFolder", { headers: { Authorization: `Bearer ${accessToken}` } });
         if (listRes.status === 401) {
@@ -410,7 +474,7 @@
       try {
         const fileData = JSON.stringify(state.favorites);
         if (driveFileId) {
-          await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
+          await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?uploadType=media`, {
             method: 'PATCH', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }, body: fileData
           });
         } else {
@@ -523,25 +587,42 @@
           if (!resp.ok) continue;
           const parsed = parseDatContent(await resp.text());
           if (Object.keys(parsed.map).length > 0) {
-            state.datNameMap = parsed.map; 
-            state.datOrderMap = parsed.order;
-            state.datCloneMap = parsed.cloneMap;
-            Storage.set(cacheKey, parsed); return;
+            state.datNameMap = parsed.map;
+            state.datOrderMap = parsed.order || {};
+            state.datCloneMap = parsed.cloneMap || {};
+            Storage.set(cacheKey, parsed);
+            return;
           }
         } catch (e) {}
       }
     }
 
-    function getDisplayName(r) {
-      if (!r) return "";
-      const clean = cleanTitle(r).toLowerCase().trim();
-      const noTag = clean.replace(/[\(\[\<].*?[\)\]\>]/g, '').trim();
-      for (const k of [r.toLowerCase().trim(), clean, noTag]) { if (k && state.datNameMap[k]) return state.datNameMap[k]; }
-      return r;
+    function isCloneGame(g) {
+      if (!g) return false;
+      const clean = cleanTitle(g.fullName).toLowerCase().trim();
+      const rawKey = g.fullName.toLowerCase().trim().replace(/\.[^/.]+$/, '');
+      if (state.datCloneMap[rawKey] || state.datCloneMap[clean]) return true;
+      return /[\(\[](clone|alt|bootleg|hack|unl|beta|proto|demo|sample)/i.test(g.fullName);
     }
 
-    const showLoader = m => { $('loader').style.display = 'flex'; $('ld-t').innerText = m; };
-    const hideLoader = () => { $('loader').style.display = 'none'; };
+    function getDisplayName(rawTitle) {
+      if (!rawTitle) return "";
+      const kLow = rawTitle.toLowerCase().trim();
+      const kNoExt = kLow.replace(/\.[^/.]+$/, '');
+      return state.datNameMap[kLow] || state.datNameMap[kNoExt] || rawTitle;
+    }
+
+    const showLoader = m => {
+      const pl = $('preview-loader');
+      if (pl) {
+        pl.style.display = 'flex';
+        if ($('ld-t')) $('ld-t').innerText = m;
+      }
+    };
+    const hideLoader = () => {
+      const pl = $('preview-loader');
+      if (pl) pl.style.display = 'none';
+    };
 
     function calcNumSlots() {
       const h = $('svg-container')?.clientHeight || (window.innerHeight * 0.55);
@@ -577,15 +658,16 @@
       const cacheKey = "pandora_full_db_v12";
       if (!forceReload) {
         const cached = Storage.get(cacheKey);
-        // Chỉ sử dụng cache khi cache đầy đủ (nhiều hơn 1 hệ máy)
         if (cached?.datList?.length > 1 && cached?.gamesByCat) {
           state.datList = processCats(cached.datList);
           state.gamesByCat = cached.gamesByCat;
           state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
           const currCat = state.datList[state.currentDatIdx];
           state.allGames = state.gamesByCat[currCat?.name] || [];
-          filterGames(false); restorePos(); hideLoader(); drawAll();
-          if (currCat) loadDatMap(currCat.name).then(() => updateNames());
+          
+          state.datNameMap = {}; state.datOrderMap = {}; state.datCloneMap = {};
+          if (currCat) await loadDatMap(currCat.name);
+          updateNames(); restorePos(); hideLoader(); drawAll();
           return;
         }
       }
@@ -593,7 +675,6 @@
       try {
         const gamesByCat = {}, catMap = new Map();
 
-        // Tải dữ liệu song song từ tất cả các nguồn
         const sourcePromises = GAME_SOURCES.map(async (source) => {
           try {
             const resp = await fetch(`https://api.github.com/repos/${source.owner}/${source.repo}/git/trees/${source.branch || "main"}?recursive=1`);
@@ -650,7 +731,6 @@
           state.gamesByCat[catName] = gamesByCat[catName].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base', numeric: true }));
         }
 
-        // Chỉ lưu vào cache khi danh sách hệ máy tải về đầy đủ (> 1 hệ)
         if (rawCatList.length > 1) {
           Storage.set(cacheKey, { datList: rawCatList, gamesByCat: state.gamesByCat });
         }
@@ -659,9 +739,10 @@
         const currCat = state.datList[state.currentDatIdx];
         state.allGames = state.gamesByCat[currCat?.name] || [];
 
-        filterGames(false); restorePos(); hideLoader(); drawAll();
-        if (currCat) { await loadDatMap(currCat.name); updateNames(); }
-      } catch (e) { showLoader("LỖI TẢI: " + e.message); }
+        state.datNameMap = {}; state.datOrderMap = {}; state.datCloneMap = {};
+        if (currCat) await loadDatMap(currCat.name);
+        updateNames(); restorePos(); hideLoader(); drawAll();
+      } catch (e) { showLoader("HOÀN TẤT VỚI DỮ LIỆU CÓ SẴN"); setTimeout(hideLoader, 1500); }
     }
 
     function updateNames() {
@@ -694,15 +775,8 @@
 
     function toggleMainOnlyFilter() {
       state.showMainOnly = !state.showMainOnly;
+      localStorage.setItem('pandora_show_main_only', state.showMainOnly);
       filterGames(true); drawAll();
-    }
-
-    function isCloneGame(g) {
-      if (!g) return false;
-      const clean = cleanTitle(g.fullName).toLowerCase().trim();
-      const rawKey = g.fullName.toLowerCase().trim().replace(/\.[^/.]+$/, '');
-      if (state.datCloneMap[rawKey] || state.datCloneMap[clean]) return true;
-      return /[\(\[](clone|alt|bootleg|hack|unl|beta|proto|demo|sample)/i.test(g.fullName);
     }
 
     function filterGames(preserve = true) {
@@ -726,7 +800,7 @@
       const itemsHtml = state.datList.map((item, i) =>
         `<div class="menu-item ${i === state.currentDatIdx ? 'active' : ''}" onclick="switchCat(${i})">
           <div class="menu-logo-box">
-            <img src="${item.logo}" alt="${item.displayName}" onerror="this.onerror=null;this.src='${ASSETS_BASE}FBNeo%20-%20Arcade%20Games.png';" />
+            <img src="${item.logo}" alt="${item.displayName}" onerror="this.onerror=null;this.src=FALLBACK_ARCADE_SVG;" />
           </div>
           <span>${item.displayName}</span>
         </div>`
@@ -746,7 +820,7 @@
       }
     };
 
-    function switchCat(i) {
+    async function switchCat(i) {
       if (i === state.currentDatIdx) return closeMenuModal();
       state.currentDatIdx = i;
       const cat = state.datList[i];
@@ -756,61 +830,97 @@
       state.allGames = state.gamesByCat[cat.name] || [];
       state.searchQuery = "";
       if ($('search-input')) $('search-input').value = "";
+      
+      state.datNameMap = {};
+      state.datOrderMap = {};
+      state.datCloneMap = {};
+      
       filterGames(false); restorePos(); drawAll();
-      loadDatMap(cat.name).then(() => updateNames());
+      await loadDatMap(cat.name);
+      updateNames();
     }
 
     function drawAll() {
-      requestAnimationFrame(() => { drawHeader(); drawSlots(); render(); });
+      updateSvgViewBox();
+      drawHeader(); 
+      drawSlots(); 
+      render();
     }
 
     function drawHeader() {
-      if (!state.datList.length) return;
-      updateSvgViewBox();
       const p = getGeom(), xl0 = getX(6, p), xl1 = getX(54, p), xlMid = getX(30, p);
+      const isPlaceholder = state.filteredGames.length && state.filteredGames[0]?.fullName?.startsWith('placeholder_');
+      const cntText = isPlaceholder ? 'ĐANG TẢI DỮ LIỆU...' : (state.filteredGames.length ? `${state.showFavOnly ? 'YÊU THÍCH' : (state.showMainOnly ? 'GAME CHÍNH' : 'GAME')}: ${state.selIdx + 1} / ${state.filteredGames.length}` : (state.datList.length ? 'GAME: 0 / 0' : 'ĐANG TẢI...'));
 
       $('hg').innerHTML = `
         <polygon points="${xl0.toFixed(1)},6 ${(xl0 + p.W).toFixed(1)},6 ${(xl1 + p.W).toFixed(1)},54 ${xl1.toFixed(1)},54" fill="url(#gh)" stroke="#475569" stroke-width="1.5"/>
         <line x1="${xl0.toFixed(1)}" y1="6" x2="${xl1.toFixed(1)}" y2="54" stroke="#38bdf8" stroke-width="4"/>
-        <text id="cnt-txt" x="${(xlMid + 56).toFixed(1)}" y="30" dominant-baseline="central" fill="#fbbf24" font-size="15" font-weight="bold" font-family="Orbitron">GAME: 0 / 0</text>`;
+        <text id="cnt-txt" x="${(xlMid + 56).toFixed(1)}" y="30" dominant-baseline="central" fill="#fbbf24" font-size="14" font-weight="bold" font-family="Orbitron">${cntText}</text>`;
 
       updateHeaderOverlays();
-      if ($('menu-dropdown').classList.contains('active')) posMenu($('menu-dropdown'), $('hdr-logo-btn'));
-      if ($('user-menu-dropdown').classList.contains('active')) posMenu($('user-menu-dropdown'), $('hdr-avatar-btn'), true);
     }
 
     function updateHeaderOverlays() {
-      if ($('hdr-logo-img')) $('hdr-logo-img').src = state.datList[state.currentDatIdx]?.logo || (ASSETS_BASE + "FBNeo - Arcade Games.png");
+      if ($('hdr-logo-img')) $('hdr-logo-img').src = state.datList[state.currentDatIdx]?.logo || FALLBACK_ARCADE_SVG;
       const aImg = $('hdr-avatar-img'), aSvg = $('hdr-avatar-svg');
       if (currentUserProfile?.picture) { aImg.src = currentUserProfile.picture; aImg.style.display = 'block'; aSvg.style.display = 'none'; }
       else { aImg.style.display = 'none'; aSvg.style.display = 'block'; }
+      
       posOverlays();
     }
 
     function posOverlays() {
-      const c = $('svg-container'); if (!c) return;
-      const p = getGeom(), xlMid = getX(30, p), rxMid = xlMid + p.W;
-      const rect = c.getBoundingClientRect();
-      const scaleX = rect.width / 540, scaleY = rect.height / (64 + state.numSlots * 54), scaleMin = Math.min(scaleX, scaleY);
-      const centerYPx = 30 * scaleY;
+      const c = $('svg-container'), svg = $('svg'); if (!c || !svg) return;
+      const p = getGeom();
+      const viewBoxH = 64 + state.numSlots * 54;
+      const xlMid = getX(30, p), rxMid = xlMid + p.W;
+      
+      const rect = svg.getBoundingClientRect();
+      const cRect = c.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
 
-      const setBtnPos = (btn, x, sz) => {
+      const scaleX = rect.width / 540;
+      const scaleY = rect.height / viewBoxH;
+      const scaleMin = Math.min(scaleX, scaleY);
+
+      const svgOffsetX = rect.left - cRect.left;
+      const svgOffsetY = rect.top - cRect.top;
+
+      const setBtnPos = (btn, xSvg, ySvg, sz) => {
         if (!btn) return;
-        const size = sz * scaleMin;
-        btn.style.left = `${x * scaleX}px`; btn.style.top = `${centerYPx - (size / 2)}px`;
-        btn.style.width = btn.style.height = `${size}px`;
+        const pixelX = svgOffsetX + (xSvg / 540) * rect.width;
+        const pixelY = svgOffsetY + (ySvg / viewBoxH) * rect.height;
+        const size = Math.max(20, Math.min(42, Math.round(sz * scaleMin)));
+        
+        btn.style.left = `${pixelX}px`;
+        btn.style.top = `${pixelY}px`;
+        btn.style.transform = 'translate(-50%, -50%)';
+        btn.style.width = `${size}px`;
+        btn.style.height = `${size}px`;
+        btn.classList.add('ready');
       };
 
-      setBtnPos($('hdr-logo-btn'), xlMid + 12, 34);
-      setBtnPos($('hdr-search-btn'), rxMid - 70, 28);
-      setBtnPos($('hdr-avatar-btn'), rxMid - 36, 32);
+      setBtnPos($('hdr-logo-btn'), xlMid + 28, 30, 34);
+      setBtnPos($('hdr-search-btn'), rxMid - 56, 30, 28);
+      setBtnPos($('hdr-avatar-btn'), rxMid - 22, 30, 32);
 
       const bar = $('inline-search-bar');
       if (bar?.classList.contains('active')) {
-        const startX = xlMid + 50, endX = rxMid - 76, barH = 36 * scaleY;
-        bar.style.left = `${startX * scaleX}px`; bar.style.top = `${centerYPx - (barH / 2)}px`;
-        bar.style.width = `${Math.max(120, endX - startX) * scaleX}px`; bar.style.height = `${barH}px`;
+        const startX = xlMid + 50, endX = rxMid - 76;
+        const pixelX = svgOffsetX + (startX / 540) * rect.width;
+        const pixelY = svgOffsetY + (30 / viewBoxH) * rect.height;
+        const widthPx = ((endX - startX) / 540) * rect.width;
+        const barH = Math.max(26, Math.min(40, Math.round(34 * scaleY)));
+        
+        bar.style.left = `${pixelX}px`;
+        bar.style.top = `${pixelY}px`;
+        bar.style.transform = 'translateY(-50%)';
+        bar.style.width = `${widthPx}px`;
+        bar.style.height = `${barH}px`;
       }
+
+      if ($('menu-dropdown').classList.contains('active')) posMenu($('menu-dropdown'), $('hdr-logo-btn'));
+      if ($('user-menu-dropdown').classList.contains('active')) posMenu($('user-menu-dropdown'), $('hdr-avatar-btn'), true);
     }
 
     function toggleInlineSearch(e) {
@@ -857,7 +967,7 @@
     }
 
     function getPreviewCandidates(g) {
-      if (!g) return [];
+      if (!g || g.fullName?.startsWith('placeholder_')) return [];
       const cat = state.datList[state.currentDatIdx]; if (!cat) return [];
       const catFolder = encodeURIComponent(cat.folderName || cat.name), fileBase = g.fullName ? g.fullName.split('/').pop().replace(/\.[^/.]+$/, '') : '';
       const names = Array.from(new Set([cleanTitle(g.fullName), fileBase, g.name])).filter(Boolean);
@@ -871,53 +981,97 @@
       ]).filter(url => !failedUrls.has(url));
     }
 
-    function preloadNeighbors() {
-      [1, 2, 3, -1, -2].forEach(offset => {
-        const targetGame = state.filteredGames[state.selIdx + offset], k = getGameKey(targetGame);
-        if (targetGame && k && !imgCache.has(k)) {
-          const cand = getPreviewCandidates(targetGame);
-          if (cand.length > 0) {
-            const temp = new Image();
-            temp.onload = () => cacheSet(k, cand[0]);
-            temp.onerror = () => failedUrls.add(cand[0]);
-            temp.src = cand[0];
-          }
+    function resolveAndCacheImage(g, onDone) {
+      if (!g || g.fullName?.startsWith('placeholder_')) return;
+      const key = getGameKey(g);
+      if (!key) return;
+
+      if (imgCache.has(key)) {
+        if (onDone) onDone(imgCache.get(key));
+        return;
+      }
+
+      if (persistentImgMap[key] && !failedUrls.has(persistentImgMap[key])) {
+        const pUrl = persistentImgMap[key];
+        imgCache.set(key, pUrl);
+        if (onDone) onDone(pUrl);
+        return;
+      }
+
+      const candidates = getPreviewCandidates(g);
+      if (!candidates.length) {
+        cacheSet(key, PLACEHOLDER_SVG);
+        if (onDone) onDone(PLACEHOLDER_SVG);
+        return;
+      }
+
+      let step = 0;
+      const tryNext = () => {
+        if (step < candidates.length) {
+          const url = candidates[step++];
+          if (failedUrls.has(url)) { tryNext(); return; }
+          const tempImg = new Image();
+          tempImg.onload = () => {
+            cacheSet(key, url);
+            if (onDone) onDone(url);
+          };
+          tempImg.onerror = () => {
+            failedUrls.add(url);
+            tryNext();
+          };
+          tempImg.src = url;
+        } else {
+          cacheSet(key, PLACEHOLDER_SVG);
+          if (onDone) onDone(PLACEHOLDER_SVG);
         }
+      };
+      tryNext();
+    }
+
+    function preloadNeighbors() {
+      [-2, -1, 1, 2, 3, 4, 5].forEach(offset => {
+        const targetGame = state.filteredGames[state.selIdx + offset];
+        if (targetGame) resolveAndCacheImage(targetGame);
       });
     }
 
     function updatePreview(g) {
       const img = $('preview-img'), favBtn = $('fav-btn');
-      if (!g) { img.src = EMPTY_GIF; if (favBtn) favBtn.style.display = 'none'; return; }
+      if (!g || g.fullName?.startsWith('placeholder_')) { img.src = EMPTY_GIF; if (favBtn) favBtn.style.display = 'none'; return; }
       if (favBtn) favBtn.style.display = 'block';
 
       const key = getGameKey(g), token = ++currentPreviewToken;
+
       if (imgCache.has(key)) {
-        img.src = imgCache.get(key); img.classList.remove('loading'); preloadNeighbors(); return;
+        img.src = imgCache.get(key);
+        img.classList.remove('loading');
+        preloadNeighbors();
+        return;
       }
 
-      img.src = EMPTY_GIF; img.classList.add('loading');
-      const candidates = getPreviewCandidates(g);
-      if (!candidates.length) { img.src = PLACEHOLDER_SVG; img.classList.remove('loading'); return; }
+      if (persistentImgMap[key] && !failedUrls.has(persistentImgMap[key])) {
+        const pUrl = persistentImgMap[key];
+        imgCache.set(key, pUrl);
+        img.src = pUrl;
+        img.classList.remove('loading');
+        preloadNeighbors();
+        return;
+      }
 
-      let step = 0;
-      const tryNext = () => {
-        if (token !== currentPreviewToken) return;
-        if (step < candidates.length) {
-          const url = candidates[step++], tempImg = new Image();
-          tempImg.onload = () => {
-            if (token !== currentPreviewToken) return;
-            cacheSet(key, url); img.src = url; img.classList.remove('loading'); preloadNeighbors();
-          };
-          tempImg.onerror = () => { failedUrls.add(url); if (token === currentPreviewToken) tryNext(); };
-          tempImg.src = url;
-        } else { cacheSet(key, PLACEHOLDER_SVG); img.src = PLACEHOLDER_SVG; img.classList.remove('loading'); }
-      };
-      tryNext();
+      img.src = EMPTY_GIF;
+      img.classList.add('loading');
+
+      resolveAndCacheImage(g, (winUrl) => {
+        if (token === currentPreviewToken) {
+          img.src = winUrl;
+          img.classList.remove('loading');
+          preloadNeighbors();
+        }
+      });
     }
 
     function buildEmuUrl(g, c) {
-      if (!g?.fullName) return "";
+      if (!g?.fullName || g.fullName.startsWith('placeholder_')) return "";
       let romUrl = g.romUrl || g.fullName;
       try { romUrl = decodeURIComponent(romUrl); } catch (e) {}
       return `${EMULATOR_URL}?core=${g.core || c?.core || "arcade"}&rom=${encodeURI(romUrl)}`;
@@ -925,7 +1079,7 @@
 
     function launchCurrentGame() {
       const g = state.filteredGames[state.selIdx], c = state.datList[state.currentDatIdx];
-      if (!g?.fullName) return;
+      if (!g?.fullName || g.fullName.startsWith('placeholder_')) return;
       $('player-title').textContent = `${g.name.toUpperCase()} [${c?.displayName || c?.name || ''}]`;
       $('game-frame').src = buildEmuUrl(g, c);
       $('game-player-modal').classList.add('active');
@@ -956,7 +1110,9 @@
     }
 
     function render() {
+      const isPlaceholder = state.filteredGames.length && state.filteredGames[0]?.fullName?.startsWith('placeholder_');
       const label = state.showFavOnly ? 'YÊU THÍCH' : (state.showMainOnly ? 'GAME CHÍNH' : 'GAME');
+      
       if (!state.filteredGames.length) {
         if ($('cnt-txt')) $('cnt-txt').textContent = `${label}: 0 / 0`;
         state.slots.forEach(s => s.g.style.display = "none");
@@ -967,8 +1123,11 @@
       else if (state.selIdx >= state.topIdx + state.numSlots) state.topIdx = state.selIdx - state.numSlots + 1;
       state.topIdx = Math.max(0, Math.min(state.topIdx, Math.max(0, state.filteredGames.length - state.numSlots)));
 
-      if ($('cnt-txt')) $('cnt-txt').textContent = `${label}: ${state.selIdx + 1} / ${state.filteredGames.length}`;
-      if (state.datList[state.currentDatIdx] && state.filteredGames[state.selIdx]?.fullName) {
+      if ($('cnt-txt')) {
+        $('cnt-txt').textContent = isPlaceholder ? 'ĐANG TẢI DỮ LIỆU...' : `${label}: ${state.selIdx + 1} / ${state.filteredGames.length}`;
+      }
+
+      if (!isPlaceholder && state.datList[state.currentDatIdx] && state.filteredGames[state.selIdx]?.fullName) {
         localStorage.setItem("pandora_lg_" + state.datList[state.currentDatIdx].name, state.filteredGames[state.selIdx].fullName);
       }
 
@@ -1033,13 +1192,19 @@
     }
 
     function bindEvents() {
+      // Use ResizeObserver for instant alignment without layout glitches
+      const svgContainer = $('svg-container');
+      if (svgContainer && window.ResizeObserver) {
+        new ResizeObserver(() => {
+          posOverlays();
+        }).observe(svgContainer);
+      }
+
       window.onresize = () => {
         clearTimeout(state.resizeTimer);
         state.resizeTimer = setTimeout(() => { 
           if (state.datList.length) drawAll(); 
-          if ($('menu-dropdown').classList.contains('active')) posMenu($('menu-dropdown'), $('hdr-logo-btn'));
-          if ($('user-menu-dropdown').classList.contains('active')) posMenu($('user-menu-dropdown'), $('hdr-avatar-btn'), true);
-        }, 100);
+        }, 80);
       };
 
       document.addEventListener('click', e => {
@@ -1155,8 +1320,12 @@
       requestAnimationFrame(pollGamepad);
     }
 
+    // Direct synchronous startup so interface displays immediately on load
     window.onload = () => { 
-      bindEvents(); loadFullDatabase(); requestAnimationFrame(pollGamepad);
+      bindEvents(); 
+      drawAll(); // Draw initial cabinet and placeholders synchronously
+      loadFullDatabase(); 
+      requestAnimationFrame(pollGamepad);
       const checkGSI = setInterval(() => {
         if (typeof google !== 'undefined' && google.accounts) {
           clearInterval(checkGSI); initGoogleDriveAuth();
