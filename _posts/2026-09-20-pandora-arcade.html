@@ -48,6 +48,12 @@
     .menu-item{display:flex;align-items:center;gap:10px;padding:8px 10px;color:#e2e8f0;font:700 14px 'Rajdhani',sans-serif;border-radius:6px;cursor:pointer;transition:all .15s}
     .menu-item:hover,.menu-item.active{background:rgba(56,189,248,.2);color:#fff}
     .menu-item.active{border-left:3px solid var(--ca)}
+    .menu-item.active svg,.menu-item.active .menu-logo-box img{filter:drop-shadow(0 0 8px var(--ca))}
+    .menu-item.active-glow{background:rgba(251,191,36,.18);color:#fff;border-left:3px solid var(--a)}
+    .menu-item.active-glow svg{fill:var(--a);color:var(--a);filter:drop-shadow(0 0 8px rgba(251,191,36,.9))}
+    .logout-icon-btn{background:transparent;border:none;color:#ef4444;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px;border-radius:6px;transition:all .2s;flex-shrink:0}
+    .logout-icon-btn:hover{background:rgba(239,68,68,.2);transform:scale(1.15);filter:drop-shadow(0 0 8px #ef4444)}
+    .logout-icon-btn svg{width:18px;height:18px;fill:currentColor}
     .menu-logo-box{width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;aspect-ratio:1/1}
     .menu-logo-box img{width:100%;height:100%;object-fit:contain}
     .menu-item svg{width:20px;height:20px;object-fit:contain;flex-shrink:0;fill:currentColor}
@@ -104,14 +110,19 @@
       </div>
       <div id="menu-dropdown" class="dropdown-menu"></div>
       <div id="user-menu-dropdown" class="dropdown-menu">
-        <div class="menu-header">
-          <div id="user-menu-avatar-wrap" class="img-box avatar-box" style="width:28px;height:28px;flex-shrink:0;display:none;"><img id="user-menu-avatar-img" src="" alt="Avatar"/></div>
-          <span id="user-menu-name">Khách (Chưa đăng nhập)</span>
+        <div class="menu-header" style="justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
+            <div id="user-menu-avatar-wrap" class="img-box avatar-box" style="width:28px;height:28px;flex-shrink:0;display:none;"><img id="user-menu-avatar-img" src="" alt="Avatar"/></div>
+            <span id="user-menu-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Khách (Chưa đăng nhập)</span>
+          </div>
+          <button id="logout-btn" class="logout-icon-btn" onclick="handleAuthClick()" title="Đăng xuất" style="display:none;">
+            <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+          </button>
         </div>
-        <div class="menu-item" onclick="handleAuthClick()"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg><span id="auth-btn-text">Đăng nhập Google</span></div>
-        <div class="menu-item" onclick="toggleFavFilter();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg><span id="fav-menu-text">Lọc Game Yêu Thích</span></div>
-        <div class="menu-item" onclick="toggleMainOnlyFilter();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm2 5h12v2H6zm3 5h6v2H9z"/></svg><span id="clone-menu-text">Chỉ Xem Game Chính</span></div>
-        <div class="menu-item" onclick="toggleLayoutMode();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M3 5v14h18V5H3zm16 12H5V7h14v10z"/></svg><span id="layout-menu-text">Chuyển Giao Diện</span></div>
+        <div id="auth-menu-item" class="menu-item" onclick="handleAuthClick()"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg><span id="auth-btn-text">Đăng nhập Google</span></div>
+        <div id="fav-menu-item" class="menu-item" onclick="toggleFavFilter();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg><span id="fav-menu-text">Lọc Game Yêu Thích</span></div>
+        <div id="clone-menu-item" class="menu-item" onclick="toggleMainOnlyFilter();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm2 5h12v2H6zm3 5h6v2H9z"/></svg><span id="clone-menu-text">Chỉ Xem Game Chính</span></div>
+        <div id="layout-menu-item" class="menu-item" onclick="toggleLayoutMode();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M3 5v14h18V5H3zm16 12H5V7h14v10z"/></svg><span id="layout-menu-text">Chuyển Giao Diện</span></div>
         <div class="menu-item" onclick="reloadDatabase();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg><span>Cập Nhật Dữ Liệu</span></div>
         <div class="menu-item" onclick="openHelpModal();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg><span>Hướng Dẫn Sử Dụng</span></div>
       </div>
@@ -292,10 +303,30 @@
       $('user-menu-name').textContent = currentUserProfile?.name || 'Khách (Chưa đăng nhập)';
       $('user-menu-avatar-wrap').style.display = currentUserProfile?.picture ? 'flex' : 'none';
       if (currentUserProfile?.picture) $('user-menu-avatar-img').src = currentUserProfile.picture;
-      $('auth-btn-text').textContent = currentUserProfile ? 'Đăng xuất' : 'Đăng nhập Google';
-      $('fav-menu-text').textContent = state.showFavOnly ? 'Hiện Tất Cả Game' : 'Chỉ Xem Yêu Thích';
-      $('clone-menu-text').textContent = state.showMainOnly ? 'Hiện Game Chính & Con' : 'Chỉ Xem Game Chính';
-      $('layout-menu-text').textContent = state.isCurved ? 'Giao Diện Phẳng' : 'Giao Diện Cong';
+
+      const logoutBtn = $('logout-btn');
+      if (logoutBtn) logoutBtn.style.display = currentUserProfile ? 'flex' : 'none';
+
+      const authItem = $('auth-menu-item');
+      if (authItem) authItem.style.display = currentUserProfile ? 'none' : 'flex';
+
+      const favItem = $('fav-menu-item');
+      if (favItem) {
+        favItem.classList.toggle('active-glow', state.showFavOnly);
+        $('fav-menu-text').textContent = state.showFavOnly ? 'Hiện Tất Cả Game' : 'Chỉ Xem Yêu Thích';
+      }
+
+      const cloneItem = $('clone-menu-item');
+      if (cloneItem) {
+        cloneItem.classList.toggle('active-glow', state.showMainOnly);
+        $('clone-menu-text').textContent = state.showMainOnly ? 'Chế Độ: Chỉ Game Chính' : 'Chế Độ: Tất Cả Game';
+      }
+
+      const layoutItem = $('layout-menu-item');
+      if (layoutItem) {
+        layoutItem.classList.toggle('active-glow', state.isCurved);
+        $('layout-menu-text').textContent = state.isCurved ? 'Giao Diện: Cong Arcade' : 'Giao Diện: Màn Phẳng';
+      }
 
       if (menu.classList.contains('active')) closeUserMenu();
       else { posMenu(menu, $('hdr-avatar-btn'), true); menu.classList.add('active'); }
