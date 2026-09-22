@@ -282,7 +282,7 @@
       if (v && v !== PLACEHOLDER_SVG) { persistentImgMap[k] = v; savePersistentImgMap(); }
     }
 
-    const initialPlaceholderGames = Array.from({ length: 8 }, (_, i) => ({ name: "", fullName: `placeholder_${i}` }));
+    const initialPlaceholderGames = Array.from({ length: 15 }, (_, i) => ({ name: "", fullName: `placeholder_${i}` }));
 
     const state = {
       datList: SYSTEM_PROFILES.map(([_, img, name, core, sys]) => ({ name, displayName: name, logo: ASSETS_BASE + encodeURIComponent(img), system: name, core, libretroSys: sys })), 
@@ -1184,6 +1184,7 @@
     window.onload = () => { 
       bindEvents(); 
       drawAll(); 
+      requestAnimationFrame(() => posOverlays());
       loadFullDatabase(); 
       requestAnimationFrame(pollGamepad);
       const checkGSI = setInterval(() => {
