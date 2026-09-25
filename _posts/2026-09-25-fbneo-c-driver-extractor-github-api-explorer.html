@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FBNeo C++ Driver Extractor & GitHub API Explorer</title>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-950: #080d1a; --bg-900: #0f172a; --bg-800: #1e293b;
+            --border: #334155; --text: #f8fafc; --muted: #94a3b8; --dim: #64748b;
+            --sky: #38bdf8; --emerald: #34d399; --amber: #fbbf24; --indigo: #818cf8; --purple: #c084fc;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; --rad: 8px; --rad-lg: 12px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg-900); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        body {
+            background: var(--bg-900); color: var(--text); font-family: var(--font);
+            height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; line-height: 1.3;
+        }
+
+        header { background: rgba(30,41,59,.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 30; }
+        .hdr-cnt { max-width: 1280px; margin: 0 auto; padding: .5rem .75rem; display: flex; flex-direction: column; gap: .4rem; }
+        @media (min-width: 640px) { .hdr-cnt { flex-direction: row; align-items: center; justify-content: space-between; padding: .6rem 1rem; } }
+
+        .brand-sec { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+        .brand-sub { display: flex; align-items: center; gap: .5rem; }
+        .brand-ico { padding: .35rem .5rem; background: linear-gradient(135deg, #0284c7, #4f46e5); border-radius: var(--rad); color: #fff; font-size: .85rem; }
+        .brand-ttl h1 { font-size: .9rem; font-weight: 700; color: #fff; white-space: nowrap; }
+        @media (min-width: 640px) { .brand-ttl h1 { font-size: 1rem; } }
+        
+        .hdr-desc { display: none; font-size: .7rem; color: var(--muted); }
+        @media (min-width: 640px) { .hdr-desc { display: block; } }
+
+        .badge-sys { font-size: .6rem; font-weight: 600; padding: .1rem .35rem; background: rgba(56,189,248,.15); color: var(--sky); border: 1px solid rgba(56,189,248,.3); border-radius: 99px; white-space: nowrap; }
+
+        .ctrl-sec { display: flex; align-items: center; gap: .35rem; width: 100%; flex-wrap: wrap; }
+        @media (min-width: 640px) { .ctrl-sec { width: auto; flex-wrap: nowrap; gap: .5rem; } }
+
+        .sel-wrap { position: relative; flex: 1; min-width: 110px; }
+        @media (min-width: 640px) { .sel-wrap { min-width: 150px; flex: none; } }
+
+        .c-select, .c-input, .c-filter, .c-textarea {
+            width: 100%; background: var(--bg-900); border: 1px solid var(--border);
+            border-radius: var(--rad); padding: .3rem .5rem; font-size: .75rem; color: var(--text); outline: none; transition: all .2s;
+        }
+        .c-select { color: var(--sky); font-weight: 600; appearance: none; padding-right: 1.5rem; cursor: pointer; text-transform: uppercase; }
+        .c-select:focus, .c-input:focus, .c-filter:focus, .c-textarea:focus { border-color: var(--sky); }
+        .sel-arr { position: absolute; right: .5rem; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: .65rem; pointer-events: none; }
+
+        .btn-p, .btn-s, .btn-a, .btn-em {
+            font-weight: 500; font-size: .725rem; padding: .35rem .6rem; border-radius: var(--rad); border: none; cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center; gap: .3rem; transition: all .2s; white-space: nowrap;
+        }
+        .btn-p { background: #0284c7; color: #fff; } .btn-p:hover { background: #0369a1; }
+        .btn-s { background: var(--border); color: #f1f5f9; } .btn-s:hover { background: #475569; }
+        .btn-a { background: #4f46e5; color: #fff; } .btn-a:hover { background: #4338ca; }
+        .btn-em { background: #059669; color: #fff; } .btn-em:hover { background: #047857; }
+
+        .btn-txt-mobile { display: none; }
+        @media (min-width: 480px) { .btn-txt-mobile { display: inline; } }
+
+        .chk-lbl { display: flex; align-items: center; gap: .25rem; font-size: .675rem; color: var(--muted); cursor: pointer; user-select: none; white-space: nowrap; }
+        .chk-lbl input { accent-color: var(--sky); cursor: pointer; }
+
+        main { flex: 1; min-height: 0; max-width: 1280px; width: 100%; margin: 0 auto; padding: .4rem .5rem; display: flex; flex-direction: column; gap: .4rem; overflow: hidden; }
+        @media (min-width: 640px) { main { padding: .6rem 1rem; gap: .5rem; } }
+
+        /* Mobile Responsive Stats Strip */
+        .stats-grid { 
+            display: flex; overflow-x: auto; gap: .4rem; flex-shrink: 0; padding-bottom: .2rem;
+            -webkit-overflow-scrolling: touch; scrollbar-width: none;
+        }
+        .stats-grid::-webkit-scrollbar { display: none; }
+
+        @media (min-width: 640px) { 
+            .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); overflow-x: visible; padding-bottom: 0; } 
+        }
+
+        .stat-card { 
+            background: rgba(30,41,59,.8); border: 1px solid var(--border); border-radius: var(--rad); 
+            padding: .35rem .5rem; display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+            min-width: 110px; flex-shrink: 0;
+        }
+        @media (min-width: 640px) { .stat-card { border-radius: var(--rad-lg); padding: .5rem .75rem; min-width: 0; flex-shrink: 1; } }
+
+        .stat-card.col-span-2 { min-width: 130px; }
+        @media (min-width: 640px) { .stat-card.col-span-2 { grid-column: span 1; min-width: 0; } }
+
+        .stat-lbl { font-size: .6rem; color: var(--muted); font-weight: 500; white-space: nowrap; }
+        .stat-val { font-size: .85rem; font-weight: 700; color: #fff; }
+        @media (min-width: 640px) { .stat-val { font-size: 1rem; } }
+        .stat-ico { padding: .25rem; border-radius: var(--rad); font-size: .7rem; display: flex; }
+        @media (min-width: 640px) { .stat-ico { padding: .35rem; font-size: .8rem; } }
+
+        .ic-sky { background: rgba(56,189,248,.1); color: var(--sky); }
+        .ic-em { background: rgba(52,211,153,.1); color: var(--emerald); }
+        .ic-amb { background: rgba(251,191,36,.1); color: var(--amber); }
+        .ic-ind { background: rgba(129,140,248,.1); color: var(--indigo); }
+        .ic-pur { background: rgba(192,132,252,.1); color: var(--purple); }
+
+        /* Filter Panel Compact for Mobile */
+        .flt-panel { background: rgba(30,41,59,.8); border: 1px solid var(--border); border-radius: var(--rad); padding: .4rem; flex-shrink: 0; }
+        @media (min-width: 640px) { .flt-panel { border-radius: var(--rad-lg); padding: .5rem; } }
+
+        .flt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .35rem; }
+        @media (min-width: 640px) { .flt-grid { grid-template-columns: 1.5fr 1fr 1fr; gap: .4rem; } }
+
+        .srch-wrap { position: relative; grid-column: span 2; }
+        @media (min-width: 640px) { .srch-wrap { grid-column: span 1; } }
+
+        .srch-ico { position: absolute; left: .5rem; top: 50%; transform: translateY(-50%); color: var(--dim); font-size: .65rem; }
+        .c-input { padding-left: 1.6rem; }
+
+        /* Table Area Maximize */
+        .tbl-card { flex: 1; min-height: 0; background: rgba(30,41,59,.8); border: 1px solid var(--border); border-radius: var(--rad); overflow: hidden; display: flex; flex-direction: column; }
+        @media (min-width: 640px) { .tbl-card { border-radius: var(--rad-lg); } }
+
+        .tbl-resp { flex: 1; overflow: auto; width: 100%; -webkit-overflow-scrolling: touch; }
+
+        .data-tbl { width: 100%; border-collapse: collapse; text-align: left; font-size: .7rem; color: #cbd5e1; }
+        @media (min-width: 640px) { .data-tbl { font-size: .75rem; } }
+
+        .data-tbl th { position: sticky; top: 0; z-index: 10; background: var(--bg-950); color: var(--muted); font-weight: 600; text-transform: uppercase; padding: .4rem .5rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        @media (min-width: 640px) { .data-tbl th { padding: .5rem .75rem; } }
+
+        .data-tbl th.sortable { cursor: pointer; } .data-tbl th.sortable:hover { color: var(--sky); }
+        .data-tbl td { padding: .35rem .5rem; border-bottom: 1px solid rgba(51,65,85,.4); vertical-align: middle; }
+        @media (min-width: 640px) { .data-tbl td { padding: .45rem .75rem; } }
+
+        .data-tbl tbody tr:hover { background: rgba(51,65,85,.3); }
+
+        .badge { display: inline-block; padding: .1rem .35rem; border-radius: 4px; font-size: .6rem; font-weight: 500; white-space: nowrap; border: 1px solid transparent; }
+        .badge-parent { background: rgba(52,211,153,.1); color: var(--emerald); border-color: rgba(52,211,153,.2); }
+        .badge-clone { background: rgba(251,191,36,.1); color: var(--amber); border-color: rgba(251,191,36,.2); cursor: pointer; }
+
+        .font-mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+        .rom-title { color: var(--sky); font-weight: 600; }
+
+        .tbl-ftr { flex-shrink: 0; background: var(--bg-950); padding: .35rem .6rem; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-size: .65rem; color: var(--muted); }
+
+        /* Modals Mobile Friendly */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.85); backdrop-filter: blur(6px); z-index: 50; display: flex; align-items: center; justify-content: center; padding: .4rem; }
+        .modal-card { background: var(--bg-800); border: 1px solid var(--border); border-radius: var(--rad-lg); max-width: 1000px; width: 100%; height: 90vh; height: 90dvh; padding: .6rem .8rem; display: flex; flex-direction: column; gap: .4rem; }
+        .modal-hdr { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: .35rem; flex-shrink: 0; }
+        .modal-ttl { font-size: .8rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: .4rem; }
+        .btn-cls { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1rem; }
+
+        .tab-grp { display: flex; background: var(--bg-900); padding: .15rem; border-radius: var(--rad); border: 1px solid var(--border); gap: .2rem; flex-shrink: 0; }
+        .tab-btn { flex: 1; padding: .3rem; font-size: .675rem; color: var(--muted); background: none; border: none; border-radius: 4px; cursor: pointer; }
+        .tab-btn.active { background: #0284c7; color: #fff; font-weight: 600; }
+
+        .modal-info { display: flex; align-items: center; justify-content: space-between; font-size: .65rem; color: var(--muted); flex-shrink: 0; }
+        .exp-txt { width: 100%; background: var(--bg-900); border: 1px solid var(--border); border-radius: var(--rad); padding: .5rem; font-family: ui-monospace, Consolas, monospace; font-size: .7rem; color: var(--sky); outline: none; resize: none; flex: 1; min-height: 0; }
+
+        .modal-ftr { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: .4rem; flex-shrink: 0; }
+        .flex-row-end { display: flex; align-items: center; gap: .4rem; justify-content: flex-end; }
+
+        .file-list-box { background: var(--bg-900); border: 1px solid var(--border); border-radius: var(--rad); padding: .4rem; max-height: 240px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: .35rem; }
+        .file-item { font-size: .65rem; font-family: monospace; display: flex; align-items: center; gap: .3rem; padding: .2rem .35rem; background: rgba(255,255,255,0.03); border-radius: 4px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .prog-bar-wrap { width: 100%; background: var(--bg-900); border: 1px solid var(--border); border-radius: 99px; height: 6px; overflow: hidden; margin-top: .2rem; }
+        .prog-bar-fill { height: 100%; background: linear-gradient(90deg, var(--sky), var(--emerald)); width: 0%; transition: width .2s ease; }
+
+        #toastContainer { position: fixed; top: .5rem; right: .5rem; z-index: 9999; display: flex; flex-direction: column; gap: .35rem; max-width: 280px; pointer-events: none; }
+        .toast { padding: .35rem .6rem; border-radius: var(--rad); font-size: .65rem; font-weight: 500; border: 1px solid transparent; opacity: 0; transform: translateY(6px); transition: all .25s ease; pointer-events: auto; display: flex; align-items: center; gap: .35rem; }
+        .toast.visible { opacity: 1; transform: translateY(0); }
+        .toast-success { background: #059669; color: #fff; } .toast-error { background: #e11d48; color: #fff; } .toast-info { background: #0284c7; color: #fff; }
+
+        .hidden { display: none !important; } .text-center { text-align: center; } .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    </style>
+</head>
+<body>
+
+    <div id="toastContainer"></div>
+
+    <header>
+        <div class="hdr-cnt">
+            <div class="brand-sec">
+                <div class="brand-sub">
+                    <div class="brand-ico"><i class="fa-solid fa-code-branch"></i></div>
+                    <div class="brand-ttl">
+                        <h1>FBNeo API Explorer</h1>
+                        <p class="hdr-desc">Tự động quét kho FBNeo qua GitHub REST API & Trích xuất Metadata</p>
+                    </div>
+                </div>
+                <span id="headerSystemBadge" class="badge-sys">Đang tải...</span>
+            </div>
+
+            <div class="ctrl-sec">
+                <label class="chk-lbl" title="Bật để nạp thêm file mới mà không xóa danh sách game hiện tại">
+                    <input type="checkbox" id="appendDataCheckbox">
+                    <span>+ Dồn dữ liệu</span>
+                </label>
+
+                <!-- GitHub API Dynamic System Selector -->
+                <div class="sel-wrap" title="Chọn Thư Mục Hệ Máy">
+                    <select id="githubSystemSelect" onchange="onGitHubFolderChange()" class="c-select">
+                        <option value="">⏳ Đang quét API...</option>
+                    </select>
+                    <i class="fa-solid fa-folder sel-arr" style="color:var(--sky);"></i>
+                </div>
+
+                <button id="btnLoadAllFolder" onclick="loadAllDriversInCurrentFolder()" class="btn-em" title="Nạp toàn bộ file .cpp trong hệ máy này">
+                    <i class="fa-solid fa-cloud-arrow-down"></i> <span class="btn-txt-mobile">Nạp Tất Cả</span>
+                </button>
+
+                <button onclick="openFilePickerModal()" class="btn-a" title="Chọn cụ thể từng file driver .cpp">
+                    <i class="fa-solid fa-list-check"></i> <span class="btn-txt-mobile">Chọn File</span>
+                </button>
+
+                <button onclick="openExportModal('ini')" class="btn-p">
+                    <i class="fa-solid fa-file-export"></i> <span class="btn-txt-mobile">Xuất</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div><p class="stat-lbl">Tổng Game</p><p id="statTotalGames" class="stat-val">0</p></div>
+                <div class="stat-ico ic-sky"><i class="fa-solid fa-gamepad"></i></div>
+            </div>
+            <div class="stat-card">
+                <div><p class="stat-lbl">Game Gốc</p><p id="statParentGames" class="stat-val" style="color: var(--emerald);">0</p></div>
+                <div class="stat-ico ic-em"><i class="fa-solid fa-crown"></i></div>
+            </div>
+            <div class="stat-card">
+                <div><p class="stat-lbl">Game Con</p><p id="statCloneGames" class="stat-val" style="color: var(--amber);">0</p></div>
+                <div class="stat-ico ic-amb"><i class="fa-solid fa-code-fork"></i></div>
+            </div>
+            <div class="stat-card">
+                <div><p class="stat-lbl">Thể Loại</p><p id="statTotalGenres" class="stat-val" style="color: var(--indigo);">0</p></div>
+                <div class="stat-ico ic-ind"><i class="fa-solid fa-tags"></i></div>
+            </div>
+            <div class="stat-card col-span-2">
+                <div><p class="stat-lbl">Hệ Máy</p><p id="statSystem" class="stat-val truncate" style="color: var(--purple);">NES</p></div>
+                <div class="stat-ico ic-pur"><i class="fa-solid fa-folder-open"></i></div>
+            </div>
+        </div>
+
+        <div class="flt-panel">
+            <div class="flt-grid">
+                <div class="srch-wrap">
+                    <i class="fa-solid fa-magnifying-glass srch-ico"></i>
+                    <input type="text" id="searchInput" oninput="filterData()" placeholder="Tìm ROM, tên game..." class="c-input">
+                </div>
+                <select id="parentFilter" onchange="filterData()" class="c-filter">
+                    <option value="">Tất cả loại ROM</option>
+                    <option value="parent_only">Chỉ Parent (Gốc)</option>
+                    <option value="clone_only">Chỉ Clone (Con)</option>
+                </select>
+                <select id="genreFilter" onchange="filterData()" class="c-filter">
+                    <option value="">Tất cả thể loại</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="tbl-card">
+            <div class="tbl-resp">
+                <table class="data-tbl">
+                    <thead>
+                        <tr>
+                            <th style="width: 30px; text-align: center;">#</th>
+                            <th class="sortable" onclick="sortTable('shortName')">ROM Zip <i class="fa-solid fa-sort"></i></th>
+                            <th>Quan Hệ</th>
+                            <th class="sortable" style="min-width: 150px;" onclick="sortTable('fullName')">Tên Đầy Đủ <i class="fa-solid fa-sort"></i></th>
+                            <th class="sortable" onclick="sortTable('genreName')">Thể Loại <i class="fa-solid fa-sort"></i></th>
+                            <th class="sortable" style="text-align: center;" onclick="sortTable('players')">Chơi <i class="fa-solid fa-sort"></i></th>
+                            <th class="sortable" onclick="sortTable('manufacturer')">Hãng <i class="fa-solid fa-sort"></i></th>
+                            <th class="sortable" onclick="sortTable('date')">Năm <i class="fa-solid fa-sort"></i></th>
+                        </tr>
+                    </thead>
+                    <tbody id="gameTableBody">
+                        <tr>
+                            <td colspan="8" class="text-center" style="padding: 2rem; color: var(--muted);">
+                                <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.25rem; color: var(--sky); margin-bottom: .4rem; display: block;"></i>
+                                Đang quét hệ máy từ GitHub API...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="tbl-ftr">
+                <span id="tableCountInfo">Hiển thị 0 game</span>
+                <span id="statusIndicator">
+                    <span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;"></span>
+                    <span style="color: var(--emerald); font-family: monospace;">Sẵn sàng</span>
+                </span>
+            </div>
+        </div>
+    </main>
+
+    <div id="filePickerModal" class="modal-overlay hidden">
+        <div class="modal-card" style="max-width: 800px; height: auto; max-height: 85vh;">
+            <div class="modal-hdr">
+                <h3 class="modal-ttl"><i class="fa-solid fa-folder-tree" style="color: var(--sky);"></i> Driver (.cpp) trong hệ <span id="modalFolderTitle" style="color:var(--emerald);"></span></h3>
+                <button onclick="closeFilePickerModal()" class="btn-cls"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:.65rem; color:var(--muted);">
+                <span>Chọn các file driver bạn muốn phân tích:</span>
+                <div style="display:flex; gap:.3rem;">
+                    <button onclick="toggleSelectAllFiles(true)" class="btn-s" style="padding:.15rem .35rem; font-size:.6rem;">Tất cả</button>
+                    <button onclick="toggleSelectAllFiles(false)" class="btn-s" style="padding:.15rem .35rem; font-size:.6rem;">Bỏ chọn</button>
+                </div>
+            </div>
+
+            <div id="fileListContainer" class="file-list-box">
+                <!-- Checkboxes dynamically generated -->
+            </div>
+
+            <div id="progressSection" class="hidden">
+                <div style="display:flex; justify-content:space-between; font-size:.65rem; color:var(--sky);">
+                    <span id="progressText">Đang nạp file...</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="prog-bar-wrap"><div id="progressBarFill" class="prog-bar-fill"></div></div>
+            </div>
+
+            <div class="modal-ftr">
+                <span id="filePickerCountLabel" style="font-size: .6rem; color: var(--muted);">Đã chọn 0 file</span>
+                <div class="flex-row-end">
+                    <button onclick="closeFilePickerModal()" class="btn-s">Đóng</button>
+                    <button onclick="loadSelectedFilesFromModal()" class="btn-p"><i class="fa-solid fa-download"></i> Phân Tích</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="exportModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-hdr">
+                <h3 class="modal-ttl"><i class="fa-solid fa-eye" style="color: var(--sky);"></i> Xem Trước & Xuất File</h3>
+                <button onclick="closeExportModal()" class="btn-cls"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="tab-grp">
+                <button id="tab-ini" onclick="switchExportFormat('ini')" class="tab-btn">genre.ini</button>
+                <button id="tab-xml" onclick="switchExportFormat('xml')" class="tab-btn">XML DAT</button>
+                <button id="tab-csv" onclick="switchExportFormat('csv')" class="tab-btn">CSV</button>
+            </div>
+
+            <div class="modal-info">
+                <span id="exportFormatDescription">Mô tả định dạng</span>
+                <span id="exportFormatStats" style="font-family: monospace; color: var(--sky);">0 dòng</span>
+            </div>
+
+            <textarea id="exportPreviewText" readonly class="exp-txt"></textarea>
+
+            <div class="modal-ftr">
+                <div style="display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;">
+                    <button onclick="copyCurrentPreviewToClipboard()" class="btn-s">
+                        <i class="fa-regular fa-copy"></i> Copy
+                    </button>
+                    <label id="xmlPlayersOption" class="hidden" style="display: flex; align-items: center; gap: .25rem; font-size: .65rem; color: var(--muted); cursor: pointer; user-select: none;">
+                        <input type="checkbox" id="xmlPlayersCheckbox" onchange="switchExportFormat('xml')" style="accent-color: var(--sky); cursor: pointer;">
+                        <span>Dùng <code>&lt;input players="..."/&gt;</code></span>
+                    </label>
+                </div>
+                <div class="flex-row-end">
+                    <button onclick="closeExportModal()" class="btn-s">Đóng</button>
+                    <button onclick="downloadCurrentFormat()" class="btn-p">
+                        <i class="fa-solid fa-download"></i> Tải Về
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GITHUB_API_DRV = 'https://api.github.com/repos/libretro/FBNeo/contents/src/burn/drv';
+        
+        const MAP = {
+            'GBF_PLATFORM': ['Platform','#34d399'], 'GBF_HORSHOOT': ['Shooter / Horiz','#fbbf24'],
+            'GBF_VERSHOOT': ['Shooter / Vert','#fb923c'], 'GBF_MULTISHOOT': ['Shooter / Multi','#fbbf24'],
+            'GBF_SHOOT': ['Shooter','#fbbf24'], 'GBF_RUNGUN': ['Run \'n\' Gun','#f87171'],
+            'GBF_SCRFIGHT': ['Beat \'em Up','#f87171'], 'GBF_VSFIGHT': ['Fighting','#fb7185'],
+            'GBF_ACTION': ['Action','#38bdf8'], 'GBF_PUZZLE': ['Puzzle','#c084fc'],
+            'GBF_RACE': ['Racing','#60a5fa'], 'GBF_RACING': ['Racing','#60a5fa'],
+            'GBF_SPORTS': ['Sports','#2dd4bf'], 'GBF_SPORTSFOOTBALL': ['Sports / Football','#2dd4bf'],
+            'GBF_SPORTSMISC': ['Sports / Misc','#2dd4bf'], 'GBF_MAHJONG': ['Mahjong','#818cf8'],
+            'GBF_QUIZ': ['Quiz','#e879f9'], 'GBF_BOARD': ['Board Game','#818cf8'],
+            'GBF_CASINO': ['Casino','#e879f9'], 'GBF_MISC': ['Misc','#94a3b8']
+        };
+
+        let systemFolders = [];
+        let currentFolderFiles = [];
+        let parsedGames = [], filteredGames = [], sortCol = 'shortName', sortAsc = true, currentFmt = 'ini';
+
+        const $ = id => document.getElementById(id);
+        const esc = s => (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+
+        function showToast(msg, type = 'info') {
+            const t = document.createElement('div');
+            t.className = `toast toast-${type}`;
+            t.innerHTML = `<i class="fa-solid fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i> <span>${msg}</span>`;
+            $('toastContainer').appendChild(t);
+            requestAnimationFrame(() => t.classList.add('visible'));
+            setTimeout(() => { t.classList.remove('visible'); setTimeout(() => t.remove(), 250); }, 2500);
+        }
+
+        async function fetchGitHubSystems() {
+            try {
+                const cache = sessionStorage.getItem('fbneo_sys_folders');
+                let data = cache ? JSON.parse(cache) : null;
+
+                if (!data) {
+                    const res = await fetch(GITHUB_API_DRV);
+                    if (!res.ok) throw new Error('GitHub API rate limited or unreachable');
+                    data = await res.json();
+                    sessionStorage.setItem('fbneo_sys_folders', JSON.stringify(data));
+                }
+
+                systemFolders = data.filter(item => item.type === 'dir').map(dir => ({
+                    name: dir.name,
+                    path: dir.path,
+                    url: dir.url
+                })).sort((a,b) => a.name.localeCompare(b.name));
+
+                populateSystemDropdown();
+            } catch (err) {
+                showToast('Lỗi API GitHub! Sử dụng hệ thống dự phòng...', 'error');
+                systemFolders = ['nes','snes','megadrive','capcom','konami','neogeo','sega','taito','cave','pce','sms','gba'].map(s => ({ name: s, path: `src/burn/drv/${s}` }));
+                populateSystemDropdown();
+            }
+        }
+
+        function populateSystemDropdown() {
+            const sel = $('githubSystemSelect');
+            sel.innerHTML = '';
+            
+            systemFolders.forEach(folder => {
+                const opt = document.createElement('option');
+                opt.value = folder.name;
+                opt.textContent = `${folder.name.toUpperCase()}`;
+                sel.appendChild(opt);
+            });
+
+            if (systemFolders.some(f => f.name === 'nes')) sel.value = 'nes';
+            else if (systemFolders.length) sel.value = systemFolders[0].name;
+
+            onGitHubFolderChange();
+        }
+
+        async function onGitHubFolderChange() {
+            const folderName = $('githubSystemSelect').value;
+            if (!folderName) return;
+
+            $('statusIndicator').innerHTML = `<span style="width:6px;height:6px;border-radius:50%;background:#38bdf8;display:inline-block;"></span> <span style="color:#38bdf8;">Tải danh sách...</span>`;
+
+            try {
+                const cacheKey = `fbneo_files_${folderName}`;
+                const cache = sessionStorage.getItem(cacheKey);
+                let filesData = cache ? JSON.parse(cache) : null;
+
+                if (!filesData) {
+                    const res = await fetch(`${GITHUB_API_DRV}/${folderName}`);
+                    if (!res.ok) throw new Error('Không thể nạp danh sách file');
+                    filesData = await res.json();
+                    sessionStorage.setItem(cacheKey, JSON.stringify(filesData));
+                }
+
+                currentFolderFiles = filesData.filter(f => f.name.endsWith('.cpp')).map(f => ({
+                    name: f.name,
+                    download_url: f.download_url || `https://raw.githubusercontent.com/libretro/FBNeo/master/src/burn/drv/${folderName}/${f.name}`
+                }));
+
+                $('statusIndicator').innerHTML = `<span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;"></span> <span style="color:var(--emerald);">${currentFolderFiles.length} file .cpp</span>`;
+                $('headerSystemBadge').textContent = `${folderName.toUpperCase()} (${currentFolderFiles.length})`;
+
+                loadAllDriversInCurrentFolder();
+
+            } catch (err) {
+                $('statusIndicator').innerHTML = `<span style="width:6px;height:6px;border-radius:50%;background:#ef4444;display:inline-block;"></span> <span style="color:#ef4444;">Lỗi nạp</span>`;
+                showToast('Lỗi tải danh sách file', 'error');
+            }
+        }
+
+        function extractBurnDriverBlocks(cpp) {
+            const clean = cpp.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, ''), res = [];
+            const re = /struct\s+BurnDriver\s+BurnDrv(\w+)\s*=\s*\{/g;
+            let m;
+            while ((m = re.exec(clean)) !== null) {
+                let start = m.index + m[0].length - 1, d = 0, end = -1;
+                for (let i = start; i < clean.length; i++) {
+                    if (clean[i] === '{') d++;
+                    else if (clean[i] === '}' && --d === 0) { end = i; break; }
+                }
+                if (end !== -1) res.push(clean.substring(start + 1, end));
+            }
+            return res;
+        }
+
+        function parseDriverBody(body) {
+            const elms = [];
+            let cur = '', inStr = false, sChar = '', dB = 0, dP = 0;
+            for (let i = 0; i < body.length; i++) {
+                const c = body[i];
+                if (inStr) { cur += c; if (c === sChar && body[i - 1] !== '\\') inStr = false; }
+                else {
+                    if (c === '"' || c === "'") { inStr = true; sChar = c; cur += c; }
+                    else if (c === '{') { dB++; cur += c; }
+                    else if (c === '}') { dB--; cur += c; }
+                    else if (c === '(') { dP++; cur += c; }
+                    else if (c === ')') { dP--; cur += c; }
+                    else if (c === ',' && !dB && !dP) { elms.push(cur.trim()); cur = ''; }
+                    else cur += c;
+                }
+            }
+            if (cur.trim()) elms.push(cur.trim());
+
+            const clean = v => (!v || v === 'NULL' || v === '0') ? '' : v.trim().replace(/^"|"$/g, '').replace(/\\0/g, '').replace(/\\n/g, ' ');
+            const gM = body.match(/GBF_[A-Z0-9_]+/);
+            const pM = body.match(/BDF_[A-Z0-9_|\s\(\)]+,\s*(\d{1,2})\s*,/);
+
+            return {
+                shortName: clean(elms[0]), parent: clean(elms[1]), date: clean(elms[4]),
+                fullName: clean(elms[5]), manufacturer: clean(elms[7]), system: clean(elms[8]),
+                rawGenre: gM ? gM[0] : 'GBF_MISC', players: pM ? pM[1] : '2'
+            };
+        }
+
+        async function fetchAndParseDriverFiles(fileList, sysName) {
+            const isAppend = $('appendDataCheckbox').checked;
+            if (!isAppend) parsedGames = [];
+
+            $('gameTableBody').innerHTML = `<tr><td colspan="8" class="text-center" style="padding:2rem;"><i class="fa-solid fa-spinner fa-spin" style="font-size:1.2rem;color:var(--sky)"></i><br><br>Đang nạp ${fileList.length} file...</td></tr>`;
+
+            $('progressSection').classList.remove('hidden');
+            let completed = 0;
+
+            const existingNames = new Set(parsedGames.map(g => g.shortName));
+
+            for (const file of fileList) {
+                try {
+                    const res = await fetch(`${file.download_url}?_t=${Date.now()}`);
+                    if (res.ok) {
+                        const code = await res.text();
+                        extractBurnDriverBlocks(code).forEach(b => {
+                            const d = parseDriverBody(b);
+                            if (d.shortName && d.fullName) {
+                                const cleanRom = d.shortName.replace(/^[a-zA-Z0-9]+_/, '');
+                                if (!existingNames.has(cleanRom)) {
+                                    existingNames.add(cleanRom);
+                                    const info = MAP[d.rawGenre] || [d.rawGenre.replace(/^GBF_/, ''), '#94a3b8'];
+                                    parsedGames.push({
+                                        shortName: cleanRom,
+                                        fullName: d.fullName,
+                                        parent: d.parent ? d.parent.replace(/^[a-zA-Z0-9]+_/, '') : '',
+                                        date: d.date || 'N/A',
+                                        manufacturer: d.manufacturer || 'Unknown',
+                                        system: d.system || sysName || 'FBNeo',
+                                        genreName: info[0],
+                                        genreStyle: `background:rgba(255,255,255,0.05);color:${info[1]};border-color:${info[1]}33`,
+                                        players: d.players || '2'
+                                    });
+                                }
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error('Lỗi file:', file.name);
+                }
+
+                completed++;
+                const pct = Math.round((completed / fileList.length) * 100);
+                $('progressBarFill').style.width = `${pct}%`;
+                $('progressPercent').textContent = `${pct}%`;
+                $('progressText').textContent = `Đang nạp: ${file.name} (${completed}/${fileList.length})`;
+            }
+
+            setTimeout(() => $('progressSection').classList.add('hidden'), 800);
+
+            updateStats(sysName);
+            populateGenres();
+            filterData();
+            showToast(`Nạp thành công ${parsedGames.length} game!`, 'success');
+        }
+
+        function loadAllDriversInCurrentFolder() {
+            if (!currentFolderFiles.length) return showToast('Không có file nào!', 'error');
+            const sys = $('githubSystemSelect').value.toUpperCase();
+            fetchAndParseDriverFiles(currentFolderFiles, sys);
+        }
+
+        function openFilePickerModal() {
+            const folderName = $('githubSystemSelect').value;
+            if (!folderName) return showToast('Chưa chọn hệ máy!', 'error');
+
+            $('modalFolderTitle').textContent = folderName.toUpperCase();
+            const container = $('fileListContainer');
+            container.innerHTML = '';
+
+            currentFolderFiles.forEach((f, idx) => {
+                const label = document.createElement('label');
+                label.className = 'file-item';
+                label.innerHTML = `<input type="checkbox" value="${idx}" checked style="accent-color:var(--sky);"> <span>${f.name}</span>`;
+                container.appendChild(label);
+            });
+
+            updateModalSelectedCount();
+            container.querySelectorAll('input').forEach(chk => chk.onchange = updateModalSelectedCount);
+
+            $('filePickerModal').classList.remove('hidden');
+        }
+
+        function closeFilePickerModal() { $('filePickerModal').classList.add('hidden'); }
+
+        function toggleSelectAllFiles(select) {
+            $('fileListContainer').querySelectorAll('input[type="checkbox"]').forEach(c => c.checked = select);
+            updateModalSelectedCount();
+        }
+
+        function updateModalSelectedCount() {
+            const cnt = $('fileListContainer').querySelectorAll('input[type="checkbox"]:checked').length;
+            $('filePickerCountLabel').textContent = `Đã chọn ${cnt} / ${currentFolderFiles.length} file`;
+        }
+
+        function loadSelectedFilesFromModal() {
+            const checkedBoxes = Array.from($('fileListContainer').querySelectorAll('input[type="checkbox"]:checked'));
+            const selectedFiles = checkedBoxes.map(cb => currentFolderFiles[+cb.value]);
+
+            if (!selectedFiles.length) return showToast('Hãy chọn ít nhất 1 file!', 'error');
+
+            closeFilePickerModal();
+            fetchAndParseDriverFiles(selectedFiles, $('githubSystemSelect').value.toUpperCase());
+        }
+
+        function updateStats(overrideSys) {
+            $('statTotalGames').textContent = parsedGames.length;
+            $('statParentGames').textContent = parsedGames.filter(g => !g.parent).length;
+            $('statCloneGames').textContent = parsedGames.filter(g => !!g.parent).length;
+            $('statTotalGenres').textContent = new Set(parsedGames.map(g => g.genreName)).size;
+            
+            const sys = overrideSys || $('githubSystemSelect').value.toUpperCase() || 'FBNeo';
+            $('statSystem').textContent = sys;
+        }
+
+        function populateGenres() {
+            const sel = $('genreFilter');
+            const prevVal = sel.value;
+            sel.innerHTML = '<option value="">Tất cả thể loại</option>';
+            const counts = {};
+            parsedGames.forEach(g => counts[g.genreName] = (counts[g.genreName] || 0) + 1);
+
+            Object.keys(counts).sort().forEach(g => {
+                const o = document.createElement('option');
+                o.value = g; o.textContent = `${g} (${counts[g]})`;
+                sel.appendChild(o);
+            });
+
+            sel.value = prevVal;
+        }
+
+        function filterData() {
+            const q = $('searchInput').value.toLowerCase().trim();
+            const g = $('genreFilter').value, p = $('parentFilter').value;
+
+            filteredGames = parsedGames.filter(i => {
+                const mQ = !q || i.shortName.toLowerCase().includes(q) || i.fullName.toLowerCase().includes(q) || (i.parent && i.parent.toLowerCase().includes(q));
+                const mG = !g || i.genreName === g;
+                const mP = !p || (p === 'parent_only' ? !i.parent : !!i.parent);
+                return mQ && mG && mP;
+            });
+
+            sortTable(sortCol, false);
+        }
+
+        function sortTable(col, toggle = true) {
+            if (toggle) sortAsc = (sortCol === col) ? !sortAsc : true;
+            sortCol = col;
+
+            filteredGames.sort((a, b) => {
+                let vA = a[col] || '', vB = b[col] || '';
+                if (col === 'players') return sortAsc ? (+vA - +vB) : (+vB - +vA);
+                return sortAsc ? vA.toString().localeCompare(vB.toString()) : vB.toString().localeCompare(vA.toString());
+            });
+
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = $('gameTableBody');
+            tbody.innerHTML = '';
+
+            if (!filteredGames.length) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center" style="padding:1.5rem;color:var(--dim)">Không có dữ liệu phù hợp.</td></tr>`;
+                $('tableCountInfo').textContent = 'Hiển thị 0 game';
+                return;
+            }
+
+            filteredGames.forEach((g, i) => {
+                const tr = document.createElement('tr');
+                const badge = g.parent
+                    ? `<button onclick="filterByParentRom('${g.parent}')" class="badge badge-clone">Clone of ${g.parent}</button>`
+                    : `<span class="badge badge-parent">Parent</span>`;
+
+                tr.innerHTML = `
+                    <td style="text-align:center;color:var(--dim)" class="font-mono">${i + 1}</td>
+                    <td class="font-mono rom-title">${esc(g.shortName)}</td>
+                    <td>${badge}</td>
+                    <td style="font-weight:500;color:#f1f5f9;">${esc(g.fullName)}</td>
+                    <td><span class="badge" style="${g.genreStyle}">${esc(g.genreName)}</span></td>
+                    <td class="font-mono" style="text-align:center;">${g.players}P</td>
+                    <td class="truncate" style="color:#cbd5e1">${esc(g.manufacturer)}</td>
+                    <td class="font-mono" style="color:var(--muted)">${esc(g.date)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            $('tableCountInfo').textContent = `Hiển thị ${filteredGames.length} / ${parsedGames.length} game`;
+        }
+
+        function filterByParentRom(rom) { $('searchInput').value = rom; filterData(); }
+
+        function openExportModal(fmt = 'ini') {
+            if (!parsedGames.length) return showToast('Chưa có dữ liệu!', 'error');
+            $('exportModal').classList.remove('hidden');
+            switchExportFormat(fmt);
+        }
+
+        function switchExportFormat(fmt) {
+            currentFmt = fmt;
+            ['ini','xml','csv'].forEach(f => {
+                const btn = $(`tab-${f}`);
+                if (btn) btn.classList.toggle('active', f === fmt);
+            });
+
+            const sys = $('githubSystemSelect').value.toUpperCase() || 'FBNeo';
+            const xmlOpt = $('xmlPlayersOption');
+            if (xmlOpt) xmlOpt.classList.toggle('hidden', fmt !== 'xml');
+
+            let txt = '';
+            if (fmt === 'ini') {
+                $('exportFormatDescription').textContent = 'Định dạng genre.ini';
+                txt = `[Genre]\n; ${sys}\n` + parsedGames.map(g => `${g.shortName}=${g.genreName}`).join('\n');
+            } else if (fmt === 'xml') {
+                $('exportFormatDescription').textContent = 'Định dạng XML DAT';
+                const useInput = $('xmlPlayersCheckbox')?.checked;
+                txt = `<?xml version="1.0"?>\n<datafile>\n  <header><name>${sys}</name></header>\n` + parsedGames.map(g => 
+                    `  <game name="${g.shortName}"${g.parent?` cloneof="${g.parent}"`:''}>\n    <description>${esc(g.fullName)}</description>\n    <genre>${esc(g.genreName)}</genre>\n    ${useInput ? `<input players="${g.players}"/>` : `<players>${g.players}</players>`}\n    <year>${esc(g.date)}</year>\n    <manufacturer>${esc(g.manufacturer)}</manufacturer>\n  </game>`
+                ).join('\n') + `\n</datafile>`;
+            } else if (fmt === 'csv') {
+                $('exportFormatDescription').textContent = 'Định dạng CSV (Phân cách ;)';
+                txt = `#Name;Title;Emulator;CloneOf;Year;Manufacturer;Category;Players;\n` + parsedGames.map(g => 
+                    `${g.shortName};"${g.fullName.replace(/"/g,'""')}";"${g.system||sys}";"${g.parent||''} ";"${g.date}";"${g.manufacturer.replace(/"/g,'""')}";"${g.genreName}";"${g.players}";`
+                ).join('\n');
+            }
+
+            $('exportPreviewText').value = txt;
+            $('exportFormatStats').textContent = `${txt.split('\n').length} dòng`;
+        }
+
+        function copyCurrentPreviewToClipboard() {
+            $('exportPreviewText').select();
+            document.execCommand('copy');
+            showToast('Đã sao chép!', 'success');
+        }
+
+        function downloadCurrentFormat() {
+            const txt = $('exportPreviewText').value;
+            const name = currentFmt === 'ini' ? 'genre.ini' : currentFmt === 'xml' ? 'fbneo_games.dat' : 'fbneo_export.csv';
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([txt], { type: 'text/plain' }));
+            a.download = name; a.click();
+            showToast(`Đã tải về ${name}!`, 'success');
+        }
+
+        function closeExportModal() { $('exportModal').classList.add('hidden'); }
+
+        window.onload = fetchGitHubSystems;
+    </script>
+</body>
+</html>
