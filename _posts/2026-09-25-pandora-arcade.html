@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Pandora Arcade</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script>
+    window.FALLBACK_ARCADE_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2338bdf8'%3E%3Cpath d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm-4 12v-2h2v2H8zm8 0h-2v-2h2v2zm2-5H6v-2h12v2z'/%3E%3C/svg%3E";
+  </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@600;700;800&display=swap');
     :root{--p:#ea580c;--pg:rgba(234,88,12,.4);--a:#fbbf24;--ca:#38bdf8;--bg:#050101;--panel:rgba(15,23,42,.94)}
@@ -18,9 +21,11 @@
     #svg-container{flex:1.25;width:100%;height:100%;display:flex;align-items:center;justify-content:center;order:1;position:relative;overflow:hidden}
     #svg{width:100%;height:100%;filter:drop-shadow(0 10px 20px rgba(0,0,0,.9));transform:translateZ(0)}
     #preview-container{flex:1.1;width:100%;max-width:680px;aspect-ratio:4/3;max-height:80vh;background:var(--panel);border:2px solid var(--p);border-radius:12px;box-shadow:0 0 25px var(--pg),inset 0 0 25px #000;display:flex;align-items:center;justify-content:center;padding:12px;position:relative;overflow:hidden;backdrop-filter:blur(12px);order:2;transform:translateZ(0)}
+    
     #preview-img{width:100%;height:100%;object-fit:contain;transition:opacity .15s,transform .15s,max-width .2s,max-height .2s;will-change:transform,opacity}
     #preview-img.loading{opacity:.3;transform:scale(.98)}
     #preview-img.is-placeholder{max-width:88px;max-height:88px;opacity:.45;filter:drop-shadow(0 0 12px rgba(234,88,12,.5))}
+
     .preview-badges{position:absolute;top:8px;right:8px;z-index:20;display:flex;align-items:center;gap:8px}
     .fav-star-btn{font-size:24px;color:#e2e8f0;cursor:pointer;transition:all .2s;opacity:.25;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.9))}
     #preview-container:hover .fav-star-btn{opacity:.5}
@@ -39,16 +44,15 @@
     .avatar-box{border-radius:50%}
     .avatar-box img{object-fit:cover;border:1.5px solid #4ade80;border-radius:50%;aspect-ratio:1/1;width:100%;height:100%}
     .avatar-box svg{width:100%;height:100%;display:block}
-    .dropdown-menu{display:none;position:fixed;z-index:260;background:rgba(15,23,42,.98);border:1.5px solid var(--ca);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.9);max-height:60vh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;backdrop-filter:blur(12px);padding:8px;flex-direction:column;gap:4px;scrollbar-width:thin;scrollbar-color:var(--ca) transparent}
+    .dropdown-menu{display:none;position:fixed;z-index:260;background:rgba(15,23,42,.98);border:1.5px solid var(--ca);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.9);max-height:70vh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;backdrop-filter:blur(12px);padding:8px;flex-direction:column;gap:4px;scrollbar-width:thin;scrollbar-color:var(--ca) transparent}
     .dropdown-menu::-webkit-scrollbar{width:5px}
     .dropdown-menu::-webkit-scrollbar-thumb{background:var(--ca);border-radius:4px}
     .dropdown-menu.active{display:flex}
-    #menu-dropdown,#genre-menu-dropdown{width:260px;max-width:88vw}
+    #menu-dropdown, #genre-menu-dropdown{width:260px;max-width:88vw}
     #user-menu-dropdown{min-width:220px;max-height:70vh}
     .menu-header{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.15);margin-bottom:6px;font-size:13px;color:var(--a);font-weight:bold;line-height:1.3;white-space:normal;word-break:break-word;position:sticky;top:0;background:#0f172a;z-index:10;display:flex;align-items:center;gap:10px}
     .menu-item{display:flex;align-items:center;gap:10px;padding:8px 10px;color:#e2e8f0;font:700 14px 'Rajdhani',sans-serif;border-radius:6px;cursor:pointer;transition:all .15s}
-    .menu-item:hover,.menu-item.active{background:rgba(56,189,248,.2);color:#fff}
-    .menu-item.keyboard-focused{background:rgba(251,191,36,.28)!important;outline:1.5px solid var(--a)}
+    .menu-item:hover,.menu-item.active,.menu-item.gp-hover{background:rgba(56,189,248,.2);color:#fff}
     .menu-item.active{border-left:3px solid var(--ca)}
     .menu-item.active svg,.menu-item.active .menu-logo-box img{filter:drop-shadow(0 0 8px var(--ca))}
     .menu-item.active-glow{background:rgba(251,191,36,.18);color:#fff;border-left:3px solid var(--a)}
@@ -99,10 +103,10 @@
   <main>
     <div id="svg-container">
       <div id="hdr-logo-btn" class="hdr-btn-wrap" onclick="toggleMenuModal(event)" title="Chọn hệ máy">
-        <div class="img-box"><img id="hdr-logo-img" src="" alt="System Logo" onerror="this.onerror=null;this.src=FALLBACK_ARCADE_SVG;"/></div>
+        <div class="img-box"><img id="hdr-logo-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="System Logo" onerror="this.onerror=null;this.src=window.FALLBACK_ARCADE_SVG;"/></div>
       </div>
-      <div id="hdr-genre-btn" class="hdr-btn-wrap" onclick="toggleGenreMenu(event)" title="Chọn thể loại">
-        <div class="img-box"><img id="hdr-genre-img" src="" alt="Genre Logo" onerror="this.onerror=null;this.src=FALLBACK_GENRE_SVG;"/></div>
+      <div id="hdr-genre-btn" class="hdr-btn-wrap" onclick="toggleGenreMenu(event)" title="Lọc Thể Loại">
+        <div class="img-box"><img id="hdr-genre-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Genre Icon" onerror="handleGenreImgError(this)"/></div>
       </div>
       <div id="hdr-search-btn" class="hdr-btn-wrap" onclick="toggleInlineSearch(event)" title="Tìm kiếm">
         <svg viewBox="0 0 24 24" fill="#38bdf8" style="width:100%;height:100%"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
@@ -126,7 +130,6 @@
           </button>
         </div>
         <div id="auth-menu-item" class="menu-item" onclick="handleAuthClick()"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg><span id="auth-btn-text">Đăng nhập Google</span></div>
-        <div id="genre-menu-item" class="menu-item" onclick="toggleGenreMenu(event);closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M12 2l-5.5 9h11zM6 13h12v2H6zm0 4h12v2H6z" fill="currentColor"/></svg><span id="genre-menu-text">Chọn Thể Loại Game</span></div>
         <div id="fav-menu-item" class="menu-item" onclick="toggleFavFilter();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg><span id="fav-menu-text">Lọc Game Yêu Thích</span></div>
         <div id="clone-menu-item" class="menu-item" onclick="toggleMainOnlyFilter();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm2 5h12v2H6zm3 5h6v2H9z"/></svg><span id="clone-menu-text">Chỉ Xem Game Chính</span></div>
         <div id="layout-menu-item" class="menu-item" onclick="toggleLayoutMode();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M3 5v14h18V5H3zm16 12H5V7h14v10z"/></svg><span id="layout-menu-text">Chuyển Giao Diện</span></div>
@@ -163,7 +166,6 @@
       </div>
     </div>
   </main>
-
   <div id="help-modal">
     <div class="help-card">
       <div class="help-header"><div class="help-title">📖 HƯỚNG DẪN & TÍNH NĂNG</div><button class="close-modal-btn" onclick="closeHelpModal()">✕</button></div>
@@ -173,8 +175,7 @@
           <div class="help-grid">
             <div class="help-item"><span>Chọn Game</span><span class="help-key">↑ / ↓</span></div>
             <div class="help-item"><span>Chuyển Hệ Máy</span><span class="help-key">← / →</span></div>
-            <div class="help-item"><span>Menu Thể Loại</span><span class="help-key">G</span></div>
-            <div class="help-item"><span>Menu Hệ Máy</span><span class="help-key">M</span></div>
+            <div class="help-item"><span>Mở Menu Thể Loại</span><span class="help-key">G</span></div>
             <div class="help-item"><span>Nhảy Chữ Cái (A-Z)</span><span class="help-key">PageUp / Dn</span></div>
             <div class="help-item"><span>Vào Game</span><span class="help-key">Enter</span></div>
             <div class="help-item"><span>Yêu Thích</span><span class="help-key">F</span></div>
@@ -187,22 +188,22 @@
         <div class="help-sec">
           <div class="help-sec-h">🎮 ĐIỀU KHIỂN TAY CẦM (GAMEPAD)</div>
           <div class="help-grid">
-            <div class="help-item"><span>Di Chuyển Danh Sách</span><span class="help-key">D-Pad / Analog</span></div>
-            <div class="help-item"><span>Đổi Hệ Máy Fast</span><span class="help-key">Trái / Phải</span></div>
-            <div class="help-item"><span>Mở Menu Thể Loại</span><span class="help-key">Nút LT (L2)</span></div>
-            <div class="help-item"><span>Mở Menu Hệ Máy</span><span class="help-key">Nút RT (R2)</span></div>
+            <div class="help-item"><span>Di Chuyển Danh Sách / Menu</span><span class="help-key">D-Pad / Analog</span></div>
+            <div class="help-item"><span>Đổi Hệ Máy</span><span class="help-key">Trái / Phải</span></div>
             <div class="help-item"><span>Nhảy Chữ Cái</span><span class="help-key">LB / RB</span></div>
-            <div class="help-item"><span>Vào Game / Chọn Menu</span><span class="help-key">Nút A / Start</span></div>
-            <div class="help-item"><span>Thoát Menu</span><span class="help-key">Nút B / Select</span></div>
+            <div class="help-item"><span>Mở Menu Thể Loại</span><span class="help-key">LT / L2</span></div>
+            <div class="help-item"><span>Mở Menu Hệ Máy</span><span class="help-key">RT / R2</span></div>
+            <div class="help-item"><span>Vào Game / Chọn</span><span class="help-key">A / Start</span></div>
             <div class="help-item"><span>Đánh Dấu Yêu Thích</span><span class="help-key">Nút Y</span></div>
             <div class="help-item"><span>Lọc Yêu Thích</span><span class="help-key">Nút X</span></div>
+            <div class="help-item"><span>Lọc Game Chính</span><span class="help-key">Nút B / Select</span></div>
             <div class="help-item"><span>Thoát Game Đang Chơi</span><span class="help-key">Nút Home</span></div>
           </div>
         </div>
         <div class="help-sec">
           <div class="help-sec-h">⚡ TÍNH NĂNG NỔI BẬT</div>
           <div style="font-size:13px;display:flex;flex-direction:column;gap:6px;">
-            <p>• <b>Lọc Thể Loại Game (Genre):</b> Trích xuất thẻ genre/category từ tệp .DAT để lọc game theo các thể loại (Shooter, Fighting, Action, Platform...), hiển thị biểu tượng minh họa tương ứng từ thư mục genre.</p>
+            <p>• <b>Lọc theo Thể Loại:</b> Trích xuất thẻ &lt;genre&gt; từ file .DAT, hiển thị menu với biểu tượng hình ảnh chữ viết liền từ thư mục genre, hỗ trợ điều khiển full trên Tay cầm.</p>
             <p>• <b>Game Chính vs Game Con (Clone):</b> Sử dụng dữ liệu .DAT để lọc bớt các bản game clone, hack, hoặc phiên bản phụ, giúp danh sách gọn gàng hơn.</p>
             <p>• <b>Đồng bộ Google Drive:</b> Đăng nhập Google để sao lưu danh sách Game Yêu Thích lên đám mây, tự động đồng bộ giữa các thiết bị.</p>
           </div>
@@ -210,7 +211,6 @@
       </div>
     </div>
   </div>
-
   <div id="game-player-modal">
     <div id="player-toolbar">
       <span id="player-title">PANDORA ARCADE</span>
@@ -224,7 +224,7 @@
   </div>
 
   <script>
-    const GOOGLE_CLIENT_ID = "2611223495-h3eq8j0sprp9tvhtm0jhnej3v.apps.googleusercontent.com"; 
+    const GOOGLE_CLIENT_ID = "2611223495-h3eq8j0sprp9tvhig1u9ihtm0jhnej3v.apps.googleusercontent.com"; 
     const DRIVE_FILE_NAME = "pandora_favs.json";
     let tokenClient = null, accessToken = null, driveFileId = null, currentUserProfile = null;
 
@@ -235,8 +235,7 @@
     const EMPTY_GIF = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
     
     const PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ea580c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='4' ry='4'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5' fill='%23ea580c'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E";
-    const FALLBACK_ARCADE_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2338bdf8'%3E%3Cpath d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm-4 12v-2h2v2H8zm8 0h-2v-2h2v2zm2-5H6v-2h12v2z'/%3E%3C/svg%3E";
-    const FALLBACK_GENRE_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2338bdf8'%3E%3Cpath d='M12 2l-5.5 9h11zM6 13h12v2H6zm0 4h12v2H6z'/%3E%3C/svg%3E";
+    var FALLBACK_ARCADE_SVG = window.FALLBACK_ARCADE_SVG;
 
     const GAME_SOURCES = [
       { owner: "longhai", repo: "emu", branch: "main" },
@@ -269,12 +268,23 @@
     const getGameKey = g => g ? `${state.datList[state.currentDatIdx]?.name || ""}_${g.fullName || g.name}` : "";
     const isFav = g => g?.fullName ? state.favorites.includes(g.fullName) : false;
 
-    function getGenreIconUrl(genre) {
-      if (!genre || genre === "ALL") {
-        return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23fbbf24'%3E%3Cpath d='M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z'/%3E%3C/svg%3E";
+    const getGenreSlug = str => str ? str.toLowerCase().replace(/[^a-z0-9]/g, '') : "all";
+    const getGenreSlugUnderscore = str => str ? str.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') : "all";
+
+    const getGenreIconUrl = genreStr => {
+      if (!genreStr || genreStr === 'all') return FALLBACK_ARCADE_SVG;
+      return `${RAW_BASE}genre/${getGenreSlug(genreStr)}.png`;
+    };
+
+    function handleGenreImgError(img) {
+      const genreVal = img.dataset.genre || state.selectedGenre;
+      if (!img.dataset.tried && genreVal && genreVal !== 'all') {
+        img.dataset.tried = 'true';
+        img.src = `${RAW_BASE}genre/${getGenreSlugUnderscore(genreVal)}.png`;
+      } else {
+        img.onerror = null;
+        img.src = window.FALLBACK_ARCADE_SVG;
       }
-      const primaryName = genre.split('/')[0].trim().toLowerCase();
-      return `${RAW_BASE}genre/${encodeURIComponent(primaryName)}.png`;
     }
 
     const buildDirectRomUrl = (src, itemPath) => /^https?:\/\//i.test(itemPath) ? itemPath : `https://${src.repo === 'emu' ? 'raw.githubusercontent.com' : 'media.githubusercontent.com/media'}/${src.owner}/${src.repo}/${src.branch || "main"}/${itemPath}`;
@@ -295,9 +305,15 @@
     function savePersistentImgMap() {
       try {
         const keys = Object.keys(persistentImgMap);
-        if (keys.length > 2000) keys.slice(0, 500).forEach(k => delete persistentImgMap[k]);
+        if (keys.length > 1500) keys.slice(0, 500).forEach(k => delete persistentImgMap[k]);
         lsSet(PERSISTENT_IMG_CACHE_KEY, JSON.stringify(persistentImgMap));
-      } catch(e) {}
+      } catch(e) {
+        try {
+          const keys = Object.keys(persistentImgMap);
+          keys.slice(0, Math.floor(keys.length / 2)).forEach(k => delete persistentImgMap[k]);
+          lsSet(PERSISTENT_IMG_CACHE_KEY, JSON.stringify(persistentImgMap));
+        } catch(err){}
+      }
     }
 
     function cacheSet(k, v) {
@@ -314,12 +330,12 @@
       allGames: initialPlaceholderGames, filteredGames: initialPlaceholderGames, 
       selIdx: 0, topIdx: 0, slots: [], searchQuery: "", showFavOnly: false, 
       showMainOnly: lsGet('pandora_show_main_only') === 'true',
-      selectedGenre: "ALL", availableGenres: ["ALL"],
-      genreMenuSelIdx: 0, systemMenuSelIdx: 0,
+      selectedGenre: 'all', availableGenres: [],
       datNameMap: {}, datOrderMap: {}, datCloneMap: {}, datGenreMap: {},
       favorites: JSON.parse(lsGet('pandora_favs') || '[]'),
       isCurved: lsGet('pandora_curved') !== null ? lsGet('pandora_curved') === 'true' : !(window.innerWidth < 820 || window.innerHeight > window.innerWidth),
-      numSlots: 5, gpLastTime: 0, resizeTimer: null
+      numSlots: 5, gamepadConnected: false, gpLastTime: 0, lastGpBtn: {}, resizeTimer: null,
+      gpMenuIdx: 0
     };
 
     function toggleUserMenu(e) {
@@ -335,12 +351,6 @@
 
       const authItem = $('auth-menu-item');
       if (authItem) authItem.style.display = currentUserProfile ? 'none' : 'flex';
-
-      const genreItem = $('genre-menu-item');
-      if (genreItem) {
-        genreItem.classList.toggle('active-glow', state.selectedGenre !== "ALL");
-        $('genre-menu-text').textContent = state.selectedGenre !== "ALL" ? `Thể loại: ${state.selectedGenre}` : 'Chọn Thể Loại Game';
-      }
 
       const favItem = $('fav-menu-item');
       if (favItem) {
@@ -381,9 +391,9 @@
       menu.style.maxHeight = `${Math.max(150, window.innerHeight - topPos - 16)}px`;
     }
 
-    const closeUserMenu = () => $('user-menu-dropdown')?.classList.remove('active');
-    const closeMenuModal = () => $('menu-dropdown')?.classList.remove('active');
-    const closeGenreMenu = () => $('genre-menu-dropdown')?.classList.remove('active');
+    const closeUserMenu = () => $('user-menu-dropdown').classList.remove('active');
+    const closeMenuModal = () => $('menu-dropdown').classList.remove('active');
+    const closeGenreMenu = () => $('genre-menu-dropdown').classList.remove('active');
     const handleAuthClick = () => { closeUserMenu(); handleGoogleAuth(); };
 
     function toggleLayoutMode() {
@@ -419,16 +429,21 @@
       try {
         const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } });
         if (res.ok) currentUserProfile = await res.json();
+        else if (res.status === 401) handleAuthLogout();
       } catch (e) {}
+    }
+
+    function handleAuthLogout() {
+      accessToken = driveFileId = currentUserProfile = null;
+      lsRem('pandora_google_token'); lsRem('pandora_google_user');
+      drawHeader();
     }
 
     function handleGoogleAuth() {
       if (!accessToken) {
         if (tokenClient) tokenClient.requestAccessToken({ prompt: 'consent' });
       } else {
-        accessToken = driveFileId = currentUserProfile = null;
-        lsRem('pandora_google_token'); lsRem('pandora_google_user');
-        drawHeader();
+        handleAuthLogout();
       }
     }
 
@@ -438,9 +453,8 @@
       try {
         const listRes = await fetch("https://www.googleapis.com/drive/v3/files?spaces=appDataFolder", { headers: { Authorization: `Bearer ${accessToken}` } });
         if (listRes.status === 401) {
-          accessToken = currentUserProfile = null;
-          lsRem('pandora_google_token'); lsRem('pandora_google_user');
-          drawHeader(); return;
+          handleAuthLogout();
+          return;
         }
         const listData = await listRes.json(), file = listData.files?.find(f => f.name === DRIVE_FILE_NAME);
 
@@ -523,26 +537,18 @@
     }
 
     function addDatEntry(map, orderMap, cloneMap, genreMap, key, desc, cloneof, genre, idx) {
-      if (!key) return;
+      if (!key || !desc) return;
       const kLow = key.toLowerCase().trim(), kNoExt = kLow.replace(/\.[^/.]+$/, '');
-      if (desc) {
-        map[kLow] = desc; 
-        if (orderMap[kLow] === undefined) orderMap[kLow] = idx;
-        if (kNoExt) {
-          map[kNoExt] = desc; 
-          if (orderMap[kNoExt] === undefined) orderMap[kNoExt] = idx;
-        }
-      }
-      if (cloneof) {
-        cloneMap[kLow] = cloneof.toLowerCase().trim();
-        if (kNoExt) cloneMap[kNoExt] = cloneof.toLowerCase().trim();
-      }
-      if (genre) {
-        const cleanG = decodeXml(genre).trim();
-        if (cleanG) {
-          genreMap[kLow] = cleanG;
-          if (kNoExt) genreMap[kNoExt] = cleanG;
-        }
+      map[kLow] = desc; 
+      if (orderMap[kLow] === undefined) orderMap[kLow] = idx;
+      if (cloneof) cloneMap[kLow] = cloneof.toLowerCase().trim();
+      if (genre) genreMap[kLow] = genre.trim();
+
+      if (kNoExt) { 
+        map[kNoExt] = desc; 
+        if (orderMap[kNoExt] === undefined) orderMap[kNoExt] = idx;
+        if (cloneof) cloneMap[kNoExt] = cloneof.toLowerCase().trim();
+        if (genre) genreMap[kNoExt] = genre.trim();
       }
     }
 
@@ -557,12 +563,15 @@
         const cloneof = cloneMatch ? cloneMatch[1].trim() : null;
         const d = /<description>([\s\S]*?)<\/description>/i.exec(inner);
         const g = /<(?:genre|category)>([\s\S]*?)<\/(?:genre|category)>/i.exec(inner);
-        addDatEntry(map, order, cloneMap, genreMap, name, d ? decodeXml(d[1]) : null, cloneof, g ? g[1] : null, count++);
+        const genreStr = g?.[1] ? decodeXml(g[1]).trim() : null;
+        if (d?.[1]) addDatEntry(map, order, cloneMap, genreMap, name, decodeXml(d[1]), cloneof, genreStr, count++);
       }
       if (!xmlFound) {
-        const clrRegex = /(?:game|machine)\s*\(\s*name\s+["']?([^"'\r\n]+)["']?(?:[\s\S]*?\bcloneof\s+["']?([^"'\r\n]+)["']?)?[\s\S]*?(?:description\s+["']([^"']+)["'])?(?:[\s\S]*?(?:genre|category)\s+["']([^"']+)["'])?/gi;
+        const clrRegex = /(?:game|machine)\s*\(\s*name\s+["']?([^"'\r\n]+)["']?(?:[\s\S]*?\bcloneof\s+["']?([^"'\r\n]+)["']?)?[\s\S]*?description\s+["']([^"']+)["']/gi;
         while ((match = clrRegex.exec(text)) !== null) {
-          addDatEntry(map, order, cloneMap, genreMap, match[1].trim(), match[3] ? decodeXml(match[3]) : null, match[2] ? match[2].trim() : null, match[4] ? match[4].trim() : null, count++);
+          const inner = match[0];
+          const gMatch = /\b(?:category|genre)\s+["']([^"']+)["']/i.exec(inner);
+          addDatEntry(map, order, cloneMap, genreMap, match[1].trim(), decodeXml(match[3]), match[2] ? match[2].trim() : null, gMatch?.[1] ? gMatch[1].trim() : null, count++);
         }
       }
       return { map, order, cloneMap, genreMap };
@@ -643,7 +652,7 @@
       const lastCat = lsGet("pandora_last_cat");
       const processCats = list => list.map(i => ({ ...i, displayName: capTitle(i.system || i.name) })).sort((a, b) => a.displayName.localeCompare(b.displayName, 'vi', { sensitivity: 'base' }));
 
-      const cacheKey = "pandora_full_db_v12";
+      const cacheKey = "pandora_full_db_v13";
       if (!forceReload) {
         const cached = Storage.get(cacheKey);
         if (cached?.datList?.length > 1 && cached?.gamesByCat) {
@@ -723,30 +732,24 @@
       } catch (e) { showLoader("HOÀN TẤT VỚI DỮ LIỆU CÓ SẴN"); setTimeout(hideLoader, 1500); }
     }
 
-    function updateAvailableGenres() {
-      const genreSet = new Set();
-      state.allGames.forEach(g => {
-        if (g.genre) genreSet.add(g.genre);
-      });
-      const sortedGenres = Array.from(genreSet).sort((a, b) => a.localeCompare(b, 'vi', { sensitivity: 'base' }));
-      state.availableGenres = ["ALL", ...sortedGenres];
-      if (state.selectedGenre !== "ALL" && !sortedGenres.includes(state.selectedGenre)) {
-        state.selectedGenre = "ALL";
-      }
-    }
-
     function updateNames() {
       const counts = {};
+      const genreSet = new Set();
+
       state.allGames.forEach(g => {
         const d = getDisplayName(cleanTitle(g.fullName));
         if (d) g.name = d;
-        const rawKey = g.fullName ? g.fullName.toLowerCase().trim().replace(/\.[^/.]+$/, '') : '';
-        const cleanKey = cleanTitle(g.fullName).toLowerCase().trim();
-        g.genre = state.datGenreMap[rawKey] || state.datGenreMap[cleanKey] || "";
-
         const k = g.name.toLowerCase().trim();
         counts[k] = (counts[k] || 0) + 1;
+
+        const kLow = g.fullName.toLowerCase().trim();
+        const kNoExt = kLow.replace(/\.[^/.]+$/, '');
+        const clean = cleanTitle(g.fullName).toLowerCase().trim();
+        g.genre = state.datGenreMap[kLow] || state.datGenreMap[kNoExt] || state.datGenreMap[clean] || "";
+        if (g.genre) genreSet.add(g.genre);
       });
+
+      state.availableGenres = Array.from(genreSet).sort((a, b) => a.localeCompare(b, 'vi'));
 
       state.allGames.forEach(g => {
         const k = g.name.toLowerCase().trim();
@@ -759,8 +762,6 @@
       const map = new Map();
       state.allGames.forEach(g => map.set(`${g.romUrl || g.fullName}_${g.name}`, g));
       state.allGames = Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base', numeric: true }));
-      
-      updateAvailableGenres();
       filterGames(true); render();
     }
 
@@ -773,8 +774,8 @@
       if (q) list = list.filter(g => g.name.toLowerCase().includes(q) || g.fullName.toLowerCase().includes(q));
       if (state.showFavOnly) list = list.filter(g => isFav(g));
       if (state.showMainOnly) list = list.filter(g => !isCloneGame(g));
-      if (state.selectedGenre !== "ALL") {
-        list = list.filter(g => g.genre && (g.genre === state.selectedGenre || g.genre.includes(state.selectedGenre)));
+      if (state.selectedGenre && state.selectedGenre !== 'all') {
+        list = list.filter(g => g.genre && g.genre.toLowerCase() === state.selectedGenre.toLowerCase());
       }
       state.filteredGames = list;
 
@@ -787,33 +788,23 @@
 
     function renderMenuList() {
       $('menu-dropdown').innerHTML = `<div class="menu-header">Danh Sách Hệ Máy (${state.datList.length})</div>` + state.datList.map((item, i) =>
-        `<div class="menu-item ${i === state.currentDatIdx ? 'active' : ''} ${i === state.systemMenuSelIdx ? 'keyboard-focused' : ''}" onclick="switchCat(${i})">
-          <div class="menu-logo-box"><img src="${item.logo}" alt="${item.displayName}" onerror="this.onerror=null;this.src=FALLBACK_ARCADE_SVG;"/></div>
+        `<div class="menu-item ${i === state.currentDatIdx ? 'active' : ''}" onclick="switchCat(${i})">
+          <div class="menu-logo-box"><img src="${item.logo}" alt="${item.displayName}" onerror="this.onerror=null;this.src=window.FALLBACK_ARCADE_SVG;"/></div>
           <span>${item.displayName}</span>
         </div>`
       ).join('');
     }
 
     function renderGenreMenuList() {
-      const menu = $('genre-menu-dropdown');
-      if (!menu) return;
-      
-      const itemsHtml = state.availableGenres.map((genre, i) => {
-        const isActive = state.selectedGenre === genre;
-        const isFocused = i === state.genreMenuSelIdx;
-        const displayName = genre === "ALL" ? "Tất Cả Thể Loại" : genre;
-        const iconUrl = getGenreIconUrl(genre);
-        
-        return `<div class="menu-item ${isActive ? 'active' : ''} ${isFocused ? 'keyboard-focused' : ''}" 
-                     onclick="selectGenre('${genre.replace(/'/g, "\\'")}')">
-                  <div class="menu-logo-box">
-                    <img src="${iconUrl}" alt="${displayName}" onerror="this.onerror=null;this.src=FALLBACK_GENRE_SVG;"/>
-                  </div>
-                  <span>${displayName}</span>
-                </div>`;
+      const items = [{ name: 'Tất Cả Thể Loại', value: 'all' }, ...state.availableGenres.map(g => ({ name: g, value: g }))];
+      $('genre-menu-dropdown').innerHTML = `<div class="menu-header">Thể Loại (${items.length - 1})</div>` + items.map((item, i) => {
+        const iconUrl = getGenreIconUrl(item.value);
+        const isActive = state.selectedGenre.toLowerCase() === item.value.toLowerCase();
+        return `<div class="menu-item ${isActive ? 'active' : ''}" onclick="switchGenre('${item.value.replace(/'/g, "\\'")}')">
+          <div class="menu-logo-box"><img src="${iconUrl}" data-genre="${item.value.replace(/"/g, '&quot;')}" alt="${item.name}" onerror="handleGenreImgError(this)"/></div>
+          <span>${item.name}</span>
+        </div>`;
       }).join('');
-      
-      menu.innerHTML = `<div class="menu-header">Thể Loại (${state.availableGenres.length})</div>` + itemsHtml;
     }
 
     const toggleMenuModal = e => {
@@ -821,11 +812,7 @@
       closeUserMenu(); closeGenreMenu(); closeInlineSearch();
       const menu = $('menu-dropdown');
       if (menu.classList.contains('active')) closeMenuModal();
-      else { 
-        state.systemMenuSelIdx = state.currentDatIdx;
-        renderMenuList(); posMenu(menu, $('hdr-logo-btn')); menu.classList.add('active'); 
-        highlightSystemMenuItem();
-      }
+      else { state.gpMenuIdx = state.currentDatIdx; renderMenuList(); posMenu(menu, $('hdr-logo-btn')); menu.classList.add('active'); updateMenuGpHighlight(menu); }
     };
 
     const toggleGenreMenu = e => {
@@ -833,37 +820,27 @@
       closeUserMenu(); closeMenuModal(); closeInlineSearch();
       const menu = $('genre-menu-dropdown');
       if (menu.classList.contains('active')) closeGenreMenu();
-      else { 
-        state.genreMenuSelIdx = Math.max(0, state.availableGenres.indexOf(state.selectedGenre));
-        renderGenreMenuList(); posMenu(menu, $('hdr-genre-btn')); menu.classList.add('active'); 
-        highlightGenreMenuItem();
+      else {
+        renderGenreMenuList();
+        posMenu(menu, $('hdr-genre-btn'));
+        menu.classList.add('active');
+        const items = [{ value: 'all' }, ...state.availableGenres.map(g => ({ value: g }))];
+        state.gpMenuIdx = Math.max(0, items.findIndex(x => x.value.toLowerCase() === state.selectedGenre.toLowerCase()));
+        updateMenuGpHighlight(menu);
       }
     };
 
-    function highlightGenreMenuItem() {
-      const menu = $('genre-menu-dropdown');
+    function updateMenuGpHighlight(menu) {
       if (!menu) return;
       const items = menu.querySelectorAll('.menu-item');
       items.forEach((item, idx) => {
-        item.classList.toggle('keyboard-focused', idx === state.genreMenuSelIdx);
+        item.classList.toggle('gp-hover', idx === state.gpMenuIdx);
+        if (idx === state.gpMenuIdx) item.scrollIntoView({ block: 'nearest' });
       });
-      const activeEl = menu.querySelector(`.menu-item:nth-child(${state.genreMenuSelIdx + 2})`);
-      if (activeEl) activeEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
 
-    function highlightSystemMenuItem() {
-      const menu = $('menu-dropdown');
-      if (!menu) return;
-      const items = menu.querySelectorAll('.menu-item');
-      items.forEach((item, idx) => {
-        item.classList.toggle('keyboard-focused', idx === state.systemMenuSelIdx);
-      });
-      const activeEl = menu.querySelector(`.menu-item:nth-child(${state.systemMenuSelIdx + 2})`);
-      if (activeEl) activeEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    }
-
-    function selectGenre(genre) {
-      state.selectedGenre = genre;
+    function switchGenre(genreValue) {
+      state.selectedGenre = genreValue;
       closeGenreMenu();
       filterGames(false);
       drawAll();
@@ -872,6 +849,7 @@
     async function switchCat(i) {
       if (i === state.currentDatIdx) return closeMenuModal();
       state.currentDatIdx = i;
+      state.selectedGenre = 'all';
       const cat = state.datList[i]; if (!cat) return;
       lsSet("pandora_last_cat", cat.name || ''); closeMenuModal();
       state.allGames = state.gamesByCat[cat.name] || []; state.searchQuery = "";
@@ -886,24 +864,24 @@
     function drawHeader() {
       const p = getGeom(), xl0 = getX(6, p), xl1 = getX(54, p), xlMid = getX(30, p);
       const isPlaceholder = state.filteredGames.length && state.filteredGames[0]?.fullName?.startsWith('placeholder_');
-      
-      let label = state.showFavOnly ? 'YÊU THÍCH' : (state.showMainOnly ? 'GAME CHÍNH' : 'GAME');
-      if (state.selectedGenre !== "ALL") label = `[${state.selectedGenre.toUpperCase()}]`;
-
-      const cntText = isPlaceholder ? 'ĐANG TẢI DỮ LIỆU...' : (state.filteredGames.length ? `${label}: ${state.selIdx + 1} / ${state.filteredGames.length}` : (state.datList.length ? 'GAME: 0 / 0' : 'ĐANG TẢI...'));
+      const cntText = isPlaceholder ? 'ĐANG TẢI DỮ LIỆU...' : (state.filteredGames.length ? `${state.showFavOnly ? 'YÊU THÍCH' : (state.showMainOnly ? 'GAME CHÍNH' : 'GAME')}: ${state.selIdx + 1} / ${state.filteredGames.length}` : (state.datList.length ? 'GAME: 0 / 0' : 'ĐANG TẢI...'));
 
       $('hg').innerHTML = `
         <polygon points="${xl0.toFixed(1)},6 ${(xl0 + p.W).toFixed(1)},6 ${(xl1 + p.W).toFixed(1)},54 ${xl1.toFixed(1)},54" fill="url(#gh)" stroke="#475569" stroke-width="1.5"/>
         <line x1="${xl0.toFixed(1)}" y1="6" x2="${xl1.toFixed(1)}" y2="54" stroke="#38bdf8" stroke-width="4"/>
-        <text id="cnt-txt" x="${(xlMid + 92).toFixed(1)}" y="30" dominant-baseline="central" fill="#fbbf24" font-size="13" font-weight="bold" font-family="Orbitron">${cntText}</text>`;
+        <text id="cnt-txt" x="${(xlMid + 92).toFixed(1)}" y="30" dominant-baseline="central" fill="#fbbf24" font-size="14" font-weight="bold" font-family="Orbitron">${cntText}</text>`;
 
       updateHeaderOverlays();
     }
 
     function updateHeaderOverlays() {
       if ($('hdr-logo-img')) $('hdr-logo-img').src = state.datList[state.currentDatIdx]?.logo || FALLBACK_ARCADE_SVG;
-      if ($('hdr-genre-img')) $('hdr-genre-img').src = getGenreIconUrl(state.selectedGenre);
-
+      if ($('hdr-genre-img')) {
+        const img = $('hdr-genre-img');
+        delete img.dataset.tried;
+        img.dataset.genre = state.selectedGenre;
+        img.src = getGenreIconUrl(state.selectedGenre);
+      }
       const aImg = $('hdr-avatar-img'), aSvg = $('hdr-avatar-svg');
       if (currentUserProfile?.picture) { aImg.src = currentUserProfile.picture; aImg.style.display = 'block'; aSvg.style.display = 'none'; }
       else { aImg.style.display = 'none'; aSvg.style.display = 'block'; }
@@ -930,13 +908,13 @@
       };
 
       setBtnPos($('hdr-logo-btn'), xlMid + 28, 30, 34);
-      setBtnPos($('hdr-genre-btn'), xlMid + 68, 30, 32);
+      setBtnPos($('hdr-genre-btn'), xlMid + 64, 30, 28);
       setBtnPos($('hdr-search-btn'), rxMid - 56, 30, 28);
       setBtnPos($('hdr-avatar-btn'), rxMid - 22, 30, 32);
 
       const bar = $('inline-search-bar');
       if (bar?.classList.contains('active')) {
-        const startX = xlMid + 92, endX = rxMid - 76;
+        const startX = xlMid + 88, endX = rxMid - 76;
         bar.style.left = `${svgOffsetX + (startX / 540) * rect.width}px`;
         bar.style.top = `${svgOffsetY + (30 / viewBoxH) * rect.height}px`;
         bar.style.transform = 'translateY(-50%)';
@@ -994,16 +972,27 @@
     function getPreviewCandidates(g) {
       if (!g || g.fullName?.startsWith('placeholder_')) return [];
       const cat = state.datList[state.currentDatIdx]; if (!cat) return [];
-      const catFolder = encodeURIComponent(cat.folderName || cat.name), fileBase = g.fullName ? g.fullName.split('/').pop().replace(/\.[^/.]+$/, '') : '';
-      const names = Array.from(new Set([cleanTitle(g.fullName), fileBase, g.name])).filter(Boolean);
-      const sysName = cat.libretroSys || cat.system || cat.name;
+      const catFolder = encodeURIComponent(cat.folderName || cat.name);
+      const fileBase = g.fullName ? g.fullName.split('/').pop().replace(/\.[^/.]+$/, '') : '';
+      const sysName = encodeURIComponent(cat.libretroSys || cat.system || cat.name);
+      
+      const names = Array.from(new Set([
+        fileBase,
+        cleanTitle(g.fullName),
+        g.name
+      ])).filter(Boolean);
 
-      return names.flatMap(n => [
-        `${RAW_BASE}snap/${catFolder}/${encodeURIComponent(n)}.png`,
-        `${RAW_BASE}snap/arcade/${encodeURIComponent(n)}.png`,
-        `https://thumbnails.libretro.com/${encodeURIComponent(sysName)}/Named_Snaps/${encodeURIComponent(n)}.png`,
-        `https://thumbnails.libretro.com/${encodeURIComponent(sysName)}/Named_Titles/${encodeURIComponent(n)}.png`
-      ]).filter(url => !failedUrls.has(url));
+      const urls = [];
+      names.forEach(n => {
+        const encoded = encodeURIComponent(n);
+        urls.push(`${RAW_BASE}snap/${catFolder}/${encoded}.png`);
+        if (catFolder.toLowerCase() !== 'arcade') {
+          urls.push(`${RAW_BASE}snap/arcade/${encoded}.png`);
+        }
+        urls.push(`https://thumbnails.libretro.com/${sysName}/Named_Snaps/${encoded}.png`);
+      });
+
+      return Array.from(new Set(urls)).filter(url => !failedUrls.has(url));
     }
 
     function resolveAndCacheImage(g, onDone) {
@@ -1030,34 +1019,35 @@
         return onDone?.(PLACEHOLDER_SVG); 
       }
 
-      let resolved = false;
-      let failCount = 0;
-
-      candidates.forEach(url => {
+      let idx = 0;
+      function tryNext() {
+        if (idx >= candidates.length) {
+          cacheSet(key, PLACEHOLDER_SVG);
+          onDone?.(PLACEHOLDER_SVG);
+          return;
+        }
+        const url = candidates[idx++];
+        if (failedUrls.has(url)) {
+          tryNext();
+          return;
+        }
         const tempImg = new Image();
         tempImg.onload = () => {
-          if (!resolved) {
-            resolved = true;
-            cacheSet(key, url);
-            onDone?.(url);
-          }
+          cacheSet(key, url);
+          onDone?.(url);
         };
         tempImg.onerror = () => {
           failedUrls.add(url);
-          failCount++;
-          if (failCount === candidates.length && !resolved) {
-            resolved = true;
-            cacheSet(key, PLACEHOLDER_SVG);
-            onDone?.(PLACEHOLDER_SVG);
-          }
+          tryNext();
         };
         tempImg.src = url;
-      });
+      }
+      tryNext();
     }
 
     function preloadNeighbors() {
       const schedulePreload = () => {
-        [-2, -1, 1, 2, 3, 4, 5].forEach(offset => {
+        [-1, 1, 2].forEach(offset => {
           const targetGame = state.filteredGames[state.selIdx + offset];
           if (targetGame) resolveAndCacheImage(targetGame);
         });
@@ -1147,6 +1137,7 @@
       $('game-player-modal').classList.remove('active');
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
       state.gpLastTime = performance.now() + 400;
+      state.lastGpBtn = { dir: true, cat: true, home: true, favY: true, favX: true, cloneB: true, cloneSelect: true, confirm: true };
       render();
     }
 
@@ -1156,13 +1147,19 @@
       else document.exitFullscreen().catch(() => {});
     }
 
-    function onSearchInput(val) { state.searchQuery = val; filterGames(false); drawSlots(); render(); }
+    function onSearchInput(val) { 
+      state.searchQuery = val; 
+      state.selIdx = 0;
+      state.topIdx = 0;
+      filterGames(false); 
+      drawSlots(); 
+      render(); 
+    }
 
     function render() {
       const isPlaceholder = state.filteredGames.length && state.filteredGames[0]?.fullName?.startsWith('placeholder_');
-      let label = state.showFavOnly ? 'YÊU THÍCH' : (state.showMainOnly ? 'GAME CHÍNH' : 'GAME');
-      if (state.selectedGenre !== "ALL") label = `[${state.selectedGenre.toUpperCase()}]`;
-      
+      const label = state.showFavOnly ? 'YÊU THÍCH' : (state.showMainOnly ? 'GAME CHÍNH' : 'GAME');
+
       if (!state.filteredGames.length) {
         if ($('cnt-txt')) $('cnt-txt').textContent = `${label}: 0 / 0`;
         state.slots.forEach(s => s.g.style.display = "none");
@@ -1218,85 +1215,20 @@
       const currChar = getChar(state.filteredGames[state.selIdx]);
 
       if (dir > 0) {
-        let targetIdx = -1;
-        for (let i = state.selIdx + 1; i < state.filteredGames.length; i++) {
-          if (getChar(state.filteredGames[i]) !== currChar) { targetIdx = i; break; }
-        }
+        let targetIdx = state.filteredGames.findIndex((g, idx) => idx > state.selIdx && getChar(g) !== currChar);
         state.selIdx = targetIdx !== -1 ? targetIdx : state.filteredGames.length - 1;
       } else {
-        let startOfCurr = state.selIdx;
-        while (startOfCurr > 0 && getChar(state.filteredGames[startOfCurr - 1]) === currChar) startOfCurr--;
-        if (state.selIdx > startOfCurr) state.selIdx = startOfCurr;
-        else {
-          let prevIdx = startOfCurr - 1;
-          if (prevIdx >= 0) {
-            const prevChar = getChar(state.filteredGames[prevIdx]);
-            while (prevIdx > 0 && getChar(state.filteredGames[prevIdx - 1]) === prevChar) prevIdx--;
-            state.selIdx = prevIdx;
-          } else state.selIdx = 0;
+        let firstOfCurr = state.filteredGames.findIndex(g => getChar(g) === currChar);
+        if (state.selIdx > firstOfCurr && firstOfCurr !== -1) {
+          state.selIdx = firstOfCurr;
+        } else if (firstOfCurr > 0) {
+          const prevChar = getChar(state.filteredGames[firstOfCurr - 1]);
+          state.selIdx = state.filteredGames.findIndex(g => getChar(g) === prevChar);
+        } else {
+          state.selIdx = 0;
         }
       }
       render();
-    }
-
-    function pollGamepad() {
-      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-      let gp = null;
-      for (let i = 0; i < gamepads.length; i++) {
-        if (gamepads[i]) { gp = gamepads[i]; break; }
-      }
-      
-      const gpBadge = $('gp-badge');
-      if (gpBadge) gpBadge.style.display = gp ? 'block' : 'none';
-
-      if (gp) {
-        const now = performance.now();
-        if (now > state.gpLastTime) {
-          const b = gp.buttons, axes = gp.axes;
-          const up = (b[12] && b[12].pressed) || (axes[1] && axes[1] < -0.5);
-          const down = (b[13] && b[13].pressed) || (axes[1] && axes[1] > 0.5);
-          const left = (b[14] && b[14].pressed) || (axes[0] && axes[0] < -0.5);
-          const right = (b[15] && b[15].pressed) || (axes[0] && axes[0] > 0.5);
-          
-          const btnA = b[0] && b[0].pressed, btnB = b[1] && b[1].pressed;
-          const btnX = b[2] && b[2].pressed, btnY = b[3] && b[3].pressed;
-          const btnLB = b[4] && b[4].pressed, btnRB = b[5] && b[5].pressed;
-          const btnLT = b[6] && b[6].pressed, btnRT = b[7] && b[7].pressed;
-          const btnSelect = b[8] && b[8].pressed, btnStart = b[9] && b[9].pressed;
-          const btnHome = b[16] && b[16].pressed;
-
-          let act = false;
-
-          if ($('game-player-modal').classList.contains('active')) {
-            if (btnHome) { closeGamePlayer(); act = true; }
-          } else if ($('menu-dropdown').classList.contains('active')) {
-            if (up) { state.systemMenuSelIdx = Math.max(0, state.systemMenuSelIdx - 1); highlightSystemMenuItem(); act = true; }
-            else if (down) { state.systemMenuSelIdx = Math.min(state.datList.length - 1, state.systemMenuSelIdx + 1); highlightSystemMenuItem(); act = true; }
-            else if (btnA || btnStart) { switchCat(state.systemMenuSelIdx); act = true; }
-            else if (btnB || btnSelect) { closeMenuModal(); act = true; }
-          } else if ($('genre-menu-dropdown').classList.contains('active')) {
-            if (up) { state.genreMenuSelIdx = Math.max(0, state.genreMenuSelIdx - 1); highlightGenreMenuItem(); act = true; }
-            else if (down) { state.genreMenuSelIdx = Math.min(state.availableGenres.length - 1, state.genreMenuSelIdx + 1); highlightGenreMenuItem(); act = true; }
-            else if (btnA || btnStart) { selectGenre(state.availableGenres[state.genreMenuSelIdx]); act = true; }
-            else if (btnB || btnSelect) { closeGenreMenu(); act = true; }
-          } else {
-            if (up) { moveSelection(-1); act = true; }
-            else if (down) { moveSelection(1); act = true; }
-            else if (left) { switchCat((state.currentDatIdx - 1 + state.datList.length) % state.datList.length); act = true; }
-            else if (right) { switchCat((state.currentDatIdx + 1) % state.datList.length); act = true; }
-            else if (btnLT) { toggleGenreMenu(); act = true; }
-            else if (btnRT) { toggleMenuModal(); act = true; }
-            else if (btnLB) { jumpByLetter(-1); act = true; }
-            else if (btnRB) { jumpByLetter(1); act = true; }
-            else if (btnA || btnStart) { launchCurrentGame(); act = true; }
-            else if (btnY) { toggleCurrentFav(); act = true; }
-            else if (btnX) { toggleFavFilter(); act = true; }
-          }
-
-          if (act) state.gpLastTime = now + 180;
-        }
-      }
-      requestAnimationFrame(pollGamepad);
     }
 
     function bindEvents() {
@@ -1321,85 +1253,156 @@
         if (el) { el.addEventListener('touchstart', blockMenuTouch, { passive: true }); el.addEventListener('touchmove', blockMenuTouch, { passive: true }); }
       });
 
-      let touchY = 0;
-      if (svgContainer) {
-        svgContainer.addEventListener('touchstart', e => { if (e.touches.length) touchY = e.touches[0].clientY; }, { passive: true });
-        svgContainer.addEventListener('touchend', e => {
-          if (!e.changedTouches.length) return;
-          const diffY = touchY - e.changedTouches[0].clientY;
-          if (Math.abs(diffY) > 30) moveSelection(diffY > 0 ? 1 : -1);
+      let touchY = 0, svgC = $('svg-container');
+      if (svgC) {
+        svgC.addEventListener('touchstart', e => { if (e.touches.length) touchY = e.touches[0].clientY; }, { passive: true });
+        svgC.addEventListener('touchmove', e => {
+          if ($('menu-dropdown').classList.contains('active') || $('genre-menu-dropdown').classList.contains('active') || $('user-menu-dropdown').classList.contains('active')) return;
+          if (!state.filteredGames.length || !e.touches.length) return;
+          const d = touchY - e.touches[0].clientY;
+          if (Math.abs(d) > 28) { moveSelection(d > 0 ? 1 : -1); touchY = e.touches[0].clientY; }
         }, { passive: true });
-        svgContainer.addEventListener('wheel', e => {
-          e.preventDefault();
-          moveSelection(e.deltaY > 0 ? 1 : -1);
-        }, { passive: false });
       }
 
-      document.addEventListener('keydown', e => {
-        if (e.target.tagName === 'INPUT') {
-          if (e.key === 'Escape') closeInlineSearch(true);
+      window.onwheel = e => {
+        if ($('game-player-modal').classList.contains('active') || $('menu-dropdown').classList.contains('active') || $('genre-menu-dropdown').classList.contains('active') || $('user-menu-dropdown').classList.contains('active')) return;
+        moveSelection(e.deltaY > 0 ? 1 : -1);
+      };
+
+      window.onkeydown = e => {
+        if ($('help-modal').classList.contains('active')) { if (e.key === 'Escape') closeHelpModal(); return; }
+        if ($('game-player-modal').classList.contains('active')) { if (e.key === 'Escape') closeGamePlayer(); return; }
+        if ($('inline-search-bar')?.classList.contains('active')) {
+          if (e.key === 'Escape') return closeInlineSearch(true);
+          if (e.key === 'Enter') { e.preventDefault(); closeInlineSearch(false); if (state.filteredGames.length) launchCurrentGame(); return; }
+          if (e.key === 'ArrowDown') { e.preventDefault(); moveSelection(1); return; }
+          if (e.key === 'ArrowUp') { e.preventDefault(); moveSelection(-1); return; }
+          if (e.key === 'PageDown') { e.preventDefault(); jumpByLetter(1); return; }
+          if (e.key === 'PageUp') { e.preventDefault(); jumpByLetter(-1); return; }
           return;
         }
-        if ($('game-player-modal').classList.contains('active')) {
-          if (e.key === 'Escape') closeGamePlayer();
-          return;
-        }
+        if ($('menu-dropdown').classList.contains('active')) { if (e.key === 'Escape') closeMenuModal(); return; }
+        if ($('genre-menu-dropdown').classList.contains('active')) { if (e.key === 'Escape') closeGenreMenu(); return; }
+        if ($('user-menu-dropdown').classList.contains('active')) { if (e.key === 'Escape') closeUserMenu(); return; }
 
-        const isMenu = $('menu-dropdown').classList.contains('active');
-        const isGenre = $('genre-menu-dropdown').classList.contains('active');
-        const isHelp = $('help-modal').classList.contains('active');
-
-        if (e.key === 'Escape') {
-          closeMenuModal(); closeGenreMenu(); closeUserMenu(); closeHelpModal(); closeInlineSearch(true);
-          return;
-        }
-
-        if (isHelp) return;
-
-        if (isMenu) {
-          if (e.key === 'ArrowUp') { e.preventDefault(); state.systemMenuSelIdx = Math.max(0, state.systemMenuSelIdx - 1); highlightSystemMenuItem(); }
-          else if (e.key === 'ArrowDown') { e.preventDefault(); state.systemMenuSelIdx = Math.min(state.datList.length - 1, state.systemMenuSelIdx + 1); highlightSystemMenuItem(); }
-          else if (e.key === 'Enter') { e.preventDefault(); switchCat(state.systemMenuSelIdx); }
-          return;
-        }
-
-        if (isGenre) {
-          if (e.key === 'ArrowUp') { e.preventDefault(); state.genreMenuSelIdx = Math.max(0, state.genreMenuSelIdx - 1); highlightGenreMenuItem(); }
-          else if (e.key === 'ArrowDown') { e.preventDefault(); state.genreMenuSelIdx = Math.min(state.availableGenres.length - 1, state.genreMenuSelIdx + 1); highlightGenreMenuItem(); }
-          else if (e.key === 'Enter') { e.preventDefault(); selectGenre(state.availableGenres[state.genreMenuSelIdx]); }
-          return;
-        }
-
-        const k = e.key.toLowerCase();
-        if (k === 'arrowup') { e.preventDefault(); moveSelection(-1); }
-        else if (k === 'arrowdown') { e.preventDefault(); moveSelection(1); }
-        else if (k === 'arrowleft') { e.preventDefault(); switchCat((state.currentDatIdx - 1 + state.datList.length) % state.datList.length); }
-        else if (k === 'arrowright') { e.preventDefault(); switchCat((state.currentDatIdx + 1) % state.datList.length); }
-        else if (k === 'pageup') { e.preventDefault(); jumpByLetter(-1); }
-        else if (k === 'pagedown') { e.preventDefault(); jumpByLetter(1); }
-        else if (k === 'enter') { e.preventDefault(); launchCurrentGame(); }
-        else if (k === 'f') { e.preventDefault(); toggleCurrentFav(); }
-        else if (k === 'v') { e.preventDefault(); toggleFavFilter(); }
-        else if (k === 'c') { e.preventDefault(); toggleMainOnlyFilter(); }
-        else if (k === 'g') { e.preventDefault(); toggleGenreMenu(); }
-        else if (k === 'm') { e.preventDefault(); toggleMenuModal(); }
-        else if (k === 'r') { e.preventDefault(); reloadDatabase(); }
-        else if (e.key === '/') { e.preventDefault(); toggleInlineSearch(); }
-      });
+        const kMap = {
+          ArrowDown: () => moveSelection(1), ArrowUp: () => moveSelection(-1),
+          PageDown: () => jumpByLetter(1), PageUp: () => jumpByLetter(-1),
+          ArrowLeft: () => state.datList.length && switchCat((state.currentDatIdx - 1 + state.datList.length) % state.datList.length),
+          ArrowRight: () => state.datList.length && switchCat((state.currentDatIdx + 1) % state.datList.length),
+          Home: () => state.filteredGames.length && (state.selIdx = 0, render()),
+          f: toggleCurrentFav, F: toggleCurrentFav, v: toggleFavFilter, V: toggleFavFilter,
+          c: toggleMainOnlyFilter, C: toggleMainOnlyFilter, g: toggleGenreMenu, G: toggleGenreMenu,
+          r: reloadDatabase, R: reloadDatabase, Enter: launchCurrentGame, '/': toggleInlineSearch
+        };
+        if (kMap[e.key]) { e.preventDefault(); kMap[e.key](); }
+      };
     }
 
-    function init() {
-      bindEvents();
-      initGoogleDriveAuth();
-      loadFullDatabase();
+    function pollGamepad() {
+      try {
+        const rawGps = navigator.getGamepads ? navigator.getGamepads() : null;
+        let gp = null;
+        if (rawGps) { for (let i = 0; i < rawGps.length; i++) { if (rawGps[i]?.connected) { gp = rawGps[i]; break; } } }
+        const isConnected = !!gp;
+
+        if (isConnected !== state.gamepadConnected) {
+          state.gamepadConnected = isConnected;
+          if ($('gp-badge')) $('gp-badge').style.display = isConnected ? 'block' : 'none';
+        }
+
+        if (isConnected && gp) {
+          const now = performance.now();
+          const isSysMenuOpen = $('menu-dropdown').classList.contains('active');
+          const isGenreMenuOpen = $('genre-menu-dropdown').classList.contains('active');
+
+          if ($('game-player-modal').classList.contains('active')) {
+            if (gp.buttons[16]?.pressed) closeGamePlayer();
+          } else if (isSysMenuOpen || isGenreMenuOpen) {
+            if (now >= state.gpLastTime) {
+              const ay = gp.axes[1] ?? 0;
+              const u = gp.buttons[12]?.pressed || ay < -0.55;
+              const d = gp.buttons[13]?.pressed || ay > 0.55;
+              const menuEl = isSysMenuOpen ? $('menu-dropdown') : $('genre-menu-dropdown');
+              const itemCount = isSysMenuOpen ? state.datList.length : (state.availableGenres.length + 1);
+
+              if (u || d) {
+                state.gpMenuIdx = (state.gpMenuIdx + (u ? -1 : 1) + itemCount) % itemCount;
+                updateMenuGpHighlight(menuEl);
+                state.gpLastTime = now + 160;
+              }
+
+              if (gp.buttons[0]?.pressed || gp.buttons[9]?.pressed) {
+                if (isSysMenuOpen) switchCat(state.gpMenuIdx);
+                else {
+                  const genreVal = state.gpMenuIdx === 0 ? 'all' : state.availableGenres[state.gpMenuIdx - 1];
+                  switchGenre(genreVal);
+                }
+                state.gpLastTime = now + 300;
+              } else if (gp.buttons[1]?.pressed || gp.buttons[8]?.pressed) {
+                closeMenuModal(); closeGenreMenu();
+                state.gpLastTime = now + 300;
+              }
+            }
+          } else if (!$('inline-search-bar')?.classList.contains('active') && !$('user-menu-dropdown').classList.contains('active')) {
+            if (now >= state.gpLastTime) {
+              const ay = gp.axes[1] ?? 0, ax = gp.axes[0] ?? 0;
+              const u = gp.buttons[12]?.pressed || ay < -0.55, d = gp.buttons[13]?.pressed || ay > 0.55;
+              const l = gp.buttons[14]?.pressed || ax < -0.55, r = gp.buttons[15]?.pressed || ax > 0.55;
+
+              if (u || d) {
+                if (!state.lastGpBtn.dir || now - state.gpLastTime > 160) { moveSelection(u ? -1 : 1); state.gpLastTime = now; state.lastGpBtn.dir = true; }
+              } else state.lastGpBtn.dir = false;
+
+              const l1 = gp.buttons[4]?.pressed, r1 = gp.buttons[5]?.pressed;
+              if ((l1 || r1) && !state.lastGpBtn.page) {
+                state.lastGpBtn.page = true; jumpByLetter(r1 ? 1 : -1);
+              } else if (!l1 && !r1) state.lastGpBtn.page = false;
+
+              if ((l || r) && !state.lastGpBtn.cat) {
+                state.lastGpBtn.cat = true;
+                if (state.datList.length) switchCat((state.currentDatIdx + (r ? 1 : -1) + state.datList.length) % state.datList.length);
+              } else if (!l && !r) state.lastGpBtn.cat = false;
+
+              const l2 = gp.buttons[6]?.pressed, r2 = gp.buttons[7]?.pressed;
+              if (l2 && !state.lastGpBtn.trigL) { state.lastGpBtn.trigL = true; toggleGenreMenu(); }
+              else if (!l2) state.lastGpBtn.trigL = false;
+
+              if (r2 && !state.lastGpBtn.trigR) { state.lastGpBtn.trigR = true; toggleMenuModal(); }
+              else if (!r2) state.lastGpBtn.trigR = false;
+
+              const checkBtn = (btnIdx, stateKey, action) => {
+                const pressed = gp.buttons[btnIdx]?.pressed;
+                if (pressed && !state.lastGpBtn[stateKey]) { state.lastGpBtn[stateKey] = true; action(); }
+                else if (!pressed) state.lastGpBtn[stateKey] = false;
+              };
+
+              checkBtn(16, 'home', () => { if (state.filteredGames.length) { state.selIdx = 0; render(); } });
+              checkBtn(3, 'favY', toggleCurrentFav);
+              checkBtn(2, 'favX', toggleFavFilter);
+              checkBtn(1, 'cloneB', toggleMainOnlyFilter);
+              checkBtn(8, 'cloneSelect', toggleMainOnlyFilter);
+              checkBtn(0, 'confirm', launchCurrentGame);
+              checkBtn(9, 'confirm', launchCurrentGame);
+            }
+          }
+        }
+      } catch (e) {}
       requestAnimationFrame(pollGamepad);
     }
 
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', init);
-    } else {
-      init();
-    }
+    window.onload = () => { 
+      bindEvents(); 
+      drawAll(); 
+      requestAnimationFrame(() => posOverlays());
+      loadFullDatabase(); 
+      requestAnimationFrame(pollGamepad);
+      const checkGSI = setInterval(() => {
+        if (typeof google !== 'undefined' && google.accounts) {
+          clearInterval(checkGSI); initGoogleDriveAuth();
+        }
+      }, 100);
+    };
   </script>
 </body>
 </html>
