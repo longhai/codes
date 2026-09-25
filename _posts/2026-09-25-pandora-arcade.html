@@ -273,11 +273,12 @@
     const getGameKey = g => g ? `${state.datList[state.currentDatIdx]?.name || ""}_${g.fullName || g.name}` : "";
     const isFav = g => g?.fullName ? state.favorites.includes(g.fullName) : false;
 
+    // Chuyển primaryName về chữ thường (.toLowerCase()) để luôn khớp với tên tệp ảnh trong thư mục /genre
     function getGenreIconUrl(genre) {
       if (!genre || genre === "ALL") {
         return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23fbbf24'%3E%3Cpath d='M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z'/%3E%3C/svg%3E";
       }
-      const primaryName = genre.split('/')[0].trim();
+      const primaryName = genre.split('/')[0].trim().toLowerCase();
       return `${RAW_BASE}genre/${encodeURIComponent(primaryName)}.png`;
     }
 
@@ -1457,32 +1458,24 @@
               };
 
               checkBtn(16, 'home', () => { if (state.filteredGames.length) { state.selIdx = 0; render(); } });
-              checkBtn(6, 'genreLT', toggleGenreMenu);
-              checkBtn(7, 'systemRT', toggleMenuModal);
               checkBtn(3, 'favY', toggleCurrentFav);
               checkBtn(2, 'favX', toggleFavFilter);
-              checkBtn(1, 'cloneB', toggleMainOnlyFilter);
-              checkBtn(8, 'cloneSelect', toggleMainOnlyFilter);
               checkBtn(0, 'confirm', launchCurrentGame);
               checkBtn(9, 'confirm', launchCurrentGame);
+              checkBtn(6, 'genreL2', toggleGenreMenu);
+              checkBtn(7, 'menuR2', toggleMenuModal);
             }
           }
         }
-      } catch (e) {}
+      } catch (err) {}
       requestAnimationFrame(pollGamepad);
     }
 
-    window.onload = () => { 
-      bindEvents(); 
-      drawAll(); 
-      requestAnimationFrame(() => posOverlays());
-      loadFullDatabase(); 
+    window.onload = () => {
+      bindEvents();
+      initGoogleDriveAuth();
+      loadFullDatabase();
       requestAnimationFrame(pollGamepad);
-      const checkGSI = setInterval(() => {
-        if (typeof google !== 'undefined' && google.accounts) {
-          clearInterval(checkGSI); initGoogleDriveAuth();
-        }
-      }, 100);
     };
   </script>
 </body>
