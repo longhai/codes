@@ -384,8 +384,8 @@
         const MAP = {
             'GBF_PLATFORM': ['Platform','#34d399'], 'GBF_HORSHOOT': ['Shooter / Horiz','#fbbf24'],
             'GBF_VERSHOOT': ['Shooter / Vert','#fb923c'], 'GBF_MULTISHOOT': ['Shooter / Multi','#fbbf24'],
-            'GBF_SHOOT': ['Shooter','#fbbf24'], 'GBF_RUNGUN': ['Run \'n\' Gun','#f87171'],
-            'GBF_SCRFIGHT': ['Beat \'em Up','#f87171'], 'GBF_VSFIGHT': ['Fighting','#fb7185'],
+            'GBF_SHOOT': ['Shooter','#fbbf24'], 'GBF_RUNGUN': ["Run 'n' Gun",'#f87171'],
+            'GBF_SCRFIGHT': ["Beat 'em Up",'#f87171'], 'GBF_VSFIGHT': ['Fighting','#fb7185'],
             'GBF_ACTION': ['Action','#38bdf8'], 'GBF_PUZZLE': ['Puzzle','#c084fc'],
             'GBF_RACE': ['Racing','#60a5fa'], 'GBF_RACING': ['Racing','#60a5fa'],
             'GBF_SPORTS': ['Sports','#2dd4bf'], 'GBF_SPORTSFOOTBALL': ['Sports / Football','#2dd4bf'],
@@ -399,12 +399,24 @@
         let parsedGames = [], filteredGames = [], sortCol = 'shortName', sortAsc = true, currentFmt = 'ini';
 
         const $ = id => document.getElementById(id);
-        const esc = s => (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+
+        // Escape HTML special characters for safe browser display
+        const esc = s => (s || '').toString()
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+
+        // Xuất XML dùng ký tự thật (&, ', ", :) để tránh lỗi dữ liệu ở frontend/emulator
+        const escXml = s => (s || '').toString()
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
 
         function showToast(msg, type = 'info') {
             const t = document.createElement('div');
             t.className = `toast toast-${type}`;
-            t.innerHTML = `<i class="fa-solid fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i> <span>${msg}</span>`;
+            t.innerHTML = `<i class="fa-solid fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i> <span>${esc(msg)}</span>`;
             $('toastContainer').appendChild(t);
             requestAnimationFrame(() => t.classList.add('visible'));
             setTimeout(() => { t.classList.remove('visible'); setTimeout(() => t.remove(), 250); }, 2500);
@@ -507,8 +519,10 @@
             let cur = '', inStr = false, sChar = '', dB = 0, dP = 0;
             for (let i = 0; i < body.length; i++) {
                 const c = body[i];
-                if (inStr) { cur += c; if (c === sChar && body[i - 1] !== '\\') inStr = false; }
-                else {
+                if (inStr) {
+                    cur += c;
+                    if (c === sChar && body[i - 1] !== '\\') inStr = false;
+                } else {
                     if (c === '"' || c === "'") { inStr = true; sChar = c; cur += c; }
                     else if (c === '{') { dB++; cur += c; }
                     else if (c === '}') { dB--; cur += c; }
@@ -520,7 +534,25 @@
             }
             if (cur.trim()) elms.push(cur.trim());
 
-            const clean = v => (!v || v === 'NULL' || v === '0') ? '' : v.trim().replace(/^"|"$/g, '').replace(/\\0/g, '').replace(/\\n/g, ' ');
+            // Enhanced C++ String Literal Unescaping & Cleaning
+            const clean = v => {
+                if (!v || v === 'NULL' || v === '0') return '';
+                let str = v.trim();
+                // Merge adjacent strings e.g. "String 1 " "String 2"
+                str = str.replace(/"\s*"/g, '');
+                // Strip outer quotes if enclosed in double quotes
+                if (str.startsWith('"') && str.endsWith('"')) {
+                    str = str.slice(1, -1);
+                }
+                return str
+                    .replace(/\\'/g, "'")           // Unescape C++ single quote
+                    .replace(/\\"/g, '"')           // Unescape C++ double quote
+                    .replace(/\\\\/g, '\\')         // Unescape C++ backslash
+                    .replace(/\\0/g, '')            // Null char
+                    .replace(/\\n/g, ' ')           // Newline to space
+                    .trim();
+            };
+
             const gM = body.match(/GBF_[A-Z0-9_]+/);
             const pM = body.match(/BDF_[A-Z0-9_|\s\(\)]+,\s*(\d{1,2})\s*,/);
 
@@ -605,7 +637,7 @@
             currentFolderFiles.forEach((f, idx) => {
                 const label = document.createElement('label');
                 label.className = 'file-item';
-                label.innerHTML = `<input type="checkbox" value="${idx}" checked style="accent-color:var(--sky);"> <span>${f.name}</span>`;
+                label.innerHTML = `<input type="checkbox" value="${idx}" checked style="accent-color:var(--sky);"> <span>${esc(f.name)}</span>`;
                 container.appendChild(label);
             });
 
@@ -702,8 +734,9 @@
 
             filteredGames.forEach((g, i) => {
                 const tr = document.createElement('tr');
+                const safeParent = g.parent ? g.parent.replace(/'/g, "\\'") : '';
                 const badge = g.parent
-                    ? `<button onclick="filterByParentRom('${g.parent}')" class="badge badge-clone">Clone of ${g.parent}</button>`
+                    ? `<button onclick="filterByParentRom('${safeParent}')" class="badge badge-clone">Clone of ${esc(g.parent)}</button>`
                     : `<span class="badge badge-parent">Parent</span>`;
 
                 tr.innerHTML = `
@@ -712,7 +745,7 @@
                     <td>${badge}</td>
                     <td style="font-weight:500;color:#f1f5f9;">${esc(g.fullName)}</td>
                     <td><span class="badge" style="${g.genreStyle}">${esc(g.genreName)}</span></td>
-                    <td class="font-mono" style="text-align:center;">${g.players}P</td>
+                    <td class="font-mono" style="text-align:center;">${esc(g.players)}P</td>
                     <td class="truncate" style="color:#cbd5e1">${esc(g.manufacturer)}</td>
                     <td class="font-mono" style="color:var(--muted)">${esc(g.date)}</td>
                 `;
@@ -749,7 +782,7 @@
                 $('exportFormatDescription').textContent = 'Định dạng XML DAT';
                 const useInput = $('xmlPlayersCheckbox')?.checked;
                 txt = `<?xml version="1.0"?>\n<datafile>\n  <header><name>${sys}</name></header>\n` + parsedGames.map(g => 
-                    `  <game name="${g.shortName}"${g.parent?` cloneof="${g.parent}"`:''}>\n    <description>${esc(g.fullName)}</description>\n    <genre>${esc(g.genreName)}</genre>\n    ${useInput ? `<input players="${g.players}"/>` : `<players>${g.players}</players>`}\n    <year>${esc(g.date)}</year>\n    <manufacturer>${esc(g.manufacturer)}</manufacturer>\n  </game>`
+                    `  <game name="${g.shortName}"${g.parent?` cloneof="${g.parent}"`:''}>\n    <description>${escXml(g.fullName)}</description>\n    <genre>${escXml(g.genreName)}</genre>\n    ${useInput ? `<input players="${g.players}"/>` : `<players>${g.players}</players>`}\n    <year>${escXml(g.date)}</year>\n    <manufacturer>${escXml(g.manufacturer)}</manufacturer>\n  </game>`
                 ).join('\n') + `\n</datafile>`;
             } else if (fmt === 'csv') {
                 $('exportFormatDescription').textContent = 'Định dạng CSV (Phân cách ;)';
