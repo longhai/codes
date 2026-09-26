@@ -111,7 +111,7 @@ async function launch(src){
     Object.assign(window,{
         EJS_player:"#game",
         EJS_gameName:gameName||"Game",
-        EJS_biosUrl:["arcade","mame2003_plus"].includes(core)?"https://longhai.github.io/bios/arcade.7z":"",
+        EJS_biosUrl:core==="psx"?"https://longhai.github.io/bios/psx.7z":["arcade","mame2003_plus"].includes(core)?"https://longhai.github.io/bios/arcade.7z":"",
         EJS_gameUrl:src,
         EJS_core:core,
         EJS_pathtodata:cdn,
