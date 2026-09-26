@@ -202,7 +202,7 @@
         <div class="help-sec">
           <div class="help-sec-h">⚡ TÍNH NĂNG NỔI BẬT</div>
           <div style="font-size:13px;display:flex;flex-direction:column;gap:6px;">
-            <p>• <b>Lọc theo Thể Loại:</b> Trích xuất thẻ &lt;genre&gt; từ file .DAT, hiển thị menu với biểu tượng hình ảnh chữ viết liền từ thư mục genre, hỗ trợ điều khiển full trên Tay cầm.</p>
+            <p>• <b>Lọc theo Thể Loại:</b> Trích xuất thẻ &lt;genre&gt; từ file .DAT, hiển thị menu với biểu tượng hình ảnh từ thư mục genre (bao gồm <code>all.png</code> và <code>uncategorized.png</code>).</p>
             <p>• <b>Game Chưa Phân Loại:</b> Hỗ trợ gom nhóm riêng các game không gắn thẻ thể loại trong file .DAT để bạn dễ kiểm tra.</p>
             <p>• <b>Game Chính vs Game Con (Clone):</b> Sử dụng dữ liệu .DAT để lọc bớt các bản game clone, hack, hoặc phiên bản phụ, giúp danh sách gọn gàng hơn.</p>
             <p>• <b>Đồng bộ Google Drive:</b> Đăng nhập Google để sao lưu danh sách Game Yêu Thích lên đám mây, tự động đồng bộ giữa các thiết bị.</p>
@@ -257,14 +257,21 @@
     const getGenreSlug = str => str ? str.toLowerCase().replace(/[^a-z0-9]/g, '') : "all";
     const getGenreSlugUnderscore = str => str ? str.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') : "all";
 
-    const getGenreIconUrl = genreStr => (!genreStr || genreStr === 'all' || genreStr === 'uncategorized') ? window.FALLBACK_GENRE_SVG : `${RAW_BASE}genre/${getGenreSlug(genreStr)}.png`;
+    // Trả về URL PNG cho tất cả genre bao gồm cả 'all' và 'uncategorized'
+    const getGenreIconUrl = genreStr => {
+      if (!genreStr) return `${RAW_BASE}genre/all.png`;
+      return `${RAW_BASE}genre/${getGenreSlug(genreStr)}.png`;
+    };
 
     function handleGenreImgError(img) {
       const genreVal = img.dataset.genre || state.selectedGenre;
-      if (!img.dataset.tried && genreVal && genreVal !== 'all' && genreVal !== 'uncategorized') {
+      if (!img.dataset.tried && genreVal) {
         img.dataset.tried = 'true';
         img.src = `${RAW_BASE}genre/${getGenreSlugUnderscore(genreVal)}.png`;
-      } else { img.onerror = null; img.src = window.FALLBACK_GENRE_SVG; }
+      } else { 
+        img.onerror = null; 
+        img.src = window.FALLBACK_GENRE_SVG; 
+      }
     }
 
     const buildDirectRomUrl = (src, itemPath) => /^https?:\/\//i.test(itemPath) ? itemPath : `https://${src.repo === 'emu' ? 'raw.githubusercontent.com' : 'media.githubusercontent.com/media'}/${src.owner}/${src.repo}/${src.branch || "main"}/${itemPath}`;
