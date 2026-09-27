@@ -8,7 +8,7 @@ i18n={
     vi:{drop:"Kéo thả file ROM vào đây hoặc click để chọn",url:"Dán URL ROM & nhấn Enter...",title:"Cài đặt",debug:"Chế độ Debug:",cache:"Xóa Cache:",clear:"Dọn sạch",lang:"Ngôn ngữ:",cdn:"CDN tùy chỉnh:",pwa:"Cài đặt PWA:",inst:"Cài đặt",installed:"Đã cài đặt",close:"Đóng"},
     en:{drop:"Drag & drop ROM file here or click to select",url:"Paste ROM URL & press Enter...",title:"Settings",debug:"Debug Mode:",cache:"Clear Cache:",clear:"Clear",lang:"Language:",cdn:"Custom CDN:",pwa:"PWA Setup:",inst:"Install",installed:"Installed",close:"Close"}
 },
-extMap={fds:"nes",nes:"nes",unf:"nes",smc:"snes",sfc:"snes",z64:"n64",n64:"n64",pce:"pce",ngp:"ngp",ws:"ws",nds:"nds",gba:"gba",gb:"gb"},
+extMap={fds:"nes",nes:"nes",unf:"nes",smc:"snes",sfc:"snes",z64:"n64",n64:"n64",pce:"pce",ngp:"ngp",ws:"ws",nds:"nds",gba:"gba",gb:"gb",iso:"psx",cue:"psx",chd:"psx"},
 coreNames={"Arcade":"arcade","Mame 2003":"mame2003_plus","Nintendo 64":"n64","Game Boy":"gb","Game Boy Advance":"gba","Nintendo DS":"nds","NES":"nes","SNES":"snes","PlayStation":"psx","Sega Mega Drive":"segaMD","PSP":"psp"};
 
 let installPrompt=null;
@@ -187,4 +187,3 @@ initSettings();
 const autoRom = new URLSearchParams(location.search).get('rom');
 if(autoRom) launch(autoRom);
 </script></body></html>
-<!--hỗ trợ link emu.html?core=fbneo&rom=https://...game.zip-->
