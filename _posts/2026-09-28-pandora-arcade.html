@@ -7,7 +7,7 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
     window.FALLBACK_ARCADE_SVG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzM4YmRmOCI+PHBhdGggZD0iTTE5IDNINWMtMS4xIDAtMiAuOS0yIDJ2MTRjMCAxLjEuOSAyIDIgMmgxNGMxLjEgMCAyLS45IDItMlY1YzAtMS4xLS45LTItMi0yei03IDNjMS42NiAwIDMgMS4zNCAzIDNzLTEuMzQgMy0zIDMtMy0xLjM0LTMtM3MxLjM0LTMgMy0zeG0tNCAxMnYtMmgydjJIZDh6bTggMGgtMnYtMmgydjJ6bTItNUg2di0yaDEydjJ6Ii8+PC9zdmc+";
-    window.FALLBACK_GENRE_SVG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iTTIxLjQxIDExLjU4bC05LTlDMTIuMDUgMi4yMiAxMS41NSAyIDExIDJINGMtMS4xIDAtMiAuOS0yIDJ2N2MwIC41NS4yMiAxLjA1LjU5IDEuNDJsOSA5Yy4zNi43Ni44Ni41OCAxLjQxLjU4LjU1IDAgMS4wNS0uMjIgMS40MS0uNTlsNy03Yy4zNy0uMzYuNTktLjg2LjU5LTEuNDIgMC0uNTUtLjIzLTEuNDYtLjU5LTEuNDJ6TTUuNSA3QzQuNCcgNyA0IDYuMzMgNCA1LjVTNC42NyA0IDUuNSA0IDcgNC42NyA3IDUuNSA2LjMzIDcgNS41IDd6Ii8+PC9zdmc+";
+    window.FALLBACK_GENRE_SVG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzM4YmRmOCI+PHBhdGggZD0iTTIxLjQxIDExLjU4bC05LTlDMTIuMDUgMi4yMiAxMS41NSAyIDExIDJINGMtMS4xIDAtMiAuOS0yIDJ2N2MwIC41NS4yMiAxLjA1LjU5IDEuNDJsOSA5Yy4zNi43Ni44Ni41OCAxLjQxLjU4LjU1IDAgMS4wNS0uMjIgMS40MS0uNTlsNy03Yy4zNy0uMzYuNTktLjg2LjU5LTEuNDIgMC0uNTUtLjIzLTEuMDUtLjU5LTEuNDJ6Ii8+PC9zdmc+";
   </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@600;700;800&display=swap');
@@ -256,7 +256,6 @@
     const isFav = g => g?.fullName ? state.favorites.includes(g.fullName) : false;
 
     const getGenreSlug = str => str ? str.toLowerCase().replace(/[^a-z0-9]/g, '') : "all";
-    const getGenreSlugUnderscore = str => str ? str.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') : "all";
 
     const getGenreIconUrl = genreStr => {
       if (!genreStr) return `${RAW_BASE}genre/all.png`;
@@ -264,14 +263,8 @@
     };
 
     function handleGenreImgError(img) {
-      const genreVal = img.dataset.genre || state.selectedGenre;
-      if (!img.dataset.tried && genreVal) {
-        img.dataset.tried = 'true';
-        img.src = `${RAW_BASE}genre/${getGenreSlugUnderscore(genreVal)}.png`;
-      } else { 
-        img.onerror = null; 
-        img.src = window.FALLBACK_GENRE_SVG; 
-      }
+      img.onerror = null;
+      img.src = window.FALLBACK_GENRE_SVG;
     }
 
     const buildDirectRomUrl = (src, itemPath) => /^https?:\/\//i.test(itemPath) ? itemPath : `https://${src.repo === 'emu' ? 'raw.githubusercontent.com' : 'media.githubusercontent.com/media'}/${src.owner}/${src.repo}/${src.branch || "main"}/${itemPath}`;
@@ -283,7 +276,7 @@
     };
 
     const imgCache = new Map(), failedUrls = new Set(), pendingProbes = new Map();
-    let currentPreviewToken = 0, persistentImgMap = {};
+    let currentPreviewToken = 0, persistentImgMap = {}, imgSaveTimer = 0, preloadTimer = 0;
     try { persistentImgMap = JSON.parse(lsGet("pandora_img_urls_v2") || "{}"); } catch(e) {}
 
     function savePersistentImgMap() {
@@ -303,7 +296,11 @@
     function cacheSet(k, v) {
       if (imgCache.size >= 500) imgCache.delete(imgCache.keys().next().value);
       imgCache.set(k, v);
-      if (v) { persistentImgMap[k] = v; savePersistentImgMap(); }
+      if (v) {
+        persistentImgMap[k] = v;
+        clearTimeout(imgSaveTimer);
+        imgSaveTimer = setTimeout(() => { savePersistentImgMap(); imgSaveTimer = 0; }, 300);
+      }
     }
 
     const initialPlaceholderGames = Array.from({ length: 15 }, (_, i) => ({ name: "", fullName: `placeholder_${i}` }));
@@ -316,7 +313,7 @@
       showMainOnly: lsGet('pandora_show_main_only') === 'true',
       selectedGenre: 'all', availableGenres: [], hasUncategorized: false,
       datNameMap: {}, datOrderMap: {}, datCloneMap: {}, datGenreMap: {},
-      favorites: JSON.parse(lsGet('pandora_favs') || '[]'),
+      favorites: (() => { try { const v = JSON.parse(lsGet('pandora_favs') || '[]'); return Array.isArray(v) ? v : []; } catch(e) { return []; } })(),
       isCurved: lsGet('pandora_curved') !== null ? lsGet('pandora_curved') === 'true' : !(window.innerWidth < 820 || window.innerHeight > window.innerWidth),
       numSlots: 5, gamepadConnected: false, gpLastTime: 0, lastGpBtn: {}, resizeTimer: null,
       gpMenuIdx: 0
@@ -742,6 +739,7 @@
       state.allGames.forEach(g => map.set(`${g.romUrl || g.fullName}_${g.name}`, g));
       state.allGames = Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base', numeric: true }));
       filterGames(true); render();
+      preloadWindowAtStart();
     }
 
     function toggleFavFilter() { state.showFavOnly = !state.showFavOnly; filterGames(true); drawAll(); }
@@ -780,7 +778,8 @@
       $('genre-menu-dropdown').innerHTML = `<div class="menu-header">Thể Loại (${items.length - 1})</div>` + items.map((item) => {
         const iconUrl = getGenreIconUrl(item.value);
         const isActive = state.selectedGenre.toLowerCase() === item.value.toLowerCase();
-        return `<div class="menu-item ${isActive ? 'active' : ''}" onclick="switchGenre('${item.value.replace(/'/g, "\\'")}')">
+        const value = JSON.stringify(item.value).replace(/'/g, '&#39;');
+        return `<div class="menu-item ${isActive ? 'active' : ''}" onclick='switchGenre(${value})'>
           <div class="menu-logo-box"><img src="${iconUrl}" data-genre="${item.value.replace(/"/g, '&quot;')}" alt="${item.name}" onerror="handleGenreImgError(this)"/></div>
           <span>${item.name}</span>
         </div>`;
@@ -968,17 +967,16 @@
       return Array.from(new Set(urls)).filter(url => !failedUrls.has(url));
     }
 
-    /* TỐI ƯU HÓA: TẢI SONG SONG TẤT CẢ CANDIDATES & GIẢI MÃ LẦN ĐẦU */
+    /* TẢI ẢNH SONG SONG, HIỂN THỊ NGAY KHI ONLOAD */
     function resolveAndCacheImage(g, onDone) {
       if (!g || g.fullName?.startsWith('placeholder_')) return;
       const key = getGameKey(g); if (!key) return;
-
       if (imgCache.has(key)) return onDone?.(imgCache.get(key));
 
-      if (persistentImgMap[key]) {
-        const pUrl = persistentImgMap[key];
-        if (pUrl === PLACEHOLDER_SVG) { imgCache.set(key, PLACEHOLDER_SVG); return onDone?.(PLACEHOLDER_SVG); }
-        if (!failedUrls.has(pUrl)) { imgCache.set(key, pUrl); return onDone?.(pUrl); }
+      const cached = persistentImgMap[key];
+      if (cached && (cached === PLACEHOLDER_SVG || !failedUrls.has(cached))) {
+        imgCache.set(key, cached);
+        return onDone?.(cached);
       }
 
       if (pendingProbes.has(key)) {
@@ -988,59 +986,36 @@
 
       const candidates = getPreviewCandidates(g);
       if (!candidates.length) { cacheSet(key, PLACEHOLDER_SVG); return onDone?.(PLACEHOLDER_SVG); }
+      pendingProbes.set(key, onDone ? [onDone] : []);
 
-      const callbacks = onDone ? [onDone] : [];
-      pendingProbes.set(key, callbacks);
-
-      const notifyAll = (url) => {
+      const finish = url => {
         const cbs = pendingProbes.get(key) || [];
         pendingProbes.delete(key);
+        cacheSet(key, url);
         cbs.forEach(cb => cb(url));
       };
 
-      let resolved = false, failCount = 0;
-      const validCandidates = candidates.filter(u => !failedUrls.has(u));
-
-      if (!validCandidates.length) {
-        cacheSet(key, PLACEHOLDER_SVG);
-        notifyAll(PLACEHOLDER_SVG);
-        return;
-      }
-
-      validCandidates.forEach(url => {
-        const tempImg = new Image();
-        tempImg.onload = async () => {
-          if (!resolved) {
-            resolved = true;
-            if (tempImg.decode) { try { await tempImg.decode(); } catch(e){} }
-            cacheSet(key, url);
-            notifyAll(url);
-          }
-        };
-        tempImg.onerror = () => {
+      let left = candidates.length, done = false;
+      candidates.forEach(url => {
+        const im = new Image();
+        im.onload = () => { if (!done) { done = true; finish(url); } };
+        im.onerror = () => {
           failedUrls.add(url);
-          failCount++;
-          if (failCount === validCandidates.length && !resolved) {
-            resolved = true;
-            cacheSet(key, PLACEHOLDER_SVG);
-            notifyAll(PLACEHOLDER_SVG);
-          }
+          if (!--left && !done) { done = true; finish(PLACEHOLDER_SVG); }
         };
-        tempImg.src = url;
+        im.src = url;
       });
     }
 
-    /* PRELOAD DIỆN RỘNG (XUNG QUANH LÊN ĐẾN 8 ITEMS) */
+    /* PRELOAD NHANH VÙNG LÂN CẬN, KHÔNG CHỜ IDLE */
     function preloadNeighbors() {
-      const offsets = [-3, -2, -1, 1, 2, 3, 4, 5];
-      const firePreloads = () => {
-        offsets.forEach(offset => {
-          const targetGame = state.filteredGames[state.selIdx + offset];
-          if (targetGame) resolveAndCacheImage(targetGame);
+      clearTimeout(preloadTimer);
+      preloadTimer = setTimeout(() => {
+        [-3, -2, -1, 1, 2, 3, 4, 5].forEach(offset => {
+          const g = state.filteredGames[state.selIdx + offset];
+          if (g) resolveAndCacheImage(g);
         });
-      };
-      if (window.requestIdleCallback) requestIdleCallback(firePreloads, { timeout: 800 });
-      else setTimeout(firePreloads, 50);
+      }, 0);
     }
 
     function preloadWindowAtStart() {
