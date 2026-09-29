@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FBNeo Extractor</title>
+    <title>FBNeo C++ Driver Extractor & GitHub API Explorer</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -301,9 +301,10 @@
         const GITHUB_API_DRV = 'https://api.github.com/repos/libretro/FBNeo/contents/src/burn/drv';
         const CONCURRENCY_LIMIT = 18, DB_NAME = 'FBNeoDriverCacheDB', DB_STORE = 'driver_files';
 
-        // Các thư mục đại diện cho dòng máy Console / Handheld trong FBNeo
+        // Danh sách chính xác 14 thư mục hệ máy Console/Handheld thực tế trong API FBNeo (FDS đã nằm trong nes)
         const CONSOLE_FOLDERS = [
-            'console', 'megadrive', 'snes', 'sms', 'pce', 'tg16', 'coleco', 'nes', 'ngp', 'sg1000', 'spectrum', 'channelf', 'msx', 'gamegear', 'gba', 'atari', 'intellivision'
+            'channelf', 'coleco', 'gamegear', 'gba', 'intellivision', 
+            'megadrive', 'msx', 'nes', 'ngp', 'pce', 'sg1000', 'sms', 'snes', 'spectrum'
         ];
 
         const MAP = {
@@ -416,13 +417,13 @@
             optArcade.textContent = '🕹️ ARCADE';
             sel.appendChild(optArcade);
 
-            // Phân loại các thư mục Arcade và Console
+            // Phân loại các thư mục Arcade và Console dựa theo danh sách thực tế từ GitHub API
             const arcadeFolders = systemFolders.filter(f => !CONSOLE_FOLDERS.includes(f.name.toLowerCase()));
             const consoleFolders = systemFolders.filter(f => CONSOLE_FOLDERS.includes(f.name.toLowerCase()));
 
             if (arcadeFolders.length) {
                 const grpArcade = document.createElement('optgroup');
-                grpArcade.label = '── THƯ MỤC ARCADE LẺ ──';
+                grpArcade.label = '── THƯ MỤC ARCADE ──';
                 arcadeFolders.forEach(f => {
                     const o = document.createElement('option');
                     o.value = f.name;
@@ -434,7 +435,7 @@
 
             if (consoleFolders.length) {
                 const grpConsole = document.createElement('optgroup');
-                grpConsole.label = '── HỆ CONSOLE ──';
+                grpConsole.label = '🎮 HỆ CONSOLE 🎮';
                 consoleFolders.forEach(f => {
                     const o = document.createElement('option');
                     o.value = f.name;
