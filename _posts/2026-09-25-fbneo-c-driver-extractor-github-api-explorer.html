@@ -489,7 +489,7 @@
                             try {
                                 const res = await fetch(`${GITHUB_API_DRV}/${f.name}`);
                                 if (res.ok) {
-                                    files = (await res.json()).map(x => ({ name: x.name, download_url: x.download_url || `https://raw.githubusercontent.com/libretro/FBNeo/master/src/burn/drv/${f.name}/${x.name}` }));
+                                    files = (await res.json()).map(x => ({ name: x.name, folder: f.name, download_url: x.download_url || `https://raw.githubusercontent.com/libretro/FBNeo/master/src/burn/drv/${f.name}/${x.name}` }));
                                     await setCache(CACHE_FILES + f.name, files);
                                 }
                             } catch(err) {}
@@ -507,7 +507,7 @@
                         try {
                             const res = await fetch(`${GITHUB_API_DRV}/${folder}`);
                             if (res.ok) {
-                                files = (await res.json()).map(x => ({ name: x.name, download_url: x.download_url || `https://raw.githubusercontent.com/libretro/FBNeo/master/src/burn/drv/${folder}/${x.name}` }));
+                                files = (await res.json()).map(x => ({ name: x.name, folder, download_url: x.download_url || `https://raw.githubusercontent.com/libretro/FBNeo/master/src/burn/drv/${folder}/${x.name}` }));
                                 await setCache(CACHE_FILES + folder, files);
                             }
                         } catch(err) {}
@@ -603,6 +603,9 @@
                         const code = await res.text();
                         if (sessionId !== activeSessionId) return;
 
+                        const fileFolder = (f.folder || sysName).toLowerCase();
+                        const emuName = (sysName.toUpperCase() === 'ARCADE') ? 'arcade' : fileFolder;
+
                         extractBurnDriverBlocks(code).forEach(b => {
                             const d = parseDriverBody(b);
                             if (d.shortName && d.fullName) {
@@ -610,7 +613,7 @@
                                 if (!existing.has(rom) && sessionId === activeSessionId) {
                                     existing.add(rom);
                                     const info = MAP[d.rawGenre] || [formatGenreFallback(d.rawGenre), '#94a3b8'];
-                                    parsedGames.push({ shortName: rom, fullName: d.fullName, parent: d.parent ? d.parent.replace(/^[a-zA-Z0-9]+_/, '') : '', date: d.date || 'N/A', manufacturer: d.manufacturer || 'Unknown', system: d.system || sysName, genreName: info[0], genreStyle: `background:rgba(255,255,255,0.05);color:${info[1]};border-color:${info[1]}33`, players: d.players || '2' });
+                                    parsedGames.push({ shortName: rom, fullName: d.fullName, parent: d.parent ? d.parent.replace(/^[a-zA-Z0-9]+_/, '') : '', date: d.date || 'N/A', manufacturer: d.manufacturer || 'Unknown', system: d.system || sysName, folder: fileFolder, emulator: emuName, genreName: info[0], genreStyle: `background:rgba(255,255,255,0.05);color:${info[1]};border-color:${info[1]}33`, players: d.players || '2' });
                                 }
                             }
                         });
@@ -759,8 +762,7 @@
             } else if (fmt === 'csv') {
                 $('exportFormatDescription').textContent = 'Định dạng CSV (Dễ đọc trên điện thoại)';
                 txt = `#Name;Title;Emulator;CloneOf;Year;Manufacturer;Category;Players\n` + parsedGames.map(g => {
-                    const sysLow = (g.system || sys || '').toLowerCase();
-                    const emuName = CONSOLE_FOLDERS.includes(sysLow) ? sysLow : 'arcade';
+                    const emuName = g.emulator || (sys.toLowerCase() === 'arcade' ? 'arcade' : (g.folder || sys.toLowerCase()));
                     return `${escapeCsv(g.shortName)};${escapeCsv(g.fullName)};${escapeCsv(emuName)};${escapeCsv(g.parent)};${escapeCsv(g.date)};${escapeCsv(g.manufacturer)};${escapeCsv(g.genreName)};${escapeCsv(g.players)}`;
                 }).join('\n');
             }
