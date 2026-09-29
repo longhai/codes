@@ -117,7 +117,11 @@
         .tab-grp { display:flex; background:var(--bg-900); padding:.15rem; border-radius:var(--rad); border:1px solid var(--border); gap:.2rem; flex-shrink:0; }
         .tab-btn { flex:1; padding:.3rem; font-size:.675rem; color:var(--muted); background:none; border:none; border-radius:4px; cursor:pointer; }
         .tab-btn.active { background:#0284c7; color:#fff; font-weight:600; }
-        .exp-txt { width:100%; background:var(--bg-900); border:1px solid var(--border); border-radius:var(--rad); padding:.5rem; font-family:'Consolas','Courier New',monospace; font-size:.7rem; color:var(--sky); outline:none; resize:none; flex:1; min-height:0; white-space:pre; overflow-x:auto; word-break:normal; }
+        
+        .exp-code-box { width:100%; background:#0b1329; border:1px solid var(--border); border-radius:var(--rad); flex:1; min-height:0; overflow:auto; padding:.6rem; position:relative; }
+        .exp-code-content { font-family:'Consolas','Courier New',monospace; font-size:.725rem; line-height:1.45; color:#f8fafc; white-space:pre; word-break:normal; margin:0; user-select:text; }
+        .exp-code-content.wrap { white-space:pre-wrap; word-break:break-word; }
+
         .flex-row-end { display:flex; align-items:center; gap:.4rem; justify-content:flex-end; }
         .file-list-box { background:var(--bg-900); border:1px solid var(--border); border-radius:var(--rad); padding:.4rem; max-height:280px; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:.35rem; }
         .file-item { font-size:.65rem; font-family:monospace; display:flex; align-items:center; gap:.3rem; padding:.2rem .35rem; background:rgba(255,255,255,0.03); border-radius:4px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -271,7 +275,9 @@
                 <span id="exportFormatDescription">Mô tả định dạng</span>
                 <span id="exportFormatStats" style="font-family:monospace;color:var(--sky);">0 dòng</span>
             </div>
-            <textarea id="exportPreviewText" readonly wrap="off" class="exp-txt"></textarea>
+            <div class="exp-code-box">
+                <pre id="exportPreviewCode" class="exp-code-content"></pre>
+            </div>
             <div class="modal-ftr">
                 <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
                     <button onclick="copyCurrentPreviewToClipboard()" class="btn-s"><i class="fa-regular fa-copy"></i> Copy</button>
@@ -298,6 +304,13 @@
         const CACHE_KEY_SYS = 'fbneo_parsed_systems_v1', CACHE_PARSED = 'fbneo_parsed_data_', CACHE_FILES = 'fbneo_files_list_';
         const CONSOLE_FOLDERS = ['nes','snes','megadrive','md','pce','sms','msx','fds','psx','ngp','coleco','sg1000'];
 
+        // Danh sách hệ máy dự phòng khi bị chặn GitHub Rate Limit
+        const FALLBACK_SYSTEM_FOLDERS = [
+            'capcom', 'cave', 'cps3', 'dataeast', 'galaxian', 'irem', 'kaneko', 'konami', 
+            'midway', 'neogeo', 'pacman', 'pgm', 'psikyo', 'sega', 'taito', 'toaplan', 
+            'nes', 'snes', 'megadrive', 'pce', 'sms', 'msx', 'fds', 'psx', 'ngp', 'coleco', 'sg1000'
+        ];
+
         const MAP = {
             GBF_PLATFORM:['Platform','#34d399'], GBF_HORSHOOT:['Shooter / Horiz','#fbbf24'], GBF_VERSHOOT:['Shooter / Vert','#fb923c'],
             GBF_MULTISHOOT:['Shooter / Multi','#fbbf24'], GBF_SHOOT:['Shooter','#fbbf24'], GBF_RUNGUN:["Run 'n' Gun",'#f87171'],
@@ -309,7 +322,7 @@
         };
 
         let systemFolders = [], currentFolderFiles = [], parsedGames = [], filteredGames = [], sortCol = 'shortName', sortAsc = true, currentFmt = 'ini';
-        let currentPage = 1, pageSize = 50, activeSessionId = 0;
+        let currentPage = 1, pageSize = 50, activeSessionId = 0, currentExportRawText = '';
 
         const $ = id => document.getElementById(id);
         const esc = s => (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
@@ -400,17 +413,27 @@
                 if (!data) {
                     showMainProgress(true, 'Đang quét hệ máy từ GitHub...');
                     const res = await fetch(GITHUB_API_DRV);
-                    if (!res.ok) throw new Error(res.status === 403 ? 'Chạm giới hạn GitHub API (Rate Limit)!' : 'Lỗi kết nối GitHub');
-                    data = await res.json();
+                    if (!res.ok) {
+                        if (res.status === 403) {
+                            showToast('Chạm giới hạn GitHub API, chuyển sang Chế độ Dự phòng!', 'info');
+                            data = FALLBACK_SYSTEM_FOLDERS.map(name => ({ name, path: `src/burn/drv/${name}`, url: `${GITHUB_API_DRV}/${name}` }));
+                        } else {
+                            throw new Error('Lỗi kết nối GitHub');
+                        }
+                    } else {
+                        data = await res.json();
+                    }
                     await setCache(CACHE_KEY_SYS, data);
                     showMainProgress(false);
                 }
-                systemFolders = data.filter(i => i.type === 'dir').map(d => ({ name: d.name, path: d.path, url: d.url })).sort((a,b) => a.name.localeCompare(b.name));
+                systemFolders = data.filter(i => i.type === 'dir' || !i.type).map(d => ({ name: d.name, path: d.path, url: d.url })).sort((a,b) => a.name.localeCompare(b.name));
                 populateSystemDropdown();
             } catch (e) {
-                showMainProgress(false); showToast(e.message, 'error');
-                $('githubSystemSelect').innerHTML = `<option value="">⚠️ Lỗi kết nối GitHub API</option>`;
-                $('gameTableBody').innerHTML = `<tr><td colspan="8" class="text-center" style="padding:2rem;color:#ef4444;"><i class="fa-solid fa-triangle-exclamation" style="font-size:1.5rem;"></i><br>${esc(e.message)}</td></tr>`;
+                showMainProgress(false); 
+                // Sử dụng fallback nếu gặp lỗi mạng hoặc API
+                systemFolders = FALLBACK_SYSTEM_FOLDERS.map(name => ({ name, path: `src/burn/drv/${name}`, url: `${GITHUB_API_DRV}/${name}` }));
+                populateSystemDropdown();
+                showToast('Đã nạp danh sách hệ máy từ bộ nhớ dự phòng', 'info');
             }
         }
 
@@ -466,14 +489,18 @@
 
                         let files = !force ? await getCache(CACHE_FILES + f.name) : null;
                         if (!files) {
-                            const res = await fetch(`${GITHUB_API_DRV}/${f.name}`);
-                            if (res.ok) {
-                                const raw = await res.json();
-                                files = raw.map(x => ({ name: x.name, download_url: x.download_url || `https://raw.githubusercontent.com/libretro/FBNeo/master/src/burn/drv/${f.name}/${x.name}` }));
-                                await setCache(CACHE_FILES + f.name, files);
-                            }
+                            try {
+                                const res = await fetch(`${GITHUB_API_DRV}/${f.name}`);
+                                if (res.ok) {
+                                    const raw = await res.json();
+                                    files = raw.map(x => ({ name: x.name, download_url: x.download_url || `https://raw.githubusercontent.com/libretro/FBNeo/master/src/burn/drv/${f.name}/${x.name}` }));
+                                    await setCache(CACHE_FILES + f.name, files);
+                                }
+                            } catch(err) {}
                         }
-                        if (files) allFiles.push(...files.filter(x => x.name.endsWith('.cpp')).map(x => ({ name: x.name, folder: f.name, download_url: x.download_url || `https://raw.githubusercontent.com/libretro/FBNeo/master/src/burn/drv/${f.name}/${x.name}` })));
+                        if (files) {
+                            allFiles.push(...files.filter(x => x.name.endsWith('.cpp')).map(x => ({ name: x.name, folder: f.name, download_url: x.download_url || `https://raw.githubusercontent.com/libretro/FBNeo/master/src/burn/drv/${f.name}/${x.name}` })));
+                        }
                         updateMainProgress(++done, arc.length, f.name.toUpperCase());
                     }
                     if (currentSession !== activeSessionId) return;
@@ -483,14 +510,19 @@
                     showMainProgress(true, `Quét file .cpp [${folder.toUpperCase()}]...`);
                     let files = !force ? await getCache(CACHE_FILES + folder) : null;
                     if (!files) {
-                        const res = await fetch(`${GITHUB_API_DRV}/${folder}`);
-                        if (!res.ok) throw new Error('Không thể nạp file .cpp');
-                        const raw = await res.json();
-                        files = raw.map(x => ({ name: x.name, download_url: x.download_url || `https://raw.githubusercontent.com/libretro/FBNeo/master/src/burn/drv/${folder}/${x.name}` }));
-                        await setCache(CACHE_FILES + folder, files);
+                        try {
+                            const res = await fetch(`${GITHUB_API_DRV}/${folder}`);
+                            if (res.ok) {
+                                const raw = await res.json();
+                                files = raw.map(x => ({ name: x.name, download_url: x.download_url || `https://raw.githubusercontent.com/libretro/FBNeo/master/src/burn/drv/${folder}/${x.name}` }));
+                                await setCache(CACHE_FILES + folder, files);
+                            }
+                        } catch(err) {}
                     }
                     if (currentSession !== activeSessionId) return;
-                    currentFolderFiles = files.filter(x => x.name.endsWith('.cpp')).map(x => ({ name: x.name, folder, download_url: x.download_url }));
+                    if (files) {
+                        currentFolderFiles = files.filter(x => x.name.endsWith('.cpp')).map(x => ({ name: x.name, folder, download_url: x.download_url }));
+                    }
                     showMainProgress(false);
                 }
                 if (currentSession !== activeSessionId) return;
@@ -742,32 +774,44 @@
                     `  <game name="${g.shortName}"${g.parent?` cloneof="${g.parent}"`:''}>\n    <description>${escXml(g.fullName)}</description>\n    <genre>${escXml(g.genreName)}</genre>\n    ${useInput ? `<input players="${g.players}"/>` : `<players>${g.players}</players>`}\n    <year>${escXml(g.date)}</year>\n    <manufacturer>${escXml(g.manufacturer)}</manufacturer>\n  </game>`
                 ).join('\n') + `\n</datafile>`;
             } else if (fmt === 'csv') {
-                $('exportFormatDescription').textContent = 'Định dạng CSV (Gọn nhẹ, bọc "" thông minh khi có dấu ;)';
+                $('exportFormatDescription').textContent = 'Định dạng CSV (Dễ đọc trên điện thoại)';
                 txt = `#Name;Title;Emulator;CloneOf;Year;Manufacturer;Category;Players;\n` + parsedGames.map(g => 
                     `${escapeCsv(g.shortName)};${escapeCsv(g.fullName)};${escapeCsv(g.system||sys)};${escapeCsv(g.parent)};${escapeCsv(g.date)};${escapeCsv(g.manufacturer)};${escapeCsv(g.genreName)};${escapeCsv(g.players)};`
                 ).join('\n');
             }
-            $('exportPreviewText').value = txt;
+
+            currentExportRawText = txt;
+            const codeEl = $('exportPreviewCode');
+            if (codeEl) codeEl.textContent = txt;
             $('exportFormatStats').textContent = `${txt.split('\n').length} dòng`;
         }
 
-        function copyCurrentPreviewToClipboard() { $('exportPreviewText').select(); document.execCommand('copy'); showToast('Đã sao chép!', 'success'); }
+        function copyCurrentPreviewToClipboard() {
+            if (!currentExportRawText) return;
+            const tempEl = document.createElement('textarea');
+            tempEl.value = currentExportRawText;
+            tempEl.style.position = 'fixed';
+            tempEl.style.opacity = '0';
+            document.body.appendChild(tempEl);
+            tempEl.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempEl);
+            showToast('Đã sao chép dữ liệu!', 'success');
+        }
         
         function toggleExportWordWrap(enable) {
-            const el = $('exportPreviewText');
-            if (enable) {
-                el.style.whiteSpace = 'pre-wrap';
-                el.setAttribute('wrap', 'soft');
-            } else {
-                el.style.whiteSpace = 'pre';
-                el.setAttribute('wrap', 'off');
-            }
+            const el = $('exportPreviewCode');
+            if (el) el.classList.toggle('wrap', enable);
         }
 
         function downloadCurrentFormat() {
-            const txt = $('exportPreviewText').value, name = currentFmt === 'ini' ? 'genre.ini' : currentFmt === 'xml' ? 'fbneo_games.dat' : 'fbneo_export.csv';
-            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: 'text/plain' }));
-            a.download = name; a.click(); showToast(`Đã tải về ${name}!`, 'success');
+            if (!currentExportRawText) return;
+            const name = currentFmt === 'ini' ? 'genre.ini' : currentFmt === 'xml' ? 'fbneo_games.dat' : 'fbneo_export.csv';
+            const a = document.createElement('a'); 
+            a.href = URL.createObjectURL(new Blob([currentExportRawText], { type: 'text/plain;charset=utf-8' }));
+            a.download = name; 
+            a.click(); 
+            showToast(`Đã tải về ${name}!`, 'success');
         }
         function closeExportModal() { $('exportModal').classList.add('hidden'); }
 
