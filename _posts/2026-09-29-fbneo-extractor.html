@@ -478,7 +478,7 @@
                         const cppFiles = filesData.filter(f => f.name.endsWith('.cpp')).map(f => ({
                             name: f.name,
                             sysName: folder.name.toUpperCase(),
-                            download_url: f.download_url || `https://raw.githubusercontent.com/libretro/FBNeo/master/src/burn/drv/${folder.name}/${f.name}`
+                            download_url: f.download_url || `https://raw.githubusercontent.com/finalburnneo/FBNeo/master/src/burn/drv/${folder.name}/${f.name}`
                         }));
                         allFiles.push(...cppFiles);
                     }));
@@ -507,7 +507,7 @@
                 currentFolderFiles = filesData.filter(f => f.name.endsWith('.cpp')).map(f => ({
                     name: f.name,
                     sysName: folderName.toUpperCase(),
-                    download_url: f.download_url || `https://raw.githubusercontent.com/libretro/FBNeo/master/src/burn/drv/${folderName}/${f.name}`
+                    download_url: f.download_url || `https://raw.githubusercontent.com/finalburnneo/FBNeo/master/src/burn/drv/${folderName}/${f.name}`
                 }));
                 $('headerSystemBadge').textContent = `${folderName.toUpperCase()} (${currentFolderFiles.length})`;
                 loadAllDriversInCurrentFolder();
