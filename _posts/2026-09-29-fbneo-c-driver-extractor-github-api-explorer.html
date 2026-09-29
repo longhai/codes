@@ -309,7 +309,7 @@
 
         const $ = id => document.getElementById(id);
         const esc = s => (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
-        const escXml = s => (s||'').toString().replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const escXml = s => (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
         function showToast(m, t='info') {
             const el = document.createElement('div');
@@ -463,7 +463,14 @@
             }
             if (cur.trim()) elms.push(cur.trim());
 
-            const clean = v => (!v || v === 'NULL' || v === '0') ? '' : v.trim().replace(/^"|"$/g, '').replace(/\\'/g, "'").replace(/\\"/g, '"').trim();
+            // Làm sạch chuỗi: loại bỏ dấu ngoặc kép và cắt bỏ C-style null terminator (\0)
+            const clean = v => {
+                if (!v || v === 'NULL' || v === '0') return '';
+                let s = v.trim().replace(/^"|"$/g, '');
+                s = s.split('\\0')[0]; // Cắt bỏ tại ký tự \0 chuẩn C/C++
+                return s.replace(/\\'/g, "'").replace(/\\"/g, '"').replace(/\\\\/g, '\\').trim();
+            };
+
             const gM = body.match(/GBF_[A-Z0-9_]+/), pM = body.match(/BDF_[A-Z0-9_|\s\(\)]+,\s*(\d{1,2})\s*,/);
             return { shortName: clean(elms[0]), parent: clean(elms[1]), date: clean(elms[4]), fullName: clean(elms[5]), manufacturer: clean(elms[7]), system: clean(elms[8]), rawGenre: gM ? gM[0] : 'GBF_MISC', players: pM ? pM[1] : '2' };
         }
