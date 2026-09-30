@@ -298,7 +298,7 @@
     </div>
 
     <script>
-        const GITHUB_API_DRV = 'https://api.github.com/repos/libretro/FBNeo/contents/src/burn/drv';
+        const GITHUB_API_DRV = 'https://api.github.com/repos/finalburnneo/FBNeo/contents/src/burn/drv';
         const CONCURRENCY_LIMIT = 18, DB_NAME = 'FBNeoDriverCacheDB', DB_STORE = 'driver_files';
 
         // Danh sách chính xác 14 thư mục hệ máy Console/Handheld thực tế trong API FBNeo (FDS đã nằm trong nes)
@@ -462,7 +462,7 @@
                     
                     let allFiles = [];
                     await Promise.all(arcadeFolders.map(async folder => {
-                        const cacheKey = `fbneo_files_v2_${folder.name}`;
+                        const cacheKey = `fbneo_files_v3_${folder.name}`;
                         let filesData = sessionStorage.getItem(cacheKey);
                         if (filesData) {
                             filesData = JSON.parse(filesData);
@@ -497,7 +497,7 @@
             $('headerSystemBadge').textContent = `${folderName.toUpperCase()} (Tải...)`;
             try {
                 const headers = {}; if (githubToken) headers['Authorization'] = `token ${githubToken}`;
-                const cacheKey = `fbneo_files_v2_${folderName}`, cache = sessionStorage.getItem(cacheKey);
+                const cacheKey = `fbneo_files_v3_${folderName}`, cache = sessionStorage.getItem(cacheKey);
                 let filesData = cache ? JSON.parse(cache) : null;
                 if (!filesData) {
                     const res = await fetch(`${GITHUB_API_DRV}/${folderName}`, { headers });
@@ -766,9 +766,11 @@
             } else if (fmt === 'csv') {
                 $('exportFormatDescription').textContent = 'Định dạng CSV (Phân cách ;, không có " và không phẩy cuối)';
                 const c = s => (s || '').toString().replace(/["\n\r]/g, '').replace(/;/g, ' ').trim();
-                txt = `Name;Title;Emulator;CloneOf;Year;Manufacturer;Category;Players\n` + parsedGames.map(g => 
-                    `${c(g.shortName)};${c(g.fullName)};${c(g.system || sys)};${c(g.parent)};${c(g.date)};${c(g.manufacturer)};${c(g.genreName)};${c(g.players)}`
-                ).join('\n');
+                const isAllArcade = (currentVal === 'all_arcade');
+                txt = `Name;Title;Emulator;CloneOf;Year;Manufacturer;Category;Players\n` + parsedGames.map(g => {
+                    const emu = isAllArcade ? 'Arcade' : (g.system || sys);
+                    return `${c(g.shortName)};${c(g.fullName)};${c(emu)};${c(g.parent)};${c(g.date)};${c(g.manufacturer)};${c(g.genreName)};${c(g.players)}`;
+                }).join('\n');
             }
             $('exportPreviewText').value = txt;
             $('exportFormatStats').textContent = `${txt.split('\n').length} dòng`;
