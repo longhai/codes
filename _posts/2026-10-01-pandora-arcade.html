@@ -22,9 +22,10 @@
     #svg-container{flex:1.25;width:100%;height:100%;display:flex;align-items:center;justify-content:center;order:1;position:relative;overflow:hidden}
     #svg{width:100%;height:100%;filter:drop-shadow(0 10px 20px rgba(0,0,0,.9));transform:translateZ(0)}
     #preview-container{flex:1.1;width:100%;max-width:680px;aspect-ratio:4/3;max-height:80vh;background:var(--panel);border:2px solid var(--p);border-radius:12px;box-shadow:0 0 25px var(--pg),inset 0 0 25px #000;display:flex;align-items:center;justify-content:center;padding:12px;position:relative;overflow:hidden;backdrop-filter:blur(12px);order:2;transform:translateZ(0)}
-    #preview-img{width:100%;height:100%;object-fit:contain;transition:opacity .12s ease-out,transform .12s ease-out,max-width .2s,max-height .2s;will-change:transform,opacity}
-    #preview-img.loading{opacity:.4;transform:scale(.98)}
-    #preview-img.is-placeholder{max-width:88px;max-height:88px;opacity:.45;filter:drop-shadow(0 0 12px rgba(234,88,12,.5))}
+    #preview-img{width:100%;height:100%;object-fit:contain;transition:opacity .12s ease-out;will-change:opacity;display:block}
+    #preview-img.is-placeholder{width:88px!important;height:88px!important;max-width:88px!important;max-height:88px!important;min-width:88px!important;min-height:88px!important;object-fit:contain;opacity:.45;filter:drop-shadow(0 0 12px rgba(234,88,12,.5));transform:none!important;transition:none!important}
+    #preview-img.loading{opacity:.55}
+
     .preview-badges{position:absolute;top:8px;right:8px;z-index:20;display:flex;align-items:center;gap:8px}
     .fav-star-btn{font-size:24px;color:#e2e8f0;cursor:pointer;transition:all .2s;opacity:.25;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.9))}
     #preview-container:hover .fav-star-btn{opacity:.5}
@@ -234,9 +235,6 @@
     const GAME_SOURCES = [{ owner: "longhai", repo: "emu", branch: "main" }, { owner: "longhai", repo: "ps1", branch: "main", defaultCat: "psx" }];
     const VALID_ROM_EXTS = new Set(['zip','7z','rar','chd','iso','bin','pbp','cso','rvz','img','cue','z64','n64','v64','nes','snes','smc','sfc','gba','gbc','gb','md','gen','smd','pce','gg','sms','a26','a78','lnx','ngp','ngc','ws','wsc','m3u','gcm','gcz','wbfs','wad']);
 
-    // Hệ máy không khai báo cứng. Danh sách menu được tạo trực tiếp từ thư mục/category trong API.
-    // Chỉ giữ ánh xạ core tối thiểu để EmulatorJS biết cách chạy ROM. Hệ mới xuất hiện
-    // trong API vẫn được tạo menu tự động, không cần sửa danh sách hệ máy trong code.
     const SYSTEM_PROFILES = [
       [["arcade","cps1","cps2","cps3","fbneo","fba","mame"], "FBNeo - Arcade Games.png", "Arcade", "arcade", "FBNeo - Arcade Games"],
       [["neogeo","neo geo","ng"], "SNK - Neo Geo.png", "Neo Geo", "arcade", "SNK - Neo Geo"],
@@ -319,7 +317,7 @@
     const initialPlaceholderGames = Array.from({ length: 15 }, (_, i) => ({ name: "", fullName: `placeholder_${i}` }));
 
     const state = {
-      datList: [], 
+      datList: SYSTEM_PROFILES.map(([_, img, name, core, sys]) => ({ name, displayName: name, logo: ASSETS_BASE + encodeURIComponent(img), system: name, core, libretroSys: sys })), 
       currentDatIdx: 0, gamesByCat: {}, 
       allGames: initialPlaceholderGames, filteredGames: initialPlaceholderGames, 
       selIdx: 0, topIdx: 0, slots: [], searchQuery: "", showFavOnly: false, 
@@ -474,92 +472,26 @@
       } catch (err) {}
     }
 
-    const IDB_NAME = "PandoraArcadeDB", IDB_VERSION = 1, IDB_STORE = "cache";
-    let pandoraDB = null, storageReady = null;
-
     const Storage = {
-      memory: new Map(),
-      async init() {
-        if (storageReady) return storageReady;
-        storageReady = new Promise(resolve => {
-          if (!window.indexedDB) { resolve(); return; }
-          const req = indexedDB.open(IDB_NAME, IDB_VERSION);
-          req.onupgradeneeded = () => {
-            const db = req.result;
-            if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
-          };
-          req.onsuccess = () => {
-            pandoraDB = req.result;
-            try {
-              const reqAll = pandoraDB.transaction(IDB_STORE, 'readonly').objectStore(IDB_STORE).getAll();
-              reqAll.onsuccess = () => {
-                for (const row of (reqAll.result || [])) if (row?.k) this.memory.set(row.k, row.v);
-                resolve();
-              };
-              reqAll.onerror = () => resolve();
-            } catch (e) { resolve(); }
-          };
-          req.onerror = () => resolve();
-        });
-        await storageReady;
+      get(k) {
         try {
-          Object.keys(localStorage).forEach(k => {
-            if (!/^pandora_(?:full_db|dat_)/.test(k) || this.memory.has(k)) return;
-            try { const item = JSON.parse(localStorage.getItem(k)); if (item?.d !== undefined) { this.memory.set(k, item.d); this.write(k, item.d); } } catch(e) {}
-          });
-        } catch(e) {}
+          const item = JSON.parse(lsGet(k));
+          if (item && item.d !== undefined) return item.d;
+        } catch (e) {} return null;
       },
-      get(k) { return this.memory.get(k) ?? null; },
-      set(k, d) { this.memory.set(k, d); this.write(k, d); },
-      write(k, d) {
-        if (!pandoraDB) return;
-        try { pandoraDB.transaction(IDB_STORE, 'readwrite').objectStore(IDB_STORE).put({k, v:d, t:Date.now()}, k); } catch(e) {}
+      set(k, d) {
+        try { lsSet(k, JSON.stringify({ t: Date.now(), d })); }
+        catch (e) {
+          Object.keys(localStorage).forEach(x => { if (x.startsWith('pandora_dat_')) lsRem(x); });
+          try { lsSet(k, JSON.stringify({ t: Date.now(), d })); } catch(err){}
+        }
       },
-      remove(k) { this.memory.delete(k); try { pandoraDB?.transaction(IDB_STORE,'readwrite').objectStore(IDB_STORE).delete(k); } catch(e) {} },
-      clearCache() {
-        for (const k of [...this.memory.keys()]) if (/^pandora_(?:full_db|dat_|source_tree_)/.test(k)) this.remove(k);
-        try {
-          const tx = pandoraDB?.transaction(IDB_STORE,'readwrite');
-          if (tx) { const st=tx.objectStore(IDB_STORE), q=st.openCursor(); q.onsuccess=()=>{const c=q.result;if(!c)return;if(/^pandora_(?:full_db|dat_|source_tree_)/.test(c.key))c.delete();c.continue();}; }
-        } catch(e) {}
-        try { Object.keys(localStorage).forEach(k=>{if(/^pandora_(?:full_db|dat_)/.test(k))lsRem(k);}); } catch(e) {}
+      clearCache() { 
+        Object.keys(localStorage).forEach(k => { 
+          if (k.startsWith('pandora_full_db') || k.startsWith('pandora_dat_')) lsRem(k); 
+        }); 
       }
     };
-
-    function useCachedDatabase(cached, lastCat, processCats) {
-      if (!cached?.datList?.length || !cached?.gamesByCat) return false;
-      state.datList = processCats(cached.datList); state.gamesByCat = cached.gamesByCat;
-      state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
-      const currCat = state.datList[state.currentDatIdx]; state.allGames = state.gamesByCat[currCat?.name] || [];
-      state.datNameMap = {}; state.datOrderMap = {}; state.datCloneMap = {}; state.datGenreMap = {};
-      return true;
-    }
-
-    async function fetchCachedGitHubTree(source, force = false) {
-      const key = `pandora_source_tree_${source.owner}_${source.repo}_${source.branch || 'main'}`;
-      const cached = await Storage.get(key), headers = {};
-      if (cached?.etag) headers['If-None-Match'] = cached.etag;
-      try {
-        const resp = await fetch(`https://api.github.com/repos/${source.owner}/${source.repo}/git/trees/${source.branch || 'main'}?recursive=1`, {headers, cache:'no-store'});
-        if (resp.status === 304 && cached?.treeData) return {source, treeData:cached.treeData, unchanged:true};
-        // Nếu GitHub giới hạn API hoặc trả lỗi nhưng đã có Tree cũ, dùng Tree cũ.
-        // Nhờ vậy một repository lỗi không làm mất dữ liệu của repository đó trong DB tổng.
-        if (resp.status === 403 || resp.status === 429) {
-          if (cached?.treeData) return {source, treeData:cached.treeData, unchanged:true, stale:true, error:'rate'};
-          return {source,error:'rate'};
-        }
-        if (!resp.ok) {
-          if (cached?.treeData) return {source, treeData:cached.treeData, unchanged:true, stale:true, error:`http_${resp.status}`};
-          return {source,error:`http_${resp.status}`};
-        }
-        const treeData = await resp.json(), etag = resp.headers.get('ETag') || '';
-        Storage.set(key, {etag, treeData, savedAt:Date.now()});
-        return {source,treeData,unchanged:false};
-      } catch(e) {
-        if (cached?.treeData) return {source,treeData:cached.treeData,unchanged:true,offline:true,stale:true};
-        return {source,error:'network'};
-      }
-    }
 
     function toggleCurrentFav() {
       if (!state.filteredGames.length) return;
@@ -581,53 +513,14 @@
       state.selIdx = last ? Math.max(0, state.filteredGames.findIndex(g => g.fullName === last)) : 0;
     }
 
-    function normalizeSystemKey(value) {
-      return String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
-    }
-
-    function getSystemProfile(value) {
-      const raw = String(value || '').trim().toLowerCase();
-      const compact = raw.replace(/[^a-z0-9]/g, '');
-      return SYSTEM_PROFILES.find(([aliases]) => aliases.some(a => {
-        const x = String(a).toLowerCase().trim();
-        return raw === x || compact === x.replace(/[^a-z0-9]/g, '');
-      })) || null;
-    }
-
-    function systemFromFolder(folder, source = {}) {
-      const original = String(folder || '').trim();
-      const fallback = source.defaultCat || original || source.repo || 'arcade';
-      const raw = original || fallback;
-      const profile = getSystemProfile(raw);
-
-      if (profile) {
-        const [, icon, displayName, core, libretroSys] = profile;
-        return {
-          isKnown: true,
-          name: displayName,
-          displayName,
-          logo: ASSETS_BASE + encodeURIComponent(icon),
-          system: displayName,
-          core,
-          libretroSys
-        };
-      }
-
-      // Hệ mới vẫn tự xuất hiện từ API; không cần thêm vào SYSTEM_PROFILES.
-      const key = normalizeSystemKey(raw);
-      return {
-        isKnown: true,
-        name: raw,
-        displayName: capTitle(raw.replace(/[-_]+/g, ' ')) || capTitle(fallback),
-        logo: FALLBACK_ARCADE_SVG,
-        system: raw,
-        core: key || 'arcade',
-        libretroSys: raw
-      };
-    }
-
-    function resolveSys(f, source = {}) {
-      return systemFromFolder(f, source);
+    function resolveSys(f) {
+      const rawLower = f.toLowerCase(), normName = rawLower.replace(/[^a-z0-9]/g, '');
+      const match = SYSTEM_PROFILES.find(([keys]) => keys.some(k => {
+        const kLow = k.toLowerCase();
+        return kLow.length <= 3 ? new RegExp(`\\b${kLow}\\b`, 'i').test(rawLower) : (rawLower.includes(kLow) || normName.includes(kLow.replace(/[^a-z0-9]/g, '')));
+      }));
+      return match ? { isKnown: true, logo: ASSETS_BASE + encodeURIComponent(match[1]), system: match[2], core: match[3], libretroSys: match[4] } 
+                   : { isKnown: false, logo: ASSETS_BASE + "FBNeo - Arcade Games.png", system: f, core: "arcade", libretroSys: f };
     }
 
     function addDatEntry(map, orderMap, cloneMap, genreMap, key, desc, cloneof, genre, idx) {
@@ -673,24 +566,20 @@
 
     async function loadDatMap(catName = "arcade") {
       const catInfo = state.datList[state.currentDatIdx];
-      const sysName = catInfo?.name || catName;
-      const cleanCat = sysName.toLowerCase().trim();
-      const cacheKey = "pandora_dat_v12_" + cleanCat;
-      const cached = await Storage.get(cacheKey);
+      const sysName = catInfo?.name || catName, folder = catInfo?.folderName || sysName, cleanCat = sysName.toLowerCase().trim();
+      const cacheKey = "pandora_dat_v11_" + cleanCat, cached = Storage.get(cacheKey);
 
       if (cached?.map && Object.keys(cached.map).length > 0) {
-        state.datNameMap = cached.map;
+        state.datNameMap = cached.map; 
         state.datOrderMap = cached.order || {};
         state.datCloneMap = cached.cloneMap || {};
         state.datGenreMap = cached.genreMap || {};
         return;
       }
 
-      // DAT/XML được phát hiện trực tiếp từ GitHub Tree API, không hard-code tên file.
-      const urls = Array.from(new Set([catInfo?.datUrl, catInfo?.xmlUrl].filter(Boolean)));
-      for (const u of urls) {
+      for (const u of Array.from(new Set([folder, folder.toLowerCase(), sysName, cleanCat, 'arcade'].map(x => `${RAW_BASE}data/${encodeURIComponent(x)}.dat`)))) {
         try {
-          const resp = await fetch(u, { cache: 'force-cache' });
+          const resp = await fetch(u);
           if (!resp.ok) continue;
           const parsed = parseDatContent(await resp.text());
           if (Object.keys(parsed.map).length > 0) {
@@ -745,115 +634,131 @@
       await loadFullDatabase(true);
     }
 
-    let databaseLoadPromise = null;
-
     async function loadFullDatabase(forceReload = false) {
-      if (databaseLoadPromise && !forceReload) return databaseLoadPromise;
-      databaseLoadPromise = (async () => {
-        await Storage.init();
-        showLoader(forceReload ? "ĐANG CẬP NHẬT DỮ LIỆU..." : "ĐANG TẢI DỮ LIỆU...");
-        const lastCat = lsGet("pandora_last_cat");
-        const processCats = list => list.map(i => ({...i,displayName:i.displayName || capTitle(i.system||i.name)})).sort((a,b)=>a.displayName.localeCompare(b.displayName,'vi',{sensitivity:'base'}));
-        const cacheKey="pandora_full_db_v17", cached=await Storage.get(cacheKey);
+      showLoader("ĐANG TẢI DỮ LIỆU...");
+      const lastCat = lsGet("pandora_last_cat");
+      const processCats = list => list.map(i => ({ ...i, displayName: capTitle(i.system || i.name) })).sort((a, b) => a.displayName.localeCompare(b.displayName, 'vi', { sensitivity: 'base' }));
 
-        if (!forceReload && cached?.datList?.length && cached?.gamesByCat) {
-          useCachedDatabase(cached,lastCat,processCats);
-          const currCat=state.datList[state.currentDatIdx];
-          if(currCat) await loadDatMap(currCat.name);
-          updateNames(); restorePos(); hideLoader(); drawAll(); return;
+      const cacheKey = "pandora_full_db_v13";
+      const cached = Storage.get(cacheKey);
+
+      // Nếu không phải force reload và đã có dữ liệu lưu trữ -> sử dụng ngay lập tức
+      if (!forceReload && cached?.datList?.length > 1 && cached?.gamesByCat) {
+        state.datList = processCats(cached.datList);
+        state.gamesByCat = cached.gamesByCat;
+        state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
+        const currCat = state.datList[state.currentDatIdx];
+        state.allGames = state.gamesByCat[currCat?.name] || [];
+        state.datNameMap = {}; state.datOrderMap = {}; state.datCloneMap = {}; state.datGenreMap = {};
+        if (currCat) await loadDatMap(currCat.name);
+        updateNames(); restorePos(); hideLoader(); drawAll();
+        return;
+      }
+
+      try {
+        const gamesByCat = {}, catMap = new Map();
+        let apiFailed = false;
+
+        const results = await Promise.all(GAME_SOURCES.map(async (source) => {
+          try {
+            const resp = await fetch(`https://api.github.com/repos/${source.owner}/${source.repo}/git/trees/${source.branch || "main"}?recursive=1`);
+            if (resp.status === 403 || resp.status === 429) {
+              apiFailed = true;
+              return null;
+            }
+            return resp.ok ? { source, treeData: await resp.json() } : null;
+          } catch (e) {
+            apiFailed = true;
+            return null;
+          }
+        }));
+
+        // Nếu hết lượt API GitHub hoặc lỗi kết nối, nhưng trình duyệt đã có bộ nhớ đệm
+        if (apiFailed && cached?.datList?.length > 1 && cached?.gamesByCat) {
+          showLoader("HẾT LƯỢT API: DÙNG DỮ LIỆU ĐÃ LƯU");
+          state.datList = processCats(cached.datList);
+          state.gamesByCat = cached.gamesByCat;
+          state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
+          const currCat = state.datList[state.currentDatIdx];
+          state.allGames = state.gamesByCat[currCat?.name] || [];
+          state.datNameMap = {}; state.datOrderMap = {}; state.datCloneMap = {}; state.datGenreMap = {};
+          if (currCat) await loadDatMap(currCat.name);
+          updateNames(); restorePos(); 
+          setTimeout(hideLoader, 2000);
+          drawAll();
+          return;
         }
 
-        // Xử lý từng repository ngay khi tải xong.
-        // Repo nhẹ (ví dụ PS1) có thể hiện trước, repo lớn (emu) tiếp tục nhập vào sau.
-        const gamesByCat = {}, catMap = new Map();
-        let finished = 0, firstPaint = false, aborted = false;
+        for (const res of results) {
+          if (!res?.treeData?.tree) continue;
+          const { source, treeData } = res;
+          const cueBases = new Set(treeData.tree.filter(i => i.type === "blob" && /\.(cue|m3u|ccd|gdi)$/i.test(i.path)).map(i => i.path.substring(0, i.path.lastIndexOf('.')).toLowerCase()));
 
-        const processTree = (source, treeData) => {
-          if (!treeData?.tree) return;
-          const metaFiles = new Map();
           treeData.tree.forEach(item => {
-            if (item.type !== 'blob' || !/(^|\/)data\//i.test(item.path) || !/\.(dat|xml)$/i.test(item.path)) return;
-            const file = item.path.split('/').pop();
-            const stem = file.replace(/\.(dat|xml)$/i, '');
-            const key = normalizeSystemKey(stem);
-            if (!metaFiles.has(key)) metaFiles.set(key, {});
-            const ext = file.split('.').pop().toLowerCase();
-            metaFiles.get(key)[ext + 'Url'] = buildDirectRomUrl(source, item.path);
-          });
-          const cueBases=new Set(treeData.tree.filter(i=>i.type==='blob'&&/\.(cue|m3u|ccd|gdi)$/i.test(i.path)).map(i=>i.path.substring(0,i.path.lastIndexOf('.')).toLowerCase()));
-          treeData.tree.forEach(item=>{
-            if(item.type!=='blob'||!isGameFile(item.path))return;
-            const ext=item.path.split('.').pop().toLowerCase(),basePath=item.path.substring(0,item.path.lastIndexOf('.')).toLowerCase();
-            if(['bin','img','wav'].includes(ext)&&(cueBases.has(basePath)||/track\s*\d+/i.test(item.path)))return;
-            let catName='',fileName='';const parts=item.path.split('/');
-            if(parts[0].toLowerCase()==='roms'){catName=parts.length>=3?parts[1]:(source.defaultCat||'arcade');fileName=parts.slice(parts.length>=3?2:1).join('/');}
-            else if(parts.length>=2){catName=parts[0];fileName=parts.slice(1).join('/');}
-            else if(source.defaultCat){catName=source.defaultCat;fileName=item.path;}else return;
-            const info=resolveSys(catName, source);if(!info.isKnown&&['emu','main','roms'].includes(catName.toLowerCase()))return;
-            const sysKey=info.system;
-            const meta = metaFiles.get(normalizeSystemKey(catName)) || metaFiles.get(normalizeSystemKey(info.system)) || {};
-            if(!gamesByCat[sysKey])gamesByCat[sysKey]=[];
-            const cleanName=cleanTitle(fileName);
-            if(cleanName){
-              gamesByCat[sysKey].push({name:cleanName,fullName:fileName,romUrl:buildDirectRomUrl(source,item.path),path:item.path,core:info.core});
-              if(!catMap.has(sysKey))catMap.set(sysKey,{name:sysKey,folderName:catName,logo:info.logo,system:info.system,core:info.core,libretroSys:info.libretroSys,datUrl:meta.datUrl||'',xmlUrl:meta.xmlUrl||''});
-              else { const c=catMap.get(sysKey); if(!c.datUrl&&meta.datUrl)c.datUrl=meta.datUrl; if(!c.xmlUrl&&meta.xmlUrl)c.xmlUrl=meta.xmlUrl; }
+            if (item.type === "blob" && isGameFile(item.path)) {
+              const ext = item.path.split('.').pop().toLowerCase();
+              const basePath = item.path.substring(0, item.path.lastIndexOf('.')).toLowerCase();
+              if (['bin', 'img', 'wav'].includes(ext) && (cueBases.has(basePath) || /track\s*\d+/i.test(item.path))) return;
+
+              let catName = "", fileName = "";
+              const parts = item.path.split('/');
+              if (parts[0].toLowerCase() === "roms") {
+                catName = parts.length >= 3 ? parts[1] : (source.defaultCat || "arcade");
+                fileName = parts.slice(parts.length >= 3 ? 2 : 1).join('/');
+              } else if (parts.length >= 2) {
+                catName = parts[0]; fileName = parts.slice(1).join('/');
+              } else if (source.defaultCat) {
+                catName = source.defaultCat; fileName = item.path;
+              } else return;
+
+              const info = resolveSys(catName);
+              if (!info.isKnown && ['emu', 'main', 'roms'].includes(catName.toLowerCase())) return;
+              const sysKey = info.system;
+
+              if (!gamesByCat[sysKey]) gamesByCat[sysKey] = [];
+              const cleanName = cleanTitle(fileName);
+              if (cleanName) {
+                gamesByCat[sysKey].push({ name: cleanName, fullName: fileName, romUrl: buildDirectRomUrl(source, item.path), path: item.path, core: info.core });
+                if (!catMap.has(sysKey)) catMap.set(sysKey, { name: sysKey, folderName: catName, logo: info.logo, system: info.system, core: info.core, libretroSys: info.libretroSys });
+              }
             }
           });
-        };
+        }
 
-        const paint = async (final = false) => {
-          const rawCatList=Array.from(catMap.values());
-          if(!rawCatList.length)return;
-          state.datList=processCats(rawCatList); state.gamesByCat={};
-          for(const catName in gamesByCat) state.gamesByCat[catName]=gamesByCat[catName].sort((a,b)=>a.name.localeCompare(b.name,'vi',{sensitivity:'base',numeric:true}));
-          let idx=state.datList.findIndex(i=>i.name===lastCat); if(idx<0)idx=0; state.currentDatIdx=idx;
-          const currCat=state.datList[state.currentDatIdx]; state.allGames=state.gamesByCat[currCat?.name]||[];
-          state.datNameMap={};state.datOrderMap={};state.datCloneMap={};state.datGenreMap={};
-          if(currCat) await loadDatMap(currCat.name);
-          updateNames(); restorePos(); drawAll();
-          firstPaint=true;
-          if(final) hideLoader();
-        };
-
-        const pending = GAME_SOURCES.map(source => fetchCachedGitHubTree(source,forceReload).then(result => ({result,source})));
-        const results = [];
-        while (pending.length) {
-          const wrapped = await Promise.race(pending);
-          const i = pending.indexOf(wrapped);
-          if (i >= 0) pending.splice(i,1);
-          const {result,source}=wrapped; results.push(result);
-          if (result?.treeData?.tree) {
-            processTree(source,result.treeData);
-            await paint(false);
+        const rawCatList = Array.from(catMap.values());
+        if (rawCatList.length > 0) {
+          state.datList = processCats(rawCatList);
+          state.gamesByCat = {};
+          for (const catName in gamesByCat) {
+            state.gamesByCat[catName] = gamesByCat[catName].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base', numeric: true }));
           }
-          finished++;
-          if (finished < GAME_SOURCES.length) showLoader(`ĐANG TẢI DỮ LIỆU... ${finished}/${GAME_SOURCES.length}`);
+
+          // Lưu vĩnh viễn dữ liệu mới tải về LocalStorage
+          Storage.set(cacheKey, { datList: rawCatList, gamesByCat: state.gamesByCat });
         }
 
-        const usable=results.filter(r=>r?.treeData?.tree);
-        const staleSources = results.filter(r=>r?.stale).map(r=>`${r.source.owner}/${r.source.repo}`);
-        if (staleSources.length) showLoader(`DÙNG CACHE: ${staleSources.join(', ')}`);
-        if (forceReload && results.some(r=>r?.unchanged === false)) {
-          try { for (const k of [...Storage.memory.keys()]) if (/^pandora_dat_/.test(k)) Storage.remove(k); } catch(e) {}
-        }
-        if(!usable.length) {
-          if(useCachedDatabase(cached,lastCat,processCats)){showLoader("API KHÔNG KHẢ DỤNG: DÙNG CACHE");const c=state.datList[state.currentDatIdx];if(c)await loadDatMap(c.name);updateNames();restorePos();setTimeout(hideLoader,1200);drawAll();return;}
-          throw new Error('Không có dữ liệu API và chưa có cache');
-        }
-        if(!Array.from(catMap.values()).length) throw new Error('API không trả về game');
+        state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
+        const currCat = state.datList[state.currentDatIdx];
+        state.allGames = state.gamesByCat[currCat?.name] || [];
 
-        const rawCatList=Array.from(catMap.values());
-        state.datList=processCats(rawCatList); state.gamesByCat={};
-        for(const catName in gamesByCat)state.gamesByCat[catName]=gamesByCat[catName].sort((a,b)=>a.name.localeCompare(b.name,'vi',{sensitivity:'base',numeric:true}));
-        Storage.set(cacheKey,{datList:rawCatList,gamesByCat:state.gamesByCat,savedAt:Date.now()});
-        const currCat=state.datList[state.currentDatIdx]||state.datList[0];
-        state.currentDatIdx=Math.max(0,state.datList.findIndex(i=>i.name===currCat?.name));
-        state.allGames=state.gamesByCat[state.datList[state.currentDatIdx]?.name]||[];
-        await loadDatMap(state.datList[state.currentDatIdx]?.name);
-        updateNames();restorePos();hideLoader();drawAll();
-      })().catch(e=>{ console.error(e); });
-      try { return await databaseLoadPromise; } finally { databaseLoadPromise=null; }
+        state.datNameMap = {}; state.datOrderMap = {}; state.datCloneMap = {}; state.datGenreMap = {};
+        if (currCat) await loadDatMap(currCat.name);
+        updateNames(); restorePos(); hideLoader(); drawAll();
+      } catch (e) { 
+        if (cached?.datList?.length > 1) {
+          showLoader("LỖI KẾT NỐI: KHÔI PHỤC DỮ LIỆU ĐÃ LƯU");
+          state.datList = processCats(cached.datList);
+          state.gamesByCat = cached.gamesByCat;
+          state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
+          const currCat = state.datList[state.currentDatIdx];
+          state.allGames = state.gamesByCat[currCat?.name] || [];
+          if (currCat) await loadDatMap(currCat.name);
+          updateNames(); restorePos();
+        } else {
+          showLoader("HOÀN TẤT VỚI DỮ LIỆU CÓ SẴN");
+        }
+        setTimeout(hideLoader, 1500); 
+      }
     }
 
     function updateNames() {
@@ -1096,42 +1001,66 @@
       }
     }
 
+    // Snap: lazy-load + cache URL + preload 20 game phía trước.
+    // Chỉ thử nguồn phụ sau khi nguồn chính thất bại; khi đã tìm thấy URL thì dừng ngay.
+    const SNAP_PRELOAD_COUNT = 20;
+    const SNAP_PRELOAD_CONCURRENCY = 4;
+    const snapPreloadQueue = [];
+    const snapPreloadQueued = new Set();
+    let snapPreloadRunning = 0;
+
     function getPreviewCandidates(g) {
       if (!g || g.fullName?.startsWith('placeholder_')) return [];
       const cat = state.datList[state.currentDatIdx]; if (!cat) return [];
-      const catFolder = encodeURIComponent(cat.folderName || cat.name);
-      const fileBase = g.fullName ? g.fullName.split('/').pop().replace(/\.[^/.]+$/, '') : '';
-      const sysName = encodeURIComponent(cat.libretroSys || cat.system || cat.name);
-      
-      const names = Array.from(new Set([fileBase, cleanTitle(g.fullName), g.name])).filter(Boolean);
-      const urls = [];
-      names.forEach(n => {
-        const encoded = encodeURIComponent(n);
-        urls.push(`${RAW_BASE}snap/${catFolder}/${encoded}.png`);
-        urls.push(`https://thumbnails.libretro.com/${sysName}/Named_Snaps/${encoded}.png`);
-      });
 
-      return Array.from(new Set(urls)).filter(url => !failedUrls.has(url));
+      const catFolder = encodeURIComponent(cat.folderName || cat.name || cat.system || 'arcade');
+      const playlist = cat.libretroSys || cat.system || cat.name || cat.folderName || 'arcade';
+      const libretroFolder = encodeURIComponent(playlist);
+      const fileBase = g.fullName ? g.fullName.split('/').pop().replace(/\.[^/.]+$/, '') : '';
+      // FBNeo/DAT dùng tên chuẩn của bộ FBNeo trước. Các hệ khác vẫn dùng tên file/tên game gốc.
+      const isFbneo = /^(arcade|fbneo|fba|cps1|cps2|cps3|mame)$/i.test(String(cat.folderName || cat.name || cat.system || ''));
+      const names = isFbneo
+        ? Array.from(new Set([g.name, fileBase, cleanTitle(g.fullName)]))
+        : Array.from(new Set([fileBase, g.name, cleanTitle(g.fullName)]));
+      const filteredNames = names.filter(Boolean);
+      const candidates = [];
+
+      // Ưu tiên snap trong repo. Chỉ khi URL này lỗi mới thử Libretro.
+      for (const n of filteredNames) {
+        const encoded = encodeURIComponent(n);
+        candidates.push(`${RAW_BASE}snap/${catFolder}/${encoded}.png`);
+        candidates.push(`https://thumbnails.libretro.com/${libretroFolder}/Named_Snaps/${encoded}.png`);
+      }
+
+      return candidates.filter(url => !failedUrls.has(url));
     }
 
     function resolveAndCacheImage(g, onDone) {
       if (!g || g.fullName?.startsWith('placeholder_')) return;
       const key = getGameKey(g); if (!key) return;
+
+      // RAM cache: không tạo thêm request.
       if (imgCache.has(key)) return onDone?.(imgCache.get(key));
 
+      // Persistent URL cache: dùng ngay, không request nguồn phụ.
       const cached = persistentImgMap[key];
       if (cached && (cached === PLACEHOLDER_SVG || !failedUrls.has(cached))) {
         imgCache.set(key, cached);
         return onDone?.(cached);
       }
 
+      // Một game chỉ có một probe đang chạy.
       if (pendingProbes.has(key)) {
         if (onDone) pendingProbes.get(key).push(onDone);
         return;
       }
 
       const candidates = getPreviewCandidates(g);
-      if (!candidates.length) { cacheSet(key, PLACEHOLDER_SVG); return onDone?.(PLACEHOLDER_SVG); }
+      if (!candidates.length) {
+        cacheSet(key, PLACEHOLDER_SVG);
+        return onDone?.(PLACEHOLDER_SVG);
+      }
+
       pendingProbes.set(key, onDone ? [onDone] : []);
 
       const finish = url => {
@@ -1141,33 +1070,75 @@
         cbs.forEach(cb => cb(url));
       };
 
-      let left = candidates.length, done = false;
-      candidates.forEach(url => {
+      // Probe tuần tự: tìm thấy URL là DỪNG NGAY, không gửi tiếp nguồn phụ.
+      let index = 0;
+      const probeNext = () => {
+        if (index >= candidates.length) return finish(PLACEHOLDER_SVG);
+        const url = candidates[index++];
+        if (failedUrls.has(url)) return probeNext();
+
         const im = new Image();
-        im.onload = () => { if (!done) { done = true; finish(url); } };
-        im.onerror = () => {
-          failedUrls.add(url);
-          if (!--left && !done) { done = true; finish(PLACEHOLDER_SVG); }
+        let settled = false;
+        const cleanup = () => {
+          im.onload = im.onerror = null;
         };
+
+        im.onload = () => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          // URL đã biết -> cache ngay và không đụng tới các nguồn còn lại.
+          finish(url);
+        };
+
+        im.onerror = () => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          failedUrls.add(url);
+          probeNext();
+        };
+
         im.src = url;
-      });
+      };
+
+      probeNext();
+    }
+
+    function queueSnapPreload(g) {
+      if (!g || g.fullName?.startsWith('placeholder_')) return;
+      const key = getGameKey(g); if (!key) return;
+      if (imgCache.has(key) || persistentImgMap[key] || pendingProbes.has(key) || snapPreloadQueued.has(key)) return;
+      snapPreloadQueued.add(key);
+      snapPreloadQueue.push(g);
+      runSnapPreloadQueue();
+    }
+
+    function runSnapPreloadQueue() {
+      while (snapPreloadRunning < SNAP_PRELOAD_CONCURRENCY && snapPreloadQueue.length) {
+        const g = snapPreloadQueue.shift();
+        snapPreloadRunning++;
+        const done = () => {
+          snapPreloadRunning--;
+          snapPreloadQueued.delete(getGameKey(g));
+          runSnapPreloadQueue();
+        };
+        resolveAndCacheImage(g, done);
+      }
     }
 
     function preloadNeighbors() {
       clearTimeout(preloadTimer);
       preloadTimer = setTimeout(() => {
-        [-3, -2, -1, 1, 2, 3, 4, 5].forEach(offset => {
-          const g = state.filteredGames[state.selIdx + offset];
-          if (g) resolveAndCacheImage(g);
-        });
+        const start = state.selIdx + 1;
+        const end = Math.min(state.filteredGames.length, start + SNAP_PRELOAD_COUNT);
+        for (let i = start; i < end; i++) queueSnapPreload(state.filteredGames[i]);
       }, 0);
     }
 
     function preloadWindowAtStart() {
-      const len = Math.min(12, state.filteredGames.length);
-      for (let i = 0; i < len; i++) {
-        if (state.filteredGames[i]) resolveAndCacheImage(state.filteredGames[i]);
-      }
+      const end = Math.min(SNAP_PRELOAD_COUNT, state.filteredGames.length);
+      for (let i = 0; i < end; i++) queueSnapPreload(state.filteredGames[i]);
     }
 
     function updatePreview(g) {
@@ -1183,30 +1154,57 @@
 
       const key = getGameKey(g), token = ++currentPreviewToken;
 
-      const applySrc = (srcUrl) => {
+      // Khi đang tìm snap: KHÔNG hiển thị ảnh mặc định.
+      // Chỉ hiện placeholder nhỏ nếu tất cả nguồn đều thất bại.
+      // Dùng EMPTY_GIF trong lúc chờ để không có flash ảnh mặc định.
+      img.classList.remove('is-placeholder');
+      img.classList.add('loading');
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.maxWidth = '';
+      img.style.maxHeight = '';
+      img.style.minWidth = '';
+      img.style.minHeight = '';
+      img.src = EMPTY_GIF;
+
+      const applySrc = srcUrl => {
         if (token !== currentPreviewToken) return;
-        img.src = srcUrl;
-        img.classList.remove('loading');
-        if (srcUrl === PLACEHOLDER_SVG) img.classList.add('is-placeholder');
-        else img.classList.remove('is-placeholder');
+        if (srcUrl === PLACEHOLDER_SVG) {
+          // Không tìm được snap nào: lúc này mới hiện ảnh mặc định nhỏ.
+          img.classList.add('is-placeholder');
+          img.classList.remove('loading');
+          img.style.width = '88px';
+          img.style.height = '88px';
+          img.style.maxWidth = '88px';
+          img.style.maxHeight = '88px';
+          img.style.minWidth = '88px';
+          img.style.minHeight = '88px';
+          img.src = PLACEHOLDER_SVG;
+        } else {
+          // Có URL thật: bỏ placeholder trước rồi mới gán ảnh thật.
+          img.classList.remove('is-placeholder', 'loading');
+          img.style.width = '';
+          img.style.height = '';
+          img.style.maxWidth = '';
+          img.style.maxHeight = '';
+          img.style.minWidth = '';
+          img.style.minHeight = '';
+          img.src = srcUrl;
+        }
         preloadNeighbors();
       };
 
-      if (imgCache.has(key)) {
-        return applySrc(imgCache.get(key));
+      // RAM cache -> hiển thị tức thì.
+      if (imgCache.has(key)) return applySrc(imgCache.get(key));
+
+      // URL cache -> hiển thị tức thì, tuyệt đối không probe nguồn phụ.
+      const cached = persistentImgMap[key];
+      if (cached && (cached === PLACEHOLDER_SVG || !failedUrls.has(cached))) {
+        imgCache.set(key, cached);
+        return applySrc(cached);
       }
 
-      if (persistentImgMap[key]) {
-        const pUrl = persistentImgMap[key];
-        if (pUrl === PLACEHOLDER_SVG || !failedUrls.has(pUrl)) {
-          imgCache.set(key, pUrl);
-          applySrc(pUrl);
-          return;
-        }
-      }
-
-      img.classList.add('loading');
-      resolveAndCacheImage(g, winUrl => applySrc(winUrl));
+      resolveAndCacheImage(g, applySrc);
     }
 
     function buildEmuUrl(g, c) {
