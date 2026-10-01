@@ -542,13 +542,21 @@
       try {
         const resp = await fetch(`https://api.github.com/repos/${source.owner}/${source.repo}/git/trees/${source.branch || 'main'}?recursive=1`, {headers, cache:'no-store'});
         if (resp.status === 304 && cached?.treeData) return {source, treeData:cached.treeData, unchanged:true};
-        if (resp.status === 403 || resp.status === 429) return {source,error:'rate'};
-        if (!resp.ok) return {source,error:`http_${resp.status}`};
+        // Nếu GitHub giới hạn API hoặc trả lỗi nhưng đã có Tree cũ, dùng Tree cũ.
+        // Nhờ vậy một repository lỗi không làm mất dữ liệu của repository đó trong DB tổng.
+        if (resp.status === 403 || resp.status === 429) {
+          if (cached?.treeData) return {source, treeData:cached.treeData, unchanged:true, stale:true, error:'rate'};
+          return {source,error:'rate'};
+        }
+        if (!resp.ok) {
+          if (cached?.treeData) return {source, treeData:cached.treeData, unchanged:true, stale:true, error:`http_${resp.status}`};
+          return {source,error:`http_${resp.status}`};
+        }
         const treeData = await resp.json(), etag = resp.headers.get('ETag') || '';
         Storage.set(key, {etag, treeData, savedAt:Date.now()});
         return {source,treeData,unchanged:false};
       } catch(e) {
-        if (cached?.treeData) return {source,treeData:cached.treeData,unchanged:true,offline:true};
+        if (cached?.treeData) return {source,treeData:cached.treeData,unchanged:true,offline:true,stale:true};
         return {source,error:'network'};
       }
     }
@@ -824,6 +832,8 @@
         }
 
         const usable=results.filter(r=>r?.treeData?.tree);
+        const staleSources = results.filter(r=>r?.stale).map(r=>`${r.source.owner}/${r.source.repo}`);
+        if (staleSources.length) showLoader(`DÙNG CACHE: ${staleSources.join(', ')}`);
         if (forceReload && results.some(r=>r?.unchanged === false)) {
           try { for (const k of [...Storage.memory.keys()]) if (/^pandora_dat_/.test(k)) Storage.remove(k); } catch(e) {}
         }
@@ -1203,7 +1213,7 @@
       if (!g?.fullName || g.fullName.startsWith('placeholder_')) return "";
       let romUrl = g.romUrl || g.fullName;
       try { romUrl = decodeURIComponent(romUrl); } catch (e) {}
-      return `${EMULATOR_URL}?core=${g.core || c?.core || "arcade"}&rom=${encodeURI(romUrl)}`;
+      return `${EMULATOR_URL}?core=${encodeURIComponent(g.core || c?.core || "arcade")}&rom=${encodeURIComponent(romUrl)}`;
     }
 
     function downloadCurrentGame() {
