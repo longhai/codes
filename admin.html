@@ -15,32 +15,50 @@ layout: null
     .row{display:flex;gap:6px;align-items:center;justify-content:space-between}
     select,input,button,.btn-file{background:#0f172a;border:1px solid #334155;color:#fff;border-radius:4px;padding:5px 8px;font-size:12px;outline:none}
     button,.btn-file{cursor:pointer;font-weight:bold;display:inline-flex;align-items:center;justify-content:center}
+    .tabs{display:flex;background:#0f172a;border-radius:4px;padding:2px;border:1px solid #334155}
+    .tab{border:none;padding:3px 8px;color:#94a3b8;border-radius:3px}
+    .tab.active{background:#2563eb;color:#fff}
     
-    /* Main Layout & Resizer */
-    main{flex:1;display:flex;position:relative;overflow:hidden;padding:6px;min-height:0;user-select:none}
-    main.split-h{flex-direction:row}
-    main.split-v{flex-direction:column}
-
-    .pane{display:flex;flex-direction:column;gap:6px;min-height:0;min-width:0;position:relative}
-    .pane-ed{flex:1}
-    .pane-prev{flex:1}
-
-    /* Thanh kéo chia đôi màn hình */
-    .resizer{background:#334155;z-index:10;transition:background 0.2s;flex-shrink:0}
-    .resizer:hover, .resizer.dragging{background:#2563eb}
-    main.split-h > .resizer{width:8px;cursor:col-resize;margin:0 2px;border-radius:4px}
-    main.split-v > .resizer{height:8px;cursor:row-resize;margin:2px 0;border-radius:4px}
-
+    main{flex:1;display:flex;position:relative;overflow:hidden;padding:6px;min-height:0}
+    .pane{flex:1;display:flex;flex-direction:column;gap:6px;height:100%;min-height:0;min-width:0}
     input.title{font-weight:bold;width:100%;flex-shrink:0}
-    textarea{flex:1;width:100%;height:100%;background:#1e293b;border:1px solid #334155;color:#fff;border-radius:4px;padding:8px;font-family:monospace;resize:none;outline:none;user-select:text}
+    textarea{flex:1;width:100%;height:100%;background:#1e293b;border:1px solid #334155;color:#fff;border-radius:4px;padding:8px;font-family:monospace;resize:none;outline:none}
     iframe{width:100%;height:100%;border:1px solid #334155;border-radius:4px;background:#fff}
     
     .auth-pop{position:absolute;right:0;top:32px;background:#1e293b;border:1px solid #334155;padding:8px;border-radius:6px;display:none;flex-direction:column;gap:6px;z-index:999;width:200px;box-shadow:0 4px 12px rgba(0,0,0,0.5)}
     .auth-pop.show{display:flex}
+
+    /* Thanh chia cách kéo rê */
+    .resizer{display:none;background:#334155;z-index:10;transition:background 0.2s}
+    .resizer:hover,.resizer.dragging{background:#2563eb}
     
+    /* Shield để tránh iframe ăn mất sự kiện chuột khi đang kéo */
+    .drag-shield{position:absolute;top:0;left:0;right:0;bottom:0;z-index:99;display:none}
+
+    /* Layout Desktop */
     @media(min-width:769px){
       header{flex-direction:row;align-items:center;justify-content:space-between}
       .row{width:auto}
+      .tabs{display:none}
+      .layout-select{display:inline-block !important}
+      .pane-prev{display:flex!important}
+
+      /* Layout Mặc định: Ngang (Code bên trái, Xem bên phải) */
+      main.layout-row{flex-direction:row}
+      main.layout-row .resizer{display:block;width:6px;height:100%;cursor:col-resize}
+      main.layout-row .pane-ed{width:50%}
+
+      /* Layout: Dọc (Code ở trên, Xem ở dưới) */
+      main.layout-col{flex-direction:column}
+      main.layout-col .resizer{display:block;height:6px;width:100%;cursor:row-resize}
+      main.layout-col .pane-ed{height:50%}
+    }
+
+    /* Layout Mobile */
+    @media(max-width:768px){
+      .layout-select{display:none !important}
+      .resizer{display:none !important}
+      .show-ed .pane-prev,.show-prev .pane-ed{display:none!important}
     }
   </style>
 </head>
@@ -57,8 +75,16 @@ layout: null
     </div>
 
     <div class="row">
-      <button type="button" onclick="toggleLayout()" style="background:#475569" title="Đổi hướng chia khung">LAYOUT <span id="layoutDirIcon">↕️</span></button>
-      <button type="button" onclick="swapPanes()" style="background:#475569" title="Đảo vị trí 2 khung">🔄 Đảo</button>
+      <!-- Tùy chọn chuyển layout cho màn hình lớn -->
+      <select id="layoutSelect" class="layout-select" onchange="changeLayout(this.value)" style="display:none">
+        <option value="row">📱 Preview bên phải</option>
+        <option value="col">⬇️ Preview bên dưới</option>
+      </select>
+
+      <div class="tabs">
+        <button class="tab active" onclick="tab('ed')">✏️ Sửa</button>
+        <button class="tab" onclick="tab('prev')">👁️ Xem</button>
+      </div>
 
       <div style="display:flex;gap:6px;position:relative;align-items:center;">
         <button type="button" onclick="toggleAuth()" style="background:#334155">⚙️ Auth</button>
@@ -75,17 +101,19 @@ layout: null
     </div>
   </header>
 
-  <main id="ws" class="split-h">
-    <div class="pane pane-ed" id="pane1">
+  <main id="ws" class="show-ed layout-row">
+    <div class="pane pane-ed" id="paneEd">
       <input id="title" class="title" placeholder="Tiêu đề (tự lấy từ <title> nếu bỏ trống)..." oninput="pv()">
       <textarea id="content" placeholder="Mã HTML/CSS/JS..." oninput="pv()"></textarea>
     </div>
     
-    <div class="resizer" id="dragBar"></div>
+    <div class="resizer" id="resizer"></div>
     
-    <div class="pane pane-prev" id="pane2">
+    <div class="pane pane-prev" id="panePrev">
       <iframe id="frame"></iframe>
     </div>
+    
+    <div class="drag-shield" id="dragShield"></div>
   </main>
 </div>
 
@@ -99,76 +127,14 @@ function saveCfg(){
   C = {owner:cfgOwner.value.trim(), repo:cfgRepo.value.trim(), token:cfgToken.value.trim()};
   localStorage.setItem('gh_cfg', JSON.stringify(C)); alert('Đã lưu Auth!'); authBox.classList.remove('show'); load();
 }
-
+function tab(t){
+  ws.className = ws.className.replace(/show-(ed|prev)/g, '') + ' ' + (t==='ed'?'show-ed':'show-prev');
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active', (i===0)===(t==='ed')));
+  if(t==='prev') pv();
+}
 function pv(){
   if(bUrl) URL.revokeObjectURL(bUrl);
   frame.src = bUrl = URL.createObjectURL(new Blob([content.value], {type:'text/html'}));
-}
-
-/* Kéo rê thay đổi kích thước khung (Resizable Split View) */
-const ws = $('ws'), dragBar = $('dragBar'), pane1 =$('pane1');
-let isDragging = false;
-
-dragBar.addEventListener('mousedown', initDrag);
-dragBar.addEventListener('touchstart', initDrag, {passive: false});
-
-function initDrag(e) {
-  isDragging = true;
-  dragBar.classList.add('dragging');
-  document.body.style.pointerEvents = 'none'; // Tránh iframe nuốt sự kiện chuột
-  window.addEventListener('mousemove', doDrag);
-  window.addEventListener('touchmove', doDrag, {passive: false});
-  window.addEventListener('mouseup', stopDrag);
-  window.addEventListener('touchend', stopDrag);
-}
-
-function doDrag(e) {
-  if (!isDragging) return;
-  if(e.cancelable) e.preventDefault();
-  
-  const rect = ws.getBoundingClientRect();
-  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-
-  if (ws.classList.contains('split-h')) {
-    let size = ((clientX - rect.left) / rect.width) * 100;
-    size = Math.max(10, Math.min(90, size));
-    pane1.style.flex = `0 0 ${size}%`;
-  } else {
-    let size = ((clientY - rect.top) / rect.height) * 100;
-    size = Math.max(10, Math.min(90, size));
-    pane1.style.flex = `0 0 ${size}%`;
-  }
-}
-
-function stopDrag() {
-  isDragging = false;
-  dragBar.classList.remove('dragging');
-  document.body.style.pointerEvents = 'auto';
-  window.removeEventListener('mousemove', doDrag);
-  window.removeEventListener('touchmove', doDrag);
-  window.removeEventListener('mouseup', stopDrag);
-  window.removeEventListener('touchend', stopDrag);
-}
-
-/* Đổi hướng chia dọc/ngang & đảo vị trí */
-function toggleLayout(){
-  const isH = ws.classList.contains('split-h');
-  ws.classList.toggle('split-h', !isH);
-  ws.classList.toggle('split-v', isH);
-  layoutDirIcon.textContent = isH ? '↔️' : '↕️';
-  pane1.style.flex = '1';
-}
-
-function swapPanes(){
-  if(ws.firstElementChild === pane1){
-    ws.appendChild(pane1);
-    ws.insertBefore(dragBar, pane1);
-  } else {
-    ws.insertBefore(pane1, ws.firstElementChild);
-    ws.insertBefore(dragBar, pane2);
-  }
-  pane1.style.flex = '1';
 }
 
 function uploadFile(e){
@@ -269,6 +235,58 @@ async function subForm(){
   else alert('❌ Lỗi!');
   subBtn.disabled = false;
 }
+
+/* --- Xử lý Chuyển Layout & Kéo Rê Kích Thước (Resizer) --- */
+function changeLayout(type){
+  ws.classList.remove('layout-row', 'layout-col');
+  ws.classList.add(type === 'col' ? 'layout-col' : 'layout-row');
+  paneEd.style.width = '';
+  paneEd.style.height = '';
+}
+
+const resizer = $('resizer');
+const paneEd = $('paneEd');
+const ws = $('ws');
+const dragShield = $('dragShield');
+
+let isDragging = false;
+
+resizer.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  resizer.classList.add('dragging');
+  dragShield.style.display = 'block'; // Tránh iframe chặn chuột
+  document.body.style.userSelect = 'none';
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+
+  const rect = ws.getBoundingClientRect();
+  const isRow = ws.classList.contains('layout-row');
+
+  if (isRow) {
+    let offset = e.clientX - rect.left;
+    let percentage = (offset / rect.width) * 100;
+    if (percentage > 10 && percentage < 90) {
+      paneEd.style.width = percentage + '%';
+    }
+  } else {
+    let offset = e.clientY - rect.top;
+    let percentage = (offset / rect.height) * 100;
+    if (percentage > 10 && percentage < 90) {
+      paneEd.style.height = percentage + '%';
+    }
+  }
+});
+
+document.addEventListener('mouseup', () => {
+  if (isDragging) {
+    isDragging = false;
+    resizer.classList.remove('dragging');
+    dragShield.style.display = 'none';
+    document.body.style.userSelect = '';
+  }
+});
 
 load(); pv();
 </script>
