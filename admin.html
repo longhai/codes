@@ -15,13 +15,24 @@ layout: null
     .row{display:flex;gap:6px;align-items:center;justify-content:space-between}
     select,input,button,.btn-file{background:#0f172a;border:1px solid #334155;color:#fff;border-radius:4px;padding:5px 8px;font-size:12px;outline:none}
     button,.btn-file{cursor:pointer;font-weight:bold;display:inline-flex;align-items:center;justify-content:center}
-    .tabs{display:flex;background:#0f172a;border-radius:4px;padding:2px;border:1px solid #334155}
-    .tab{border:none;padding:3px 8px;color:#94a3b8;border-radius:3px}
-    .tab.active{background:#2563eb;color:#fff}
-    main{flex:1;display:flex;position:relative;overflow:hidden;padding:6px;min-height:0}
-    .pane{flex:1;display:flex;flex-direction:column;gap:6px;height:100%;min-height:0}
+    
+    /* Main Layout & Resizer */
+    main{flex:1;display:flex;position:relative;overflow:hidden;padding:6px;min-height:0;user-select:none}
+    main.split-h{flex-direction:row}
+    main.split-v{flex-direction:column}
+
+    .pane{display:flex;flex-direction:column;gap:6px;min-height:0;min-width:0;position:relative}
+    .pane-ed{flex:1}
+    .pane-prev{flex:1}
+
+    /* Thanh kéo chia đôi màn hình */
+    .resizer{background:#334155;z-index:10;transition:background 0.2s;flex-shrink:0}
+    .resizer:hover, .resizer.dragging{background:#2563eb}
+    main.split-h > .resizer{width:8px;cursor:col-resize;margin:0 2px;border-radius:4px}
+    main.split-v > .resizer{height:8px;cursor:row-resize;margin:2px 0;border-radius:4px}
+
     input.title{font-weight:bold;width:100%;flex-shrink:0}
-    textarea{flex:1;width:100%;height:100%;background:#1e293b;border:1px solid #334155;color:#fff;border-radius:4px;padding:8px;font-family:monospace;resize:none;outline:none}
+    textarea{flex:1;width:100%;height:100%;background:#1e293b;border:1px solid #334155;color:#fff;border-radius:4px;padding:8px;font-family:monospace;resize:none;outline:none;user-select:text}
     iframe{width:100%;height:100%;border:1px solid #334155;border-radius:4px;background:#fff}
     
     .auth-pop{position:absolute;right:0;top:32px;background:#1e293b;border:1px solid #334155;padding:8px;border-radius:6px;display:none;flex-direction:column;gap:6px;z-index:999;width:200px;box-shadow:0 4px 12px rgba(0,0,0,0.5)}
@@ -30,12 +41,6 @@ layout: null
     @media(min-width:769px){
       header{flex-direction:row;align-items:center;justify-content:space-between}
       .row{width:auto}
-      .tabs{display:none}
-      main{gap:6px}
-      .pane-prev{display:flex!important}
-    }
-    @media(max-width:768px){
-      .show-ed .pane-prev,.show-prev .pane-ed{display:none!important}
     }
   </style>
 </head>
@@ -52,10 +57,8 @@ layout: null
     </div>
 
     <div class="row">
-      <div class="tabs">
-        <button class="tab active" onclick="tab('ed')">✏️ Sửa</button>
-        <button class="tab" onclick="tab('prev')">👁️ Xem</button>
-      </div>
+      <button type="button" onclick="toggleLayout()" style="background:#475569" title="Đổi hướng chia khung">LAYOUT <span id="layoutDirIcon">↕️</span></button>
+      <button type="button" onclick="swapPanes()" style="background:#475569" title="Đảo vị trí 2 khung">🔄 Đảo</button>
 
       <div style="display:flex;gap:6px;position:relative;align-items:center;">
         <button type="button" onclick="toggleAuth()" style="background:#334155">⚙️ Auth</button>
@@ -72,12 +75,17 @@ layout: null
     </div>
   </header>
 
-  <main id="ws" class="show-ed">
-    <div class="pane pane-ed">
+  <main id="ws" class="split-h">
+    <div class="pane pane-ed" id="pane1">
       <input id="title" class="title" placeholder="Tiêu đề (tự lấy từ <title> nếu bỏ trống)..." oninput="pv()">
       <textarea id="content" placeholder="Mã HTML/CSS/JS..." oninput="pv()"></textarea>
     </div>
-    <div class="pane pane-prev"><iframe id="frame"></iframe></div>
+    
+    <div class="resizer" id="dragBar"></div>
+    
+    <div class="pane pane-prev" id="pane2">
+      <iframe id="frame"></iframe>
+    </div>
   </main>
 </div>
 
@@ -91,14 +99,76 @@ function saveCfg(){
   C = {owner:cfgOwner.value.trim(), repo:cfgRepo.value.trim(), token:cfgToken.value.trim()};
   localStorage.setItem('gh_cfg', JSON.stringify(C)); alert('Đã lưu Auth!'); authBox.classList.remove('show'); load();
 }
-function tab(t){
-  ws.className = t==='ed'?'show-ed':'show-prev';
-  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active', (i===0)===(t==='ed')));
-  if(t==='prev') pv();
-}
+
 function pv(){
   if(bUrl) URL.revokeObjectURL(bUrl);
   frame.src = bUrl = URL.createObjectURL(new Blob([content.value], {type:'text/html'}));
+}
+
+/* Kéo rê thay đổi kích thước khung (Resizable Split View) */
+const ws = $('ws'), dragBar = $('dragBar'), pane1 =$('pane1');
+let isDragging = false;
+
+dragBar.addEventListener('mousedown', initDrag);
+dragBar.addEventListener('touchstart', initDrag, {passive: false});
+
+function initDrag(e) {
+  isDragging = true;
+  dragBar.classList.add('dragging');
+  document.body.style.pointerEvents = 'none'; // Tránh iframe nuốt sự kiện chuột
+  window.addEventListener('mousemove', doDrag);
+  window.addEventListener('touchmove', doDrag, {passive: false});
+  window.addEventListener('mouseup', stopDrag);
+  window.addEventListener('touchend', stopDrag);
+}
+
+function doDrag(e) {
+  if (!isDragging) return;
+  if(e.cancelable) e.preventDefault();
+  
+  const rect = ws.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+  if (ws.classList.contains('split-h')) {
+    let size = ((clientX - rect.left) / rect.width) * 100;
+    size = Math.max(10, Math.min(90, size));
+    pane1.style.flex = `0 0 ${size}%`;
+  } else {
+    let size = ((clientY - rect.top) / rect.height) * 100;
+    size = Math.max(10, Math.min(90, size));
+    pane1.style.flex = `0 0 ${size}%`;
+  }
+}
+
+function stopDrag() {
+  isDragging = false;
+  dragBar.classList.remove('dragging');
+  document.body.style.pointerEvents = 'auto';
+  window.removeEventListener('mousemove', doDrag);
+  window.removeEventListener('touchmove', doDrag);
+  window.removeEventListener('mouseup', stopDrag);
+  window.removeEventListener('touchend', stopDrag);
+}
+
+/* Đổi hướng chia dọc/ngang & đảo vị trí */
+function toggleLayout(){
+  const isH = ws.classList.contains('split-h');
+  ws.classList.toggle('split-h', !isH);
+  ws.classList.toggle('split-v', isH);
+  layoutDirIcon.textContent = isH ? '↔️' : '↕️';
+  pane1.style.flex = '1';
+}
+
+function swapPanes(){
+  if(ws.firstElementChild === pane1){
+    ws.appendChild(pane1);
+    ws.insertBefore(dragBar, pane1);
+  } else {
+    ws.insertBefore(pane1, ws.firstElementChild);
+    ws.insertBefore(dragBar, pane2);
+  }
+  pane1.style.flex = '1';
 }
 
 function uploadFile(e){
@@ -109,7 +179,6 @@ function uploadFile(e){
     let text = evt.target.result;
     text = text.replace(/^---[\s\S]*?---\s*/m,'').replace(/^```[a-z]*\n?/i,'').replace(/\n?```$/i,'');
     
-    // Ưu tiên trích xuất thẻ <title> từ file tải lên
     const match = text.match(/<title>(.*?)<\/title>/i);
     if(match && match[1].trim()) {
       title.value = match[1].trim();
@@ -179,7 +248,6 @@ async function subForm(){
 
   let t = title.value.trim();
 
-  // Tự động trích xuất tiêu đề từ thẻ <title> nếu chưa nhập tiêu đề
   if(!t) {
     const match = content.value.match(/<title>(.*?)<\/title>/i);
     if(match && match[1].trim()) {
