@@ -745,83 +745,105 @@
         await Storage.init();
         showLoader(forceReload ? "ĐANG CẬP NHẬT DỮ LIỆU..." : "ĐANG TẢI DỮ LIỆU...");
         const lastCat = lsGet("pandora_last_cat");
-        const processCats = list => list.map(i => {
-          const profile = getSystemProfile(i.folderName || i.name || i.system);
-          if (!profile) return {...i, displayName:i.displayName || capTitle(i.system||i.name)};
-          const [, icon, displayName, core, libretroSys] = profile;
-          return {...i, name:displayName, displayName, system:displayName, core, libretroSys, logo:ASSETS_BASE + encodeURIComponent(icon)};
-        }).sort((a,b)=>a.displayName.localeCompare(b.displayName,'vi',{sensitivity:'base'}));
+        const processCats = list => list.map(i => ({...i,displayName:i.displayName || capTitle(i.system||i.name)})).sort((a,b)=>a.displayName.localeCompare(b.displayName,'vi',{sensitivity:'base'}));
         const cacheKey="pandora_full_db_v17", cached=await Storage.get(cacheKey);
 
-        // Cache không hết hạn. Chỉ gọi GitHub API khi chưa có dữ liệu hoặc người dùng bấm Cập nhật.
         if (!forceReload && cached?.datList?.length && cached?.gamesByCat) {
-          useCachedDatabase(cached,lastCat,processCats); const currCat=state.datList[state.currentDatIdx];
-          if(currCat) await loadDatMap(currCat.name); updateNames();restorePos();hideLoader();drawAll();return;
+          useCachedDatabase(cached,lastCat,processCats);
+          const currCat=state.datList[state.currentDatIdx];
+          if(currCat) await loadDatMap(currCat.name);
+          updateNames(); restorePos(); hideLoader(); drawAll(); return;
         }
 
-        try {
-          const results=await Promise.all(GAME_SOURCES.map(source=>fetchCachedGitHubTree(source,forceReload)));
-          const usable=results.filter(r=>r?.treeData?.tree);
-          // Khi Tree API báo có thay đổi, bỏ cache DAT/XML cũ để lấy metadata mới từ chính file mà API phát hiện.
-          if (forceReload && results.some(r => r?.unchanged === false)) {
-            try {
-              for (const k of [...Storage.memory.keys()]) if (/^pandora_dat_/.test(k)) Storage.remove(k);
-            } catch(e) {}
-          }
-          if(!usable.length) {
-            if(useCachedDatabase(cached,lastCat,processCats)){showLoader("API KHÔNG KHẢ DỤNG: DÙNG CACHE");const c=state.datList[state.currentDatIdx];if(c)await loadDatMap(c.name);updateNames();restorePos();setTimeout(hideLoader,1200);drawAll();return;}
-            throw new Error('Không có dữ liệu API và chưa có cache');
-          }
+        // Xử lý từng repository ngay khi tải xong.
+        // Repo nhẹ (ví dụ PS1) có thể hiện trước, repo lớn (emu) tiếp tục nhập vào sau.
+        const gamesByCat = {}, catMap = new Map();
+        let finished = 0, firstPaint = false, aborted = false;
 
-          const gamesByCat={},catMap=new Map();
-          for(const res of usable){
-            const {source,treeData}=res;
-            const metaFiles = new Map();
-            treeData.tree.forEach(item => {
-              if (item.type !== 'blob' || !/(^|\/)data\//i.test(item.path) || !/\.(dat|xml)$/i.test(item.path)) return;
-              const file = item.path.split('/').pop();
-              const stem = file.replace(/\.(dat|xml)$/i, '');
-              const key = normalizeSystemKey(stem);
-              if (!metaFiles.has(key)) metaFiles.set(key, {});
-              const ext = file.split('.').pop().toLowerCase();
-              metaFiles.get(key)[ext + 'Url'] = buildDirectRomUrl(source, item.path);
-            });
-            const cueBases=new Set(treeData.tree.filter(i=>i.type==='blob'&&/\.(cue|m3u|ccd|gdi)$/i.test(i.path)).map(i=>i.path.substring(0,i.path.lastIndexOf('.')).toLowerCase()));
-            treeData.tree.forEach(item=>{
-              if(item.type!=='blob'||!isGameFile(item.path))return;
-              const ext=item.path.split('.').pop().toLowerCase(),basePath=item.path.substring(0,item.path.lastIndexOf('.')).toLowerCase();
-              if(['bin','img','wav'].includes(ext)&&(cueBases.has(basePath)||/track\s*\d+/i.test(item.path)))return;
-              let catName='',fileName='';const parts=item.path.split('/');
-              if(parts[0].toLowerCase()==='roms'){catName=parts.length>=3?parts[1]:(source.defaultCat||'arcade');fileName=parts.slice(parts.length>=3?2:1).join('/');}
-              else if(parts.length>=2){catName=parts[0];fileName=parts.slice(1).join('/');}
-              else if(source.defaultCat){catName=source.defaultCat;fileName=item.path;}else return;
-              const info=resolveSys(catName, source);if(!info.isKnown&&['emu','main','roms'].includes(catName.toLowerCase()))return;
-              const sysKey=info.system;
-              const meta = metaFiles.get(normalizeSystemKey(catName)) || metaFiles.get(normalizeSystemKey(info.system)) || {};
-              if(!gamesByCat[sysKey])gamesByCat[sysKey]=[];const cleanName=cleanTitle(fileName);
-              if(cleanName){
-                gamesByCat[sysKey].push({name:cleanName,fullName:fileName,romUrl:buildDirectRomUrl(source,item.path),path:item.path,core:info.core});
-                if(!catMap.has(sysKey))catMap.set(sysKey,{name:sysKey,folderName:catName,logo:info.logo,system:info.system,core:info.core,libretroSys:info.libretroSys,datUrl:meta.datUrl||'',xmlUrl:meta.xmlUrl||''});
-                else {
-                  const c=catMap.get(sysKey);
-                  if(!c.datUrl&&meta.datUrl)c.datUrl=meta.datUrl;
-                  if(!c.xmlUrl&&meta.xmlUrl)c.xmlUrl=meta.xmlUrl;
-                }
-              }
-            });
+        const processTree = (source, treeData) => {
+          if (!treeData?.tree) return;
+          const metaFiles = new Map();
+          treeData.tree.forEach(item => {
+            if (item.type !== 'blob' || !/(^|\/)data\//i.test(item.path) || !/\.(dat|xml)$/i.test(item.path)) return;
+            const file = item.path.split('/').pop();
+            const stem = file.replace(/\.(dat|xml)$/i, '');
+            const key = normalizeSystemKey(stem);
+            if (!metaFiles.has(key)) metaFiles.set(key, {});
+            const ext = file.split('.').pop().toLowerCase();
+            metaFiles.get(key)[ext + 'Url'] = buildDirectRomUrl(source, item.path);
+          });
+          const cueBases=new Set(treeData.tree.filter(i=>i.type==='blob'&&/\.(cue|m3u|ccd|gdi)$/i.test(i.path)).map(i=>i.path.substring(0,i.path.lastIndexOf('.')).toLowerCase()));
+          treeData.tree.forEach(item=>{
+            if(item.type!=='blob'||!isGameFile(item.path))return;
+            const ext=item.path.split('.').pop().toLowerCase(),basePath=item.path.substring(0,item.path.lastIndexOf('.')).toLowerCase();
+            if(['bin','img','wav'].includes(ext)&&(cueBases.has(basePath)||/track\s*\d+/i.test(item.path)))return;
+            let catName='',fileName='';const parts=item.path.split('/');
+            if(parts[0].toLowerCase()==='roms'){catName=parts.length>=3?parts[1]:(source.defaultCat||'arcade');fileName=parts.slice(parts.length>=3?2:1).join('/');}
+            else if(parts.length>=2){catName=parts[0];fileName=parts.slice(1).join('/');}
+            else if(source.defaultCat){catName=source.defaultCat;fileName=item.path;}else return;
+            const info=resolveSys(catName, source);if(!info.isKnown&&['emu','main','roms'].includes(catName.toLowerCase()))return;
+            const sysKey=info.system;
+            const meta = metaFiles.get(normalizeSystemKey(catName)) || metaFiles.get(normalizeSystemKey(info.system)) || {};
+            if(!gamesByCat[sysKey])gamesByCat[sysKey]=[];
+            const cleanName=cleanTitle(fileName);
+            if(cleanName){
+              gamesByCat[sysKey].push({name:cleanName,fullName:fileName,romUrl:buildDirectRomUrl(source,item.path),path:item.path,core:info.core});
+              if(!catMap.has(sysKey))catMap.set(sysKey,{name:sysKey,folderName:catName,logo:info.logo,system:info.system,core:info.core,libretroSys:info.libretroSys,datUrl:meta.datUrl||'',xmlUrl:meta.xmlUrl||''});
+              else { const c=catMap.get(sysKey); if(!c.datUrl&&meta.datUrl)c.datUrl=meta.datUrl; if(!c.xmlUrl&&meta.xmlUrl)c.xmlUrl=meta.xmlUrl; }
+            }
+          });
+        };
+
+        const paint = async (final = false) => {
+          const rawCatList=Array.from(catMap.values());
+          if(!rawCatList.length)return;
+          state.datList=processCats(rawCatList); state.gamesByCat={};
+          for(const catName in gamesByCat) state.gamesByCat[catName]=gamesByCat[catName].sort((a,b)=>a.name.localeCompare(b.name,'vi',{sensitivity:'base',numeric:true}));
+          let idx=state.datList.findIndex(i=>i.name===lastCat); if(idx<0)idx=0; state.currentDatIdx=idx;
+          const currCat=state.datList[state.currentDatIdx]; state.allGames=state.gamesByCat[currCat?.name]||[];
+          state.datNameMap={};state.datOrderMap={};state.datCloneMap={};state.datGenreMap={};
+          if(currCat) await loadDatMap(currCat.name);
+          updateNames(); restorePos(); drawAll();
+          firstPaint=true;
+          if(final) hideLoader();
+        };
+
+        const pending = GAME_SOURCES.map(source => fetchCachedGitHubTree(source,forceReload).then(result => ({result,source})));
+        const results = [];
+        while (pending.length) {
+          const wrapped = await Promise.race(pending);
+          const i = pending.indexOf(wrapped);
+          if (i >= 0) pending.splice(i,1);
+          const {result,source}=wrapped; results.push(result);
+          if (result?.treeData?.tree) {
+            processTree(source,result.treeData);
+            await paint(false);
           }
-          const rawCatList=Array.from(catMap.values());if(!rawCatList.length)throw new Error('API không trả về game');
-          state.datList=processCats(rawCatList);state.gamesByCat={};
-          for(const catName in gamesByCat)state.gamesByCat[catName]=gamesByCat[catName].sort((a,b)=>a.name.localeCompare(b.name,'vi',{sensitivity:'base',numeric:true}));
-          Storage.set(cacheKey,{datList:rawCatList,gamesByCat:state.gamesByCat,savedAt:Date.now()});
-          state.currentDatIdx=Math.max(0,state.datList.findIndex(i=>i.name===lastCat));const currCat=state.datList[state.currentDatIdx];state.allGames=state.gamesByCat[currCat?.name]||[];
-          state.datNameMap={};state.datOrderMap={};state.datCloneMap={};state.datGenreMap={};if(currCat)await loadDatMap(currCat.name);updateNames();restorePos();hideLoader();drawAll();
-        } catch(e) {
-          if(useCachedDatabase(cached,lastCat,processCats)){showLoader("LỖI API: DÙNG DỮ LIỆU ĐÃ LƯU");const c=state.datList[state.currentDatIdx];if(c)await loadDatMap(c.name);updateNames();restorePos();setTimeout(hideLoader,1200);drawAll();}
-          else{showLoader("KHÔNG CÓ DỮ LIỆU");setTimeout(hideLoader,1500);}
-        } finally {databaseLoadPromise=null;}
-      })();
-      return databaseLoadPromise;
+          finished++;
+          if (finished < GAME_SOURCES.length) showLoader(`ĐANG TẢI DỮ LIỆU... ${finished}/${GAME_SOURCES.length}`);
+        }
+
+        const usable=results.filter(r=>r?.treeData?.tree);
+        if (forceReload && results.some(r=>r?.unchanged === false)) {
+          try { for (const k of [...Storage.memory.keys()]) if (/^pandora_dat_/.test(k)) Storage.remove(k); } catch(e) {}
+        }
+        if(!usable.length) {
+          if(useCachedDatabase(cached,lastCat,processCats)){showLoader("API KHÔNG KHẢ DỤNG: DÙNG CACHE");const c=state.datList[state.currentDatIdx];if(c)await loadDatMap(c.name);updateNames();restorePos();setTimeout(hideLoader,1200);drawAll();return;}
+          throw new Error('Không có dữ liệu API và chưa có cache');
+        }
+        if(!Array.from(catMap.values()).length) throw new Error('API không trả về game');
+
+        const rawCatList=Array.from(catMap.values());
+        state.datList=processCats(rawCatList); state.gamesByCat={};
+        for(const catName in gamesByCat)state.gamesByCat[catName]=gamesByCat[catName].sort((a,b)=>a.name.localeCompare(b.name,'vi',{sensitivity:'base',numeric:true}));
+        Storage.set(cacheKey,{datList:rawCatList,gamesByCat:state.gamesByCat,savedAt:Date.now()});
+        const currCat=state.datList[state.currentDatIdx]||state.datList[0];
+        state.currentDatIdx=Math.max(0,state.datList.findIndex(i=>i.name===currCat?.name));
+        state.allGames=state.gamesByCat[state.datList[state.currentDatIdx]?.name]||[];
+        await loadDatMap(state.datList[state.currentDatIdx]?.name);
+        updateNames();restorePos();hideLoader();drawAll();
+      })().catch(e=>{ console.error(e); });
+      try { return await databaseLoadPromise; } finally { databaseLoadPromise=null; }
     }
 
     function updateNames() {
