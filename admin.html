@@ -20,44 +20,50 @@ layout: null
     .tab.active{background:#2563eb;color:#fff}
     
     main{flex:1;display:flex;position:relative;overflow:hidden;padding:6px;min-height:0}
-    .pane{flex:1;display:flex;flex-direction:column;gap:6px;height:100%;min-height:0;min-width:0}
+    .pane{display:flex;flex-direction:column;gap:6px;min-height:0;min-width:0;position:relative}
+    .pane-ed{flex:1;height:100%}
+    .pane-prev{flex:1;height:100%}
+    
     input.title{font-weight:bold;width:100%;flex-shrink:0}
     textarea{flex:1;width:100%;height:100%;background:#1e293b;border:1px solid #334155;color:#fff;border-radius:4px;padding:8px;font-family:monospace;resize:none;outline:none}
     iframe{width:100%;height:100%;border:1px solid #334155;border-radius:4px;background:#fff}
     
+    /* Thanh kéo thả đệm (Resizer) */
+    .resizer{display:none;background:#334155;flex-shrink:0;z-index:10;transition:background 0.2s}
+    .resizer:hover, .resizer.dragging{background:#2563eb}
+    
     .auth-pop{position:absolute;right:0;top:32px;background:#1e293b;border:1px solid #334155;padding:8px;border-radius:6px;display:none;flex-direction:column;gap:6px;z-index:999;width:200px;box-shadow:0 4px 12px rgba(0,0,0,0.5)}
     .auth-pop.show{display:flex}
-
-    /* Thanh chia cách kéo rê */
-    .resizer{display:none;background:#334155;z-index:10;transition:background 0.2s}
-    .resizer:hover,.resizer.dragging{background:#2563eb}
     
-    /* Shield để tránh iframe ăn mất sự kiện chuột khi đang kéo */
-    .drag-shield{position:absolute;top:0;left:0;right:0;bottom:0;z-index:99;display:none}
-
-    /* Layout Desktop */
+    /* Overlay bảo vệ pointer-events khi kéo qua iframe */
+    .drag-overlay{position:absolute;top:0;left:0;right:0;bottom:0;z-index:99;display:none}
+    
     @media(min-width:769px){
       header{flex-direction:row;align-items:center;justify-content:space-between}
       .row{width:auto}
       .tabs{display:none}
       .layout-select{display:inline-block !important}
+      
+      /* Layout Bố cục linh hoạt cho Desktop */
+      main.layout-right { flex-direction: row; }
+      main.layout-right .resizer { display: block; width: 6px; height: 100%; cursor: col-resize; }
+      
+      main.layout-left { flex-direction: row-reverse; }
+      main.layout-left .resizer { display: block; width: 6px; height: 100%; cursor: col-resize; }
+      
+      main.layout-top { flex-direction: column-reverse; }
+      main.layout-top .resizer { display: block; height: 6px; width: 100%; cursor: row-resize; }
+      
+      main.layout-bottom { flex-direction: column; }
+      main.layout-bottom .resizer { display: block; height: 6px; width: 100%; cursor: row-resize; }
+
       .pane-prev{display:flex!important}
-
-      /* Layout Mặc định: Ngang (Code bên trái, Xem bên phải) */
-      main.layout-row{flex-direction:row}
-      main.layout-row .resizer{display:block;width:6px;height:100%;cursor:col-resize}
-      main.layout-row .pane-ed{width:50%}
-
-      /* Layout: Dọc (Code ở trên, Xem ở dưới) */
-      main.layout-col{flex-direction:column}
-      main.layout-col .resizer{display:block;height:6px;width:100%;cursor:row-resize}
-      main.layout-col .pane-ed{height:50%}
     }
-
-    /* Layout Mobile */
+    
     @media(max-width:768px){
       .layout-select{display:none !important}
       .resizer{display:none !important}
+      .pane{width:100% !important; height:100% !important}
       .show-ed .pane-prev,.show-prev .pane-ed{display:none!important}
     }
   </style>
@@ -75,15 +81,17 @@ layout: null
     </div>
 
     <div class="row">
-      <!-- Tùy chọn chuyển layout cho màn hình lớn -->
-      <select id="layoutSelect" class="layout-select" onchange="changeLayout(this.value)" style="display:none">
-        <option value="row">📱 Preview bên phải</option>
-        <option value="col">⬇️ Preview bên dưới</option>
+      <!-- Chọn hướng khung xem trước trên Desktop -->
+      <select id="layoutSel" class="layout-select" onchange="changeLayout(this.value)" style="display:none">
+        <option value="right">👁️ Xem: Phải</option>
+        <option value="left">👁️ Xem: Trái</option>
+        <option value="bottom">👁️ Xem: Dưới</option>
+        <option value="top">👁️ Xem: Trên</option>
       </select>
 
       <div class="tabs">
         <button class="tab active" onclick="tab('ed')">✏️ Sửa</button>
-        <button class="tab" onclick="tab('prev')">👁️ Xem</button>
+        <button class="tab" onclick="tab('prev')">👁️️ Xem</button>
       </div>
 
       <div style="display:flex;gap:6px;position:relative;align-items:center;">
@@ -101,19 +109,19 @@ layout: null
     </div>
   </header>
 
-  <main id="ws" class="show-ed layout-row">
+  <main id="ws" class="show-ed layout-right">
     <div class="pane pane-ed" id="paneEd">
       <input id="title" class="title" placeholder="Tiêu đề (tự lấy từ <title> nếu bỏ trống)..." oninput="pv()">
       <textarea id="content" placeholder="Mã HTML/CSS/JS..." oninput="pv()"></textarea>
     </div>
     
+    <!-- Thanh chia ô để kéo thả kích thước -->
     <div class="resizer" id="resizer"></div>
-    
+
     <div class="pane pane-prev" id="panePrev">
+      <div class="drag-overlay" id="overlay"></div>
       <iframe id="frame"></iframe>
     </div>
-    
-    <div class="drag-shield" id="dragShield"></div>
   </main>
 </div>
 
@@ -127,15 +135,90 @@ function saveCfg(){
   C = {owner:cfgOwner.value.trim(), repo:cfgRepo.value.trim(), token:cfgToken.value.trim()};
   localStorage.setItem('gh_cfg', JSON.stringify(C)); alert('Đã lưu Auth!'); authBox.classList.remove('show'); load();
 }
+
 function tab(t){
-  ws.className = ws.className.replace(/show-(ed|prev)/g, '') + ' ' + (t==='ed'?'show-ed':'show-prev');
+  ws.className = ws.className.replace(/show-(ed|prev)/, t==='ed'?'show-ed':'show-prev');
   document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active', (i===0)===(t==='ed')));
   if(t==='prev') pv();
 }
+
 function pv(){
   if(bUrl) URL.revokeObjectURL(bUrl);
   frame.src = bUrl = URL.createObjectURL(new Blob([content.value], {type:'text/html'}));
 }
+
+/* Đổi layout vị trí Preview */
+function changeLayout(pos) {
+  ws.classList.remove('layout-right', 'layout-left', 'layout-top', 'layout-bottom');
+  ws.classList.add('layout-' + pos);
+  
+  // Reset kích thước tùy chỉnh khi đổi hướng bố cục
+  paneEd.style.flex = "1";
+  paneEd.style.width = "";
+  paneEd.style.height = "";
+  panePrev.style.flex = "1";
+  panePrev.style.width = "";
+  panePrev.style.height = "";
+  localStorage.setItem('admin_layout', pos);
+}
+
+/* Logic Kéo Thả (Resize Divider) */
+const resizer = $('resizer'), paneEd =$('paneEd'), panePrev = $('panePrev'), overlay =$('overlay');
+let isDragging = false;
+
+resizer.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  resizer.classList.add('dragging');
+  overlay.style.display = 'block'; // Tránh iframe "nuốt" sự kiện chuột khi kéo
+  document.body.style.cursor = resizer.style.cursor;
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!isDragging || window.innerWidth <= 768) return;
+  
+  const rect = ws.getBoundingClientRect();
+  const currentLayout = layoutSel.value;
+
+  if (currentLayout === 'right') {
+    let w = e.clientX - rect.left;
+    if(w > 100 && w < rect.width - 100) {
+      paneEd.style.flex = 'none';
+      paneEd.style.width = w + 'px';
+    }
+  } else if (currentLayout === 'left') {
+    let w = rect.right - e.clientX;
+    if(w > 100 && w < rect.width - 100) {
+      paneEd.style.flex = 'none';
+      paneEd.style.width = (rect.width - w) + 'px';
+    }
+  } else if (currentLayout === 'bottom') {
+    let h = e.clientY - rect.top;
+    if(h > 80 && h < rect.height - 80) {
+      paneEd.style.flex = 'none';
+      paneEd.style.height = h + 'px';
+    }
+  } else if (currentLayout === 'top') {
+    let h = rect.bottom - e.clientY;
+    if(h > 80 && h < rect.height - 80) {
+      paneEd.style.flex = 'none';
+      paneEd.style.height = (rect.height - h) + 'px';
+    }
+  }
+});
+
+document.addEventListener('mouseup', () => {
+  if (isDragging) {
+    isDragging = false;
+    resizer.classList.remove('dragging');
+    overlay.style.display = 'none';
+    document.body.style.cursor = 'default';
+  }
+});
+
+/* Khôi phục cài đặt layout cũ */
+const savedLayout = localStorage.getItem('admin_layout') || 'right';
+layoutSel.value = savedLayout;
+changeLayout(savedLayout);
 
 function uploadFile(e){
   const file = e.target.files[0];
@@ -235,58 +318,6 @@ async function subForm(){
   else alert('❌ Lỗi!');
   subBtn.disabled = false;
 }
-
-/* --- Xử lý Chuyển Layout & Kéo Rê Kích Thước (Resizer) --- */
-function changeLayout(type){
-  ws.classList.remove('layout-row', 'layout-col');
-  ws.classList.add(type === 'col' ? 'layout-col' : 'layout-row');
-  paneEd.style.width = '';
-  paneEd.style.height = '';
-}
-
-const resizer = $('resizer');
-const paneEd = $('paneEd');
-const ws = $('ws');
-const dragShield = $('dragShield');
-
-let isDragging = false;
-
-resizer.addEventListener('mousedown', (e) => {
-  isDragging = true;
-  resizer.classList.add('dragging');
-  dragShield.style.display = 'block'; // Tránh iframe chặn chuột
-  document.body.style.userSelect = 'none';
-});
-
-document.addEventListener('mousemove', (e) => {
-  if (!isDragging) return;
-
-  const rect = ws.getBoundingClientRect();
-  const isRow = ws.classList.contains('layout-row');
-
-  if (isRow) {
-    let offset = e.clientX - rect.left;
-    let percentage = (offset / rect.width) * 100;
-    if (percentage > 10 && percentage < 90) {
-      paneEd.style.width = percentage + '%';
-    }
-  } else {
-    let offset = e.clientY - rect.top;
-    let percentage = (offset / rect.height) * 100;
-    if (percentage > 10 && percentage < 90) {
-      paneEd.style.height = percentage + '%';
-    }
-  }
-});
-
-document.addEventListener('mouseup', () => {
-  if (isDragging) {
-    isDragging = false;
-    resizer.classList.remove('dragging');
-    dragShield.style.display = 'none';
-    document.body.style.userSelect = '';
-  }
-});
 
 load(); pv();
 </script>
