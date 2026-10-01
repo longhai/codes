@@ -7,6 +7,8 @@ layout: null
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Admin</title>
+  <!-- Thêm thư viện Split.js để hỗ trợ kéo giãn kích thước -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.5/split.min.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{width:100%;height:100dvh;overflow:hidden;background:#0f172a;color:#f8fafc;font-family:sans-serif;font-size:13px}
@@ -18,53 +20,50 @@ layout: null
     .tabs{display:flex;background:#0f172a;border-radius:4px;padding:2px;border:1px solid #334155}
     .tab{border:none;padding:3px 8px;color:#94a3b8;border-radius:3px}
     .tab.active{background:#2563eb;color:#fff}
-    
     main{flex:1;display:flex;position:relative;overflow:hidden;padding:6px;min-height:0}
-    .pane{display:flex;flex-direction:column;gap:6px;min-height:0;min-width:0;position:relative}
-    .pane-ed{flex:1;height:100%}
-    .pane-prev{flex:1;height:100%}
-    
+    .pane{display:flex;flex-direction:column;gap:6px;height:100%;min-height:0;min-width:0}
     input.title{font-weight:bold;width:100%;flex-shrink:0}
     textarea{flex:1;width:100%;height:100%;background:#1e293b;border:1px solid #334155;color:#fff;border-radius:4px;padding:8px;font-family:monospace;resize:none;outline:none}
     iframe{width:100%;height:100%;border:1px solid #334155;border-radius:4px;background:#fff}
     
-    /* Thanh kéo thả đệm (Resizer) */
-    .resizer{display:none;background:#334155;flex-shrink:0;z-index:10;transition:background 0.2s}
-    .resizer:hover, .resizer.dragging{background:#2563eb}
-    
     .auth-pop{position:absolute;right:0;top:32px;background:#1e293b;border:1px solid #334155;padding:8px;border-radius:6px;display:none;flex-direction:column;gap:6px;z-index:999;width:200px;box-shadow:0 4px 12px rgba(0,0,0,0.5)}
     .auth-pop.show{display:flex}
     
-    /* Overlay bảo vệ pointer-events khi kéo qua iframe */
-    .drag-overlay{position:absolute;top:0;left:0;right:0;bottom:0;z-index:99;display:none}
-    
+    /* Style thanh kéo Split.js */
+    .gutter {
+      background-color: #334155;
+      background-repeat: no-repeat;
+      background-position: 50%;
+    }
+    .gutter.gutter-horizontal {
+      cursor: col-resize;
+      background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADTJfu3AAAADklEQVR42mNhYGD4DwUACAgBAh555AcAAAAASUVORK5CYII=');
+    }
+    .gutter.gutter-vertical {
+      cursor: row-resize;
+      background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFCAMAAABl/6zIAAAABlBMVEUAAAD///+l2Z/dAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3wYECA4fA68pWAAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAAOSURBVHjaYmBgYACCAAgIAAEAAM4AAY2C8A4AAAAASUVORK5CYII=');
+    }
+
+    /* Vị trí khung xem trên màn hình lớn */
     @media(min-width:769px){
       header{flex-direction:row;align-items:center;justify-content:space-between}
       .row{width:auto}
       .tabs{display:none}
-      .layout-select{display:inline-block !important}
-      
-      /* Layout Bố cục linh hoạt cho Desktop */
-      main.layout-right { flex-direction: row; }
-      main.layout-right .resizer { display: block; width: 6px; height: 100%; cursor: col-resize; }
-      
-      main.layout-left { flex-direction: row-reverse; }
-      main.layout-left .resizer { display: block; width: 6px; height: 100%; cursor: col-resize; }
-      
-      main.layout-top { flex-direction: column-reverse; }
-      main.layout-top .resizer { display: block; height: 6px; width: 100%; cursor: row-resize; }
-      
-      main.layout-bottom { flex-direction: column; }
-      main.layout-bottom .resizer { display: block; height: 6px; width: 100%; cursor: row-resize; }
+      .layout-btn{display:inline-flex !important}
 
-      .pane-prev{display:flex!important}
+      /* Các hướng bố cục */
+      main.pos-right { flex-direction: row; }
+      main.pos-left { flex-direction: row-reverse; }
+      main.pos-bottom { flex-direction: column; }
+      main.pos-top { flex-direction: column-reverse; }
     }
-    
+
+    /* Tối ưu hóa cho di động */
     @media(max-width:768px){
-      .layout-select{display:none !important}
-      .resizer{display:none !important}
-      .pane{width:100% !important; height:100% !important}
-      .show-ed .pane-prev,.show-prev .pane-ed{display:none!important}
+      .layout-btn { display: none !important; }
+      .pane { flex: 1; width: 100% !important; height: 100% !important; }
+      .show-ed .pane-prev, .show-prev .pane-ed { display: none !important; }
+      .gutter { display: none !important; }
     }
   </style>
 </head>
@@ -81,21 +80,15 @@ layout: null
     </div>
 
     <div class="row">
-      <!-- Chọn hướng khung xem trước trên Desktop -->
-      <select id="layoutSel" class="layout-select" onchange="changeLayout(this.value)" style="display:none">
-        <option value="right">👁️ Xem: Phải</option>
-        <option value="left">👁️ Xem: Trái</option>
-        <option value="bottom">👁️ Xem: Dưới</option>
-        <option value="top">👁️ Xem: Trên</option>
-      </select>
-
       <div class="tabs">
         <button class="tab active" onclick="tab('ed')">✏️ Sửa</button>
-        <button class="tab" onclick="tab('prev')">👁️️ Xem</button>
+        <button class="tab" onclick="tab('prev')">👁️ Xem</button>
       </div>
 
       <div style="display:flex;gap:6px;position:relative;align-items:center;">
+        <button class="layout-btn" onclick="cycleLayout()" style="background:#475569;display:none" title="Đổi vị trí khung xem">Layout: ➡️</button>
         <button type="button" onclick="toggleAuth()" style="background:#334155">⚙️ Auth</button>
+        
         <div id="authBox" class="auth-pop">
           <input id="cfgOwner" placeholder="User">
           <input id="cfgRepo" placeholder="Repo">
@@ -109,116 +102,73 @@ layout: null
     </div>
   </header>
 
-  <main id="ws" class="show-ed layout-right">
-    <div class="pane pane-ed" id="paneEd">
+  <main id="ws" class="show-ed pos-right">
+    <div id="paneEd" class="pane pane-ed">
       <input id="title" class="title" placeholder="Tiêu đề (tự lấy từ <title> nếu bỏ trống)..." oninput="pv()">
       <textarea id="content" placeholder="Mã HTML/CSS/JS..." oninput="pv()"></textarea>
     </div>
-    
-    <!-- Thanh chia ô để kéo thả kích thước -->
-    <div class="resizer" id="resizer"></div>
-
-    <div class="pane pane-prev" id="panePrev">
-      <div class="drag-overlay" id="overlay"></div>
-      <iframe id="frame"></iframe>
-    </div>
+    <div id="panePrev" class="pane pane-prev"><iframe id="frame"></iframe></div>
   </main>
 </div>
 
 <script>
 let C = JSON.parse(localStorage.getItem('gh_cfg')||'{}'), list=[], cSha=null, cPath=null, bUrl=null;
+let splitInstance = null;
+const positions = ['right', 'bottom', 'left', 'top'];
+const posIcons = {'right':'➡️ Phải', 'bottom':'⬇️ Dưới', 'left':'⬅️ Trái', 'top':'⬆️ Trên'};
+let currentPosIndex = 0;
+
 const $ = id => document.getElementById(id);
 cfgOwner.value = C.owner||'longhai'; cfgRepo.value = C.repo||'codes'; cfgToken.value = C.token||'';
+
+// Khởi tạo Split.js kéo giãn kích thước
+function initSplit() {
+  if (window.innerWidth <= 768) {
+    if (splitInstance) { splitInstance.destroy(); splitInstance = null; }
+    return;
+  }
+  
+  if (splitInstance) splitInstance.destroy();
+  
+  const currentPos = positions[currentPosIndex];
+  const isHorizontal = currentPos === 'right' || currentPos === 'left';
+  
+  splitInstance = Split(['#paneEd', '#panePrev'], {
+    sizes: [50, 50],
+    minSize: 100,
+    gutterSize: 6,
+    direction: isHorizontal ? 'horizontal' : 'vertical'
+  });
+}
+
+// Chuyển đổi vị trí khung xem (Phải -> Dưới -> Trái -> Trên)
+function cycleLayout() {
+  currentPosIndex = (currentPosIndex + 1) % positions.length;
+  const newPos = positions[currentPosIndex];
+  
+  ws.classList.remove('pos-right', 'pos-bottom', 'pos-left', 'pos-top');
+  ws.classList.add('pos-' + newPos);
+  
+  document.querySelector('.layout-btn').textContent = 'Layout: ' + posIcons[newPos];
+  initSplit();
+}
+
+window.addEventListener('resize', initSplit);
 
 function toggleAuth(){ authBox.classList.toggle('show'); }
 function saveCfg(){
   C = {owner:cfgOwner.value.trim(), repo:cfgRepo.value.trim(), token:cfgToken.value.trim()};
   localStorage.setItem('gh_cfg', JSON.stringify(C)); alert('Đã lưu Auth!'); authBox.classList.remove('show'); load();
 }
-
 function tab(t){
   ws.className = ws.className.replace(/show-(ed|prev)/, t==='ed'?'show-ed':'show-prev');
   document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active', (i===0)===(t==='ed')));
   if(t==='prev') pv();
 }
-
 function pv(){
   if(bUrl) URL.revokeObjectURL(bUrl);
   frame.src = bUrl = URL.createObjectURL(new Blob([content.value], {type:'text/html'}));
 }
-
-/* Đổi layout vị trí Preview */
-function changeLayout(pos) {
-  ws.classList.remove('layout-right', 'layout-left', 'layout-top', 'layout-bottom');
-  ws.classList.add('layout-' + pos);
-  
-  // Reset kích thước tùy chỉnh khi đổi hướng bố cục
-  paneEd.style.flex = "1";
-  paneEd.style.width = "";
-  paneEd.style.height = "";
-  panePrev.style.flex = "1";
-  panePrev.style.width = "";
-  panePrev.style.height = "";
-  localStorage.setItem('admin_layout', pos);
-}
-
-/* Logic Kéo Thả (Resize Divider) */
-const resizer = $('resizer'), paneEd =$('paneEd'), panePrev = $('panePrev'), overlay =$('overlay');
-let isDragging = false;
-
-resizer.addEventListener('mousedown', (e) => {
-  isDragging = true;
-  resizer.classList.add('dragging');
-  overlay.style.display = 'block'; // Tránh iframe "nuốt" sự kiện chuột khi kéo
-  document.body.style.cursor = resizer.style.cursor;
-});
-
-document.addEventListener('mousemove', (e) => {
-  if (!isDragging || window.innerWidth <= 768) return;
-  
-  const rect = ws.getBoundingClientRect();
-  const currentLayout = layoutSel.value;
-
-  if (currentLayout === 'right') {
-    let w = e.clientX - rect.left;
-    if(w > 100 && w < rect.width - 100) {
-      paneEd.style.flex = 'none';
-      paneEd.style.width = w + 'px';
-    }
-  } else if (currentLayout === 'left') {
-    let w = rect.right - e.clientX;
-    if(w > 100 && w < rect.width - 100) {
-      paneEd.style.flex = 'none';
-      paneEd.style.width = (rect.width - w) + 'px';
-    }
-  } else if (currentLayout === 'bottom') {
-    let h = e.clientY - rect.top;
-    if(h > 80 && h < rect.height - 80) {
-      paneEd.style.flex = 'none';
-      paneEd.style.height = h + 'px';
-    }
-  } else if (currentLayout === 'top') {
-    let h = rect.bottom - e.clientY;
-    if(h > 80 && h < rect.height - 80) {
-      paneEd.style.flex = 'none';
-      paneEd.style.height = (rect.height - h) + 'px';
-    }
-  }
-});
-
-document.addEventListener('mouseup', () => {
-  if (isDragging) {
-    isDragging = false;
-    resizer.classList.remove('dragging');
-    overlay.style.display = 'none';
-    document.body.style.cursor = 'default';
-  }
-});
-
-/* Khôi phục cài đặt layout cũ */
-const savedLayout = localStorage.getItem('admin_layout') || 'right';
-layoutSel.value = savedLayout;
-changeLayout(savedLayout);
 
 function uploadFile(e){
   const file = e.target.files[0];
@@ -319,7 +269,7 @@ async function subForm(){
   subBtn.disabled = false;
 }
 
-load(); pv();
+load(); pv(); initSplit();
 </script>
 </body>
 </html>
