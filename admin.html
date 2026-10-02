@@ -10,39 +10,50 @@ layout: null
 <script src="https://cdn.jsdelivr.net/npm/split.js@1.6.5/dist/split.min.js"></script>
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;font-family:Arial,sans-serif;background:#111;color:#eee}
-button,input,select,textarea{font:inherit}
-button{cursor:pointer;border:0}
-.app{height:100%;display:flex;flex-direction:column}
+html,body{margin:0;height:100%;background:#111;color:#eee;font-family:Arial,sans-serif}
+button,select,input,textarea{font:inherit}
+button{cursor:pointer}
+.app{height:100vh;display:flex;flex-direction:column}
 header{height:52px;display:flex;align-items:center;gap:7px;padding:7px 10px;background:#181818;border-bottom:1px solid #333}
-header button,.bar button{background:#292929;color:#eee;border-radius:6px;padding:7px 11px}
-header button:hover,.bar button:hover{background:#383838}
-select{background:#202020;color:#eee;border:1px solid #444;border-radius:6px;padding:7px;min-width:180px}
-main{flex:1;min-height:0}
-#edit,#preview{min-width:0;min-height:0;overflow:hidden}
-#edit{display:flex;flex-direction:column}
-#preview{background:#080808}
-.bar{display:flex;align-items:center;gap:7px;padding:7px;background:#181818;border-bottom:1px solid #333}
-.bar input{flex:1;min-width:0;background:#222;color:#fff;border:1px solid #444;border-radius:6px;padding:8px}
-#content{flex:1;width:100%;resize:none;border:0;outline:0;background:#101010;color:#eee;padding:12px;font-family:Consolas,monospace;font-size:14px;line-height:1.5}
-iframe{width:100%;height:100%;border:0;background:#fff}
-.auth{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:20;padding:15px}
-.auth.show{display:flex}
-.box{width:min(430px,100%);background:#1c1c1c;border:1px solid #444;border-radius:10px;padding:16px;box-shadow:0 10px 40px #000}
-.box h3{margin:0 0 12px}
-.box input{display:block;width:100%;margin:8px 0;background:#111;color:#fff;border:1px solid #444;border-radius:6px;padding:9px}
-.actions{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
-.primary{background:#1769aa!important}
-.danger{background:#8e2222!important}
-.green{background:#176b38!important}
-.mobile-tabs{display:none}
+header h1{font-size:16px;margin:0 8px 0 0;white-space:nowrap}
+button,.btn,select{border:1px solid #444;background:#242424;color:#eee;border-radius:7px;padding:7px 10px}
+button:hover{background:#303030}
+button:disabled{opacity:.5;cursor:not-allowed}
+.main{flex:1;min-height:0;display:flex}
+.editor,.preview{min-width:0;min-height:0;overflow:hidden}
+.editor{display:flex;flex-direction:column;padding:10px}
+.preview{background:#0b0b0b}
+#content{width:100%;height:100%;resize:none;border:1px solid #333;border-radius:7px;background:#0d0d0d;color:#ddd;padding:10px;outline:none}
+#title{width:100%;margin-bottom:8px}
+#postSelect{flex:1;min-width:80px}
+#pv{width:100%;height:100%;border:0;background:#fff}
+.form{display:flex;flex-direction:column;height:100%}
+.tools{display:flex;gap:7px;margin-bottom:8px;flex-wrap:wrap}
+.bottom{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}
+.bottom button{flex:1}
+.status{font-size:12px;color:#999;display:flex;align-items:center;padding:0 5px;white-space:nowrap}
+#authBox{display:none;position:fixed;inset:0;background:#000a;z-index:20;align-items:center;justify-content:center;padding:15px}
+#authBox.show{display:flex}
+.auth{width:min(420px,100%);background:#191919;border:1px solid #444;border-radius:10px;padding:15px}
+.auth h2{font-size:17px;margin:0 0 12px}
+.auth input{width:100%;margin-bottom:8px}
+.auth .row{display:flex;gap:7px}
+.auth .row button{flex:1}
+input{background:#101010;color:#eee;border:1px solid #444;border-radius:7px;padding:8px;outline:none}
+.mobileTabs{display:none}
+.gutter{background:#222}
+.gutter.gutter-horizontal{cursor:col-resize}
+.gutter.gutter-vertical{cursor:row-resize}
 @media(max-width:700px){
- header{height:auto;flex-wrap:wrap}
- header select{order:10;width:100%}
- main{position:relative}
- #edit,#preview{position:absolute;inset:0}
- #preview{display:none}
- .mobile-tabs{display:flex}
+header{height:auto;min-height:52px;flex-wrap:wrap}
+header h1{width:100%}
+.mobileTabs{display:flex;gap:6px;padding:7px;background:#181818;border-bottom:1px solid #333}
+.mobileTabs button{flex:1}
+.main{display:block}
+.editor,.preview{height:calc(100vh - 110px)}
+.preview{display:none}
+.main.showPreview .editor{display:none}
+.main.showPreview .preview{display:block}
 }
 </style>
 </head>
@@ -50,83 +61,78 @@ iframe{width:100%;height:100%;border:0;background:#fff}
 
 <div class="app">
 <header>
+<h1>Admin</h1>
 <button onclick="newPost()">＋ Mới</button>
-<button onclick="fileInput.click()">📂 Mở file</button>
-<select id="postSelect">
-<option value="">-- Chọn bài viết --</option>
-</select>
-<button onclick="openAuth()">⚙️ Auth</button>
-<button onclick="resetForm()">🧹 Xóa form</button>
+<button onclick="fileInput.click()">📂 Mở</button>
+<input id="fileInput" type="file" accept=".html,.htm,.txt,.md" hidden>
+<select id="postSelect"></select>
+<button onclick="openAuth()">⚙️</button>
+<button onclick="changePos()">↔️</button>
+<span class="status" id="status"></span>
 </header>
 
-<div class="mobile-tabs">
-<button onclick="showTab('edit')">✏️ Edit</button>
-<button onclick="showTab('preview')">👁 Preview</button>
+<div class="mobileTabs">
+<button onclick="showTab(0)">✏️ Edit</button>
+<button onclick="showTab(1)">👁 Preview</button>
 </div>
 
-<main id="main">
-<section id="edit">
-<div class="bar">
+<div class="main" id="main">
+<section class="editor" id="editor">
+<div class="form">
 <input id="title" placeholder="Tiêu đề">
-<button onclick="subForm()" id="saveBtn" class="green">💾 Lưu</button>
-<button onclick="delPost()" id="delBtn" class="danger">🗑 Xóa</button>
-<button onclick="cycleSplit()" id="layoutBtn">➡️ Phải</button>
+<textarea id="content" placeholder="Nội dung..."></textarea>
+<div class="bottom">
+<button id="delBtn" onclick="delPost()">🗑 Xóa</button>
+<button id="saveBtn" onclick="subForm()">🚀 Đăng</button>
 </div>
-<textarea id="content" spellcheck="false" placeholder="Nội dung..."></textarea>
+</div>
 </section>
-
-<section id="preview">
-<iframe id="frame" sandbox="allow-scripts allow-forms allow-modals allow-popups allow-same-origin"></iframe>
+<section class="preview">
+<iframe id="pv" sandbox="allow-scripts allow-forms allow-modals allow-popups"></iframe>
 </section>
-</main>
+</div>
 </div>
 
-<input id="fileInput" type="file" accept=".html,.htm,.txt,.md" hidden>
-
-<div class="auth" id="auth">
-<div class="box">
-<h3>GitHub API</h3>
+<div id="authBox">
+<div class="auth">
+<h2>GitHub</h2>
 <input id="owner" placeholder="Owner">
 <input id="repo" placeholder="Repository">
 <input id="token" type="password" placeholder="GitHub Token">
-<div class="actions">
-<button class="primary" onclick="saveCfg()">💾 Lưu</button>
+<div class="row">
+<button onclick="saveCfg()">💾 Lưu</button>
+<button onclick="clearKey()">🗑 Xóa Key</button>
 <button onclick="closeAuth()">Đóng</button>
-<button class="danger" onclick="clearKey()">🗑 Xóa Key</button>
 </div>
 </div>
 </div>
 
 <script>
-let C=JSON.parse(localStorage.getItem('gh_cfg')||'{}');
-let list=[],cSha=null,cPath=null,dirty=false;
-let splitInstance=null,currentPosIndex=0;
-const positions=['right','bottom','left','top'];
-const posIcons={right:'➡️ Phải',bottom:'⬇️ Dưới',left:'⬅️ Trái',top:'⬆️ Trên'};
-
 const $=id=>document.getElementById(id);
-const title=$('title'),content=$('content'),postSelect=$('postSelect');
-const fileInput=$('fileInput');
 
-function utf8ToBase64(str){
- const bytes=new TextEncoder().encode(str);
- let bin='',n=0x8000;
- for(let i=0;i<bytes.length;i+=n)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+n));
- return btoa(bin);
+let C=JSON.parse(localStorage.getItem('gh_cfg')||'{}'),
+list=[],cSha=null,cPath=null,dirty=false,splitInstance=null;
+const positions=['right','bottom','left','top'];
+let currentPosIndex=0;
+
+$('owner').value=C.owner||'longhai';
+$('repo').value=C.repo||'codes';
+$('token').value=C.token||'';
+
+function utf8ToBase64(s){
+ const b=new TextEncoder().encode(s);let x='',n=0x8000;
+ for(let i=0;i<b.length;i+=n)x+=String.fromCharCode.apply(null,b.subarray(i,i+n));
+ return btoa(x);
 }
-
-function base64ToUtf8(str){
- const bin=atob(str.replace(/\s/g,''));
- const bytes=new Uint8Array(bin.length);
- for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
- return new TextDecoder().decode(bytes);
+function base64ToUtf8(s){
+ const b=atob(s.replace(/\s/g,'')),u=new Uint8Array(b.length);
+ for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);
+ return new TextDecoder().decode(u);
 }
 
 function apiUrl(path){
- const p=path.split('/').map(encodeURIComponent).join('/');
- return `https://api.github.com/repos/${encodeURIComponent(C.owner)}/${encodeURIComponent(C.repo)}/contents/${p}`;
+ return 'https://api.github.com/repos/'+encodeURIComponent(C.owner)+'/'+encodeURIComponent(C.repo)+'/contents/'+path.split('/').map(encodeURIComponent).join('/');
 }
-
 async function req(path,method='GET',body=null){
  const o={
   method,
@@ -140,7 +146,6 @@ async function req(path,method='GET',body=null){
  if(body)o.body=JSON.stringify(body);
  return fetch(apiUrl(path),o);
 }
-
 async function fetchFile(path){
  const r=await req(path);
  let d=null;
@@ -148,67 +153,66 @@ async function fetchFile(path){
  return {ok:r.ok,status:r.status,data:d};
 }
 
-function openAuth(){
- $('owner').value=C.owner||'longhai';
- $('repo').value=C.repo||'codes';
- $('token').value=C.token||'';
- $('auth').classList.add('show');
+function markDirty(){
+ dirty=true;
+}
+$('title').addEventListener('input',markDirty);
+$('content').addEventListener('input',()=>{dirty=true;pv()});
+
+function guard(){
+ return !dirty||confirm('⚠️ Nội dung chưa lưu. Bạn có muốn tiếp tục?');
 }
 
+function openAuth(){
+ $('authBox').classList.add('show');
+}
 function closeAuth(){
- $('auth').classList.remove('show');
+ $('authBox').classList.remove('show');
+}
+function clearKey(){
+ if(!confirm('Xóa toàn bộ key GitHub đã lưu?'))return;
+ localStorage.removeItem('gh_cfg');
+ C={};
+ $('owner').value='';
+ $('repo').value='';
+ $('token').value='';
+ list=[];
+ cSha=cPath=null;
+ $('postSelect').innerHTML='';
+ $('title').value='';
+ $('content').value='';
+ dirty=false;
+ closeAuth();
+ alert('Đã xóa key.');
 }
 
 async function saveCfg(){
  const owner=$('owner').value.trim();
  const repo=$('repo').value.trim();
  const token=$('token').value.trim();
- if(!owner||!repo||!token)return alert('Nhập đầy đủ Owner, Repository và Token');
+ if(!owner||!repo||!token)return alert('Vui lòng nhập đủ thông tin.');
  C={owner,repo,token};
  localStorage.setItem('gh_cfg',JSON.stringify(C));
- closeAuth();
  list=[];
- cSha=null;
- cPath=null;
+ cSha=cPath=null;
  dirty=false;
- postSelect.innerHTML='<option value="">-- Chọn bài viết --</option>';
+ closeAuth();
  await load();
 }
 
-function clearKey(){
- if(!confirm('Xóa Owner, Repository và GitHub Key đã lưu trên máy?'))return;
- localStorage.removeItem('gh_cfg');
- C={};
- list=[];
- cSha=null;
- cPath=null;
- dirty=false;
- postSelect.innerHTML='<option value="">-- Chọn bài viết --</option>';
- title.value='';
- content.value='';
- pv();
- closeAuth();
- alert('Đã xóa Key');
-}
-
-function markDirty(){
- dirty=true;
-}
-
-title.addEventListener('input',markDirty);
-content.addEventListener('input',()=>{dirty=true;pv()});
-
-function renderList(selectedPath=''){
- postSelect.innerHTML='<option value="">-- Chọn bài viết --</option>';
+function renderList(selected=''){
+ const s=$('postSelect');
+ s.innerHTML='<option value="">-- Chọn bài --</option>';
  list.forEach((x,i)=>{
   const o=document.createElement('option');
   o.value=i;
-  o.textContent=x.name||x.path;
-  postSelect.appendChild(o);
+  o.textContent=x.name||x.path.split('/').pop();
+  o.dataset.path=x.path;
+  s.appendChild(o);
  });
- if(selectedPath){
-  const i=list.findIndex(x=>x.path===selectedPath);
-  if(i>=0)postSelect.value=i;
+ if(selected){
+  const i=list.findIndex(x=>x.path===selected);
+  if(i>=0)s.value=i;
  }
 }
 
@@ -217,295 +221,266 @@ async function load(){
   openAuth();
   return;
  }
- const r=await req('_posts');
- if(!r.ok){
-  let m='Không thể tải _posts';
-  try{
-   const d=await r.json();
-   if(d.message)m+=`: ${d.message}`;
-  }catch{}
-  alert(m);
-  return;
+ $('status').textContent='⏳';
+ try{
+  const r=await req('_posts');
+  if(!r.ok){
+   let d={};try{d=await r.json()}catch{}
+   throw Error(d.message||`HTTP ${r.status}`);
+  }
+  const d=await r.json();
+  list=(Array.isArray(d)?d:[])
+   .filter(x=>/\.html?$|\.md$/i.test(x.name))
+   .map(x=>({name:x.name,path:x.path,sha:x.sha}));
+  renderList(cPath);
+  $('status').textContent=`${list.length} bài`;
+ }catch(e){
+  $('status').textContent='';
+  alert('Lỗi tải: '+e.message);
  }
- const data=await r.json();
- list=(Array.isArray(data)?data:[])
-  .filter(x=>x.type==='file'&&/\.(html?|md)$/i.test(x.name))
-  .sort((a,b)=>a.name.localeCompare(b.name));
- renderList(cPath||'');
 }
 
-postSelect.onchange=async()=>{
- const value=postSelect.value;
- if(dirty&&!confirm('Nội dung chưa lưu. Chuyển bài viết?')){
+$('postSelect').onchange=async e=>{
+ if(!guard()){
   const i=list.findIndex(x=>x.path===cPath);
-  postSelect.value=i>=0?i:'';
+  e.target.value=i>=0?i:'';
   return;
  }
- if(value===''){
-  clearForm();
-  return;
- }
- await edit(list[Number(value)].path);
+ const v=e.target.value;
+ if(v==='')newPost(true);
+ else await edit(list[Number(v)].path);
 };
 
-function clearForm(){
- title.value='';
- content.value='';
- cSha=null;
- cPath=null;
+async function edit(path){
+ $('status').textContent='⏳';
+ const r=await fetchFile(path);
+ if(!r.ok){
+  $('status').textContent='';
+  return alert('Không tải được file.');
+ }
+ const d=r.data;
+ let text=base64ToUtf8(d.content||'');
+ text=text.replace(/^---[\s\S]*?---\s*/,'');
+ text=text.replace(/^```(?:html|markdown|md)?\s*/i,'').replace(/\s*```$/,'');
+ cSha=d.sha;
+ cPath=d.path||path;
+ $('title').value=cPath.split('/').pop().replace(/^\d{4}-\d{2}-\d{2}-/,'').replace(/\.[^.]+$/,'').replace(/[-_]+/g,' ');
+ $('content').value=text;
  dirty=false;
- postSelect.value='';
+ $('status').textContent='';
+ renderList(cPath);
  pv();
 }
 
-function resetForm(){
- if(dirty&&!confirm('Nội dung chưa lưu. Xóa form?'))return;
- clearForm();
-}
-
-function newPost(){
- resetForm();
-}
-
-async function edit(path){
- const r=await fetchFile(path);
- if(!r.ok)return alert('Không đọc được file');
- const d=r.data;
- let text='';
- try{text=base64ToUtf8(d.content||'')}catch(e){return alert('Không giải mã được file')}
-
- text=text.replace(/^---[\s\S]*?---\s*/,'');
- text=text.replace(/^```(?:html)?\s*/i,'').replace(/\s*```$/,'');
-
- title.value=path.split('/').pop().replace(/\.(html?|md)$/i,'').replace(/^\d{4}-\d{2}-\d{2}-/,'').replace(/[-_]+/g,' ');
- content.value=text;
- cSha=d.sha;
- cPath=d.path||path;
+function newPost(force=false){
+ if(!force&&!guard())return;
+ cSha=cPath=null;
  dirty=false;
- postSelect.value=list.findIndex(x=>x.path===cPath);
+ $('title').value='';
+ $('content').value='';
+ $('postSelect').value='';
+ $('status').textContent='Bài mới';
  pv();
 }
 
 function slug(s){
  return s.toLowerCase()
- .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
- .replace(/đ/g,'d')
- .replace(/[^a-z0-9]+/g,'-')
- .replace(/^-+|-+$/g,'');
+  .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+  .replace(/đ/g,'d')
+  .replace(/[^a-z0-9]+/g,'-')
+  .replace(/^-|-$/g,'');
 }
 
 async function delPost(){
- if(!cPath)return alert('Chưa chọn bài viết');
- if(!C.token)return openAuth();
- if(!confirm(`Xóa "${cPath}"?`))return;
+ if(!cPath)return alert('Chưa chọn bài.');
+ if(!confirm('Xóa bài này?'))return;
 
- const btn=$('delBtn');
- const old=btn.textContent;
- btn.disabled=true;
- btn.textContent='⏳ Đang xóa...';
+ const b=$('delBtn');
+ b.disabled=true;
+ b.textContent='⏳ Xóa...';
 
  try{
-  let r=await req(cPath);
-  if(!r.ok)throw new Error('Không lấy được SHA');
-  let d=await r.json();
+  let r=await fetchFile(cPath);
+  if(!r.ok)throw Error(r.data?.message||`HTTP ${r.status}`);
 
-  let res=await req(cPath,'DELETE',{
-   message:`Delete ${cPath}`,
-   sha:d.sha
-  });
+  let sha=r.data.sha;
+  let res=await req(cPath,'DELETE',{message:`Delete ${cPath}`,sha});
 
   if(res.status===409){
-   r=await req(cPath);
-   if(!r.ok)throw new Error('Không lấy được SHA mới');
-   d=await r.json();
-   res=await req(cPath,'DELETE',{
-    message:`Delete ${cPath}`,
-    sha:d.sha
-   });
+   r=await fetchFile(cPath);
+   if(!r.ok)throw Error(r.data?.message||`HTTP ${r.status}`);
+   res=await req(cPath,'DELETE',{message:`Delete ${cPath}`,sha:r.data.sha});
   }
 
   if(!res.ok){
-   let d2={};
-   try{d2=await res.json()}catch{}
-   throw new Error(d2.message||`HTTP ${res.status}`);
+   let d={};try{d=await res.json()}catch{}
+   throw Error(d.message||`HTTP ${res.status}`);
   }
 
   list=list.filter(x=>x.path!==cPath);
-  clearForm();
+  cSha=cPath=null;
+  dirty=false;
   renderList();
-  alert('Đã xóa');
+  $('title').value='';
+  $('content').value='';
+  pv();
+  $('status').textContent='Đã xóa';
  }catch(e){
-  alert('Lỗi: '+e.message);
+  alert('Lỗi xóa: '+e.message);
  }finally{
-  btn.disabled=false;
-  btn.textContent=old;
+  b.disabled=false;
+  b.textContent='🗑 Xóa';
  }
 }
 
 async function subForm(){
  if(!C.token)return openAuth();
 
- let name=title.value.trim();
- let text=content.value;
-
- if(!text.trim())return alert('Nội dung đang trống');
-
- if(!name){
-  const m=text.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-  name=m?m[1].trim():'Bài viết';
+ let title=$('title').value.trim();
+ const content=$('content').value;
+ if(!title){
+  const m=content.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  title=m?m[1].trim():'Bài viết';
  }
 
- let path=cPath;
- const isNew=!path;
+ const oldPath=cPath;
+ const path=cPath||`_posts/${new Date().toISOString().slice(0,10)}-${slug(title)||'post'}.html`;
 
- if(!path){
-  const s=slug(name)||`post-${Date.now()}`;
-  path=`_posts/${new Date().toISOString().slice(0,10)}-${s}.html`;
- }
-
- const btn=$('saveBtn');
- const old=btn.textContent;
- btn.disabled=true;
- btn.textContent='⏳ Đang lưu...';
+ const b=$('saveBtn');
+ b.disabled=true;
+ b.textContent=cPath?'⏳ Lưu...':'⏳ Đăng...';
 
  try{
   let sha=cSha;
 
-  if(!isNew){
-   const r=await req(path);
-   if(!r.ok)throw new Error('Không lấy được SHA mới');
-   const d=await r.json();
-   sha=d.sha;
+  if(cPath){
+   const r=await fetchFile(path);
+   if(!r.ok)throw Error(r.data?.message||`HTTP ${r.status}`);
+   sha=r.data.sha;
   }
 
-  const body={
-   message:isNew?`Add ${path}`:`Update ${path}`,
-   content:utf8ToBase64(text)
-  };
+  let res=await req(path,'PUT',{
+   message:cPath?`Update ${path}`:`Add ${path}`,
+   content:utf8ToBase64(content),
+   ...(sha?{sha}:{})
+  });
 
-  if(sha)body.sha=sha;
-
-  let r=await req(path,'PUT',body);
-
-  if(r.status===409){
-   const r2=await req(path);
-   if(!r2.ok)throw new Error('Không lấy được SHA mới');
-   const d2=await r2.json();
-   body.sha=d2.sha;
-   r=await req(path,'PUT',body);
+  if(res.status===409){
+   const r=await fetchFile(path);
+   if(!r.ok)throw Error(r.data?.message||`HTTP ${r.status}`);
+   res=await req(path,'PUT',{
+    message:cPath?`Update ${path}`:`Add ${path}`,
+    content:utf8ToBase64(content),
+    sha:r.data.sha
+   });
   }
 
-  let d={};
-  try{d=await r.json()}catch{}
+  if(!res.ok){
+   let d={};try{d=await res.json()}catch{}
+   throw Error(d.message||`HTTP ${res.status}`);
+  }
 
-  if(!r.ok)throw new Error(d.message||`HTTP ${r.status}`);
-
-  cSha=d.content?.sha||d.sha||body.sha;
-  cPath=path;
+  const d=await res.json();
+  cSha=d.content?.sha||null;
+  cPath=d.content?.path||path;
   dirty=false;
 
-  const item={
-   name:path.split('/').pop(),
-   path
-  };
+  const item={name:cPath.split('/').pop(),path:cPath,sha:cSha};
+  const i=list.findIndex(x=>x.path===cPath);
 
-  if(isNew){
-   list.push(item);
-   list.sort((a,b)=>a.name.localeCompare(b.name));
-  }else{
-   const i=list.findIndex(x=>x.path===path);
-   if(i>=0)list[i]={...list[i],...item};
-  }
+  if(i>=0)list[i]=item;
+  else list.unshift(item);
 
-  renderList(path);
-  alert(isNew?'Đã đăng bài':'Đã lưu');
+  renderList(cPath);
+  $('status').textContent='✓ Đã lưu';
  }catch(e){
-  alert('Lỗi: '+e.message);
+  alert('Lỗi lưu: '+e.message);
  }finally{
-  btn.disabled=false;
-  btn.textContent=cPath?'💾 Lưu':'🚀 Đăng';
+  b.disabled=false;
+  b.textContent=cPath?'💾 Lưu':'🚀 Đăng';
  }
 }
 
-fileInput.onchange=()=>{
- const f=fileInput.files[0];
+$('fileInput').onchange=e=>{
+ const f=e.target.files[0];
  if(!f)return;
-
- if(dirty&&!confirm('Nội dung hiện tại chưa lưu. Mở file mới?')){
-  fileInput.value='';
+ if(!guard()){
+  e.target.value='';
   return;
  }
-
- const rd=new FileReader();
- rd.onload=()=>{
-  title.value=f.name.replace(/\.(html?|md|txt)$/i,'');
-  content.value=rd.result;
-  cSha=null;
-  cPath=null;
+ const r=new FileReader();
+ r.onload=()=>{
+  const name=f.name.replace(/\.[^.]+$/,'');
+  $('title').value=name;
+  $('content').value=r.result;
+  cSha=cPath=null;
   dirty=true;
-  postSelect.value='';
+  $('postSelect').value='';
   pv();
  };
- rd.readAsText(f);
- fileInput.value='';
+ r.readAsText(f);
+ e.target.value='';
 };
 
 function pv(){
- let html=content.value;
- $('frame').srcdoc=html;
+ const src=$('content').value;
+ $('pv').srcdoc=src;
+}
+
+function showTab(n){
+ if(innerWidth>700)return;
+ $('main').classList.toggle('showPreview',n===1);
+ if(n===1)pv();
 }
 
 function initSplit(){
- splitInstance=Split(['#edit','#preview'],{
-  direction:'horizontal',
-  sizes:[55,45],
-  minSize:[150,150],
-  gutterSize:7,
-  cursor:'col-resize'
+ if(innerWidth<=700)return;
+ splitInstance=Split(['#editor','.preview'],{
+  sizes:[50,50],
+  minSize:[180,180],
+  gutterSize:6,
+  direction:'horizontal'
  });
 }
 
-function cycleSplit(){
+function changePos(){
+ if(innerWidth<=700)return;
  currentPosIndex=(currentPosIndex+1)%positions.length;
  const p=positions[currentPosIndex];
- if(splitInstance){
-  splitInstance.destroy();
-  splitInstance=null;
- }
+
+ if(splitInstance)splitInstance.destroy();
+
+ const main=$('main');
+ const editor=$('editor');
+ const preview=document.querySelector('.preview');
 
  if(p==='right'||p==='left'){
   main.style.flexDirection='row';
-  initSplit();
   if(p==='left'){
-   splitInstance.setSizes([45,55]);
-   main.insertBefore($('preview'),$('edit'));
+   main.insertBefore(preview,editor);
   }else{
-   main.insertBefore($('edit'),$('preview'));
-   splitInstance.setSizes([55,45]);
+   main.insertBefore(editor,preview);
   }
+  splitInstance=Split([editor,preview],{
+   sizes:[50,50],
+   minSize:[180,180],
+   gutterSize:6,
+   direction:'horizontal'
+  });
  }else{
   main.style.flexDirection='column';
-  splitInstance=Split(['#edit','#preview'],{
-   direction:'vertical',
-   sizes:p==='top'?[55,45]:[45,55],
-   minSize:[150,150],
-   gutterSize:7,
-   cursor:'row-resize'
-  });
   if(p==='top'){
-   main.insertBefore($('edit'),$('preview'));
+   main.insertBefore(preview,editor);
   }else{
-   main.insertBefore($('preview'),$('edit'));
+   main.insertBefore(editor,preview);
   }
+  splitInstance=Split([editor,preview],{
+   sizes:[50,50],
+   minSize:[180,180],
+   gutterSize:6,
+   direction:'vertical'
+  });
  }
-
- $('layoutBtn').textContent=posIcons[p];
-}
-
-function showTab(tab){
- if(innerWidth>700)return;
- $('edit').style.display=tab==='edit'?'flex':'none';
- $('preview').style.display=tab==='preview'?'block':'none';
 }
 
 window.addEventListener('beforeunload',e=>{
@@ -515,9 +490,7 @@ window.addEventListener('beforeunload',e=>{
  }
 });
 
-if(C.owner&&C.repo&&C.token)load();
-else openAuth();
-
+load();
 pv();
 initSplit();
 </script>
