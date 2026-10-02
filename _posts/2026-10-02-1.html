@@ -2,46 +2,22 @@
 <html>
 <head>
     <title>EmulatorJS | Demo</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><path fill='%231AAFFF' d='M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768zM768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256zM554.667 661.547c0-59.093 47.68-106.88 106.88-106.88h212.907c59.093 0 106.88 47.68 106.88 106.88v212.907c0 59.093-47.68 106.88-106.88 106.88h-212.907A106.731 106.731 0 0 1 554.667 874.453v-212.906zm85.333 0v212.906c0 12.032 9.536 21.547 21.547 21.547h212.907c12.032 0 21.547-9.536 21.547-21.547v-212.906c0-12.032-9.536-21.547-21.547-21.547h-212.907c-12.032 0-21.547 9.536-21.547 21.547zM183.829 109.888c36.118-61.163 108.246-61.248 144.427 0l126.208 213.653c35.733 60.523 3.52 124.437-66.816 124.437H124.437c-70.613 0-102.635-63.765-66.816-124.437L183.829 109.91zM133.653 362.667h244.8l-122.41-207.232-122.39 207.232z'/></svg>">
 
-    <link rel="icon"
-          href="favicon.ico"
-          sizes="16x16 32x32 48x48 64x64"
-          type="image/vnd.microsoft.icon">
-
-    <link rel="apple-touch-icon"
-          href="img/icon.png">
-
-    <meta name="theme-color"
-          content="#000">
+    <link rel="apple-touch-icon" href="img/icon.png">
+    <meta name="theme-color" content="#000">
 
     <link rel="stylesheet"
           href="https://demo.emulatorjs.org/main.css">
 
     <style>
-        #installbox {
-            display: flex !important;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-        }
-
-        #installboxtext {
-            display: inline-block !important;
-            margin: 0 !important;
-        }
-
-        #install {
-            display: inline-block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-
         #pwa-status-msg {
-            margin: 6px 0 0;
-            font-size: 13px;
+            font-size: 12px;
+            margin-top: 6px;
+            text-align: right;
         }
     </style>
 </head>
@@ -49,16 +25,11 @@
 <body>
 
 <div id="box">
-
     <input type="file" id="input">
-
     Drag ROM file or click here
-
 </div>
 
-
 <div id="version">
-
     <select id="version-select"></select>
 
     <button id="download"
@@ -67,1136 +38,879 @@
 
         <svg xmlns="http://www.w3.org/2000/svg"
              viewBox="0 0 16 16">
-
             <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 6.854-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708"/>
-
         </svg>
 
         <svg xmlns="http://www.w3.org/2000/svg"
              viewBox="0 0 16 16">
-
             <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 4.854-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7 8.793l2.646-2.647a.5.5 0 0 1 .708.708"/>
-
         </svg>
 
     </button>
-
 
     <button id="settings">
-
         <svg xmlns="http://www.w3.org/2000/svg"
              viewBox="0 0 16 16">
-
-            <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1a1.4 1.4 0 0 0 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
-
+            <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
         </svg>
-
     </button>
-
 </div>
 
 
-<div id="popup-settings"
-     class="popup popup-animate">
+<div id="popup-settings" class="popup popup-animate">
 
     <div class="content">
 
         <div class="title">
-
             <h1>Settings</h1>
-
         </div>
-
 
         <div class="options">
 
             <div class="buttonbox">
-
                 <p>
-
                     Enable Debuging:
-
                     <label class="switch">
-
-                        <input type="checkbox"
-                               id="debug"/>
-
+                        <input type="checkbox" id="debug">
                         <span class="slider round"></span>
-
                     </label>
-
                 </p>
-
             </div>
 
             <br>
 
-
             <div class="buttonbox">
-
-                <p>
-                    Clean Cache:
-                </p>
-
-                <button id="cache">
-                    Clean
-                </button>
-
+                <p>Clean Cache:</p>
+                <button id="cache">Clean</button>
             </div>
 
             <br>
 
-
             <div class="buttonbox">
-
-                <p>
-                    Language:
-                </p>
-
+                <p>Language:</p>
                 <select id="language"></select>
-
                 <p id="languageHelp"></p>
-
             </div>
 
             <br>
-
 
             <div class="buttonbox last">
-
-                <p>
-                    Custom Path:
-                </p>
-
-                <input type="text"
-                       id="customPath"
-                       placeholder="https://cdn.emulatorjs.org/stable/">
-
+                <p>Custom Path:</p>
+                <input
+                    type="text"
+                    id="customPath"
+                    placeholder="https://cdn.emulatorjs.org/stable/data/">
                 <p id="customPathValid"></p>
-
             </div>
-
 
             <p id="offline-status">
                 Offline Status: CHECKING
             </p>
 
-
-            <p>
-                Offline Cores will be available soon.
-            </p>
-
+            <p>Offline Cores will be available soon.</p>
 
             <p class="hide">
-
                 Remove All Saved Versions:
-
                 <button id="remove-version"
                         onclick="removeallsaved()">
-
                     Remove All
-
                 </button>
-
             </p>
 
-
-            <!-- =================================================
-                 PWA
-                 ================================================= -->
-
-            <div id="installbox"
-                 class="buttonbox">
-
+            <div id="installbox" class="buttonbox">
                 <p id="installboxtext">
                     Install PWA:
                 </p>
-
                 <button id="install">
                     Install
                 </button>
-
-                <p id="pwa-status-msg"></p>
-
             </div>
+
+            <p id="pwa-status-msg"></p>
 
             <br>
 
         </div>
 
-
         <div class="bottom">
-
             <button id="settings-close">
                 Close
             </button>
-
         </div>
 
     </div>
 
 </div>
 
-
 <div class="popup-overlay"></div>
 
 
-<!-- ============================================================
-     ORIGINAL EMULATORJS MAIN.JS
-     ============================================================ -->
-
 <script src="https://demo.emulatorjs.org/main.js"></script>
 
-
 <script>
 
-    /* ============================================================
-       PWA - GIỐNG CƠ CHẾ CODE 1
-       ============================================================ */
-
-    let installPrompt = null;
-
-
-    const installButton =
-        document.querySelector("#install");
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.getRegistrations()
+        .then(rs => rs.forEach(r => r.unregister()))
+        .catch(() => {});
+}
 
 
-    const installBox =
-        document.querySelector("#installbox");
+loadJSON("/versions", response => {
 
+    const offlineStatus =
+        document.getElementById("offline-status");
 
-    const installBoxText =
-        document.querySelector("#installboxtext");
+    if (!response) {
 
+        loadJSON(
+            "https://cdn.emulatorjs.org/versions.json",
+            resp => loadVersions(resp)
+        );
 
-    const pwaStatus =
-        document.querySelector("#pwa-status-msg");
+        offlineStatus.textContent =
+            "Offline Status: NOT INSTALLED";
 
+    } else {
 
-    /*
-     * Luôn hiển thị khu vực Install PWA.
-     */
+        loadVersions(response);
 
-    installBox.style.display =
-        "flex";
-
-
-    /*
-     * ============================================================
-     * CHECK PWA
-     * ============================================================
-     */
-
-    function checkPwa() {
-
-        const isVi =
-            window.language === "vi" ||
-            (
-                window.language === "auto" &&
-                navigator.language &&
-                navigator.language.startsWith("vi")
-            );
-
-
-        const standalone =
-            window.matchMedia(
-                "(display-mode: standalone)"
-            ).matches ||
-            navigator.standalone;
-
-
-        const installed =
-            localStorage.getItem(
-                "pwa_installed"
-            ) === "true";
-
-
-        /*
-         * ĐÂY LÀ ĐIỂM QUAN TRỌNG GIỐNG CODE 1.
-         *
-         * Nếu đang standalone
-         * HOẶC
-         * đã lưu installed nhưng CHƯA có prompt
-         *
-         * => Installed
-         *
-         * Nhưng nếu browser vừa cấp prompt lại:
-         *
-         * installed = true
-         * installPrompt != null
-         *
-         * => cho phép Install lại.
-         */
-
-        const alreadyInstalled =
-            standalone ||
-            (
-                installed &&
-                !installPrompt
-            );
-
-
-        if (alreadyInstalled) {
-
-            installButton.textContent =
-                isVi
-                    ? "Đã cài đặt"
-                    : "Installed";
-
-
-            installButton.disabled =
-                true;
-
-
-            if (pwaStatus) {
-
-                pwaStatus.textContent =
-                    isVi
-                        ? "PWA đã được cài đặt."
-                        : "PWA is installed.";
-            }
-
-        } else {
-
-            installButton.textContent =
-                isVi
-                    ? "Cài đặt"
-                    : "Install";
-
-
-            installButton.disabled =
-                !installPrompt;
-
-
-            if (pwaStatus) {
-
-                pwaStatus.textContent =
-                    installPrompt
-
-                        ? (
-                            isVi
-                                ? "Ứng dụng sẵn sàng để cài đặt."
-                                : "App is ready to install."
-                        )
-
-                        : (
-                            isVi
-                                ? "Đang chờ trình duyệt cho phép cài đặt..."
-                                : "Waiting for the browser to allow installation..."
-                        );
-            }
-        }
+        offlineStatus.textContent =
+            "Offline Status: READY";
     }
 
-
-    /*
-     * ============================================================
-     * BEFORE INSTALL PROMPT
-     * ============================================================
-     */
-
-    window.addEventListener(
-        "beforeinstallprompt",
-        event => {
-
-            event.preventDefault();
-
-
-            installPrompt =
-                event;
-
-
-            /*
-             * GIỐNG CODE 1:
-             *
-             * Khi browser cấp prompt mới,
-             * xóa trạng thái installed.
-             *
-             * Điều này cho phép cài lại sau khi
-             * người dùng đã xóa PWA.
-             */
-
-            localStorage.removeItem(
-                "pwa_installed"
-            );
-
-
-            checkPwa();
-
-        }
-    );
-
-
-    /*
-     * ============================================================
-     * APP INSTALLED
-     * ============================================================
-     */
-
-    window.addEventListener(
-        "appinstalled",
-        () => {
-
-            localStorage.setItem(
-                "pwa_installed",
-                "true"
-            );
-
-
-            installPrompt =
-                null;
-
-
-            checkPwa();
-
-        }
-    );
-
-
-    /*
-     * ============================================================
-     * INSTALL
-     * ============================================================
-     */
-
-    installButton.addEventListener(
-        "click",
-        async () => {
-
-            if (!installPrompt) {
-
-                const isVi =
-                    window.language === "vi" ||
-                    (
-                        window.language === "auto" &&
-                        navigator.language &&
-                        navigator.language.startsWith("vi")
-                    );
-
-
-                if (pwaStatus) {
-
-                    pwaStatus.textContent =
-                        isVi
-                            ? "PWA yêu cầu HTTPS hoặc localhost."
-                            : "PWA requires HTTPS or localhost.";
-                }
-
-                return;
-            }
-
-
-            try {
-
-                /*
-                 * Hiện hộp thoại cài.
-                 */
-
-                installPrompt.prompt();
-
-
-                /*
-                 * Chờ lựa chọn.
-                 */
-
-                const result =
-                    await installPrompt.userChoice;
-
-
-                console.log(
-                    "Install prompt was:",
-                    result.outcome
-                );
-
-
-                /*
-                 * Prompt chỉ sử dụng một lần.
-                 */
-
-                installPrompt =
-                    null;
-
-
-                /*
-                 * Nếu chấp nhận,
-                 * ghi trạng thái.
-                 */
-
-                if (
-                    result.outcome ===
-                    "accepted"
-                ) {
-
-                    localStorage.setItem(
-                        "pwa_installed",
-                        "true"
-                    );
-
-                }
-
-
-                checkPwa();
-
-
-            } catch (e) {
-
-                if (pwaStatus) {
-
-                    pwaStatus.textContent =
-                        "Lỗi PWA: " +
-                        e.message;
-                }
-
-            }
-
-        }
-    );
-
-
-    /*
-     * ============================================================
-     * MANIFEST ĐỘNG - SVG DATA URI
-     * ============================================================
-     */
-
-    (() => {
-
-        try {
-
-            const manifest = {
-
-                name:
-                    "EmulatorJS Demo",
-
-                short_name:
-                    "EmulatorJS",
-
-                start_url:
-                    location.href,
-
-                display:
-                    "standalone",
-
-                background_color:
-                    "#0d0e12",
-
-                theme_color:
-                    "#1AAFFF",
-
-                icons: [
-
-                    {
-
-                        src:
-                            "data:image/svg+xml," +
-
-                            "<svg xmlns='http://www.w3.org/2000/svg' " +
-                            "viewBox='0 0 1024 1024'>" +
-
-                            "<path fill='%231AAFFF' d='" +
-
-                            "M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768z" +
-
-                            "M768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256z" +
-
-                            "M554.667 661.547c0-59.093 47.68-106.88 106.88-106.88h212.907c59.093 0 106.88 47.68 106.88 106.88v212.907c0 59.093-47.68 106.88-106.88 106.88h-212.907A106.731 106.731 0 0 1 554.667 874.453v-212.906zm85.333 0v212.906c0 12.032 9.536 21.547 21.547 21.547h212.907c12.032 0 21.547-9.536 21.547-21.547v-212.906c0-12.032-9.536-21.547-21.547-21.547h-212.907c-12.011 0-21.547 9.536-21.547 21.547z" +
-
-                            "M183.829 109.888c36.118-61.163 108.246-61.248 144.427 0l126.208 213.653c35.733 60.523 3.52 124.437-66.816 124.437H124.437c-70.613 0-102.635-63.765-66.816-124.437L183.829 109.91zM133.653 362.667h244.8l-122.41-207.232-122.39 207.232z" +
-
-                            "'/>" +
-
-                            "</svg>",
-
-                        sizes:
-                            "192x192 512x512",
-
-                        type:
-                            "image/svg+xml"
-                    }
-
-                ]
-
-            };
-
-
-            const manifestBlob =
-                new Blob(
-                    [
-                        JSON.stringify(
-                            manifest
-                        )
-                    ],
-                    {
-                        type:
-                            "application/json"
-                    }
-                );
-
-
-            const manifestURL =
-                URL.createObjectURL(
-                    manifestBlob
-                );
-
-
-            const link =
-                document.createElement(
-                    "link"
-                );
-
-
-            link.rel =
-                "manifest";
-
-
-            link.href =
-                manifestURL;
-
-
-            document.head.appendChild(
-                link
-            );
-
-
-        } catch (e) {
-
-            console.warn(
-                "Manifest error:",
-                e
-            );
-
-        }
-
-
-        checkPwa();
-
-    })();
-
-
-    /*
-     * ============================================================
-     * SERVICE WORKER - GIỐNG CODE 1
-     * ============================================================
-     */
-
-    (() => {
-
-        if (
-            "serviceWorker" in navigator &&
-            location.protocol.startsWith("http")
-        ) {
-
-            try {
-
-                navigator.serviceWorker.register(
-
-                    URL.createObjectURL(
-
-                        new Blob(
-
-                            [
-
-                                "self.addEventListener('install',e=>self.skipWaiting());" +
-
-                                "self.addEventListener('activate',e=>self.clients.claim());" +
-
-                                "self.addEventListener('fetch',e=>e.respondWith(fetch(e.request)));"
-
-                            ],
-
-                            {
-                                type:
-                                    "application/javascript"
-                            }
-
-                        )
-
-                    )
-
-                ).catch(
-                    () => {}
-                );
-
-
-            } catch (e) {}
-
-        }
-
-    })();
-
-
-</script>
-
-
-<!-- ============================================================
-     EMULATORJS ORIGINAL
-     ============================================================ -->
-
-<script>
-
-loadJSON(
-    "/versions",
-    (response) => {
-
-        const offlineStatus =
-            document.getElementById(
-                "offline-status"
-            );
-
-
-        if (!response) {
-
-            loadJSON(
-                "https://cdn.emulatorjs.org/versions.json",
-                resp =>
-                    loadVersions(resp)
-            );
-
-
-            offlineStatus.textContent =
-                "Offline Status: NOT INSTALLED";
-
-
-        } else {
-
-            loadVersions(
-                response
-            );
-
-
-            offlineStatus.textContent =
-                "Offline Status: READY";
-
-        }
-
-    }
-);
+});
 
 
 loadSettings();
 
 
-input.addEventListener(
-    "change",
-    async () => {
+input.addEventListener("change", async () => {
 
-        const url =
-            input.files[0];
+    const url = input.files[0];
+    const parts = input.files[0].name.split(".");
+    const ext = (parts.pop() || "").toLowerCase();
 
 
-        const parts =
-            input.files[0]
-                .name
-                .split(".");
+    const core = await (async ext => {
 
+        if (["fds","nes","unif","unf"].includes(ext))
+            return "nes";
 
-        const core =
-            await (
+        if (["smc","fig","sfc","gd3","gd7","dx2","bsx","swc"].includes(ext))
+            return "snes";
 
-                async (ext) => {
+        if (["z64","n64"].includes(ext))
+            return "n64";
 
-                    if (
-                        [
-                            "fds",
-                            "nes",
-                            "unif",
-                            "unf"
-                        ].includes(ext)
-                    )
-                        return "nes";
+        if (ext === "pce")
+            return "pce";
 
+        if (["ngp","ngc"].includes(ext))
+            return "ngp";
 
-                    if (
-                        [
-                            "smc",
-                            "fig",
-                            "sfc",
-                            "gd3",
-                            "gd7",
-                            "dx2",
-                            "bsx",
-                            "swc"
-                        ].includes(ext)
-                    )
-                        return "snes";
+        if (["ws","wsc"].includes(ext))
+            return "ws";
 
+        if (["col","cv"].includes(ext))
+            return "coleco";
 
-                    if (
-                        [
-                            "z64",
-                            "n64"
-                        ].includes(ext)
-                    )
-                        return "n64";
+        if (ext === "d64")
+            return "vice_x64";
 
+        if (["nds","gba","gb"].includes(ext))
+            return ext;
 
-                    if (
-                        ["pce"].includes(ext)
-                    )
-                        return "pce";
 
+        return await new Promise(resolve => {
 
-                    if (
-                        ["ngp", "ngc"].includes(ext)
-                    )
-                        return "ngp";
+            const cores = {
 
+                "Nintendo 64":"n64",
+                "Nintendo Game Boy":"gb",
+                "Nintendo Game Boy Advance":"gba",
+                "Nintendo DS":"nds",
+                "Nintendo Entertainment System":"nes",
+                "Super Nintendo Entertainment System":"snes",
+                "PlayStation":"psx",
+                "Virtual Boy":"vb",
+                "Sega Mega Drive":"segaMD",
+                "Sega Master System":"segaMS",
+                "Sega CD":"segaCD",
+                "Atari Lynx":"lynx",
+                "Sega 32X":"sega32x",
+                "Atari Jaguar":"jaguar",
+                "Sega Game Gear":"segaGG",
+                "Sega Saturn":"segaSaturn",
+                "Atari 7800":"atari7800",
+                "Atari 2600":"atari2600",
+                "NEC TurboGrafx-16/SuperGrafx/PC Engine":"pce",
+                "NEC PC-FX":"pcfx",
+                "SNK NeoGeo Pocket (Color)":"ngp",
+                "Bandai WonderSwan (Color)":"ws",
+                "ColecoVision":"coleco",
+                "Commodore 64":"vice_x64",
+                "Commodore 128":"vice_x128",
+                "Commodore VIC20":"vice_xvic",
+                "Commodore Plus/4":"vice_xplus4",
+                "Commodore PET":"vice_xpet",
+                "PlayStation Portable":"psp",
+                "3DS":"azahar",
+                "DOS":"dosbox_pure"
+            };
 
-                    if (
-                        ["ws", "wsc"].includes(ext)
-                    )
-                        return "ws";
 
+            const select =
+                document.createElement("select");
 
-                    if (
-                        ["col", "cv"].includes(ext)
-                    )
-                        return "coleco";
+            const button =
+                document.createElement("button");
 
 
-                    if (
-                        ["d64"].includes(ext)
-                    )
-                        return "vice_x64";
+            for (const type in cores) {
 
+                const option =
+                    document.createElement("option");
 
-                    if (
-                        [
-                            "nds",
-                            "gba",
-                            "gb",
-                            "z64",
-                            "n64"
-                        ].includes(ext)
-                    )
-                        return ext;
+                option.value =
+                    cores[type];
 
+                option.textContent =
+                    type;
 
-                    return await new Promise(
-                        resolve => {
+                select.appendChild(option);
+            }
 
-                            const cores = {
 
-                                "Nintendo 64":
-                                    "n64",
+            button.textContent =
+                "Load game";
 
-                                "Nintendo Game Boy":
-                                    "gb",
+            button.onclick =
+                () => resolve(select.value);
 
-                                "Nintendo Game Boy Advance":
-                                    "gba",
+            box.innerHTML = "";
 
-                                "Nintendo DS":
-                                    "nds",
+            box.appendChild(select);
+            box.appendChild(button);
 
-                                "Nintendo Entertainment System":
-                                    "nes",
+        });
 
-                                "Super Nintendo Entertainment System":
-                                    "snes",
+    })(ext);
 
-                                "PlayStation":
-                                    "psx",
 
-                                "Virtual Boy":
-                                    "vb",
+    const div =
+        document.createElement("div");
 
-                                "Sega Mega Drive":
-                                    "segaMD",
+    const sub =
+        document.createElement("div");
 
-                                "Sega Master System":
-                                    "segaMS",
+    const script =
+        document.createElement("script");
 
-                                "Sega CD":
-                                    "segaCD",
 
-                                "Atari Lynx":
-                                    "lynx",
+    sub.id = "game";
+    div.id = "display";
 
-                                "Sega 32X":
-                                    "sega32x",
 
-                                "Atari Jaguar":
-                                    "jaguar",
+    document.getElementById("top")?.remove();
+    document.getElementById("version")?.remove();
+    document.getElementById("box")?.remove();
 
-                                "Sega Game Gear":
-                                    "segaGG",
 
-                                "Sega Saturn":
-                                    "segaSaturn",
+    div.appendChild(sub);
 
-                                "Atari 7800":
-                                    "atari7800",
+    document.body.appendChild(div);
 
-                                "Atari 2600":
-                                    "atari2600",
 
-                                "NEC TurboGrafx-16/SuperGrafx/PC Engine":
-                                    "pce",
+    /*
+     * GIỮ NGUYÊN ĐƯỜNG KHỞI TẠO DEMO
+     */
 
-                                "NEC PC-FX":
-                                    "pcfx",
+    const cdn =
+        window.cdn ||
+        "https://cdn.emulatorjs.org/stable/data/";
 
-                                "SNK NeoGeo Pocket (Color)":
-                                    "ngp",
 
-                                "Bandai WonderSwan (Color)":
-                                    "ws",
+    window.EJS_player =
+        "#game";
 
-                                "ColecoVision":
-                                    "coleco",
+    window.EJS_gameName =
+        parts.shift();
 
-                                "Commodore 64":
-                                    "vice_x64",
+    window.EJS_biosUrl =
+        "";
 
-                                "Commodore 128":
-                                    "vice_x128",
+    window.EJS_gameUrl =
+        url;
 
-                                "Commodore VIC20":
-                                    "vice_xvic",
+    window.EJS_core =
+        core;
 
-                                "Commodore Plus/4":
-                                    "vice_xplus4",
+    window.EJS_pathtodata =
+        cdn;
 
-                                "Commodore PET":
-                                    "vice_xpet",
+    window.EJS_startOnLoaded =
+        true;
 
-                                "PlayStation Portable":
-                                    "psp",
 
-                                "3DS":
-                                    "azahar",
+    /*
+     * KHÔNG CÓ EJS_AdUrl
+     */
 
-                                "DOS":
-                                    "dosbox_pure"
+    window.EJS_DEBUG_XX =
+        window.debug;
 
-                            };
 
+    if (window.language !== "auto") {
 
-                            const button =
-                                document.createElement(
-                                    "button"
-                                );
-
-
-                            const select =
-                                document.createElement(
-                                    "select"
-                                );
-
-
-                            for (
-                                const type in cores
-                            ) {
-
-                                const option =
-                                    document.createElement(
-                                        "option"
-                                    );
-
-
-                                option.value =
-                                    cores[type];
-
-
-                                option.textContent =
-                                    type;
-
-
-                                select.appendChild(
-                                    option
-                                );
-
-                            }
-
-
-                            button.onclick =
-                                () =>
-                                    resolve(
-                                        select[
-                                            select.selectedIndex
-                                        ].value
-                                    );
-
-
-                            button.textContent =
-                                "Load game";
-
-
-                            box.innerHTML =
-                                "";
-
-
-                            box.appendChild(
-                                select
-                            );
-
-
-                            box.appendChild(
-                                button
-                            );
-
-                        }
-                    );
-
-                }
-
-            )(parts.pop());
-
-
-        const div =
-            document.createElement(
-                "div"
-            );
-
-
-        const sub =
-            document.createElement(
-                "div"
-            );
-
-
-        const script =
-            document.createElement(
-                "script"
-            );
-
-
-        sub.id =
-            "game";
-
-
-        div.id =
-            "display";
-
-
-        const top =
-            document.getElementById(
-                "top"
-            );
-
-
-        const version =
-            document.getElementById(
-                "version"
-            );
-
-
-        top.remove();
-
-
-        version.remove();
-
-
-        box.remove();
-
-
-        div.appendChild(
-            sub
-        );
-
-
-        document.body.appendChild(
-            div
-        );
-
-
-        /*
-         * ========================================================
-         * EMULATORJS GỐC - KHÔNG ĐỔI
-         * ========================================================
-         */
-
-        const cdn =
-            window.cdn ||
-            "https://cdn.emulatorjs.org/stable/data/";
-
-
-        window.EJS_player =
-            "#game";
-
-
-        window.EJS_gameName =
-            parts.shift();
-
-
-        window.EJS_biosUrl =
-            "";
-
-
-        window.EJS_gameUrl =
-            url;
-
-
-        window.EJS_core =
-            core;
-
-
-        window.EJS_pathtodata =
-            cdn;
-
-
-        window.EJS_startOnLoaded =
-            true;
-
-
-        window.EJS_AdUrl =
-            "ads.html";
-
-
-        window.EJS_DEBUG_XX =
-            window.debug;
-
-
-        if (
-            window.language !== "auto"
-        ) {
-
-            window.EJS_language =
-                window.language;
-
-        }
-
-
-        if (
-            core === "psp" ||
-            core === "dosbox_pure" ||
-            core === "azahar"
-        ) {
-
-            window.EJS_threads =
-                true;
-
-        }
-
-
-        script.src =
-            cdn +
-            "loader.js";
-
-
-        document.body.appendChild(
-            script
-        );
+        window.EJS_language =
+            window.language;
 
     }
 
+
+    if (
+        core === "psp" ||
+        core === "dosbox_pure" ||
+        core === "azahar"
+    ) {
+
+        window.EJS_threads =
+            true;
+
+    }
+
+
+    script.src =
+        cdn + "loader.js";
+
+    document.body.appendChild(script);
+
+});
+
+
+box.ondragover = () =>
+    box.setAttribute("drag", true);
+
+box.ondragleave = () =>
+    box.removeAttribute("drag");
+
+
+/*
+ * =========================
+ * PWA
+ * =========================
+ */
+
+let installPrompt = null;
+
+const installButton =
+    document.getElementById("install");
+
+const pwaStatus =
+    document.getElementById("pwa-status-msg");
+
+
+function isStandalone() {
+
+    return (
+        window.matchMedia(
+            "(display-mode: standalone)"
+        ).matches ||
+        window.navigator.standalone === true
+    );
+
+}
+
+
+function updatePwaButton() {
+
+    if (isStandalone()) {
+
+        installButton.textContent =
+            "Installed";
+
+        installButton.disabled =
+            true;
+
+        pwaStatus.textContent =
+            "";
+
+        return;
+    }
+
+
+    if (installPrompt) {
+
+        installButton.textContent =
+            "Install";
+
+        installButton.disabled =
+            false;
+
+        pwaStatus.textContent =
+            "";
+
+        return;
+    }
+
+
+    installButton.textContent =
+        "Install";
+
+    installButton.disabled =
+        true;
+
+}
+
+
+window.addEventListener(
+    "beforeinstallprompt",
+    event => {
+
+        event.preventDefault();
+
+        installPrompt =
+            event;
+
+        /*
+         * Nếu trước đó đã lưu trạng thái
+         * Installed nhưng trình duyệt lại
+         * đưa beforeinstallprompt trở lại,
+         * nghĩa là có thể cài lại.
+         */
+
+        localStorage.removeItem(
+            "pwa_installed"
+        );
+
+        updatePwaButton();
+
+    }
 );
 
 
-box.ondragover =
-    () =>
-        box.setAttribute(
-            "drag",
-            true
+window.addEventListener(
+    "appinstalled",
+    () => {
+
+        localStorage.setItem(
+            "pwa_installed",
+            "true"
         );
 
+        installPrompt =
+            null;
 
-box.ondragleave =
-    () =>
-        box.removeAttribute(
-            "drag"
-        );
+        updatePwaButton();
+
+    }
+);
+
+
+installButton.addEventListener(
+    "click",
+    async () => {
+
+        if (!installPrompt) {
+
+            pwaStatus.textContent =
+                "PWA yêu cầu HTTPS hoặc localhost.";
+
+            return;
+        }
+
+
+        try {
+
+            installPrompt.prompt();
+
+            const result =
+                await installPrompt.userChoice;
+
+
+            if (
+                result &&
+                result.outcome === "accepted"
+            ) {
+
+                localStorage.setItem(
+                    "pwa_installed",
+                    "true"
+                );
+
+            }
+
+
+            installPrompt =
+                null;
+
+            updatePwaButton();
+
+        } catch (e) {
+
+            pwaStatus.textContent =
+                "Lỗi PWA: " + e.message;
+
+        }
+
+    }
+);
+
+
+/*
+ * TẠO MANIFEST TRỰC TIẾP
+ *
+ * Không cần manifest.json riêng.
+ */
+
+(function createManifest() {
+
+    try {
+
+        const manifest = {
+
+            name: "EmulatorJS",
+
+            short_name: "EmulatorJS",
+
+            start_url:
+                location.href,
+
+            display:
+                "standalone",
+
+            background_color:
+                "#000000",
+
+            theme_color:
+                "#1AAFFF",
+
+            icons: [
+
+                {
+
+                    src:
+                        "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><path fill='%231AAFFF' d='M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768zM768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256zM554.667 661.547c0-59.093 47.68-106.88 106.88-106.88h212.907c59.093 0 106.88 47.68 106.88 106.88v212.907c0 59.093-47.68 106.88-106.88 106.88h-212.907A106.731 106.731 0 0 1 554.667 874.453v-212.906zm85.333 0v212.906c0 12.032 9.536 21.547 21.547 21.547h212.907c12.032 0 21.547-9.536 21.547-21.547v-212.906c0-12.032-9.536-21.547-21.547-21.547h-212.907c-12.032 0-21.547 9.536-21.547 21.547zM183.829 109.888c36.118-61.163 108.246-61.248 144.427 0l126.208 213.653c35.733 60.523 3.52 124.437-66.816 124.437H124.437c-70.613 0-102.635-63.765-66.816-124.437L183.829 109.91zM133.653 362.667h244.8l-122.41-207.232-122.39 207.232z'/></svg>",
+
+                    sizes:
+                        "192x192 512x512",
+
+                    type:
+                        "image/svg+xml"
+
+                }
+
+            ]
+
+        };
+
+
+        const link =
+            document.createElement("link");
+
+        link.rel =
+            "manifest";
+
+        link.href =
+            URL.createObjectURL(
+                new Blob(
+                    [JSON.stringify(manifest)],
+                    {type:"application/json"}
+                )
+            );
+
+        document.head.appendChild(link);
+
+    } catch (e) {}
+
+})();
+
+
+/*
+ * Ban đầu kiểm tra trạng thái.
+ */
+
+updatePwaButton();
+
+
+/*
+ * Nếu trình duyệt chuyển sang
+ * standalone thì cập nhật ngay.
+ */
+
+window.addEventListener(
+    "appinstalled",
+    updatePwaButton
+);
+
+document.addEventListener(
+    "visibilitychange",
+    updatePwaButton
+);
+
+
+/*
+ * =========================
+ * SETTINGS
+ * =========================
+ */
+
+const popup =
+    document.getElementById(
+        "popup-settings"
+    );
+
+
+document.getElementById(
+    "settings"
+).onclick = () => {
+
+    updatePwaButton();
+
+    popup.classList.add("show");
+
+};
+
+
+document.getElementById(
+    "settings-close"
+).onclick = () =>
+    popup.classList.remove("show");
+
+
+/*
+ * DEBUG
+ */
+
+const params =
+    new URLSearchParams(
+        location.search
+    );
+
+
+document.getElementById(
+    "debug"
+).checked =
+    params.get("debug") === "1";
+
+
+document.getElementById(
+    "debug"
+).onchange = e => {
+
+    const url =
+        new URL(location.href);
+
+    if (e.target.checked)
+        url.searchParams.set("debug","1");
+    else
+        url.searchParams.delete("debug");
+
+    location.href =
+        url.href;
+
+};
+
+
+/*
+ * LANGUAGE
+ */
+
+const languages = {
+
+    auto:"Auto",
+
+    en:"English",
+
+    vi:"Tiếng Việt",
+
+    pt:"Português",
+
+    es:"Español",
+
+    ja:"日本語",
+
+    zh:"中文",
+
+    de:"Deutsch",
+
+    fr:"Français",
+
+    ru:"Русский"
+
+};
+
+
+const languageSelect =
+    document.getElementById(
+        "language"
+    );
+
+
+for (const key in languages) {
+
+    languageSelect.add(
+        new Option(
+            languages[key],
+            key
+        )
+    );
+
+}
+
+
+window.language =
+    localStorage.getItem(
+        "language"
+    ) || "auto";
+
+
+languageSelect.value =
+    window.language;
+
+
+languageSelect.onchange = () => {
+
+    window.language =
+        languageSelect.value;
+
+    localStorage.setItem(
+        "language",
+        window.language
+    );
+
+    location.reload();
+
+};
+
+
+/*
+ * CUSTOM CDN
+ */
+
+const customPath =
+    document.getElementById(
+        "customPath"
+    );
+
+
+const customPathValid =
+    document.getElementById(
+        "customPathValid"
+    );
+
+
+const savedCdn =
+    localStorage.getItem(
+        "custom_cdn"
+    );
+
+
+if (savedCdn)
+    customPath.value =
+        savedCdn;
+
+
+customPath.onchange = () => {
+
+    const value =
+        customPath.value.trim();
+
+
+    if (
+        !value ||
+        /^https?:\/\/.+\/$/.test(value)
+    ) {
+
+        if (value)
+            localStorage.setItem(
+                "custom_cdn",
+                value
+            );
+        else
+            localStorage.removeItem(
+                "custom_cdn"
+            );
+
+        customPathValid.textContent =
+            value
+                ? "URL hợp lệ"
+                : "";
+
+        customPathValid.style.color =
+            "#4caf50";
+
+    } else {
+
+        customPathValid.textContent =
+            "URL không hợp lệ (cần / cuối URL)";
+
+        customPathValid.style.color =
+            "#f44336";
+
+    }
+
+};
+
+
+/*
+ * CACHE
+ */
+
+document.getElementById(
+    "cache"
+).onclick = async () => {
+
+    if (
+        !confirm(
+            "Xóa toàn bộ cache và dữ liệu lưu?"
+        )
+    )
+        return;
+
+
+    localStorage.clear();
+
+
+    try {
+
+        if (
+            "indexedDB" in window &&
+            indexedDB.databases
+        ) {
+
+            const dbs =
+                await indexedDB.databases();
+
+            for (const db of dbs) {
+
+                if (db.name)
+                    indexedDB.deleteDatabase(
+                        db.name
+                    );
+
+            }
+
+        }
+
+    } catch (e) {}
+
+
+    try {
+
+        const keys =
+            await caches.keys();
+
+        for (const key of keys)
+            await caches.delete(key);
+
+    } catch (e) {}
+
+
+    location.reload();
+
+};
 
 </script>
 
