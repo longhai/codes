@@ -72,10 +72,8 @@
     </div>
 
     <script>
-        const $ = i => document.getElementById(i);
-
-        // Khôi phục i18n chuẩn nguyên bản từ code gốc
-        const i18n = {
+        const $ = i => document.getElementById(i),
+        i18n = {
             vi: { pwa: "Cài đặt PWA:", inst: "Cài đặt", installed: "Đã cài đặt" },
             en: { pwa: "PWA Setup:", inst: "Install", installed: "Installed" }
         };
@@ -83,43 +81,33 @@
         let installPrompt = null;
         window.language = localStorage.getItem("language") || "auto";
 
-        // Cập nhật giao diện ngôn ngữ theo logic gốc
         function updateUiLang(l) {
             const d = (l === "vi" || (l === "auto" && navigator.language.startsWith("vi"))) ? i18n.vi : i18n.en;
             if ($("label-pwa")) $("label-pwa").textContent = d.pwa;
             checkPwa();
         }
 
-        // Kiểm tra chính xác trạng thái cài đặt chuẩn từ mã gốc
         function checkPwa() {
             const isVi = (window.language === "vi" || (window.language === "auto" && navigator.language.startsWith("vi"))),
                   st = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone,
                   mk = localStorage.getItem("pwa_installed") === "true";
-
-            // 1. Nếu đang mở app (standalone) HOẶC (đã đánh dấu installed TRONG localStorage VÀ không có installPrompt)
-            // -> Hiển thị "Đã cài đặt" và vô hiệu hóa nút
-            // 2. Ngược lại -> Hiển thị "Cài đặt" và chỉ bật nút khi trình duyệt cấp installPrompt
             $("install").textContent = (st || (mk && !installPrompt)) ? (isVi ? i18n.vi.installed : i18n.en.installed) : (isVi ? i18n.vi.inst : i18n.en.inst);
             $("install").disabled = st || (mk && !installPrompt) || !installPrompt;
         }
 
-        // Sự kiện khi ứng dụng CHƯA ĐƯỢC CÀI ĐẶT (hoặc đã BỊ XÓA khỏi thiết bị)
         window.addEventListener("beforeinstallprompt", e => {
             e.preventDefault();
             installPrompt = e;
-            // Xóa cờ đánh dấu cài đặt cũ nếu ứng dụng đã bị gỡ bỏ để cho phép cài lại
             localStorage.removeItem("pwa_installed");
             checkPwa();
         });
 
-        // Sự kiện khi ứng dụng ĐÃ ĐƯỢC CÀI ĐẶT THÀNH CÔNG
         window.addEventListener("appinstalled", () => {
             localStorage.setItem("pwa_installed", "true");
             installPrompt = null;
             checkPwa();
         });
 
-        // Tự động khởi tạo Manifest & Service Worker
         (() => {
             try {
                 const m = {
@@ -143,12 +131,9 @@
                     navigator.serviceWorker.register(URL.createObjectURL(new Blob(["self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>self.clients.claim());self.addEventListener('fetch',e=>e.respondWith(fetch(e.request)));"], { type: "application/javascript" }))).catch(() => {});
                 }
             } catch (e) {}
-            
-            // Khởi tạo ngôn ngữ ban đầu
-            updateUiLang(window.language);
+            checkPwa();
         })();
 
-        // Xử lý sự kiện click Cài đặt
         $("install").onclick = async () => {
             if (installPrompt) {
                 try {
@@ -165,6 +150,9 @@
                 $("pwa-status-msg").textContent = (window.language === "en" || (window.language === "auto" && !navigator.language.startsWith("vi"))) ? "PWA requires HTTPS or localhost." : "PWA yêu cầu môi trường HTTPS/localhost.";
             }
         };
+
+        // Khởi chạy kiểm tra giao diện ban đầu đúng thời điểm như gốc
+        updateUiLang(window.language);
     </script>
 </body>
 </html>
