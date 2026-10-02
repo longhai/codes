@@ -84,7 +84,7 @@ iframe{width:100%;height:100%;border:1px solid #334155;border-radius:4px;backgro
 
 <main id="ws" class="show-ed pos-right">
 <div id="paneEd" class="pane pane-ed">
-<input id="title" class="title" placeholder="Tiêu đề (tự lấy từ <title> nếu bỏ trống)..." oninput="dirty=true;pv()">
+<input id="title" class="title" placeholder="Tiêu đề (tự lấy từ <title> nếu bỏ trống...)" oninput="dirty=true;pv()">
 <textarea id="content" placeholder="Mã HTML/CSS/JS..." oninput="dirty=true;pv()"></textarea>
 </div>
 <div id="panePrev" class="pane pane-prev"><iframe id="frame"></iframe></div>
@@ -167,21 +167,31 @@ function pv(){
  frame.src=bUrl;
 }
 
-function uploadFile(e){
- const f=e.target.files[0];if(!f)return;
- if(dirty&&!confirm('Nội dung chưa lưu. Mở file mới?')){e.target.value='';return}
- const r=new FileReader();
- r.onload=x=>{
-  let s=x.target.result.replace(/^---[\s\S]*?---\s*/m,'').replace(/^```[a-z]*\n?/i,'').replace(/\n?```$/i,'');
-  const m=s.match(/<title[^>]*>(.*?)<\/title>/i);
-  title.value=m?.[1]?.trim()||f.name.replace(/\.(html|htm|txt|md)$/i,'');
-  content.value=s.trim();cSha=cPath=null;dirty=true;postSelect.value='';subBtn.textContent='🚀 Đăng';delBtn.style.display='none';pv();
- };
- r.readAsText(f);e.target.value='';
+function cleanContent(s){
+ return s.replace(/^---[\s\S]*?---\s*/m,'')
+  .replace(/^```[a-z]*\n?/i,'')
+  .replace(/\n?```$/i,'')
+  .trim();
+}
+
+function getTitle(s,name=''){
+ const m=s.match(/<title[^>]*>(.*?)<\/title>/i);
+ return m?.[1]?.trim()||name.replace(/\.(html|htm|txt|md)$/i,'');
 }
 
 function toSlug(s){
- return s.toLowerCase().replace(/đ/g,'d').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w\s-]/g,'').replace(/\s+/g,'-').replace(/-+/g,'-').trim();
+ return s.toLowerCase()
+  .replace(/đ/g,'d')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g,'')
+  .replace(/[^\w\s-]/g,'')
+  .replace(/\s+/g,'-')
+  .replace(/-+/g,'-')
+  .trim();
+}
+
+function todayPath(t){
+ return `_posts/${new Date().toISOString().slice(0,10)}-${toSlug(t)}.html`;
 }
 
 function apiUrl(path){
@@ -203,7 +213,8 @@ async function fetchFile(path){
 }
 
 function renderList(sel=''){
- postSelect.innerHTML='<option value="">-- Chọn bài ('+list.length+') --</option>'+list.map((x,i)=>`<option value="${i}"${x.path===sel?' selected':''}>${x.name.replace(/^\d{4}-\d{2}-\d{2}-/,'')}</option>`).join('');
+ postSelect.innerHTML='<option value="">-- Chọn bài ('+list.length+') --</option>'+
+ list.map((x,i)=>`<option value="${i}"${x.path===sel?' selected':''}>${x.name.replace(/^\d{4}-\d{2}-\d{2}-/,'')}</option>`).join('');
 }
 
 async function load(){
@@ -235,7 +246,8 @@ postSelect.onchange=async e=>{
 
 function resetForm(){
  if(dirty&&!confirm('Nội dung chưa lưu. Bạn muốn tạo bài mới?'))return;
- cSha=cPath=null;dirty=false;
+ cSha=cPath=null;
+ dirty=false;
  title.value=content.value='';
  postSelect.value='';
  subBtn.textContent='🚀 Đăng';
@@ -247,30 +259,123 @@ async function edit(path){
  const r=await fetchFile(path);
  if(!r.ok)return alert(`❌ Không thể nạp bài (${r.status})`);
  if(!r.data?.content)return alert('❌ GitHub không trả về nội dung file!');
- let s=base64ToUtf8(r.data.content).replace(/^---[\s\S]*?---\s*/m,'').replace(/^```[a-z]*\n?/i,'').replace(/\n?```$/i,'');
- title.value=path.split('/').pop().replace(/^\d{4}-\d{2}-\d{2}-/,'').replace(/\.(html|md)$/,'');
- content.value=s.trim();
- cSha=r.data.sha;cPath=r.data.path||path;dirty=false;
- subBtn.textContent='💾 Lưu';delBtn.style.display='inline-flex';renderList(cPath);pv();
+ const s=cleanContent(base64ToUtf8(r.data.content));
+ title.value=path.split('/').pop()
+  .replace(/^\d{4}-\d{2}-\d{2}-/,'')
+  .replace(/\.(html|md)$/,'');
+ content.value=s;
+ cSha=r.data.sha;
+ cPath=r.data.path||path;
+ dirty=false;
+ subBtn.textContent='💾 Lưu';
+ delBtn.style.display='inline-flex';
+ renderList(cPath);
+ pv();
+}
+
+async function openExisting(path){
+ const r=await fetchFile(path);
+ if(!r.ok)return false;
+ if(!r.data?.content)return false;
+
+ const s=cleanContent(base64ToUtf8(r.data.content));
+ title.value=path.split('/').pop()
+  .replace(/^\d{4}-\d{2}-\d{2}-/,'')
+  .replace(/\.(html|md)$/,'');
+ content.value=s;
+ cSha=r.data.sha;
+ cPath=r.data.path||path;
+ dirty=true;
+ subBtn.textContent='💾 Lưu';
+ delBtn.style.display='inline-flex';
+ renderList(cPath);
+ pv();
+ return true;
+}
+
+async function uploadFile(e){
+ const f=e.target.files[0];
+ if(!f)return;
+
+ if(dirty&&!confirm('Nội dung chưa lưu. Mở file mới?')){
+  e.target.value='';
+  return;
+ }
+
+ const r=new FileReader();
+
+ r.onload=async x=>{
+  const s=cleanContent(x.target.result);
+  const t=getTitle(s,f.name);
+  const path=todayPath(t);
+
+  title.value=t;
+  content.value=s;
+  cSha=cPath=null;
+  postSelect.value='';
+  subBtn.textContent='🚀 Đăng';
+  delBtn.style.display='none';
+  pv();
+
+  if(!C.token){
+   dirty=true;
+   e.target.value='';
+   return;
+  }
+
+  try{
+   const exists=await fetchFile(path);
+
+   if(exists.ok){
+    if(await openExisting(path)){
+     alert(`⚠️ Bài viết "${t}" đã tồn tại trong ngày hôm nay.\n\nĐã mở bài đó để bạn chỉnh sửa.`);
+     dirty=true;
+    }
+    return;
+   }
+
+   if(exists.status!==404){
+    alert(`❌ Không kiểm tra được bài viết (${exists.status}).`);
+    dirty=true;
+    return;
+   }
+
+   dirty=true;
+  }catch(err){
+   dirty=true;
+   alert('❌ Không thể kiểm tra bài viết: '+err.message);
+  }
+ };
+
+ r.readAsText(f);
+ e.target.value='';
 }
 
 async function delPost(){
  if(!cPath||!confirm('⚠️ Xóa bài viết này?'))return;
- delBtn.disabled=true;delBtn.textContent='⏳ Xóa...';
+
+ delBtn.disabled=true;
+ delBtn.textContent='⏳ Xóa...';
+
  try{
   let r=await fetchFile(cPath);
   if(!r.ok)throw Error(r.status===404?'Bài viết không còn tồn tại.':`Không lấy được SHA (${r.status})`);
+
   let res=await req(cPath,'DELETE',{message:`Delete ${cPath}`,sha:r.data.sha}),d={};
   try{d=await res.json()}catch{}
+
   if(res.status===409){
    r=await fetchFile(cPath);
    if(!r.ok)throw Error('Không lấy được SHA mới.');
    res=await req(cPath,'DELETE',{message:`Delete ${cPath}`,sha:r.data.sha});
    try{d=await res.json()}catch{}
   }
+
   if(!res.ok)throw Error(d.message||`GitHub ${res.status}`);
+
   list=list.filter(x=>x.path!==cPath);
-  cSha=cPath=null;dirty=false;
+  cSha=cPath=null;
+  dirty=false;
   title.value=content.value='';
   postSelect.value='';
   subBtn.textContent='🚀 Đăng';
@@ -278,51 +383,101 @@ async function delPost(){
   renderList();
   pv();
   alert('🗑️ Đã xóa!');
- }catch(e){alert('❌ Lỗi xóa: '+e.message)}
- finally{delBtn.disabled=false;delBtn.textContent='🗑️ Xóa'}
+ }catch(e){
+  alert('❌ Lỗi xóa: '+e.message);
+ }finally{
+  delBtn.disabled=false;
+  delBtn.textContent='🗑️ Xóa';
+ }
 }
 
 async function subForm(){
  if(!C.token)return alert('Thiếu Token!');
+
  let t=title.value.trim();
+
  if(!t){
   const m=content.value.match(/<title[^>]*>(.*?)<\/title>/i);
   if(m)t=title.value=m[1].trim();
  }
+
  if(!t)return alert('Thiếu Tiêu đề (hoặc không tìm thấy thẻ <title>)!');
- subBtn.disabled=true;subBtn.textContent='⏳ Đang lưu...';
+
+ subBtn.disabled=true;
+ subBtn.textContent='⏳ Đang lưu...';
+
  try{
-  const path=cPath||`_posts/${new Date().toISOString().slice(0,10)}-${toSlug(t)}.html`;
+  const path=cPath||todayPath(t);
   let sha=null;
+
   if(cPath){
    const r=await fetchFile(path);
    if(!r.ok)throw Error(r.status===404?'Bài viết không còn tồn tại.':`Không lấy được SHA (${r.status})`);
    sha=r.data.sha;
+  }else{
+   const r=await fetchFile(path);
+
+   if(r.ok){
+    if(await openExisting(path)){
+     dirty=true;
+     throw Error(`Bài viết "${t}" đã tồn tại trong ngày hôm nay.\nĐã mở bài đó để bạn chỉnh sửa.`);
+    }
+    throw Error('Bài viết đã tồn tại nhưng không đọc được nội dung.');
+   }
+
+   if(r.status!==404)throw Error(`Không kiểm tra được tên file (${r.status}).`);
   }
-  const body={message:`Save: ${t}`,content:utf8ToBase64(content.value)};
+
+  const body={
+   message:`Save: ${t}`,
+   content:utf8ToBase64(content.value)
+  };
+
   if(sha)body.sha=sha;
+
   let res=await req(path,'PUT',body),d={};
+
   try{d=await res.json()}catch{}
+
   if(res.status===409){
    const r=await fetchFile(path);
+
    if(!r.ok||!r.data?.sha)throw Error('Không lấy được SHA mới.');
+
    body.sha=r.data.sha;
    res=await req(path,'PUT',body);
+
    try{d=await res.json()}catch{}
   }
+
   if(!res.ok)throw Error(`GitHub ${res.status}: ${d.message||'Không thể lưu bài!'}`);
+
   cPath=d.content?.path||path;
   cSha=d.content?.sha||body.sha||null;
   dirty=false;
-  const item={name:cPath.split('/').pop(),path:cPath,sha:cSha,type:'file'};
+
+  const item={
+   name:cPath.split('/').pop(),
+   path:cPath,
+   sha:cSha,
+   type:'file'
+  };
+
   const i=list.findIndex(x=>x.path===cPath);
-  i>=0?list[i]=item:list.unshift(item);
+
+  if(i>=0)list[i]=item;
+  else list.unshift(item);
+
   subBtn.textContent='💾 Lưu';
   delBtn.style.display='inline-flex';
   renderList(cPath);
+
   alert('✅ Đã lưu thành công!');
- }catch(e){alert('❌ '+e.message)}
- finally{subBtn.disabled=false}
+ }catch(e){
+  alert('❌ '+e.message);
+ }finally{
+  subBtn.disabled=false;
+ }
 }
 
 load();
