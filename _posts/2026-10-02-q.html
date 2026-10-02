@@ -1,0 +1,25 @@
+        }
+    }catch(e){}
+    checkPwa();
+})();
+
+$("install").onclick=async()=>{
+    if(installPrompt){
+        try{
+            installPrompt.prompt();
+            if((await installPrompt.userChoice)?.outcome==='accepted'){
+                localStorage.setItem("pwa_installed","true");installPrompt=null;checkPwa();
+            }
+        }catch(e){$("pwa-status-msg").textContent="Lỗi PWA: "+e.message}
+    }else{
+        $("pwa-status-msg").textContent=(window.language==="en"||(window.language==="auto"&&!navigator.language.startsWith("vi")))?"PWA requires HTTPS or localhost.":"PWA yêu cầu môi trường HTTPS/localhost.";
+    }
+};
+
+initSettings();
+
+// Tự động kích hoạt game nếu nhận tham số từ URL
+const autoRom = new URLSearchParams(location.search).get('rom');
+if(autoRom) launch(autoRom);
+</script></body></html>
+<!--hỗ trợ link emu.html?core=fbneo&rom=https://...game.zip-->
