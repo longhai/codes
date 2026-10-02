@@ -6,11 +6,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48 64x64" type="image/vnd.microsoft.icon">
     <link rel="apple-touch-icon" href="img/icon.png">
-    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000">
     <link rel="stylesheet" href="https://demo.emulatorjs.org/main.css">
-</head>
 
+    <!-- TÍCH HỢP MANIFEST ĐỘNG CỐ ĐỊNH TRONG 1 FILE HTML -->
+    <script>
+        (function() {
+            const manifestData = {
+                name: "EmulatorJS",
+                short_name: "EmulatorJS",
+                start_url: window.location.origin + window.location.pathname,
+                display: "standalone",
+                background_color: "#000000",
+                theme_color: "#000000",
+                icons: [
+                    {
+                        src: "https://demo.emulatorjs.org/img/icon.png",
+                        sizes: "512x512",
+                        type: "image/png"
+                    }
+                ]
+            };
+            const manifestString = JSON.stringify(manifestData);
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = 'data:application/manifest+json;charset=utf-8,' + encodeURIComponent(manifestString);
+            document.head.appendChild(link);
+        })();
+    </script>
+</head>
 <body>
 
 <div id="box">
@@ -23,7 +47,7 @@
 
     <button id="download" class="hide" onclick="downloadversion()">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-            <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 6.854-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708"/>
+            <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 6.854-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 1 1 .708-.708"/>
         </svg>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
             <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 4.854-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7 8.793l2.646-2.647a.5.5 0 0 1 .708.708"/>
@@ -39,7 +63,6 @@
 
 <div id="popup-settings" class="popup popup-animate">
     <div class="content">
-
         <div class="title">
             <h1>Settings</h1>
         </div>
@@ -75,11 +98,9 @@
 
             <div class="buttonbox last">
                 <p>Custom Path:</p>
-                <input
-                    type="text"
-                    id="customPath"
-                    placeholder="https://cdn.emulatorjs.org/stable/"
-                >
+                <input type="text"
+                       id="customPath"
+                       placeholder="https://cdn.emulatorjs.org/stable/">
                 <p id="customPathValid"></p>
             </div>
 
@@ -87,21 +108,20 @@
                 Offline Status: CHECKING
             </p>
 
-            <p>
-                Offline Cores will be available soon.
-            </p>
+            <p>Offline Cores will be available soon.</p>
 
             <p class="hide">
                 Remove All Saved Versions:
-                <button
-                    id="remove-version"
-                    onclick="removeallsaved()">
+                <button id="remove-version"
+                        onclick="removeallsaved()">
                     Remove All
                 </button>
             </p>
 
             <div id="installbox" class="buttonbox">
-                <p id="installboxtext">Install PWA:</p>
+                <p id="installboxtext">
+                    Install PWA:
+                </p>
                 <button id="install" disabled>
                     Install
                 </button>
@@ -116,7 +136,6 @@
                 Close
             </button>
         </div>
-
     </div>
 </div>
 
@@ -126,14 +145,7 @@
 
 <script>
 
-/* =========================
-   ORIGINAL DEMO
-========================= */
-
-if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.getRegistrations()
-        .then(rs => rs.forEach(r => r.unregister()));
-}
+/* SETTINGS / DEMO */
 
 loadJSON("/versions", response => {
 
@@ -162,14 +174,9 @@ loadJSON("/versions", response => {
 loadSettings();
 
 
-/* =========================
-   ROM
-========================= */
+/* EMULATORJS */
 
 input.addEventListener("change", async () => {
-
-    if (!input.files || !input.files[0])
-        return;
 
     const url = input.files[0];
     const parts = input.files[0].name.split(".");
@@ -240,11 +247,11 @@ input.addEventListener("change", async () => {
                 "DOS":"dosbox_pure"
             };
 
-            const select =
-                document.createElement("select");
-
             const button =
                 document.createElement("button");
+
+            const select =
+                document.createElement("select");
 
             for (const type in cores) {
 
@@ -267,14 +274,14 @@ input.addEventListener("change", async () => {
                 () => resolve(select.value);
 
             box.innerHTML = "";
-            box.append(select, button);
+
+            box.appendChild(select);
+            box.appendChild(button);
 
         });
 
     })(ext);
 
-
-    /* EmulatorJS container */
 
     const div =
         document.createElement("div");
@@ -285,34 +292,56 @@ input.addEventListener("change", async () => {
     const script =
         document.createElement("script");
 
+
     sub.id = "game";
     div.id = "display";
+
 
     document.getElementById("top")?.remove();
     document.getElementById("version")?.remove();
     document.getElementById("box")?.remove();
 
+
     div.appendChild(sub);
     document.body.appendChild(div);
 
 
-    /* EmulatorJS */
+    /* GIỮ NGUYÊN CÁCH DEMO LOAD */
 
     const cdn =
         window.cdn ||
         "https://cdn.emulatorjs.org/stable/data/";
 
-    window.EJS_player = "#game";
-    window.EJS_gameName = parts.shift();
-    window.EJS_biosUrl = "";
-    window.EJS_gameUrl = url;
-    window.EJS_core = core;
-    window.EJS_pathtodata = cdn;
-    window.EJS_startOnLoaded = true;
-    window.EJS_DEBUG_XX = window.debug;
+
+    window.EJS_player =
+        "#game";
+
+    window.EJS_gameName =
+        parts.shift();
+
+    window.EJS_biosUrl =
+        "";
+
+    window.EJS_gameUrl =
+        url;
+
+    window.EJS_core =
+        core;
+
+    window.EJS_pathtodata =
+        cdn;
+
+    window.EJS_startOnLoaded =
+        true;
+
+    window.EJS_DEBUG_XX =
+        window.debug;
+
 
     if (window.language !== "auto")
-        window.EJS_language = window.language;
+        window.EJS_language =
+            window.language;
+
 
     if (
         core === "psp" ||
@@ -321,7 +350,10 @@ input.addEventListener("change", async () => {
     )
         window.EJS_threads = true;
 
-    script.src = cdn + "loader.js";
+
+    script.src =
+        cdn + "loader.js";
+
     document.body.appendChild(script);
 
 });
@@ -334,146 +366,79 @@ box.ondragleave =
     () => box.removeAttribute("drag");
 
 
-/* =========================
-   PWA
-========================= */
+/* ==================== XỬ LÝ PWA TRONG 1 FILE HTML ==================== */
 
 let installPrompt = null;
+const installButton = document.getElementById("install");
 
-const installButton =
-    document.getElementById("install");
-
-const installBoxText =
-    document.getElementById("installboxtext");
-
-
-function isStandalone() {
-
-    return (
-        window.matchMedia(
-            "(display-mode: standalone)"
-        ).matches ||
-        window.navigator.standalone === true
-    );
-
+// 1. Hàm đánh dấu đã cài đặt
+function setAppInstalled() {
+    localStorage.setItem("pwa_installed", "true");
+    installButton.disabled = true;
+    installButton.textContent = "Installed";
 }
 
-
-function updatePwaStatus() {
-
-    if (isStandalone()) {
-
-        installBoxText.textContent =
-            "PWA Installed:";
-
-        installButton.textContent =
-            "Installed";
-
-        installButton.disabled =
-            true;
-
-        return true;
-    }
-
-    if (installPrompt) {
-
-        installBoxText.textContent =
-            "Install PWA:";
-
-        installButton.textContent =
-            "Install";
-
-        installButton.disabled =
-            false;
-
-        return false;
-    }
-
-    installBoxText.textContent =
-        "Install PWA:";
-
-    installButton.textContent =
-        "Not available";
-
-    installButton.disabled =
-        true;
-
-    return false;
+// 2. Hàm đánh dấu chưa cài đặt
+function setAppNotInstalled() {
+    localStorage.removeItem("pwa_installed");
+    installButton.disabled = true;
+    installButton.textContent = "Install";
 }
 
+// 3. Đăng ký Service Worker bằng Data URI (Tích hợp trong 1 file HTML)
+if ("serviceWorker" in navigator) {
+    const swContent = `
+        self.addEventListener("install", e => self.skipWaiting());
+        self.addEventListener("activate", e => e.waitUntil(self.clients.claim()));
+        self.addEventListener("fetch", e => {});
+    `;
+    const swUri = "data:text/javascript;charset=utf-8," + encodeURIComponent(swContent);
 
-window.addEventListener(
-    "beforeinstallprompt",
-    event => {
+    navigator.serviceWorker.register(swUri).catch(() => {});
+}
 
-        event.preventDefault();
+// 4. Kiểm tra trạng thái khi vừa LOAD TRANG
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+const isSavedInstalled = localStorage.getItem("pwa_installed") === "true";
 
-        installPrompt = event;
+if (isStandalone || isSavedInstalled) {
+    // Nếu ứng dụng đang chạy ở giao diện PWA hoặc đã từng được cài đặt -> Ẩn nút
+    setAppInstalled();
+} else {
+    setAppNotInstalled();
+}
 
-        updatePwaStatus();
-
+// 5. Bắt sự kiện khi ứng dụng ĐỦ ĐIỀU KIỆN CÀI ĐẶT
+window.addEventListener("beforeinstallprompt", event => {
+    // Nếu trong localStorage báo đã cài rồi thì không cho hiện nữa
+    if (localStorage.getItem("pwa_installed") === "true") {
+        return;
     }
-);
 
+    event.preventDefault();
+    installPrompt = event;
+    installButton.disabled = false;
+    installButton.textContent = "Install";
+});
 
-window.addEventListener(
-    "appinstalled",
-    () => {
+// 6. Xử lý khi nhấn nút Install
+installButton.addEventListener("click", async () => {
+    if (!installPrompt) return;
 
+    await installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+
+    if (outcome === "accepted") {
         installPrompt = null;
-
-        updatePwaStatus();
-
+        setAppInstalled();
     }
-);
+});
 
-
-installButton.addEventListener(
-    "click",
-    async () => {
-
-        if (!installPrompt || isStandalone())
-            return;
-
-        installPrompt.prompt();
-
-        const result =
-            await installPrompt.userChoice;
-
-        if (result.outcome === "accepted") {
-
-            installPrompt = null;
-
-            installBoxText.textContent =
-                "PWA Installed:";
-
-            installButton.textContent =
-                "Installed";
-
-            installButton.disabled =
-                true;
-
-        } else {
-
-            updatePwaStatus();
-
-        }
-
-    }
-);
-
-
-window.addEventListener(
-    "pageshow",
-    updatePwaStatus
-);
-
-window.addEventListener(
-    "focus",
-    updatePwaStatus
-);
-
-updatePwaStatus();
+// 7. Lắng nghe sự kiện cài đặt thành công từ hệ thống
+window.addEventListener("appinstalled", () => {
+    installPrompt = null;
+    setAppInstalled();
+});
 
 </script>
 
