@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Cài đặt Ứng dụng</title>
+    <title>Ứng dụng Web</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><path fill='%231AAFFF' d='M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768zM768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256zM554.667 661.547c0-59.093 47.68-106.88 106.88-106.88h212.907c59.093 0 106.88 47.68 106.88 106.88v212.907c0 59.093-47.68 106.88-106.88 106.88h-212.907A106.731 106.731 0 0 1 554.667 874.453v-212.906zm85.333 0v212.906c0 12.032 9.536 21.547 21.547 21.547h212.907c12.032 0 21.547-9.536 21.547-21.547v-212.906c0-12.032-9.536-21.547-21.547-21.547h-212.907c-12.032 0-21.547 9.536-21.547 21.547zM183.829 109.888c36.118-61.163 108.246-61.248 144.427 0l126.208 213.653c35.733 60.523 3.52 124.437-66.816 124.437H124.437c-70.613 0-102.635-63.765-66.816-124.437L183.829 109.91zM133.653 362.667h244.8l-122.41-207.232-122.39 207.232z'/></svg>">
     <style>
         :root {
@@ -12,6 +12,9 @@
             --card-bg: #333;
             --card-border: #555;
             --text-color: #f0f0f0;
+            --text-sub: #a0a5b5;
+            --modal-shadow: rgba(0,0,0,.5);
+            --overlay-bg: rgba(0,0,0,.6);
         }
         @media(prefers-color-scheme:light) {
             :root {
@@ -20,6 +23,9 @@
                 --card-bg: #fff;
                 --card-border: #d0d5dd;
                 --text-color: #1a1d20;
+                --text-sub: #667085;
+                --modal-shadow: rgba(0,0,0,.15);
+                --overlay-bg: rgba(0,0,0,.3);
             }
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -28,20 +34,80 @@
             color: var(--text-color);
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            overflow: hidden;
+            transition: .3s;
         }
-        .card {
+        #toolbar {
+            display: flex;
+            gap: 10px;
+            width: 90%;
+            max-width: 500px;
+        }
+        #settings {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        #settings svg { width: 20px; height: 20px; fill: var(--text-color); }
+        button, select {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-color);
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: .9rem;
+            cursor: pointer;
+            outline: 0;
+        }
+        button:hover:not(:disabled) {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+        button:disabled { opacity: .5; cursor: not-allowed; }
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%) scale(.9);
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: 12px;
-            width: 100%;
+            width: 90%;
             max-width: 420px;
-            padding: 24px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: .3s;
+            box-shadow: 0 10px 25px var(--modal-shadow);
         }
-        h1 {
+        .popup.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%,-50%) scale(1);
+        }
+        .popup-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--overlay-bg);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: .3s;
+        }
+        .popup.show + .popup-overlay { opacity: 1; visibility: visible; }
+        .popup .content { padding: 24px; }
+        .popup h1 {
             font-size: 1.25rem;
             margin-bottom: 20px;
             border-bottom: 1px solid var(--card-border);
@@ -52,66 +118,86 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 14px;
-            font-size: 0.95rem;
-        }
-        button {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            color: var(--text-color);
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        button:hover:not(:disabled) {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: #fff;
-        }
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+            font-size: .95rem;
         }
         #pwa-status-msg {
             font-size: 12px;
             color: #f44336;
-            margin-top: 8px;
+            margin-top: 4px;
             text-align: right;
         }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h1>Cài đặt Ứng dụng</h1>
-    <div class="buttonbox">
-        <span>Cài đặt PWA:</span>
-        <button id="install">Cài đặt</button>
-    </div>
-    <div id="pwa-status-msg"></div>
+<div id="toolbar">
+    <button id="settings" title="Cài đặt">
+        <svg viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg>
+    </button>
 </div>
 
+<div id="popup-settings" class="popup">
+    <div class="content">
+        <h1 id="settings-title-h1"></h1>
+        <div class="buttonbox">
+            <span id="label-lang"></span>
+            <select id="language"></select>
+        </div>
+        <div class="buttonbox">
+            <span id="label-pwa"></span>
+            <button id="install"></button>
+        </div>
+        <div id="pwa-status-msg"></div>
+        <div style="display:flex;justify-content:flex-end;margin-top:1.2em">
+            <button id="settings-close" style="background:var(--primary);border:none;color:#fff"></button>
+        </div>
+    </div>
+</div>
+<div class="popup-overlay"></div>
+
 <script>
-const $ = i => document.getElementById(i);
+const $ = i => document.getElementById(i),
+langs = { auto: "Tự động", en: "English", vi: "Tiếng Việt", pt: "Português", es: "Español", ja: "日本語", zh: "中文", de: "Deutsch", fr: "Français", ru: "Русский" },
+i18n = {
+    vi: { title: "Cài đặt", lang: "Ngôn ngữ:", pwa: "Cài đặt PWA:", inst: "Cài đặt", installed: "Đã cài đặt", close: "Đóng" },
+    en: { title: "Settings", lang: "Language:", pwa: "PWA Setup:", inst: "Install", installed: "Installed", close: "Close" }
+};
+
 let installPrompt = null;
 
-// Hàm kiểm tra đúng chuẩn logic gốc
-function checkPwa() {
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-    const isMarkedInstalled = localStorage.getItem("pwa_installed") === "true";
-
-    // Nếu đang chạy trong app độc lập HOẶC đã lưu cờ cài đặt (và không có popup cài mới)
-    if (isStandalone || (isMarkedInstalled && !installPrompt)) {
-        $("install").textContent = "Đã cài đặt";
-        $("install").disabled = true;
-    } else {
-        $("install").textContent = "Cài đặt";
-        $("install").disabled = !installPrompt;
-    }
+function updateUiLang(l) {
+    const d = (l === "vi" || (l === "auto" && navigator.language.startsWith("vi"))) ? i18n.vi : i18n.en;
+    $("settings-title-h1").textContent = d.title;
+    $("label-lang").textContent = d.lang;
+    $("label-pwa").textContent = d.pwa;
+    $("settings-close").textContent = d.close;
+    checkPwa();
 }
 
-// Bắt sự kiện khi trình duyệt cho phép cài đặt PWA
+function initSettings() {
+    const m = $("popup-settings");
+    $("settings").onclick = () => { checkPwa(); m.classList.add("show"); };
+    $("settings-close").onclick = () => m.classList.remove("show");
+
+    const s = $("language");
+    for (let l in langs) s.add(new Option(langs[l], l));
+    window.language = localStorage.getItem("language") || "auto";
+    s.value = window.language;
+    updateUiLang(window.language);
+    s.onchange = () => {
+        localStorage.setItem("language", window.language = s.value);
+        updateUiLang(window.language);
+    };
+}
+
+function checkPwa() {
+    const isVi = (window.language === "vi" || (window.language === "auto" && navigator.language.startsWith("vi"))),
+          st = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone,
+          mk = localStorage.getItem("pwa_installed") === "true";
+    $("install").textContent = (st || (mk && !installPrompt)) ? (isVi ? i18n.vi.installed : i18n.en.installed) : (isVi ? i18n.vi.inst : i18n.en.inst);
+    $("install").disabled = st || (mk && !installPrompt) || !installPrompt;
+}
+
 window.addEventListener("beforeinstallprompt", e => {
     e.preventDefault();
     installPrompt = e;
@@ -119,19 +205,17 @@ window.addEventListener("beforeinstallprompt", e => {
     checkPwa();
 });
 
-// Bắt sự kiện khi ứng dụng vừa cài xong
 window.addEventListener("appinstalled", () => {
     localStorage.setItem("pwa_installed", "true");
     installPrompt = null;
     checkPwa();
 });
 
-// Khởi tạo PWA Manifest & Service Worker
 (() => {
     try {
-        const manifest = {
-            name: "Web Application",
-            short_name: "WebApp",
+        const m = {
+            name: "App Demo",
+            short_name: "App",
             start_url: location.href,
             display: "standalone",
             background_color: "#0d0e12",
@@ -141,24 +225,18 @@ window.addEventListener("appinstalled", () => {
                 sizes: "192x192 512x512",
                 type: "image/svg+xml"
             }]
-        };
-
-        const link = document.createElement("link");
-        link.rel = "manifest";
-        link.href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: "application/json" }));
-        document.head.appendChild(link);
+        }, l = document.createElement("link");
+        l.rel = "manifest";
+        l.href = URL.createObjectURL(new Blob([JSON.stringify(m)], { type: "application/json" }));
+        document.head.appendChild(l);
 
         if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-            const swCode = "self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>self.clients.claim());self.addEventListener('fetch',e=>e.respondWith(fetch(e.request)));";
-            navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode], { type: "application/javascript" }))).catch(() => {});
+            navigator.serviceWorker.register(URL.createObjectURL(new Blob(["self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>self.clients.claim());self.addEventListener('fetch',e=>e.respondWith(fetch(e.request)));"], { type: "application/javascript" }))).catch(() => {});
         }
     } catch (e) {}
-
-    // Gọi kiểm tra trạng thái ngay lập tức khi load trang
     checkPwa();
 })();
 
-// Xử lý sự kiện click
 $("install").onclick = async () => {
     if (installPrompt) {
         try {
@@ -172,10 +250,11 @@ $("install").onclick = async () => {
             $("pwa-status-msg").textContent = "Lỗi PWA: " + e.message;
         }
     } else {
-        $("pwa-status-msg").textContent = "PWA yêu cầu môi trường HTTPS/localhost.";
+        $("pwa-status-msg").textContent = (window.language === "en" || (window.language === "auto" && !navigator.language.startsWith("vi"))) ? "PWA requires HTTPS or localhost." : "PWA yêu cầu môi trường HTTPS/localhost.";
     }
 };
-</script>
 
+initSettings();
+</script>
 </body>
 </html>
