@@ -12,7 +12,6 @@
             --card-bg: #333;
             --card-border: #555;
             --text-color: #f0f0f0;
-            --text-sub: #a0a5b5;
         }
         @media(prefers-color-scheme:light) {
             :root {
@@ -21,7 +20,6 @@
                 --card-bg: #fff;
                 --card-border: #d0d5dd;
                 --text-color: #1a1d20;
-                --text-sub: #667085;
             }
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -30,7 +28,6 @@
             color: var(--text-color);
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 20px;
@@ -90,94 +87,94 @@
     <h1>Cài đặt Ứng dụng</h1>
     <div class="buttonbox">
         <span>Cài đặt PWA:</span>
-        <button id="install" disabled>Cài đặt</button>
+        <button id="install">Cài đặt</button>
     </div>
     <div id="pwa-status-msg"></div>
 </div>
 
 <script>
-    const $ = id => document.getElementById(id);
-    let installPrompt = null;
+const $ = i => document.getElementById(i);
+let installPrompt = null;
 
-    // Kiểm tra trạng thái PWA
-    function checkPwa() {
-        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-        const isMarkedInstalled = localStorage.getItem("pwa_installed") === "true";
+// Hàm kiểm tra đúng chuẩn logic gốc
+function checkPwa() {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+    const isMarkedInstalled = localStorage.getItem("pwa_installed") === "true";
 
-        if (isStandalone || (isMarkedInstalled && !installPrompt)) {
-            $("install").textContent = "Đã cài đặt";
-            $("install").disabled = true;
-        } else {
-            $("install").textContent = "Cài đặt";
-            $("install").disabled = !installPrompt;
-        }
+    // Nếu đang chạy trong app độc lập HOẶC đã lưu cờ cài đặt (và không có popup cài mới)
+    if (isStandalone || (isMarkedInstalled && !installPrompt)) {
+        $("install").textContent = "Đã cài đặt";
+        $("install").disabled = true;
+    } else {
+        $("install").textContent = "Cài đặt";
+        $("install").disabled = !installPrompt;
     }
+}
 
-    // Lắng nghe sự kiện trước khi hiển thị nút cài đặt
-    window.addEventListener("beforeinstallprompt", (e) => {
-        e.preventDefault();
-        installPrompt = e;
-        localStorage.removeItem("pwa_installed");
-        checkPwa();
-    });
+// Bắt sự kiện khi trình duyệt cho phép cài đặt PWA
+window.addEventListener("beforeinstallprompt", e => {
+    e.preventDefault();
+    installPrompt = e;
+    localStorage.removeItem("pwa_installed");
+    checkPwa();
+});
 
-    // Lắng nghe sự kiện sau khi ứng dụng đã cài đặt thành công
-    window.addEventListener("appinstalled", () => {
-        localStorage.setItem("pwa_installed", "true");
-        installPrompt = null;
-        checkPwa();
-    });
+// Bắt sự kiện khi ứng dụng vừa cài xong
+window.addEventListener("appinstalled", () => {
+    localStorage.setItem("pwa_installed", "true");
+    installPrompt = null;
+    checkPwa();
+});
 
-    // Đăng ký Manifest & Service Worker cho PWA
-    (() => {
-        try {
-            const manifest = {
-                name: "Web Application",
-                short_name: "WebApp",
-                start_url: location.href,
-                display: "standalone",
-                background_color: "#0d0e12",
-                theme_color: "#1AAFFF",
-                icons: [{
-                    src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><path fill='%231AAFFF' d='M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768zM768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256zM554.667 661.547c0-59.093 47.68-106.88 106.88-106.88h212.907c59.093 0 106.88 47.68 106.88 106.88v212.907c0 59.093-47.68 106.88-106.88 106.88h-212.907A106.731 106.731 0 0 1 554.667 874.453v-212.906zm85.333 0v212.906c0 12.032 9.536 21.547 21.547 21.547h212.907c12.032 0 21.547-9.536 21.547-21.547v-212.906c0-12.032-9.536-21.547-21.547-21.547h-212.907c-12.032 0-21.547 9.536-21.547 21.547zM183.829 109.888c36.118-61.163 108.246-61.248 144.427 0l126.208 213.653c35.733 60.523 3.52 124.437-66.816 124.437H124.437c-70.613 0-102.635-63.765-66.816-124.437L183.829 109.91zM133.653 362.667h244.8l-122.41-207.232-122.39 207.232z'/></svg>",
-                    sizes: "192x192 512x512",
-                    type: "image/svg+xml"
-                }]
-            };
+// Khởi tạo PWA Manifest & Service Worker
+(() => {
+    try {
+        const manifest = {
+            name: "Web Application",
+            short_name: "WebApp",
+            start_url: location.href,
+            display: "standalone",
+            background_color: "#0d0e12",
+            theme_color: "#1AAFFF",
+            icons: [{
+                src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><path fill='%231AAFFF' d='M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768zM768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256zM554.667 661.547c0-59.093 47.68-106.88 106.88-106.88h212.907c59.093 0 106.88 47.68 106.88 106.88v212.907c0 59.093-47.68 106.88-106.88 106.88h-212.907A106.731 106.731 0 0 1 554.667 874.453v-212.906zm85.333 0v212.906c0 12.032 9.536 21.547 21.547 21.547h212.907c12.032 0 21.547-9.536 21.547-21.547v-212.906c0-12.032-9.536-21.547-21.547-21.547h-212.907c-12.032 0-21.547 9.536-21.547 21.547zM183.829 109.888c36.118-61.163 108.246-61.248 144.427 0l126.208 213.653c35.733 60.523 3.52 124.437-66.816 124.437H124.437c-70.613 0-102.635-63.765-66.816-124.437L183.829 109.91zM133.653 362.667h244.8l-122.41-207.232-122.39 207.232z'/></svg>",
+                sizes: "192x192 512x512",
+                type: "image/svg+xml"
+            }]
+        };
 
-            const link = document.createElement("link");
-            link.rel = "manifest";
-            link.href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: "application/json" }));
-            document.head.appendChild(link);
+        const link = document.createElement("link");
+        link.rel = "manifest";
+        link.href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: "application/json" }));
+        document.head.appendChild(link);
 
-            if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-                const swCode = "self.addEventListener('install', e => self.skipWaiting());" +
-                               "self.addEventListener('activate', e => self.clients.claim());" +
-                               "self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));";
-                navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode], { type: "application/javascript" }))).catch(() => {});
-            }
-        } catch (e) {}
-        checkPwa();
-    })();
-
-    // Xử lý sự kiện click nút Cài đặt
-    $("install").onclick = async () => {
-        if (installPrompt) {
-            try {
-                installPrompt.prompt();
-                const choice = await installPrompt.userChoice;
-                if (choice?.outcome === 'accepted') {
-                    localStorage.setItem("pwa_installed", "true");
-                    installPrompt = null;
-                    checkPwa();
-                }
-            } catch (e) {
-                $("pwa-status-msg").textContent = "Lỗi PWA: " + e.message;
-            }
-        } else {
-            $("pwa-status-msg").textContent = "PWA yêu cầu môi trường HTTPS hoặc localhost.";
+        if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+            const swCode = "self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>self.clients.claim());self.addEventListener('fetch',e=>e.respondWith(fetch(e.request)));";
+            navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode], { type: "application/javascript" }))).catch(() => {});
         }
-    };
+    } catch (e) {}
+
+    // Gọi kiểm tra trạng thái ngay lập tức khi load trang
+    checkPwa();
+})();
+
+// Xử lý sự kiện click
+$("install").onclick = async () => {
+    if (installPrompt) {
+        try {
+            installPrompt.prompt();
+            if ((await installPrompt.userChoice)?.outcome === 'accepted') {
+                localStorage.setItem("pwa_installed", "true");
+                installPrompt = null;
+                checkPwa();
+            }
+        } catch (e) {
+            $("pwa-status-msg").textContent = "Lỗi PWA: " + e.message;
+        }
+    } else {
+        $("pwa-status-msg").textContent = "PWA yêu cầu môi trường HTTPS/localhost.";
+    }
+};
 </script>
 
 </body>
