@@ -6,13 +6,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <link rel="icon" href="favicon.ico"
+    <link rel="icon"
+          href="favicon.ico"
           sizes="16x16 32x32 48x48 64x64"
           type="image/vnd.microsoft.icon">
 
-    <link rel="apple-touch-icon" href="img/icon.png">
+    <link rel="apple-touch-icon"
+          href="img/icon.png">
 
-    <meta name="theme-color" content="#000">
+    <meta name="theme-color"
+          content="#000">
 
     <link rel="stylesheet"
           href="https://demo.emulatorjs.org/main.css">
@@ -46,9 +49,13 @@
 <body>
 
 <div id="box">
+
     <input type="file" id="input">
+
     Drag ROM file or click here
+
 </div>
+
 
 <div id="version">
 
@@ -60,21 +67,28 @@
 
         <svg xmlns="http://www.w3.org/2000/svg"
              viewBox="0 0 16 16">
+
             <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 6.854-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708"/>
+
         </svg>
 
         <svg xmlns="http://www.w3.org/2000/svg"
              viewBox="0 0 16 16">
+
             <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 4.854-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7 8.793l2.646-2.647a.5.5 0 0 1 .708.708"/>
+
         </svg>
 
     </button>
+
 
     <button id="settings">
 
         <svg xmlns="http://www.w3.org/2000/svg"
              viewBox="0 0 16 16">
+
             <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1a1.4 1.4 0 0 0 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
+
         </svg>
 
     </button>
@@ -88,30 +102,41 @@
     <div class="content">
 
         <div class="title">
+
             <h1>Settings</h1>
+
         </div>
+
 
         <div class="options">
 
             <div class="buttonbox">
 
                 <p>
+
                     Enable Debuging:
 
                     <label class="switch">
+
                         <input type="checkbox"
                                id="debug"/>
+
                         <span class="slider round"></span>
+
                     </label>
+
                 </p>
 
             </div>
 
             <br>
 
+
             <div class="buttonbox">
 
-                <p>Clean Cache:</p>
+                <p>
+                    Clean Cache:
+                </p>
 
                 <button id="cache">
                     Clean
@@ -121,9 +146,12 @@
 
             <br>
 
+
             <div class="buttonbox">
 
-                <p>Language:</p>
+                <p>
+                    Language:
+                </p>
 
                 <select id="language"></select>
 
@@ -133,9 +161,12 @@
 
             <br>
 
+
             <div class="buttonbox last">
 
-                <p>Custom Path:</p>
+                <p>
+                    Custom Path:
+                </p>
 
                 <input type="text"
                        id="customPath"
@@ -150,6 +181,7 @@
                 Offline Status: CHECKING
             </p>
 
+
             <p>
                 Offline Cores will be available soon.
             </p>
@@ -161,15 +193,17 @@
 
                 <button id="remove-version"
                         onclick="removeallsaved()">
+
                     Remove All
+
                 </button>
 
             </p>
 
 
-            <!-- =========================
+            <!-- =================================================
                  PWA
-                 ========================= -->
+                 ================================================= -->
 
             <div id="installbox"
                  class="buttonbox">
@@ -208,7 +242,7 @@
 
 
 <!-- ============================================================
-     EMULATORJS DEMO MAIN.JS
+     ORIGINAL EMULATORJS MAIN.JS
      ============================================================ -->
 
 <script src="https://demo.emulatorjs.org/main.js"></script>
@@ -217,34 +251,40 @@
 <script>
 
     /* ============================================================
-       PWA INSTALL
+       PWA - GIỐNG CƠ CHẾ CODE 1
        ============================================================ */
 
     let installPrompt = null;
 
 
     const installButton =
-        document.getElementById("install");
+        document.querySelector("#install");
 
 
     const installBox =
-        document.getElementById("installbox");
+        document.querySelector("#installbox");
+
+
+    const installBoxText =
+        document.querySelector("#installboxtext");
 
 
     const pwaStatus =
-        document.getElementById("pwa-status-msg");
-
-
-    installBox.style.display = "flex";
+        document.querySelector("#pwa-status-msg");
 
 
     /*
-     * Kiểm tra trạng thái thật của PWA.
-     *
-     * KHÔNG dùng localStorage "pwa_installed".
-     *
-     * Vì nếu người dùng xóa PWA,
-     * website vẫn phải cho cài lại.
+     * Luôn hiển thị khu vực Install PWA.
+     */
+
+    installBox.style.display =
+        "flex";
+
+
+    /*
+     * ============================================================
+     * CHECK PWA
+     * ============================================================
      */
 
     function checkPwa() {
@@ -262,14 +302,41 @@
             window.matchMedia(
                 "(display-mode: standalone)"
             ).matches ||
-            navigator.standalone === true;
+            navigator.standalone;
+
+
+        const installed =
+            localStorage.getItem(
+                "pwa_installed"
+            ) === "true";
 
 
         /*
-         * Đang chạy bằng app PWA.
+         * ĐÂY LÀ ĐIỂM QUAN TRỌNG GIỐNG CODE 1.
+         *
+         * Nếu đang standalone
+         * HOẶC
+         * đã lưu installed nhưng CHƯA có prompt
+         *
+         * => Installed
+         *
+         * Nhưng nếu browser vừa cấp prompt lại:
+         *
+         * installed = true
+         * installPrompt != null
+         *
+         * => cho phép Install lại.
          */
 
-        if (standalone) {
+        const alreadyInstalled =
+            standalone ||
+            (
+                installed &&
+                !installPrompt
+            );
+
+
+        if (alreadyInstalled) {
 
             installButton.textContent =
                 isVi
@@ -285,39 +352,8 @@
 
                 pwaStatus.textContent =
                     isVi
-                        ? "PWA đang được cài đặt."
+                        ? "PWA đã được cài đặt."
                         : "PWA is installed.";
-            }
-
-            return;
-        }
-
-
-        /*
-         * Website bình thường.
-         *
-         * Nếu browser đã cung cấp prompt
-         * thì cho phép cài.
-         */
-
-        if (installPrompt) {
-
-            installButton.textContent =
-                isVi
-                    ? "Cài đặt"
-                    : "Install";
-
-
-            installButton.disabled =
-                false;
-
-
-            if (pwaStatus) {
-
-                pwaStatus.textContent =
-                    isVi
-                        ? "Ứng dụng sẵn sàng để cài đặt."
-                        : "App is ready to install.";
             }
 
         } else {
@@ -328,21 +364,26 @@
                     : "Install";
 
 
-            /*
-             * Chưa có prompt thì disabled,
-             * nhưng nút vẫn hiện.
-             */
-
             installButton.disabled =
-                true;
+                !installPrompt;
 
 
             if (pwaStatus) {
 
                 pwaStatus.textContent =
-                    isVi
-                        ? "Đang chờ trình duyệt cho phép cài đặt..."
-                        : "Waiting for the browser to allow installation...";
+                    installPrompt
+
+                        ? (
+                            isVi
+                                ? "Ứng dụng sẵn sàng để cài đặt."
+                                : "App is ready to install."
+                        )
+
+                        : (
+                            isVi
+                                ? "Đang chờ trình duyệt cho phép cài đặt..."
+                                : "Waiting for the browser to allow installation..."
+                        );
             }
         }
     }
@@ -360,14 +401,25 @@
 
             event.preventDefault();
 
+
             installPrompt =
                 event;
 
 
             /*
-             * Không lưu "đã cài".
-             * Không xóa localStorage.
+             * GIỐNG CODE 1:
+             *
+             * Khi browser cấp prompt mới,
+             * xóa trạng thái installed.
+             *
+             * Điều này cho phép cài lại sau khi
+             * người dùng đã xóa PWA.
              */
+
+            localStorage.removeItem(
+                "pwa_installed"
+            );
+
 
             checkPwa();
 
@@ -385,11 +437,11 @@
         "appinstalled",
         () => {
 
-            /*
-             * Chrome đã xác nhận cài.
-             *
-             * Prompt cũ không dùng lại.
-             */
+            localStorage.setItem(
+                "pwa_installed",
+                "true"
+            );
+
 
             installPrompt =
                 null;
@@ -403,33 +455,13 @@
 
     /*
      * ============================================================
-     * INSTALL BUTTON
+     * INSTALL
      * ============================================================
      */
 
     installButton.addEventListener(
         "click",
         async () => {
-
-            /*
-             * Nếu đang chạy standalone
-             * thì đã cài.
-             */
-
-            if (
-                window.matchMedia(
-                    "(display-mode: standalone)"
-                ).matches ||
-                navigator.standalone === true
-            ) {
-
-                return;
-            }
-
-
-            /*
-             * Chưa có prompt.
-             */
 
             if (!installPrompt) {
 
@@ -446,8 +478,8 @@
 
                     pwaStatus.textContent =
                         isVi
-                            ? "Trình duyệt chưa cung cấp tùy chọn cài đặt PWA."
-                            : "The browser has not provided the PWA install option.";
+                            ? "PWA yêu cầu HTTPS hoặc localhost."
+                            : "PWA requires HTTPS or localhost.";
                 }
 
                 return;
@@ -456,58 +488,54 @@
 
             try {
 
-                const prompt =
-                    installPrompt;
-
-
                 /*
-                 * Hiện hộp thoại cài đặt.
+                 * Hiện hộp thoại cài.
                  */
 
-                await prompt.prompt();
+                installPrompt.prompt();
 
 
                 /*
-                 * Đọc kết quả.
+                 * Chờ lựa chọn.
                  */
 
                 const result =
-                    await prompt.userChoice;
+                    await installPrompt.userChoice;
+
+
+                console.log(
+                    "Install prompt was:",
+                    result.outcome
+                );
 
 
                 /*
-                 * Prompt chỉ dùng một lần.
+                 * Prompt chỉ sử dụng một lần.
                  */
 
                 installPrompt =
                     null;
 
 
+                /*
+                 * Nếu chấp nhận,
+                 * ghi trạng thái.
+                 */
+
                 if (
-                    result &&
-                    result.outcome === "accepted"
+                    result.outcome ===
+                    "accepted"
                 ) {
 
-                    /*
-                     * KHÔNG ghi localStorage.
-                     *
-                     * Trạng thái sẽ dựa vào
-                     * display-mode standalone.
-                     */
+                    localStorage.setItem(
+                        "pwa_installed",
+                        "true"
+                    );
 
-                    checkPwa();
-
-                } else {
-
-                    /*
-                     * Người dùng hủy.
-                     *
-                     * Browser có thể cấp prompt mới
-                     * ở lần thích hợp tiếp theo.
-                     */
-
-                    checkPwa();
                 }
+
+
+                checkPwa();
 
 
             } catch (e) {
@@ -515,7 +543,7 @@
                 if (pwaStatus) {
 
                     pwaStatus.textContent =
-                        "PWA: " +
+                        "Lỗi PWA: " +
                         e.message;
                 }
 
@@ -527,40 +555,7 @@
 
     /*
      * ============================================================
-     * Khi quay lại trang
-     * ============================================================
-     */
-
-    window.addEventListener(
-        "pageshow",
-        () => {
-
-            checkPwa();
-
-        }
-    );
-
-
-    document.addEventListener(
-        "visibilitychange",
-        () => {
-
-            if (
-                document.visibilityState ===
-                "visible"
-            ) {
-
-                checkPwa();
-
-            }
-
-        }
-    );
-
-
-    /*
-     * ============================================================
-     * MANIFEST - SVG DATA URI
+     * MANIFEST ĐỘNG - SVG DATA URI
      * ============================================================
      */
 
@@ -617,7 +612,6 @@
 
                         type:
                             "image/svg+xml"
-
                     }
 
                 ]
@@ -625,7 +619,7 @@
             };
 
 
-            const blob =
+            const manifestBlob =
                 new Blob(
                     [
                         JSON.stringify(
@@ -641,7 +635,7 @@
 
             const manifestURL =
                 URL.createObjectURL(
-                    blob
+                    manifestBlob
                 );
 
 
@@ -673,12 +667,15 @@
 
         }
 
+
+        checkPwa();
+
     })();
 
 
     /*
      * ============================================================
-     * SERVICE WORKER
+     * SERVICE WORKER - GIỐNG CODE 1
      * ============================================================
      */
 
@@ -691,97 +688,89 @@
 
             try {
 
-                const swCode =
+                navigator.serviceWorker.register(
 
-                    "self.addEventListener('install',e=>" +
-                    "{e.waitUntil(self.skipWaiting())});" +
-
-                    "self.addEventListener('activate',e=>" +
-                    "{e.waitUntil(self.clients.claim())});" +
-
-                    "self.addEventListener('fetch',e=>" +
-                    "{e.respondWith(fetch(e.request))});";
-
-
-                const blob =
-                    new Blob(
-                        [swCode],
-                        {
-                            type:
-                                "application/javascript"
-                        }
-                    );
-
-
-                const swURL =
                     URL.createObjectURL(
-                        blob
-                    );
 
+                        new Blob(
 
-                navigator.serviceWorker
-                    .register(swURL)
-                    .catch(
-                        () => {}
-                    );
+                            [
 
+                                "self.addEventListener('install',e=>self.skipWaiting());" +
 
-            } catch (e) {
+                                "self.addEventListener('activate',e=>self.clients.claim());" +
 
-                console.warn(
-                    "Service Worker error:",
-                    e
+                                "self.addEventListener('fetch',e=>e.respondWith(fetch(e.request)));"
+
+                            ],
+
+                            {
+                                type:
+                                    "application/javascript"
+                            }
+
+                        )
+
+                    )
+
+                ).catch(
+                    () => {}
                 );
 
-            }
+
+            } catch (e) {}
 
         }
 
     })();
 
 
-    /*
-     * Kiểm tra lần đầu.
-     */
-
-    checkPwa();
-
 </script>
 
 
 <!-- ============================================================
-     EMULATORJS ORIGINAL GAME LOADER
+     EMULATORJS ORIGINAL
      ============================================================ -->
 
 <script>
 
-loadJSON("/versions", (response) => {
+loadJSON(
+    "/versions",
+    (response) => {
 
-    const offlineStatus =
-        document.getElementById(
-            "offline-status"
-        );
+        const offlineStatus =
+            document.getElementById(
+                "offline-status"
+            );
 
 
-    if (!response) {
+        if (!response) {
 
-        loadJSON(
-            "https://cdn.emulatorjs.org/versions.json",
-            resp => loadVersions(resp)
-        );
+            loadJSON(
+                "https://cdn.emulatorjs.org/versions.json",
+                resp =>
+                    loadVersions(resp)
+            );
 
-        offlineStatus.textContent =
-            "Offline Status: NOT INSTALLED";
 
-    } else {
+            offlineStatus.textContent =
+                "Offline Status: NOT INSTALLED";
 
-        loadVersions(response);
 
-        offlineStatus.textContent =
-            "Offline Status: READY";
+        } else {
+
+            loadVersions(
+                response
+            );
+
+
+            offlineStatus.textContent =
+                "Offline Status: READY";
+
+        }
+
     }
-
-});
+);
 
 
 loadSettings();
@@ -794,6 +783,7 @@ input.addEventListener(
         const url =
             input.files[0];
 
+
         const parts =
             input.files[0]
                 .name
@@ -802,6 +792,7 @@ input.addEventListener(
 
         const core =
             await (
+
                 async (ext) => {
 
                     if (
@@ -1003,15 +994,19 @@ input.addEventListener(
                                         "option"
                                     );
 
+
                                 option.value =
                                     cores[type];
+
 
                                 option.textContent =
                                     type;
 
+
                                 select.appendChild(
                                     option
                                 );
+
                             }
 
 
@@ -1031,9 +1026,11 @@ input.addEventListener(
                             box.innerHTML =
                                 "";
 
+
                             box.appendChild(
                                 select
                             );
+
 
                             box.appendChild(
                                 button
@@ -1043,6 +1040,7 @@ input.addEventListener(
                     );
 
                 }
+
             )(parts.pop());
 
 
@@ -1086,7 +1084,9 @@ input.addEventListener(
 
         top.remove();
 
+
         version.remove();
+
 
         box.remove();
 
@@ -1103,7 +1103,7 @@ input.addEventListener(
 
         /*
          * ========================================================
-         * EMULATORJS GỐC
+         * EMULATORJS GỐC - KHÔNG ĐỔI
          * ========================================================
          */
 
@@ -1154,6 +1154,7 @@ input.addEventListener(
 
             window.EJS_language =
                 window.language;
+
         }
 
 
@@ -1165,11 +1166,13 @@ input.addEventListener(
 
             window.EJS_threads =
                 true;
+
         }
 
 
         script.src =
-            cdn + "loader.js";
+            cdn +
+            "loader.js";
 
 
         document.body.appendChild(
