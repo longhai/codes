@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48 64x64" type="image/vnd.microsoft.icon">
     <link rel="apple-touch-icon" href="img/icon.png">
-    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000">
     <link rel="stylesheet" href="https://demo.emulatorjs.org/main.css">
 </head>
@@ -81,9 +80,7 @@
                 <p id="customPathValid"></p>
             </div>
 
-            <p id="offline-status">
-                Offline Status: CHECKING
-            </p>
+            <p id="offline-status">Offline Status: CHECKING</p>
 
             <p>Offline Cores will be available soon.</p>
 
@@ -96,11 +93,10 @@
 
             <div id="installbox" class="buttonbox">
                 <p id="installboxtext">Install PWA:</p>
-                <button id="install">Install</button>
+                <button id="install" disabled>Install</button>
             </div>
 
             <br>
-
         </div>
 
         <div class="bottom">
@@ -114,39 +110,27 @@
 <script src="https://demo.emulatorjs.org/main.js"></script>
 
 <script>
-
-if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.getRegistrations().then(rs =>
-        rs.forEach(r => r.unregister())
-    );
-}
-
 loadJSON("/versions", response => {
-
-    const offlineStatus =
-        document.getElementById("offline-status");
+    const s = document.getElementById("offline-status");
 
     if (!response) {
-
         loadJSON(
             "https://cdn.emulatorjs.org/versions.json",
             resp => loadVersions(resp)
         );
-
-        offlineStatus.textContent =
-            "Offline Status: NOT INSTALLED";
-
+        s.textContent = "Offline Status: NOT INSTALLED";
     } else {
-
         loadVersions(response);
-
-        offlineStatus.textContent =
-            "Offline Status: READY";
+        s.textContent = "Offline Status: READY";
     }
 });
 
 loadSettings();
 
+
+/* =========================
+   EMULATORJS
+========================= */
 
 input.addEventListener("change", async () => {
 
@@ -223,13 +207,9 @@ input.addEventListener("change", async () => {
             const button = document.createElement("button");
 
             for (const type in cores) {
-
-                const option =
-                    document.createElement("option");
-
+                const option = document.createElement("option");
                 option.value = cores[type];
                 option.textContent = type;
-
                 select.appendChild(option);
             }
 
@@ -240,20 +220,14 @@ input.addEventListener("change", async () => {
 
             box.innerHTML = "";
             box.append(select, button);
-
         });
 
     })(ext);
 
 
-    const div =
-        document.createElement("div");
-
-    const sub =
-        document.createElement("div");
-
-    const script =
-        document.createElement("script");
+    const div = document.createElement("div");
+    const sub = document.createElement("div");
+    const script = document.createElement("script");
 
     sub.id = "game";
     div.id = "display";
@@ -266,13 +240,10 @@ input.addEventListener("change", async () => {
     document.body.appendChild(div);
 
 
-    /*
-     * GIỮ NGUYÊN CÁCH DEMO GỐC LOAD EMULATORJS
-     */
-
     const cdn =
         window.cdn ||
         "https://cdn.emulatorjs.org/stable/data/";
+
 
     window.EJS_player = "#game";
     window.EJS_gameName = parts.shift();
@@ -290,13 +261,12 @@ input.addEventListener("change", async () => {
         core === "psp" ||
         core === "dosbox_pure" ||
         core === "azahar"
-    ) {
+    )
         window.EJS_threads = true;
-    }
+
 
     script.src = cdn + "loader.js";
     document.body.appendChild(script);
-
 });
 
 
@@ -307,97 +277,176 @@ box.ondragleave = () =>
     box.removeAttribute("drag");
 
 
-/*
- * INSTALL PWA
- * Giống code PWA trước đó.
- */
+/* =========================
+   PWA
+========================= */
 
 let installPrompt = null;
 
 const installButton =
-    document.querySelector("#install");
-
-const installBox =
-    document.querySelector("#installbox");
-
-const installBoxText =
-    document.querySelector("#installboxtext");
-
-localStorage.setItem("pwa", "false");
-
-if (installButton) {
-
-    installButton.disabled = true;
-
-    window.addEventListener(
-        "beforeinstallprompt",
-        event => {
-
-            event.preventDefault();
-
-            installPrompt = event;
-
-            localStorage.setItem("pwa", "true");
-
-            installButton.textContent =
-                "Install";
-
-            installButton.disabled =
-                false;
-
-            console.log("PWA Supported");
-        }
-    );
+    document.getElementById("install");
 
 
-    installButton.addEventListener(
-        "click",
-        async () => {
+/* Tạo Manifest giống code 1 */
 
-            if (!installPrompt)
-                return;
+const manifest = {
+    name: "EmulatorJS",
+    short_name: "EmulatorJS",
+    start_url: location.href.split("?")[0],
+    display: "fullscreen",
+    background_color: "#000000",
+    theme_color: "#000000",
+    orientation: "any",
+    icons: [{
+        src: location.origin + "/img/icon.png",
+        sizes: "192x192",
+        type: "image/png"
+    }]
+};
 
-            const result =
-                await installPrompt.prompt();
+const manifestBlob = new Blob(
+    [JSON.stringify(manifest)],
+    { type: "application/manifest+json" }
+);
 
-            console.log(
-                `Install prompt was: ${result.outcome}`
-            );
+const manifestURL =
+    URL.createObjectURL(manifestBlob);
 
-            installPrompt = null;
+const manifestLink =
+    document.createElement("link");
 
-            installButton.disabled = true;
+manifestLink.rel = "manifest";
+manifestLink.href = manifestURL;
 
-        }
-    );
+document.head.appendChild(manifestLink);
 
+
+/* Service Worker */
+
+if ("serviceWorker" in navigator) {
+
+    const swCode = `
+        self.addEventListener("install", event => {
+            self.skipWaiting();
+        });
+
+        self.addEventListener("activate", event => {
+            event.waitUntil(self.clients.claim());
+        });
+
+        self.addEventListener("fetch", event => {});
+    `;
+
+    try {
+
+        const swBlob = new Blob(
+            [swCode],
+            { type: "application/javascript" }
+        );
+
+        const swURL =
+            URL.createObjectURL(swBlob);
+
+        navigator.serviceWorker.register(swURL)
+            .then(() => {
+                console.log("PWA Service Worker ready");
+            })
+            .catch(e => {
+                console.warn(
+                    "PWA Service Worker:",
+                    e
+                );
+            });
+
+    } catch (e) {
+        console.warn(
+            "PWA registration:",
+            e
+        );
+    }
 }
 
 
-/*
- * Kiểm tra khi quay lại từ màn hình PWA.
- */
+/* Install prompt */
 
-document.addEventListener(
-    "visibilitychange",
-    () => {
+window.addEventListener(
+    "beforeinstallprompt",
+    event => {
 
-        if (
-            window.matchMedia(
-                "(display-mode: standalone)"
-            ).matches
-        ) {
+        event.preventDefault();
 
-            if (
-                typeof checkinstall === "function"
-            ) {
-                checkinstall(true);
-            }
+        installPrompt = event;
 
-        }
-
+        installButton.disabled = false;
+        installButton.textContent = "Install";
     }
 );
+
+
+installButton.addEventListener(
+    "click",
+    async () => {
+
+        if (!installPrompt)
+            return;
+
+        await installPrompt.prompt();
+
+        installPrompt = null;
+
+        installButton.disabled = true;
+    }
+);
+
+
+window.addEventListener(
+    "appinstalled",
+    () => {
+
+        installPrompt = null;
+
+        installButton.disabled = true;
+
+        installButton.textContent = "Installed";
+
+        localStorage.setItem(
+            "pwa_installed",
+            "true"
+        );
+    }
+);
+
+
+/* Kiểm tra PWA đã cài */
+
+function checkPWA() {
+
+    const standalone =
+        window.matchMedia(
+            "(display-mode: standalone)"
+        ).matches ||
+        window.navigator.standalone === true;
+
+    if (standalone) {
+
+        installButton.disabled = true;
+        installButton.textContent = "Installed";
+
+        return;
+    }
+
+    if (
+        localStorage.getItem(
+            "pwa_installed"
+        ) === "true"
+    ) {
+
+        installButton.disabled = true;
+        installButton.textContent = "Installed";
+    }
+}
+
+checkPWA();
 
 </script>
 
