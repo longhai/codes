@@ -1,23 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>EmulatorJS | Demo</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="theme-color" content="#000">
-
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><path fill='%231AAFFF' d='M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768zM768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256zM554.667 661.547c0-59.093 47.68-106.88 106.88-106.88h212.907c59.093 0 106.88 47.68 106.88 106.88v212.907c0 59.093-47.68 106.88-106.88 106.88h-212.907A106.731 106.731 0 0 1 554.667 874.453v-212.906zm85.333 0v212.906c0 12.032 9.536 21.547 21.547 21.547h212.907c12.032 0 21.547-9.536 21.547-21.547v-212.906c0-12.032-9.536-21.547-21.547-21.547h-212.907c-12.032 0-21.547 9.536-21.547 21.547zM183.829 109.888c36.118-61.163 108.246-61.248 144.427 0l126.208 213.653c35.733 60.523 3.52 124.437-66.816 124.437H124.437c-70.613 0-102.635-63.765-66.816-124.437L183.829 109.91zM133.653 362.667h244.8l-122.41-207.232-122.39 207.232z'/></svg>">
-
-    <link rel="stylesheet" href="https://demo.emulatorjs.org/main.css">
-
-    <style>
-        #pwa-status-msg{
-            font-size:12px;
-            color:#f44336;
-            margin-top:6px;
-            text-align:right
-        }
-    </style>
+<title>EmulatorJS | Demo</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48 64x64" type="image/vnd.microsoft.icon">
+<link rel="apple-touch-icon" href="img/icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000">
+<link rel="stylesheet" href="https://demo.emulatorjs.org/main.css">
 </head>
 
 <body>
@@ -46,6 +37,7 @@
     </button>
 </div>
 
+
 <div id="popup-settings" class="popup popup-animate">
     <div class="content">
 
@@ -56,8 +48,7 @@
         <div class="options">
 
             <div class="buttonbox">
-                <p>
-                    Enable Debuging:
+                <p>Enable Debuging:
                     <label class="switch">
                         <input type="checkbox" id="debug">
                         <span class="slider round"></span>
@@ -96,37 +87,19 @@
                 Offline Status: CHECKING
             </p>
 
-            <p>
-                Offline Cores will be available soon.
-            </p>
-
-            <p class="hide">
-                Remove All Saved Versions:
-                <button id="remove-version" onclick="removeallsaved()">
-                    Remove All
-                </button>
-            </p>
+            <p>Offline Cores will be available soon.</p>
 
             <div id="installbox" class="buttonbox">
-                <p id="installboxtext">
-                    Install PWA:
-                </p>
-
-                <button id="install">
-                    Install
-                </button>
+                <p id="installboxtext">Install PWA:</p>
+                <button id="install" disabled>Install</button>
             </div>
 
             <p id="pwa-status-msg"></p>
 
-            <br>
-
         </div>
 
         <div class="bottom">
-            <button id="settings-close">
-                Close
-            </button>
+            <button id="settings-close">Close</button>
         </div>
 
     </div>
@@ -134,22 +107,21 @@
 
 <div class="popup-overlay"></div>
 
+
 <script src="https://demo.emulatorjs.org/main.js"></script>
 
 <script>
 
-/* =========================
-   ORIGINAL DEMO
-========================= */
-
 if ("serviceWorker" in navigator) {
     navigator.serviceWorker.getRegistrations()
-        .then(rs => rs.forEach(r => r.unregister()));
+        .then(rs => rs.forEach(r => r.unregister()))
+        .catch(() => {});
 }
+
 
 loadJSON("/versions", response => {
 
-    const offlineStatus =
+    const status =
         document.getElementById("offline-status");
 
     if (!response) {
@@ -159,24 +131,22 @@ loadJSON("/versions", response => {
             resp => loadVersions(resp)
         );
 
-        offlineStatus.textContent =
+        status.textContent =
             "Offline Status: NOT INSTALLED";
 
     } else {
 
         loadVersions(response);
 
-        offlineStatus.textContent =
+        status.textContent =
             "Offline Status: READY";
     }
+
 });
+
 
 loadSettings();
 
-
-/* =========================
-   ROM
-========================= */
 
 input.addEventListener("change", async () => {
 
@@ -249,28 +219,24 @@ input.addEventListener("change", async () => {
                 "DOS":"dosbox_pure"
             };
 
-            const button =
-                document.createElement("button");
-
             const select =
                 document.createElement("select");
+
+            const button =
+                document.createElement("button");
 
             for (const type in cores) {
 
                 const option =
                     document.createElement("option");
 
-                option.value =
-                    cores[type];
-
-                option.textContent =
-                    type;
+                option.value = cores[type];
+                option.textContent = type;
 
                 select.appendChild(option);
             }
 
-            button.textContent =
-                "Load game";
+            button.textContent = "Load game";
 
             button.onclick = () =>
                 resolve(select.value);
@@ -279,6 +245,7 @@ input.addEventListener("change", async () => {
 
             box.appendChild(select);
             box.appendChild(button);
+
         });
 
     })(ext);
@@ -307,37 +274,64 @@ input.addEventListener("change", async () => {
     document.body.appendChild(div);
 
 
+    /*
+     * GIỮ NGUYÊN CÁCH DEMO GỐC LOAD EMULATORJS
+     */
+
     const cdn =
         window.cdn ||
         "https://cdn.emulatorjs.org/stable/data/";
 
 
-    window.EJS_player = "#game";
-    window.EJS_gameName = parts.shift();
-    window.EJS_biosUrl = "";
-    window.EJS_gameUrl = url;
-    window.EJS_core = core;
-    window.EJS_pathtodata = cdn;
-    window.EJS_startOnLoaded = true;
-    window.EJS_DEBUG_XX = window.debug;
+    window.EJS_player =
+        "#game";
+
+    window.EJS_gameName =
+        parts.shift();
+
+    window.EJS_biosUrl =
+        "";
+
+    window.EJS_gameUrl =
+        url;
+
+    window.EJS_core =
+        core;
+
+    window.EJS_pathtodata =
+        cdn;
+
+    window.EJS_startOnLoaded =
+        true;
 
 
-    if (window.language !== "auto")
-        window.EJS_language = window.language;
+    /*
+     * KHÔNG CÓ EJS_AdUrl
+     */
+
+    window.EJS_DEBUG_XX =
+        window.debug;
+
+
+    if (window.language !== "auto") {
+
+        window.EJS_language =
+            window.language;
+
+    }
 
 
     if (
         core === "psp" ||
         core === "dosbox_pure" ||
         core === "azahar"
-    )
-        window.EJS_threads = true;
+    ) {
 
+        window.EJS_threads =
+            true;
 
-    /*
-     * Không EJS_AdUrl
-     * => không gọi ads.html
-     */
+    }
+
 
     script.src =
         cdn + "loader.js";
@@ -355,183 +349,16 @@ box.ondragleave = () =>
 
 
 /* =========================
-   SETTINGS
-========================= */
-
-const $ = id =>
-    document.getElementById(id);
-
-const langs = {
-    auto:"Auto",
-    en:"English",
-    vi:"Tiếng Việt",
-    pt:"Português",
-    es:"Español",
-    ja:"日本語",
-    zh:"中文",
-    de:"Deutsch",
-    fr:"Français",
-    ru:"Русский"
-};
-
-const ejsLangMap = {
-    auto:"",
-    en:"en-US",
-    vi:"vi-VN",
-    pt:"pt-BR",
-    es:"es-ES",
-    ja:"ja-JP",
-    zh:"zh-CN",
-    de:"de-DE",
-    fr:"fr-FR",
-    ru:"ru-RU"
-};
-
-
-$("settings").onclick = () =>
-    $("popup-settings").classList.add("show");
-
-$("settings-close").onclick = () =>
-    $("popup-settings").classList.remove("show");
-
-
-/* Debug */
-
-$("debug").checked =
-    localStorage.getItem("debug") === "true";
-
-$("debug").onchange = () => {
-
-    localStorage.setItem(
-        "debug",
-        $("debug").checked
-    );
-
-    window.debug =
-        $("debug").checked;
-
-};
-
-
-/* Language */
-
-for (const l in langs)
-    $("language").add(
-        new Option(langs[l], l)
-    );
-
-window.language =
-    localStorage.getItem("language") || "auto";
-
-$("language").value =
-    window.language;
-
-$("language").onchange = () => {
-
-    window.language =
-        $("language").value;
-
-    localStorage.setItem(
-        "language",
-        window.language
-    );
-
-};
-
-
-/* Custom CDN */
-
-const savedCdn =
-    localStorage.getItem("custom_cdn");
-
-if (savedCdn)
-    $("customPath").value = savedCdn;
-
-$("customPath").onchange = () => {
-
-    const value =
-        $("customPath").value.trim();
-
-    if (
-        value &&
-        /^https?:\/\/.+\/$/.test(value)
-    ) {
-
-        localStorage.setItem(
-            "custom_cdn",
-            value
-        );
-
-        $("customPathValid").textContent =
-            "URL hợp lệ";
-
-        $("customPathValid").style.color =
-            "#4caf50";
-
-    } else {
-
-        localStorage.removeItem(
-            "custom_cdn"
-        );
-
-        $("customPathValid").textContent =
-            value
-            ? "URL không hợp lệ"
-            : "";
-
-        $("customPathValid").style.color =
-            "#f44336";
-    }
-
-};
-
-
-/* Cache */
-
-$("cache").onclick = async () => {
-
-    if (!confirm(
-        "Xóa toàn bộ cache và dữ liệu lưu?"
-    ))
-        return;
-
-    localStorage.clear();
-
-    if (indexedDB.databases) {
-
-        const dbs =
-            await indexedDB.databases();
-
-        dbs.forEach(db => {
-
-            if (db.name)
-                indexedDB.deleteDatabase(db.name);
-
-        });
-    }
-
-    if ("caches" in window) {
-
-        const keys =
-            await caches.keys();
-
-        await Promise.all(
-            keys.map(k => caches.delete(k))
-        );
-    }
-
-    location.reload();
-};
-
-
-/* =========================
    PWA
-========================= */
+   ========================= */
 
 let installPrompt = null;
 
 const installButton =
-    $("install");
+    document.getElementById("install");
+
+const pwaStatus =
+    document.getElementById("pwa-status-msg");
 
 
 function isStandalone() {
@@ -540,63 +367,64 @@ function isStandalone() {
         window.matchMedia(
             "(display-mode: standalone)"
         ).matches ||
-        navigator.standalone === true
+        window.navigator.standalone === true
     );
+
 }
 
 
-function checkPwa() {
+function updatePwaButton() {
+
+    if (!installButton)
+        return;
+
 
     if (isStandalone()) {
 
         installButton.textContent =
-            "Đã cài đặt";
+            "Installed";
 
         installButton.disabled =
             true;
 
-        return;
-    }
-
-
-    if (
-        localStorage.getItem(
-            "pwa_installed"
-        ) === "true"
-    ) {
-
-        installButton.textContent =
-            "Đã cài đặt";
-
-        installButton.disabled =
-            true;
+        if (pwaStatus)
+            pwaStatus.textContent =
+                "PWA is installed.";
 
         return;
+
     }
 
 
     if (installPrompt) {
 
         installButton.textContent =
-            "Cài đặt";
+            "Install";
 
         installButton.disabled =
             false;
 
-    } else {
+        if (pwaStatus)
+            pwaStatus.textContent =
+                "";
 
-        installButton.textContent =
-            "Cài đặt";
+        return;
 
-        installButton.disabled =
-            true;
     }
+
+
+    installButton.textContent =
+        "Install";
+
+    installButton.disabled =
+        true;
+
+    if (pwaStatus)
+        pwaStatus.textContent =
+            "PWA installation is not available yet.";
+
 }
 
-
-/*
- * Browser cho phép cài
- */
 
 window.addEventListener(
     "beforeinstallprompt",
@@ -607,116 +435,126 @@ window.addEventListener(
         installPrompt =
             event;
 
-        /*
-         * Cho phép cài lại nếu
-         * browser phát lại prompt.
-         */
-        localStorage.removeItem(
-            "pwa_installed"
-        );
+        updatePwaButton();
 
-        checkPwa();
     }
 );
 
 
-/*
- * Cài đặt thành công
- */
-
 window.addEventListener(
     "appinstalled",
     () => {
+
+        installPrompt =
+            null;
 
         localStorage.setItem(
             "pwa_installed",
             "true"
         );
 
+        updatePwaButton();
+
+    }
+);
+
+
+installButton.addEventListener(
+    "click",
+    async () => {
+
+        if (!installPrompt)
+            return;
+
+
+        try {
+
+            await installPrompt.prompt();
+
+            const result =
+                await installPrompt.userChoice;
+
+
+            if (
+                result &&
+                result.outcome === "accepted"
+            ) {
+
+                localStorage.setItem(
+                    "pwa_installed",
+                    "true"
+                );
+
+            }
+
+
+        } catch (e) {
+
+            if (pwaStatus)
+                pwaStatus.textContent =
+                    "PWA error: " + e.message;
+
+        }
+
+
         installPrompt =
             null;
 
-        checkPwa();
+        updatePwaButton();
+
     }
 );
 
 
 /*
- * Nút Install
+ * Tạo manifest bằng Blob + SVG
  */
-
-installButton.onclick = async () => {
-
-    if (!installPrompt) {
-
-        $("pwa-status-msg").textContent =
-            "PWA yêu cầu HTTPS hoặc localhost.";
-
-        return;
-    }
-
-    try {
-
-        installPrompt.prompt();
-
-        const result =
-            await installPrompt.userChoice;
-
-        if (
-            result &&
-            result.outcome === "accepted"
-        ) {
-
-            localStorage.setItem(
-                "pwa_installed",
-                "true"
-            );
-
-            installPrompt =
-                null;
-        }
-
-        checkPwa();
-
-    } catch (e) {
-
-        $("pwa-status-msg").textContent =
-            "Lỗi PWA: " + e.message;
-    }
-};
-
-
-/* =========================
-   MANIFEST
-========================= */
 
 (() => {
 
     try {
 
+        const icon =
+            "data:image/svg+xml," +
+            encodeURIComponent(`
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     viewBox="0 0 1024 1024">
+                    <path fill="#1AAFFF"
+                        d="M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768zM768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256zM554.667 661.547c0-59.093 47.68-106.88 106.88-106.88h212.907c59.093 0 106.88 47.68 106.88 106.88v212.907c0 59.093-47.68 106.88-106.88 106.88h-212.907A106.731 106.731 0 0 1 554.667 874.453v-212.906zm85.333 0v212.906c0 12.032 9.536 21.547 21.547 21.547h212.907c12.032 0 21.547-9.536 21.547-21.547v-212.906c0-12.032-9.536-21.547-21.547-21.547h-212.907c-12.011 0-21.547 9.515-21.547 21.547zM183.829 109.888c36.118-61.163 108.246-61.248 144.427 0l126.208 213.653c35.733 60.523 3.52 124.437-66.816 124.437H124.437c-70.613 0-102.635-63.765-66.816-124.437L183.829 109.91zM133.653 362.667h244.8l-122.41-207.232-122.39 207.232z"/>
+                </svg>
+            `);
+
+
         const manifest = {
 
-            name:"EmulatorJS Demo",
+            name:
+                "EmulatorJS Demo",
 
-            short_name:"EmulatorJS",
+            short_name:
+                "EmulatorJS",
 
-            start_url:location.href,
+            start_url:
+                location.href,
 
-            display:"standalone",
+            display:
+                "standalone",
 
-            background_color:"#000",
+            background_color:
+                "#0d0e12",
 
-            theme_color:"#1AAFFF",
+            theme_color:
+                "#1AAFFF",
 
-            icons:[{
+            icons: [
 
-                src:
-                "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><path fill='%231AAFFF' d='M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768zM768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256z'/></svg>",
+                {
+                    src: icon,
+                    sizes: "192x192 512x512",
+                    type: "image/svg+xml"
+                }
 
-                sizes:"192x192 512x512",
+            ]
 
-                type:"image/svg+xml"
-            }]
         };
 
 
@@ -730,18 +568,245 @@ installButton.onclick = async () => {
             URL.createObjectURL(
                 new Blob(
                     [JSON.stringify(manifest)],
-                    {type:"application/json"}
+                    {
+                        type:
+                            "application/manifest+json"
+                    }
                 )
             );
 
         document.head.appendChild(link);
 
-    } catch (e) {}
+
+    } catch (e) {
+
+        console.warn(
+            "Manifest:",
+            e
+        );
+
+    }
 
 })();
 
 
-checkPwa();
+/*
+ * Settings
+ */
+
+const settings =
+    document.getElementById("settings");
+
+const popup =
+    document.getElementById("popup-settings");
+
+const close =
+    document.getElementById("settings-close");
+
+
+settings.onclick = () =>
+    popup.classList.add("show");
+
+
+close.onclick = () =>
+    popup.classList.remove("show");
+
+
+/*
+ * Debug
+ */
+
+const params =
+    new URLSearchParams(location.search);
+
+document.getElementById("debug").checked =
+    ["1", "true"].includes(
+        params.get("debug")
+    );
+
+
+/*
+ * Language
+ */
+
+const languages = {
+
+    auto: "Auto",
+
+    en: "English",
+
+    vi: "Tiếng Việt",
+
+    pt: "Português",
+
+    es: "Español",
+
+    ja: "日本語",
+
+    zh: "中文",
+
+    de: "Deutsch",
+
+    fr: "Français",
+
+    ru: "Русский"
+
+};
+
+
+const language =
+    document.getElementById("language");
+
+
+for (const key in languages) {
+
+    language.add(
+        new Option(
+            languages[key],
+            key
+        )
+    );
+
+}
+
+
+window.language =
+    localStorage.getItem(
+        "language"
+    ) || "auto";
+
+
+language.value =
+    window.language;
+
+
+language.onchange = () => {
+
+    localStorage.setItem(
+        "language",
+        language.value
+    );
+
+    location.reload();
+
+};
+
+
+/*
+ * CDN
+ */
+
+const customPath =
+    document.getElementById(
+        "customPath"
+    );
+
+const savedCdn =
+    localStorage.getItem(
+        "custom_cdn"
+    );
+
+
+if (savedCdn)
+    customPath.value =
+        savedCdn;
+
+
+customPath.onchange = () => {
+
+    const value =
+        customPath.value.trim();
+
+
+    if (
+        value &&
+        /^https?:\/\/.+\/$/.test(value)
+    ) {
+
+        localStorage.setItem(
+            "custom_cdn",
+            value
+        );
+
+        document.getElementById(
+            "customPathValid"
+        ).textContent =
+            "URL hợp lệ";
+
+    } else {
+
+        localStorage.removeItem(
+            "custom_cdn"
+        );
+
+        document.getElementById(
+            "customPathValid"
+        ).textContent =
+            value
+            ? "URL không hợp lệ"
+            : "";
+
+    }
+
+};
+
+
+/*
+ * Cache
+ */
+
+document.getElementById(
+    "cache"
+).onclick = async () => {
+
+    if (
+        !confirm(
+            "Xóa toàn bộ cache và dữ liệu lưu?"
+        )
+    )
+        return;
+
+
+    localStorage.clear();
+
+
+    if (indexedDB.databases) {
+
+        const dbs =
+            await indexedDB.databases();
+
+        dbs.forEach(db => {
+
+            if (db.name)
+                indexedDB.deleteDatabase(
+                    db.name
+                );
+
+        });
+
+    }
+
+
+    const keys =
+        await caches.keys();
+
+    await Promise.all(
+        keys.map(
+            key => caches.delete(key)
+        )
+    );
+
+
+    location.reload();
+
+};
+
+
+/*
+ * PWA initial state
+ */
+
+updatePwaButton();
 
 </script>
 
