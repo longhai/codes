@@ -11,222 +11,78 @@
     <input type="file" id="input">
     Drag ROM file or click here
 </div><div id="version">
-    <select id="version-select"></select><button id="download" class="hide" onclick="downloadversion()">
-    Download
-</button>
-
-<button id="settings">
-    ⚙
+    <select id="version-select"></select>
+    <button id="download" class="hide" onclick="downloadversion()">
+        <svg viewBox="0 0 24 24" width="18" height="18">
+            <path fill="currentColor" d="M5 20h14v-2H5v2zm7-18-5 5h3v4h4V7h3l-5-5z"/>
+        </svg>
+    </button><button id="settings">
+    <svg viewBox="0 0 24 24" width="18" height="18">
+        <path fill="currentColor" d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65-2-3.46-2.49 1c-.52-.4-1.08-.73-1.69-.98L15 2h-4l-.37 2.93c-.61.25-1.17.59-1.69.98l-2.49-1-2 3.46 2.11 1.65c-.04.32-.08.65-.08.98s.03.66.08.98l-2.11 1.65 2 3.46 2.49-1c.52.4 1.08.73 1.69.98L11 22h4l.37-2.93c.61-.25 1.17-.58 1.69-.98l2.49 1 2-3.46-2.12-1.65zM13 15.5A3.5 3.5 0 1 1 13 8a3.5 3.5 0 0 1 0 7.5z"/>
+    </svg>
 </button>
 
 </div><div id="popup-settings" class="popup popup-animate">
-    <div class="content">    <div class="title">
-        <h1>Settings</h1>
-    </div>
-
-    <div class="options">
+    <div class="content">
+        <div class="title">
+            <h1>Settings</h1>
+        </div>    <div class="options">
 
         <div class="buttonbox">
-            <p>
-                Enable Debuging:
+            <p>Enable Debuging:
                 <label class="switch">
                     <input type="checkbox" id="debug">
                     <span class="slider round"></span>
                 </label>
             </p>
-        </div>
-
-        <br>
+        </div><br>
 
         <div class="buttonbox">
-            <p>Clean Cache:</p>
+            <p>Clean Cache: </p>
             <button id="cache">Clean</button>
-        </div>
-
-        <br>
+        </div><br>
 
         <div class="buttonbox">
-            <p>Language:</p>
+            <p>Language: </p>
             <select id="language"></select>
             <p id="languageHelp"></p>
-        </div>
-
-        <br>
+        </div><br>
 
         <div class="buttonbox last">
-            <p>Custom Path:</p>
-            <input
-                type="text"
-                id="customPath"
-                placeholder="https://cdn.emulatorjs.org/stable/"
-            >
+            <p>Custom Path: </p>
+            <input type="text" id="customPath"
+                placeholder="https://cdn.emulatorjs.org/stable/">
             <p id="customPathValid"></p>
         </div>
 
         <p id="offline-status">Offline Status: CHECKING</p>
-
         <p>Offline Cores will be available soon.</p>
 
         <p class="hide">
             Remove All Saved Versions:
-            <button id="remove-version" onclick="removeallsaved()">
-                Remove All
-            </button>
+            <button id="remove-version" onclick="removeallsaved()">Remove All</button>
         </p>
 
-        <div id="installbox" class="buttonbox" style="display:none">
-            <p id="installboxtext">Install PWA:</p>
-            <button id="install">Install</button>
-        </div>
-
-        <br>
+        <div id="installbox" class="buttonbox">
+            <p id="installboxtext">Install PWA: </p>
+            <button id="install" disabled>Install</button>
+        </div><br>
 
     </div>
 
     <div class="bottom">
         <button id="settings-close">Close</button>
     </div>
-
 </div>
 
 </div><div class="popup-overlay"></div><script src="https://demo.emulatorjs.org/main.js"></script><script>
-
 /* =========================
-   PWA
-========================= */
-
-(() => {
-
-    const installBox = document.getElementById("installbox");
-    const installButton = document.getElementById("install");
-    let installPrompt = null;
-
-    const isStandalone = () =>
-        window.matchMedia("(display-mode: standalone)").matches ||
-        window.matchMedia("(display-mode: fullscreen)").matches ||
-        window.navigator.standalone === true;
-
-    const setInstalled = value => {
-        localStorage.setItem("pwa_installed", value ? "true" : "false");
-    };
-
-    const isInstalled = () =>
-        localStorage.getItem("pwa_installed") === "true";
-
-    const hideInstall = () => {
-        installBox.style.display = "none";
-    };
-
-    const showInstall = () => {
-        installBox.style.display = "flex";
-        installButton.disabled = false;
-        installButton.textContent = "Install";
-    };
-
-    /*
-     * Nếu đang chạy trong PWA:
-     * chắc chắn đã cài.
-     */
-    if (isStandalone()) {
-        setInstalled(true);
-        hideInstall();
-    }
-
-    /*
-     * Trình duyệt cho phép cài.
-     *
-     * Đây cũng là tín hiệu quan trọng:
-     * nếu trước đó localStorage nói "đã cài"
-     * nhưng beforeinstallprompt lại xuất hiện,
-     * nghĩa là PWA hiện không còn được cài
-     * hoặc trình duyệt cho phép cài lại.
-     */
-    window.addEventListener("beforeinstallprompt", event => {
-
-        event.preventDefault();
-
-        installPrompt = event;
-
-        setInstalled(false);
-
-        showInstall();
-    });
-
-    /*
-     * Người dùng cài thành công.
-     */
-    window.addEventListener("appinstalled", () => {
-
-        installPrompt = null;
-
-        setInstalled(true);
-
-        hideInstall();
-    });
-
-    /*
-     * Bấm Install.
-     */
-    installButton.addEventListener("click", async () => {
-
-        if (!installPrompt) return;
-
-        const prompt = installPrompt;
-
-        installPrompt = null;
-
-        await prompt.prompt();
-
-        const result = await prompt.userChoice;
-
-        if (result.outcome === "accepted") {
-            setInstalled(true);
-            hideInstall();
-        } else {
-            /*
-             * Người dùng bấm Cancel.
-             * Cho phép thử lại khi trình duyệt
-             * phát beforeinstallprompt lần tiếp theo.
-             */
-            installPrompt = null;
-        }
-    });
-
-    /*
-     * Khi chuyển sang app PWA.
-     */
-    document.addEventListener("visibilitychange", () => {
-
-        if (isStandalone()) {
-            setInstalled(true);
-            hideInstall();
-        }
-    });
-
-    /*
-     * Khi quay lại trang.
-     */
-    window.addEventListener("pageshow", () => {
-
-        if (isStandalone()) {
-            setInstalled(true);
-            hideInstall();
-        }
-    });
-
-})();
-
-
-/* =========================
-   EmulatorJS
+   SERVICE WORKER
 ========================= */
 
 if ("serviceWorker" in navigator) {
-
     async function unregisterServiceWorkers() {
-
-        const registrations =
-            await navigator.serviceWorker.getRegistrations();
+        const registrations = await navigator.serviceWorker.getRegistrations();
 
         for (const registration of registrations) {
             await registration.unregister();
@@ -237,73 +93,53 @@ if ("serviceWorker" in navigator) {
 }
 
 
-loadJSON("/versions", response => {
+/* =========================
+   OFFLINE / VERSION
+========================= */
 
-    const offlineStatus =
-        document.getElementById("offline-status");
+loadJSON("/versions", response => {
+    const offlineStatus = document.getElementById("offline-status");
 
     if (!response) {
-
         loadJSON(
             "https://cdn.emulatorjs.org/versions.json",
             resp => loadVersions(resp)
         );
 
-        offlineStatus.textContent =
-            "Offline Status: NOT INSTALLED";
-
+        offlineStatus.textContent = "Offline Status: NOT INSTALLED";
     } else {
-
         loadVersions(response);
-
-        offlineStatus.textContent =
-            "Offline Status: READY";
+        offlineStatus.textContent = "Offline Status: READY";
     }
 });
-
 
 loadSettings();
 
 
+/* =========================
+   ROM LOADER
+========================= */
+
 input.addEventListener("change", async () => {
 
     const url = input.files[0];
-
     const parts = input.files[0].name.split(".");
 
     const core = await (async ext => {
 
-        if (["fds","nes","unif","unf"].includes(ext))
-            return "nes";
-
-        if (["smc","fig","sfc","gd3","gd7","dx2","bsx","swc"].includes(ext))
-            return "snes";
-
-        if (["z64","n64"].includes(ext))
-            return "n64";
-
-        if (["pce"].includes(ext))
-            return "pce";
-
-        if (["ngp","ngc"].includes(ext))
-            return "ngp";
-
-        if (["ws","wsc"].includes(ext))
-            return "ws";
-
-        if (["col","cv"].includes(ext))
-            return "coleco";
-
-        if (["d64"].includes(ext))
-            return "vice_x64";
-
-        if (["nds","gba","gb"].includes(ext))
-            return ext;
+        if (["fds","nes","unif","unf"].includes(ext)) return "nes";
+        if (["smc","fig","sfc","gd3","gd7","dx2","bsx","swc"].includes(ext)) return "snes";
+        if (["z64","n64"].includes(ext)) return "n64";
+        if (["pce"].includes(ext)) return "pce";
+        if (["ngp","ngc"].includes(ext)) return "ngp";
+        if (["ws","wsc"].includes(ext)) return "ws";
+        if (["col","cv"].includes(ext)) return "coleco";
+        if (["d64"].includes(ext)) return "vice_x64";
+        if (["nds","gba","gb"].includes(ext)) return ext;
 
         return await new Promise(resolve => {
 
             const cores = {
-
                 "Nintendo 64": "n64",
                 "Nintendo Game Boy": "gb",
                 "Nintendo Game Boy Advance": "gba",
@@ -341,30 +177,23 @@ input.addEventListener("change", async () => {
             const select = document.createElement("select");
 
             for (const type in cores) {
-
-                const option =
-                    document.createElement("option");
-
+                const option = document.createElement("option");
                 option.value = cores[type];
                 option.textContent = type;
-
                 select.appendChild(option);
             }
 
+            button.onclick = () =>
+                resolve(select[select.selectedIndex].value);
+
             button.textContent = "Load game";
 
-            button.onclick = () =>
-                resolve(select.value);
-
             box.innerHTML = "";
-
             box.appendChild(select);
             box.appendChild(button);
-
         });
 
     })(parts.pop());
-
 
     const div = document.createElement("div");
     const sub = document.createElement("div");
@@ -380,11 +209,7 @@ input.addEventListener("change", async () => {
     div.appendChild(sub);
     document.body.appendChild(div);
 
-
-    /*
-     * GIỮ NGUYÊN INIT CỦA DEMO
-     * để ưu tiên FPS.
-     */
+    /* GIỮ NGUYÊN INIT EMULATORJS */
 
     const cdn =
         window.cdn ||
@@ -412,9 +237,7 @@ input.addEventListener("change", async () => {
     }
 
     script.src = cdn + "loader.js";
-
     document.body.appendChild(script);
-
 });
 
 
@@ -424,5 +247,196 @@ box.ondragover = () =>
 box.ondragleave = () =>
     box.removeAttribute("drag");
 
+
+/* =========================
+   PWA
+========================= */
+
+let installPrompt = null;
+
+const installButton =
+    document.getElementById("install");
+
+const installBox =
+    document.getElementById("installbox");
+
+const installBoxText =
+    document.getElementById("installboxtext");
+
+
+function isStandalone() {
+
+    return (
+        window.matchMedia("(display-mode: standalone)").matches ||
+        window.matchMedia("(display-mode: fullscreen)").matches ||
+        window.navigator.standalone === true
+    );
+}
+
+
+function setInstalled() {
+
+    installBox.style.display = "none";
+}
+
+
+function setNotInstalled() {
+
+    installBox.style.display = "";
+}
+
+
+function updatePWAState() {
+
+    if (isStandalone()) {
+        setInstalled();
+        return;
+    }
+
+    if (installPrompt) {
+        setNotInstalled();
+        installButton.disabled = false;
+        installButton.textContent = "Install";
+        return;
+    }
+
+    installButton.disabled = true;
+    installButton.textContent = "Install";
+}
+
+
+/* Chrome / Android tạo prompt */
+
+window.addEventListener(
+    "beforeinstallprompt",
+    event => {
+
+        event.preventDefault();
+
+        installPrompt = event;
+
+        updatePWAState();
+    }
+);
+
+
+/* Người dùng vừa cài PWA */
+
+window.addEventListener(
+    "appinstalled",
+    () => {
+
+        installPrompt = null;
+
+        setInstalled();
+    }
+);
+
+
+/* Nút Install */
+
+installButton.addEventListener(
+    "click",
+    async () => {
+
+        if (!installPrompt || isStandalone()) {
+            return;
+        }
+
+        const prompt = installPrompt;
+
+        installPrompt = null;
+
+        const result = await prompt.prompt();
+
+        if (result.outcome === "accepted") {
+            setInstalled();
+        } else {
+            updatePWAState();
+        }
+    }
+);
+
+
+/*
+   Khi chuyển vào / ra PWA,
+   kiểm tra lại trạng thái.
+*/
+
+window.addEventListener(
+    "pageshow",
+    updatePWAState
+);
+
+document.addEventListener(
+    "visibilitychange",
+    () => {
+
+        if (!document.hidden) {
+            updatePWAState();
+        }
+    }
+);
+
+
+/* =========================
+   MANIFEST
+========================= */
+
+(() => {
+
+    const manifest = {
+        name: "EmulatorJS",
+        short_name: "EmulatorJS",
+        start_url: location.href,
+        display: "standalone",
+        background_color: "#000000",
+        theme_color: "#000000",
+        icons: [
+            {
+                src: "img/icon.png",
+                sizes: "512x512",
+                type: "image/png"
+            }
+        ]
+    };
+
+    const blob = new Blob(
+        [JSON.stringify(manifest)],
+        { type: "application/manifest+json" }
+    );
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("link");
+
+    link.rel = "manifest";
+    link.href = url;
+
+    document.head.appendChild(link);
+
+})();
+
+
+/* =========================
+   INITIAL STATE
+========================= */
+
+updatePWAState();
+
+
+/* EmulatorJS settings */
+
+document.addEventListener(
+    "visibilitychange",
+    () => {
+
+        if (window.matchMedia(
+            "(display-mode: standalone)"
+        ).matches) {
+            updatePWAState();
+        }
+    }
+);
 </script></body>
 </html>
