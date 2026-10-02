@@ -1,145 +1,396 @@
-<!DOCTYPE html><html>
+<!DOCTYPE html>
+<html>
 <head>
     <title>EmulatorJS | Demo</title>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta name="theme-color" content="#000">
     <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48 64x64" type="image/vnd.microsoft.icon">
     <link rel="apple-touch-icon" href="img/icon.png">
-    <meta name="theme-color" content="#000">
     <link rel="stylesheet" href="https://demo.emulatorjs.org/main.css">
-</head><body><div id="box">
+</head>
+
+<body>
+
+<div id="box">
     <input type="file" id="input">
     Drag ROM file or click here
-</div><div id="version">
-    <select id="version-select"></select>
-    <button id="download" class="hide" onclick="downloadversion()">
-        <svg viewBox="0 0 24 24" width="18" height="18">
-            <path fill="currentColor" d="M5 20h14v-2H5v2zm7-18-5 5h3v4h4V7h3l-5-5z"/>
-        </svg>
-    </button><button id="settings">
-    <svg viewBox="0 0 24 24" width="18" height="18">
-        <path fill="currentColor" d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65-2-3.46-2.49 1c-.52-.4-1.08-.73-1.69-.98L15 2h-4l-.37 2.93c-.61.25-1.17.59-1.69.98l-2.49-1-2 3.46 2.11 1.65c-.04.32-.08.65-.08.98s.03.66.08.98l-2.11 1.65 2 3.46 2.49-1c.52.4 1.08.73 1.69.98L11 22h4l.37-2.93c.61-.25 1.17-.58 1.69-.98l2.49 1 2-3.46-2.12-1.65zM13 15.5A3.5 3.5 0 1 1 13 8a3.5 3.5 0 0 1 0 7.5z"/>
-    </svg>
-</button>
+</div>
 
-</div><div id="popup-settings" class="popup popup-animate">
+<div id="version">
+    <select id="version-select"></select>
+
+    <button id="download" class="hide" onclick="downloadversion()">
+        Download
+    </button>
+
+    <button id="settings">
+        ⚙
+    </button>
+</div>
+
+<div id="popup-settings" class="popup popup-animate">
     <div class="content">
+
         <div class="title">
             <h1>Settings</h1>
-        </div>    <div class="options">
-
-        <div class="buttonbox">
-            <p>Enable Debuging:
-                <label class="switch">
-                    <input type="checkbox" id="debug">
-                    <span class="slider round"></span>
-                </label>
-            </p>
-        </div><br>
-
-        <div class="buttonbox">
-            <p>Clean Cache: </p>
-            <button id="cache">Clean</button>
-        </div><br>
-
-        <div class="buttonbox">
-            <p>Language: </p>
-            <select id="language"></select>
-            <p id="languageHelp"></p>
-        </div><br>
-
-        <div class="buttonbox last">
-            <p>Custom Path: </p>
-            <input type="text" id="customPath"
-                placeholder="https://cdn.emulatorjs.org/stable/">
-            <p id="customPathValid"></p>
         </div>
 
-        <p id="offline-status">Offline Status: CHECKING</p>
-        <p>Offline Cores will be available soon.</p>
+        <div class="options">
 
-        <p class="hide">
-            Remove All Saved Versions:
-            <button id="remove-version" onclick="removeallsaved()">Remove All</button>
-        </p>
+            <div class="buttonbox">
+                <p>
+                    Enable Debuging:
+                    <label class="switch">
+                        <input type="checkbox" id="debug">
+                        <span class="slider round"></span>
+                    </label>
+                </p>
+            </div>
 
-        <div id="installbox" class="buttonbox">
-            <p id="installboxtext">Install PWA: </p>
-            <button id="install" disabled>Install</button>
-        </div><br>
+            <br>
 
-    </div>
+            <div class="buttonbox">
+                <p>Clean Cache:</p>
+                <button id="cache">Clean</button>
+            </div>
 
-    <div class="bottom">
-        <button id="settings-close">Close</button>
+            <br>
+
+            <div class="buttonbox">
+                <p>Language:</p>
+                <select id="language"></select>
+                <p id="languageHelp"></p>
+            </div>
+
+            <br>
+
+            <div class="buttonbox last">
+                <p>Custom Path:</p>
+                <input
+                    type="text"
+                    id="customPath"
+                    placeholder="https://cdn.emulatorjs.org/stable/"
+                >
+                <p id="customPathValid"></p>
+            </div>
+
+            <p id="offline-status">Offline Status: CHECKING</p>
+
+            <p>Offline Cores will be available soon.</p>
+
+            <p class="hide">
+                Remove All Saved Versions:
+                <button id="remove-version" onclick="removeallsaved()">
+                    Remove All
+                </button>
+            </p>
+
+            <div id="installbox" class="buttonbox">
+                <p id="installboxtext">Install PWA:</p>
+                <button id="install">Install</button>
+            </div>
+
+            <br>
+
+        </div>
+
+        <div class="bottom">
+            <button id="settings-close">Close</button>
+        </div>
+
     </div>
 </div>
 
-</div><div class="popup-overlay"></div><script src="https://demo.emulatorjs.org/main.js"></script><script>
+<div class="popup-overlay"></div>
+
+<script src="https://demo.emulatorjs.org/main.js"></script>
+
+<script>
 /* =========================
-   SERVICE WORKER
+   PWA
 ========================= */
 
-if ("serviceWorker" in navigator) {
-    async function unregisterServiceWorkers() {
-        const registrations = await navigator.serviceWorker.getRegistrations();
+(function () {
 
-        for (const registration of registrations) {
-            await registration.unregister();
-        }
-    }
+    const manifest = {
+        name: "EmulatorJS",
+        short_name: "EmulatorJS",
+        start_url: "./",
+        display: "standalone",
+        background_color: "#000000",
+        theme_color: "#000000",
+        icons: [
+            {
+                src: "img/icon.png",
+                sizes: "192x192",
+                type: "image/png"
+            },
+            {
+                src: "img/icon.png",
+                sizes: "512x512",
+                type: "image/png"
+            }
+        ]
+    };
 
-    unregisterServiceWorkers();
+    const blob = new Blob(
+        [JSON.stringify(manifest)],
+        {type: "application/manifest+json"}
+    );
+
+    const manifestURL = URL.createObjectURL(blob);
+
+    const link = document.createElement("link");
+    link.rel = "manifest";
+    link.href = manifestURL;
+
+    document.head.appendChild(link);
+
+})();
+
+
+let installPrompt = null;
+
+const installButton = document.getElementById("install");
+const installBox = document.getElementById("installbox");
+const installText = document.getElementById("installboxtext");
+
+
+function isStandalone() {
+
+    return (
+        window.matchMedia("(display-mode: standalone)").matches ||
+        window.navigator.standalone === true
+    );
+
 }
 
 
+function hideInstall() {
+
+    if (installBox)
+        installBox.style.display = "none";
+
+}
+
+
+function showInstall() {
+
+    if (!installBox)
+        return;
+
+    installBox.style.display = "";
+
+    if (installButton) {
+        installButton.disabled = !installPrompt;
+        installButton.textContent = "Install";
+    }
+
+}
+
+
+/*
+    Khi đang chạy dưới dạng PWA:
+    chắc chắn không hiện Install.
+*/
+if (isStandalone()) {
+
+    hideInstall();
+
+}
+
+
+/*
+    Chrome chỉ phát sự kiện này khi trang
+    đủ điều kiện để cài và chưa được cài.
+
+    Đây cũng là điểm quan trọng để nhận biết
+    PWA đã bị xóa hay chưa.
+*/
+window.addEventListener("beforeinstallprompt", function (event) {
+
+    event.preventDefault();
+
+    installPrompt = event;
+
+    showInstall();
+
+});
+
+
+/*
+    Người dùng cài thành công.
+*/
+window.addEventListener("appinstalled", function () {
+
+    installPrompt = null;
+
+    hideInstall();
+
+});
+
+
+/*
+    Nút Install.
+*/
+if (installButton) {
+
+    installButton.addEventListener("click", async function () {
+
+        if (!installPrompt)
+            return;
+
+        const promptEvent = installPrompt;
+
+        installPrompt = null;
+
+        try {
+
+            const result = await promptEvent.prompt();
+
+            console.log(
+                "Install prompt:",
+                result.outcome
+            );
+
+        } catch (e) {
+
+            console.log(e);
+
+        }
+
+        /*
+            Không tự hiện lại nút ngay.
+            Nếu cài thành công appinstalled sẽ ẩn.
+            Nếu hủy, Chrome có thể phát beforeinstallprompt
+            lại ở thời điểm thích hợp.
+        */
+
+        installButton.disabled = true;
+
+    });
+
+}
+
+
+/*
+    Nếu chuyển sang PWA standalone
+    thì ẩn Install ngay.
+*/
+window.addEventListener("visibilitychange", function () {
+
+    if (isStandalone())
+        hideInstall();
+
+});
+
+
 /* =========================
-   OFFLINE / VERSION
+   EmulatorJS
 ========================= */
 
-loadJSON("/versions", response => {
-    const offlineStatus = document.getElementById("offline-status");
+if ("serviceWorker" in navigator) {
+
+    async function unregisterServiceWorkers() {
+
+        const registrations =
+            await navigator.serviceWorker.getRegistrations();
+
+        for (const registration of registrations) {
+
+            try {
+                await registration.unregister();
+            } catch (e) {}
+
+        }
+
+    }
+
+    unregisterServiceWorkers();
+
+}
+
+
+loadJSON("/versions", function (response) {
+
+    const offlineStatus =
+        document.getElementById("offline-status");
 
     if (!response) {
+
         loadJSON(
             "https://cdn.emulatorjs.org/versions.json",
-            resp => loadVersions(resp)
+            function (resp) {
+                loadVersions(resp);
+            }
         );
 
-        offlineStatus.textContent = "Offline Status: NOT INSTALLED";
+        offlineStatus.textContent =
+            "Offline Status: NOT INSTALLED";
+
     } else {
+
         loadVersions(response);
-        offlineStatus.textContent = "Offline Status: READY";
+
+        offlineStatus.textContent =
+            "Offline Status: READY";
+
     }
+
 });
+
 
 loadSettings();
 
 
-/* =========================
-   ROM LOADER
-========================= */
-
-input.addEventListener("change", async () => {
+input.addEventListener("change", async function () {
 
     const url = input.files[0];
-    const parts = input.files[0].name.split(".");
 
-    const core = await (async ext => {
+    const parts =
+        input.files[0].name.split(".");
 
-        if (["fds","nes","unif","unf"].includes(ext)) return "nes";
-        if (["smc","fig","sfc","gd3","gd7","dx2","bsx","swc"].includes(ext)) return "snes";
-        if (["z64","n64"].includes(ext)) return "n64";
-        if (["pce"].includes(ext)) return "pce";
-        if (["ngp","ngc"].includes(ext)) return "ngp";
-        if (["ws","wsc"].includes(ext)) return "ws";
-        if (["col","cv"].includes(ext)) return "coleco";
-        if (["d64"].includes(ext)) return "vice_x64";
-        if (["nds","gba","gb"].includes(ext)) return ext;
+    const core = await (async function (ext) {
 
-        return await new Promise(resolve => {
+        if (["fds","nes","unif","unf"].includes(ext))
+            return "nes";
+
+        if (
+            ["smc","fig","sfc","gd3","gd7","dx2","bsx","swc"]
+            .includes(ext)
+        )
+            return "snes";
+
+        if (["z64","n64"].includes(ext))
+            return "n64";
+
+        if (["pce"].includes(ext))
+            return "pce";
+
+        if (["ngp","ngc"].includes(ext))
+            return "ngp";
+
+        if (["ws","wsc"].includes(ext))
+            return "ws";
+
+        if (["col","cv"].includes(ext))
+            return "coleco";
+
+        if (["d64"].includes(ext))
+            return "vice_x64";
+
+        if (
+            ["nds","gba","gb","z64","n64"]
+            .includes(ext)
+        )
+            return ext;
+
+
+        return await new Promise(function (resolve) {
 
             const cores = {
+
                 "Nintendo 64": "n64",
                 "Nintendo Game Boy": "gb",
                 "Nintendo Game Boy Advance": "gba",
@@ -171,272 +422,149 @@ input.addEventListener("change", async () => {
                 "PlayStation Portable": "psp",
                 "3DS": "azahar",
                 "DOS": "dosbox_pure"
+
             };
 
-            const button = document.createElement("button");
-            const select = document.createElement("select");
+
+            const button =
+                document.createElement("button");
+
+            const select =
+                document.createElement("select");
+
 
             for (const type in cores) {
-                const option = document.createElement("option");
+
+                const option =
+                    document.createElement("option");
+
                 option.value = cores[type];
                 option.textContent = type;
+
                 select.appendChild(option);
+
             }
 
-            button.onclick = () =>
-                resolve(select[select.selectedIndex].value);
+
+            button.onclick = function () {
+
+                resolve(
+                    select[select.selectedIndex].value
+                );
+
+            };
+
 
             button.textContent = "Load game";
 
             box.innerHTML = "";
+
             box.appendChild(select);
             box.appendChild(button);
+
         });
 
     })(parts.pop());
 
-    const div = document.createElement("div");
-    const sub = document.createElement("div");
-    const script = document.createElement("script");
+
+    const div =
+        document.createElement("div");
+
+    const sub =
+        document.createElement("div");
+
+    const script =
+        document.createElement("script");
+
 
     sub.id = "game";
     div.id = "display";
 
-    document.getElementById("top")?.remove();
+
     document.getElementById("version")?.remove();
     document.getElementById("box")?.remove();
 
+
     div.appendChild(sub);
+
     document.body.appendChild(div);
 
-    /* GIỮ NGUYÊN INIT EMULATORJS */
+
+    /*
+        EmulatorJS initialization
+        giữ gần như nguyên bản Demo.
+    */
 
     const cdn =
         window.cdn ||
         "https://cdn.emulatorjs.org/stable/data/";
 
+
     window.EJS_player = "#game";
-    window.EJS_gameName = parts.shift();
+
+    window.EJS_gameName =
+        parts.shift();
+
     window.EJS_biosUrl = "";
-    window.EJS_gameUrl = url;
-    window.EJS_core = core;
-    window.EJS_pathtodata = cdn;
-    window.EJS_startOnLoaded = true;
-    window.EJS_DEBUG_XX = window.debug;
+
+    window.EJS_gameUrl =
+        url;
+
+    window.EJS_core =
+        core;
+
+    window.EJS_pathtodata =
+        cdn;
+
+    window.EJS_startOnLoaded =
+        true;
+
+    window.EJS_DEBUG_XX =
+        window.debug;
+
 
     if (window.language !== "auto") {
-        window.EJS_language = window.language;
+
+        window.EJS_language =
+            window.language;
+
     }
+
 
     if (
         core === "psp" ||
         core === "dosbox_pure" ||
         core === "azahar"
     ) {
+
         window.EJS_threads = true;
+
     }
 
-    script.src = cdn + "loader.js";
+
+    script.src =
+        cdn + "loader.js";
+
+
     document.body.appendChild(script);
+
 });
 
 
-box.ondragover = () =>
+box.ondragover = function () {
+
     box.setAttribute("drag", true);
 
-box.ondragleave = () =>
+};
+
+
+box.ondragleave = function () {
+
     box.removeAttribute("drag");
 
+};
 
-/* =========================
-   PWA
-========================= */
+</script>
 
-let installPrompt = null;
-
-const installButton =
-    document.getElementById("install");
-
-const installBox =
-    document.getElementById("installbox");
-
-const installBoxText =
-    document.getElementById("installboxtext");
-
-
-function isStandalone() {
-
-    return (
-        window.matchMedia("(display-mode: standalone)").matches ||
-        window.matchMedia("(display-mode: fullscreen)").matches ||
-        window.navigator.standalone === true
-    );
-}
-
-
-function setInstalled() {
-
-    installBox.style.display = "none";
-}
-
-
-function setNotInstalled() {
-
-    installBox.style.display = "";
-}
-
-
-function updatePWAState() {
-
-    if (isStandalone()) {
-        setInstalled();
-        return;
-    }
-
-    if (installPrompt) {
-        setNotInstalled();
-        installButton.disabled = false;
-        installButton.textContent = "Install";
-        return;
-    }
-
-    installButton.disabled = true;
-    installButton.textContent = "Install";
-}
-
-
-/* Chrome / Android tạo prompt */
-
-window.addEventListener(
-    "beforeinstallprompt",
-    event => {
-
-        event.preventDefault();
-
-        installPrompt = event;
-
-        updatePWAState();
-    }
-);
-
-
-/* Người dùng vừa cài PWA */
-
-window.addEventListener(
-    "appinstalled",
-    () => {
-
-        installPrompt = null;
-
-        setInstalled();
-    }
-);
-
-
-/* Nút Install */
-
-installButton.addEventListener(
-    "click",
-    async () => {
-
-        if (!installPrompt || isStandalone()) {
-            return;
-        }
-
-        const prompt = installPrompt;
-
-        installPrompt = null;
-
-        const result = await prompt.prompt();
-
-        if (result.outcome === "accepted") {
-            setInstalled();
-        } else {
-            updatePWAState();
-        }
-    }
-);
-
-
-/*
-   Khi chuyển vào / ra PWA,
-   kiểm tra lại trạng thái.
-*/
-
-window.addEventListener(
-    "pageshow",
-    updatePWAState
-);
-
-document.addEventListener(
-    "visibilitychange",
-    () => {
-
-        if (!document.hidden) {
-            updatePWAState();
-        }
-    }
-);
-
-
-/* =========================
-   MANIFEST
-========================= */
-
-(() => {
-
-    const manifest = {
-        name: "EmulatorJS",
-        short_name: "EmulatorJS",
-        start_url: location.href,
-        display: "standalone",
-        background_color: "#000000",
-        theme_color: "#000000",
-        icons: [
-            {
-                src: "img/icon.png",
-                sizes: "512x512",
-                type: "image/png"
-            }
-        ]
-    };
-
-    const blob = new Blob(
-        [JSON.stringify(manifest)],
-        { type: "application/manifest+json" }
-    );
-
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("link");
-
-    link.rel = "manifest";
-    link.href = url;
-
-    document.head.appendChild(link);
-
-})();
-
-
-/* =========================
-   INITIAL STATE
-========================= */
-
-updatePWAState();
-
-
-/* EmulatorJS settings */
-
-document.addEventListener(
-    "visibilitychange",
-    () => {
-
-        if (window.matchMedia(
-            "(display-mode: standalone)"
-        ).matches) {
-            updatePWAState();
-        }
-    }
-);
-</script></body>
+</body>
 </html>
