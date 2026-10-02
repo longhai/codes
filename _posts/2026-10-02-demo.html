@@ -46,9 +46,9 @@
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             color: var(--text-color);
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 1rem;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: .9rem;
             cursor: pointer;
             outline: 0;
             margin-top: 12px;
@@ -60,57 +60,69 @@
             color: #fff;
         }
         button:disabled { opacity: .5; cursor: not-allowed; }
-        #pwa-status-msg { font-size: 12px; color: #f44336; margin-top: 8px; }
+        #pwa-status-msg { font-size: 12px; color: #f44336; margin-top: 4px; text-align: center; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>Cài đặt PWA</h2>
-        <button id="install">Cài đặt</button>
+        <h2 id="label-pwa">Cài đặt PWA:</h2>
+        <button id="install"></button>
         <div id="pwa-status-msg"></div>
     </div>
 
     <script>
-        const $ = id => document.getElementById(id);
+        const $ = i => document.getElementById(i);
+
+        // Khôi phục i18n chuẩn nguyên bản từ code gốc
+        const i18n = {
+            vi: { pwa: "Cài đặt PWA:", inst: "Cài đặt", installed: "Đã cài đặt" },
+            en: { pwa: "PWA Setup:", inst: "Install", installed: "Installed" }
+        };
+
         let installPrompt = null;
+        window.language = localStorage.getItem("language") || "auto";
 
-        // Hàm kiểm tra trạng thái cài đặt chuẩn theo logic gốc
-        function checkPwa() {
-            const isVi = (window.language === "vi" || (window.language === "auto" && navigator.language.startsWith("vi")));
-            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-            const isMarkedInstalled = localStorage.getItem("pwa_installed") === "true";
-
-            // Điều kiện disable nút cài đặt:
-            // 1. Đang chạy trong môi trường app (standalone)
-            // 2. HOẶC đã có cờ pwa_installed trong localStorage VÀ trình duyệt không phát lại sự kiện kích hoạt cài đặt (installPrompt === null)
-            const isInstalled = isStandalone || (isMarkedInstalled && !installPrompt);
-
-            $("install").textContent = isInstalled ? "Đã cài đặt" : "Cài đặt";
-            $("install").disabled = isInstalled || !installPrompt;
+        // Cập nhật giao diện ngôn ngữ theo logic gốc
+        function updateUiLang(l) {
+            const d = (l === "vi" || (l === "auto" && navigator.language.startsWith("vi"))) ? i18n.vi : i18n.en;
+            if ($("label-pwa")) $("label-pwa").textContent = d.pwa;
+            checkPwa();
         }
 
-        // Khi trình duyệt phát hiện trang web có thể cài đặt làm PWA (Chưa được cài hoặc đã bị xóa cài đặt trước đó)
+        // Kiểm tra chính xác trạng thái cài đặt chuẩn từ mã gốc
+        function checkPwa() {
+            const isVi = (window.language === "vi" || (window.language === "auto" && navigator.language.startsWith("vi"))),
+                  st = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone,
+                  mk = localStorage.getItem("pwa_installed") === "true";
+
+            // 1. Nếu đang mở app (standalone) HOẶC (đã đánh dấu installed TRONG localStorage VÀ không có installPrompt)
+            // -> Hiển thị "Đã cài đặt" và vô hiệu hóa nút
+            // 2. Ngược lại -> Hiển thị "Cài đặt" và chỉ bật nút khi trình duyệt cấp installPrompt
+            $("install").textContent = (st || (mk && !installPrompt)) ? (isVi ? i18n.vi.installed : i18n.en.installed) : (isVi ? i18n.vi.inst : i18n.en.inst);
+            $("install").disabled = st || (mk && !installPrompt) || !installPrompt;
+        }
+
+        // Sự kiện khi ứng dụng CHƯA ĐƯỢC CÀI ĐẶT (hoặc đã BỊ XÓA khỏi thiết bị)
         window.addEventListener("beforeinstallprompt", e => {
             e.preventDefault();
             installPrompt = e;
-            
-            // Xóa cờ cài đặt cũ để cho phép cài lại ứng dụng mới
+            // Xóa cờ đánh dấu cài đặt cũ nếu ứng dụng đã bị gỡ bỏ để cho phép cài lại
             localStorage.removeItem("pwa_installed");
             checkPwa();
         });
 
-        // Khi ứng dụng hoàn tất quá trình cài đặt thành công
+        // Sự kiện khi ứng dụng ĐÃ ĐƯỢC CÀI ĐẶT THÀNH CÔNG
         window.addEventListener("appinstalled", () => {
             localStorage.setItem("pwa_installed", "true");
             installPrompt = null;
             checkPwa();
         });
 
-        // Đăng ký ngầm Manifest và Service Worker
+        // Tự động khởi tạo Manifest & Service Worker
         (() => {
             try {
-                const manifest = {
+                const m = {
                     name: "Web Application",
                     short_name: "WebApp",
                     start_url: location.href,
@@ -122,28 +134,26 @@
                         sizes: "192x192 512x512",
                         type: "image/svg+xml"
                     }]
-                };
-
-                const link = document.createElement("link");
-                link.rel = "manifest";
-                link.href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: "application/json" }));
-                document.head.appendChild(link);
+                }, l = document.createElement("link");
+                l.rel = "manifest";
+                l.href = URL.createObjectURL(new Blob([JSON.stringify(m)], { type: "application/json" }));
+                document.head.appendChild(l);
 
                 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-                    const swCode = "self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>self.clients.claim());self.addEventListener('fetch',e=>e.respondWith(fetch(e.request)));";
-                    navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode], { type: "application/javascript" }))).catch(() => {});
+                    navigator.serviceWorker.register(URL.createObjectURL(new Blob(["self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>self.clients.claim());self.addEventListener('fetch',e=>e.respondWith(fetch(e.request)));"], { type: "application/javascript" }))).catch(() => {});
                 }
             } catch (e) {}
-            checkPwa();
+            
+            // Khởi tạo ngôn ngữ ban đầu
+            updateUiLang(window.language);
         })();
 
-        // Xử lý sự kiện khi nhấn nút Cài đặt
+        // Xử lý sự kiện click Cài đặt
         $("install").onclick = async () => {
             if (installPrompt) {
                 try {
                     installPrompt.prompt();
-                    const choice = await installPrompt.userChoice;
-                    if (choice?.outcome === 'accepted') {
+                    if ((await installPrompt.userChoice)?.outcome === 'accepted') {
                         localStorage.setItem("pwa_installed", "true");
                         installPrompt = null;
                         checkPwa();
@@ -152,7 +162,7 @@
                     $("pwa-status-msg").textContent = "Lỗi PWA: " + e.message;
                 }
             } else {
-                $("pwa-status-msg").textContent = "PWA yêu cầu môi trường HTTPS hoặc localhost.";
+                $("pwa-status-msg").textContent = (window.language === "en" || (window.language === "auto" && !navigator.language.startsWith("vi"))) ? "PWA requires HTTPS or localhost." : "PWA yêu cầu môi trường HTTPS/localhost.";
             }
         };
     </script>
