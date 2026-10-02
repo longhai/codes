@@ -4,10 +4,20 @@
     <title>EmulatorJS | Demo</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <meta name="theme-color" content="#000">
-    <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48 64x64" type="image/vnd.microsoft.icon">
+
+    <link rel="icon" href="favicon.ico"
+        sizes="16x16 32x32 48x48 64x64"
+        type="image/vnd.microsoft.icon">
+
     <link rel="apple-touch-icon" href="img/icon.png">
-    <link rel="stylesheet" href="https://demo.emulatorjs.org/main.css">
+
+    <!-- PWA: dùng manifest thật -->
+    <link rel="manifest" href="manifest.json">
+
+    <meta name="theme-color" content="#000">
+
+    <link rel="stylesheet"
+        href="https://demo.emulatorjs.org/main.css">
 </head>
 
 <body>
@@ -18,18 +28,23 @@
 </div>
 
 <div id="version">
+
     <select id="version-select"></select>
 
-    <button id="download" class="hide" onclick="downloadversion()">
+    <button id="download" class="hide"
+        onclick="downloadversion()">
         Download
     </button>
 
     <button id="settings">
         ⚙
     </button>
+
 </div>
 
+
 <div id="popup-settings" class="popup popup-animate">
+
     <div class="content">
 
         <div class="title">
@@ -67,100 +82,90 @@
 
             <div class="buttonbox last">
                 <p>Custom Path:</p>
+
                 <input
                     type="text"
                     id="customPath"
                     placeholder="https://cdn.emulatorjs.org/stable/"
                 >
+
                 <p id="customPathValid"></p>
             </div>
 
-            <p id="offline-status">Offline Status: CHECKING</p>
+            <p id="offline-status">
+                Offline Status: CHECKING
+            </p>
 
-            <p>Offline Cores will be available soon.</p>
+            <p>
+                Offline Cores will be available soon.
+            </p>
 
             <p class="hide">
                 Remove All Saved Versions:
-                <button id="remove-version" onclick="removeallsaved()">
+                <button id="remove-version"
+                    onclick="removeallsaved()">
                     Remove All
                 </button>
             </p>
 
+
+            <!-- PWA -->
+
             <div id="installbox" class="buttonbox">
-                <p id="installboxtext">Install PWA:</p>
-                <button id="install">Install</button>
+
+                <p id="installboxtext">
+                    Install PWA:
+                </p>
+
+                <button id="install">
+                    Install
+                </button>
+
             </div>
 
             <br>
 
         </div>
 
+
         <div class="bottom">
-            <button id="settings-close">Close</button>
+            <button id="settings-close">
+                Close
+            </button>
         </div>
 
     </div>
+
 </div>
+
 
 <div class="popup-overlay"></div>
 
+
 <script src="https://demo.emulatorjs.org/main.js"></script>
 
+
 <script>
-/* =========================
+
+/* =========================================================
    PWA
-========================= */
-
-(function () {
-
-    const manifest = {
-        name: "EmulatorJS",
-        short_name: "EmulatorJS",
-        start_url: "./",
-        display: "standalone",
-        background_color: "#000000",
-        theme_color: "#000000",
-        icons: [
-            {
-                src: "img/icon.png",
-                sizes: "192x192",
-                type: "image/png"
-            },
-            {
-                src: "img/icon.png",
-                sizes: "512x512",
-                type: "image/png"
-            }
-        ]
-    };
-
-    const blob = new Blob(
-        [JSON.stringify(manifest)],
-        {type: "application/manifest+json"}
-    );
-
-    const manifestURL = URL.createObjectURL(blob);
-
-    const link = document.createElement("link");
-    link.rel = "manifest";
-    link.href = manifestURL;
-
-    document.head.appendChild(link);
-
-})();
-
+========================================================= */
 
 let installPrompt = null;
 
-const installButton = document.getElementById("install");
-const installBox = document.getElementById("installbox");
-const installText = document.getElementById("installboxtext");
+const installButton =
+    document.getElementById("install");
+
+const installBox =
+    document.getElementById("installbox");
 
 
-function isStandalone() {
+function standalone() {
 
     return (
-        window.matchMedia("(display-mode: standalone)").matches ||
+        window.matchMedia(
+            "(display-mode: standalone)"
+        ).matches ||
         window.navigator.standalone === true
     );
 
@@ -183,18 +188,24 @@ function showInstall() {
     installBox.style.display = "";
 
     if (installButton) {
-        installButton.disabled = !installPrompt;
-        installButton.textContent = "Install";
+
+        installButton.disabled =
+            !installPrompt;
+
+        installButton.textContent =
+            "Install";
+
     }
 
 }
 
 
 /*
-    Khi đang chạy dưới dạng PWA:
-    chắc chắn không hiện Install.
+    Nếu đang chạy chính PWA
+    thì không hiện nút Install.
 */
-if (isStandalone()) {
+
+if (standalone()) {
 
     hideInstall();
 
@@ -202,55 +213,77 @@ if (isStandalone()) {
 
 
 /*
-    Chrome chỉ phát sự kiện này khi trang
-    đủ điều kiện để cài và chưa được cài.
+    Chrome phát sự kiện này khi:
+    - trang đủ điều kiện cài
+    - người dùng chưa cài PWA
+    - Chrome cho phép cài lại
 
-    Đây cũng là điểm quan trọng để nhận biết
-    PWA đã bị xóa hay chưa.
+    Đây là tín hiệu chính để hiện nút.
 */
-window.addEventListener("beforeinstallprompt", function (event) {
 
-    event.preventDefault();
+window.addEventListener(
+    "beforeinstallprompt",
+    function (event) {
 
-    installPrompt = event;
+        event.preventDefault();
 
-    showInstall();
+        installPrompt = event;
 
-});
+        showInstall();
+
+        console.log(
+            "PWA install available"
+        );
+
+    }
+);
 
 
 /*
-    Người dùng cài thành công.
+    Cài thành công.
 */
-window.addEventListener("appinstalled", function () {
 
-    installPrompt = null;
+window.addEventListener(
+    "appinstalled",
+    function () {
 
-    hideInstall();
+        console.log(
+            "PWA installed"
+        );
 
-});
+        installPrompt = null;
+
+        hideInstall();
+
+    }
+);
 
 
 /*
     Nút Install.
 */
-if (installButton) {
 
-    installButton.addEventListener("click", async function () {
+installButton.addEventListener(
+    "click",
+    async function () {
 
         if (!installPrompt)
             return;
 
-        const promptEvent = installPrompt;
+        const prompt =
+            installPrompt;
 
         installPrompt = null;
 
+        installButton.disabled = true;
+
         try {
 
-            const result = await promptEvent.prompt();
+            const result =
+                await prompt.prompt();
 
             console.log(
-                "Install prompt:",
+                "Install result:",
                 result.outcome
             );
 
@@ -260,309 +293,484 @@ if (installButton) {
 
         }
 
-        /*
-            Không tự hiện lại nút ngay.
-            Nếu cài thành công appinstalled sẽ ẩn.
-            Nếu hủy, Chrome có thể phát beforeinstallprompt
-            lại ở thời điểm thích hợp.
-        */
-
-        installButton.disabled = true;
-
-    });
-
-}
+    }
+);
 
 
 /*
-    Nếu chuyển sang PWA standalone
-    thì ẩn Install ngay.
+    Khi chuyển sang PWA standalone
+    thì ẩn nút.
 */
-window.addEventListener("visibilitychange", function () {
 
-    if (isStandalone())
-        hideInstall();
+window.addEventListener(
+    "visibilitychange",
+    function () {
 
-});
+        if (standalone())
+            hideInstall();
+
+    }
+);
 
 
-/* =========================
-   EmulatorJS
-========================= */
+/* =========================================================
+   EMULATORJS
+   Giữ initialization gần như nguyên Demo
+========================================================= */
 
-if ("serviceWorker" in navigator) {
 
-    async function unregisterServiceWorkers() {
+loadJSON(
+    "/versions",
+    function (response) {
 
-        const registrations =
-            await navigator.serviceWorker.getRegistrations();
+        const offlineStatus =
+            document.getElementById(
+                "offline-status"
+            );
 
-        for (const registration of registrations) {
+        if (!response) {
 
-            try {
-                await registration.unregister();
-            } catch (e) {}
+            loadJSON(
+                "https://cdn.emulatorjs.org/versions.json",
+                function (resp) {
+
+                    loadVersions(resp);
+
+                }
+            );
+
+            offlineStatus.textContent =
+                "Offline Status: NOT INSTALLED";
+
+        } else {
+
+            loadVersions(response);
+
+            offlineStatus.textContent =
+                "Offline Status: READY";
 
         }
 
     }
-
-    unregisterServiceWorkers();
-
-}
-
-
-loadJSON("/versions", function (response) {
-
-    const offlineStatus =
-        document.getElementById("offline-status");
-
-    if (!response) {
-
-        loadJSON(
-            "https://cdn.emulatorjs.org/versions.json",
-            function (resp) {
-                loadVersions(resp);
-            }
-        );
-
-        offlineStatus.textContent =
-            "Offline Status: NOT INSTALLED";
-
-    } else {
-
-        loadVersions(response);
-
-        offlineStatus.textContent =
-            "Offline Status: READY";
-
-    }
-
-});
+);
 
 
 loadSettings();
 
 
-input.addEventListener("change", async function () {
+input.addEventListener(
+    "change",
+    async function () {
 
-    const url = input.files[0];
+        const url =
+            input.files[0];
 
-    const parts =
-        input.files[0].name.split(".");
-
-    const core = await (async function (ext) {
-
-        if (["fds","nes","unif","unf"].includes(ext))
-            return "nes";
-
-        if (
-            ["smc","fig","sfc","gd3","gd7","dx2","bsx","swc"]
-            .includes(ext)
-        )
-            return "snes";
-
-        if (["z64","n64"].includes(ext))
-            return "n64";
-
-        if (["pce"].includes(ext))
-            return "pce";
-
-        if (["ngp","ngc"].includes(ext))
-            return "ngp";
-
-        if (["ws","wsc"].includes(ext))
-            return "ws";
-
-        if (["col","cv"].includes(ext))
-            return "coleco";
-
-        if (["d64"].includes(ext))
-            return "vice_x64";
-
-        if (
-            ["nds","gba","gb","z64","n64"]
-            .includes(ext)
-        )
-            return ext;
+        const parts =
+            input.files[0]
+                .name
+                .split(".");
 
 
-        return await new Promise(function (resolve) {
-
-            const cores = {
-
-                "Nintendo 64": "n64",
-                "Nintendo Game Boy": "gb",
-                "Nintendo Game Boy Advance": "gba",
-                "Nintendo DS": "nds",
-                "Nintendo Entertainment System": "nes",
-                "Super Nintendo Entertainment System": "snes",
-                "PlayStation": "psx",
-                "Virtual Boy": "vb",
-                "Sega Mega Drive": "segaMD",
-                "Sega Master System": "segaMS",
-                "Sega CD": "segaCD",
-                "Atari Lynx": "lynx",
-                "Sega 32X": "sega32x",
-                "Atari Jaguar": "jaguar",
-                "Sega Game Gear": "segaGG",
-                "Sega Saturn": "segaSaturn",
-                "Atari 7800": "atari7800",
-                "Atari 2600": "atari2600",
-                "NEC TurboGrafx-16/SuperGrafx/PC Engine": "pce",
-                "NEC PC-FX": "pcfx",
-                "SNK NeoGeo Pocket (Color)": "ngp",
-                "Bandai WonderSwan (Color)": "ws",
-                "ColecoVision": "coleco",
-                "Commodore 64": "vice_x64",
-                "Commodore 128": "vice_x128",
-                "Commodore VIC20": "vice_xvic",
-                "Commodore Plus/4": "vice_xplus4",
-                "Commodore PET": "vice_xpet",
-                "PlayStation Portable": "psp",
-                "3DS": "azahar",
-                "DOS": "dosbox_pure"
-
-            };
+        const core =
+            await (async function (ext) {
 
 
-            const button =
-                document.createElement("button");
-
-            const select =
-                document.createElement("select");
-
-
-            for (const type in cores) {
-
-                const option =
-                    document.createElement("option");
-
-                option.value = cores[type];
-                option.textContent = type;
-
-                select.appendChild(option);
-
-            }
+                if (
+                    [
+                        "fds",
+                        "nes",
+                        "unif",
+                        "unf"
+                    ].includes(ext)
+                )
+                    return "nes";
 
 
-            button.onclick = function () {
+                if (
+                    [
+                        "smc",
+                        "fig",
+                        "sfc",
+                        "gd3",
+                        "gd7",
+                        "dx2",
+                        "bsx",
+                        "swc"
+                    ].includes(ext)
+                )
+                    return "snes";
 
-                resolve(
-                    select[select.selectedIndex].value
+
+                if (
+                    [
+                        "z64",
+                        "n64"
+                    ].includes(ext)
+                )
+                    return "n64";
+
+
+                if (["pce"].includes(ext))
+                    return "pce";
+
+
+                if (
+                    [
+                        "ngp",
+                        "ngc"
+                    ].includes(ext)
+                )
+                    return "ngp";
+
+
+                if (
+                    [
+                        "ws",
+                        "wsc"
+                    ].includes(ext)
+                )
+                    return "ws";
+
+
+                if (
+                    [
+                        "col",
+                        "cv"
+                    ].includes(ext)
+                )
+                    return "coleco";
+
+
+                if (ext === "d64")
+                    return "vice_x64";
+
+
+                if (
+                    [
+                        "nds",
+                        "gba",
+                        "gb",
+                        "z64",
+                        "n64"
+                    ].includes(ext)
+                )
+                    return ext;
+
+
+                return await new Promise(
+                    function (resolve) {
+
+
+                        const cores = {
+
+                            "Nintendo 64":
+                                "n64",
+
+                            "Nintendo Game Boy":
+                                "gb",
+
+                            "Nintendo Game Boy Advance":
+                                "gba",
+
+                            "Nintendo DS":
+                                "nds",
+
+                            "Nintendo Entertainment System":
+                                "nes",
+
+                            "Super Nintendo Entertainment System":
+                                "snes",
+
+                            "PlayStation":
+                                "psx",
+
+                            "Virtual Boy":
+                                "vb",
+
+                            "Sega Mega Drive":
+                                "segaMD",
+
+                            "Sega Master System":
+                                "segaMS",
+
+                            "Sega CD":
+                                "segaCD",
+
+                            "Atari Lynx":
+                                "lynx",
+
+                            "Sega 32X":
+                                "sega32x",
+
+                            "Atari Jaguar":
+                                "jaguar",
+
+                            "Sega Game Gear":
+                                "segaGG",
+
+                            "Sega Saturn":
+                                "segaSaturn",
+
+                            "Atari 7800":
+                                "atari7800",
+
+                            "Atari 2600":
+                                "atari2600",
+
+                            "NEC TurboGrafx-16/SuperGrafx/PC Engine":
+                                "pce",
+
+                            "NEC PC-FX":
+                                "pcfx",
+
+                            "SNK NeoGeo Pocket (Color)":
+                                "ngp",
+
+                            "Bandai WonderSwan (Color)":
+                                "ws",
+
+                            "ColecoVision":
+                                "coleco",
+
+                            "Commodore 64":
+                                "vice_x64",
+
+                            "Commodore 128":
+                                "vice_x128",
+
+                            "Commodore VIC20":
+                                "vice_xvic",
+
+                            "Commodore Plus/4":
+                                "vice_xplus4",
+
+                            "Commodore PET":
+                                "vice_xpet",
+
+                            "PlayStation Portable":
+                                "psp",
+
+                            "3DS":
+                                "azahar",
+
+                            "DOS":
+                                "dosbox_pure"
+
+                        };
+
+
+                        const button =
+                            document.createElement(
+                                "button"
+                            );
+
+
+                        const select =
+                            document.createElement(
+                                "select"
+                            );
+
+
+                        for (
+                            const type in cores
+                        ) {
+
+                            const option =
+                                document.createElement(
+                                    "option"
+                                );
+
+                            option.value =
+                                cores[type];
+
+                            option.textContent =
+                                type;
+
+                            select.appendChild(
+                                option
+                            );
+
+                        }
+
+
+                        button.onclick =
+                            function () {
+
+                                resolve(
+                                    select[
+                                        select
+                                            .selectedIndex
+                                    ].value
+                                );
+
+                            };
+
+
+                        button.textContent =
+                            "Load game";
+
+
+                        box.innerHTML = "";
+
+                        box.appendChild(
+                            select
+                        );
+
+                        box.appendChild(
+                            button
+                        );
+
+                    }
                 );
 
-            };
+            })(parts.pop());
 
 
-            button.textContent = "Load game";
+        const div =
+            document.createElement("div");
 
-            box.innerHTML = "";
+        const sub =
+            document.createElement("div");
 
-            box.appendChild(select);
-            box.appendChild(button);
-
-        });
-
-    })(parts.pop());
+        const script =
+            document.createElement("script");
 
 
-    const div =
-        document.createElement("div");
+        sub.id = "game";
 
-    const sub =
-        document.createElement("div");
-
-    const script =
-        document.createElement("script");
+        div.id = "display";
 
 
-    sub.id = "game";
-    div.id = "display";
+        /*
+            Giống Demo nhưng an toàn hơn:
+            Demo gốc tham chiếu #top,
+            trong HTML này không có #top.
+        */
+
+        document
+            .getElementById("top")
+            ?.remove();
 
 
-    document.getElementById("version")?.remove();
-    document.getElementById("box")?.remove();
+        document
+            .getElementById("version")
+            ?.remove();
 
 
-    div.appendChild(sub);
-
-    document.body.appendChild(div);
-
-
-    /*
-        EmulatorJS initialization
-        giữ gần như nguyên bản Demo.
-    */
-
-    const cdn =
-        window.cdn ||
-        "https://cdn.emulatorjs.org/stable/data/";
+        document
+            .getElementById("box")
+            ?.remove();
 
 
-    window.EJS_player = "#game";
+        div.appendChild(sub);
 
-    window.EJS_gameName =
-        parts.shift();
-
-    window.EJS_biosUrl = "";
-
-    window.EJS_gameUrl =
-        url;
-
-    window.EJS_core =
-        core;
-
-    window.EJS_pathtodata =
-        cdn;
-
-    window.EJS_startOnLoaded =
-        true;
-
-    window.EJS_DEBUG_XX =
-        window.debug;
+        document.body.appendChild(div);
 
 
-    if (window.language !== "auto") {
+        /* =================================================
+           EmulatorJS ORIGINAL INIT
+        ================================================= */
 
-        window.EJS_language =
-            window.language;
+        const cdn =
+            window.cdn ||
+            "https://cdn.emulatorjs.org/stable/data/";
+
+
+        window.EJS_player =
+            "#game";
+
+
+        window.EJS_gameName =
+            parts.shift();
+
+
+        window.EJS_biosUrl =
+            "";
+
+
+        window.EJS_gameUrl =
+            url;
+
+
+        window.EJS_core =
+            core;
+
+
+        window.EJS_pathtodata =
+            cdn;
+
+
+        window.EJS_startOnLoaded =
+            true;
+
+
+        window.EJS_DEBUG_XX =
+            window.debug;
+
+
+        if (
+            window.language !== "auto"
+        ) {
+
+            window.EJS_language =
+                window.language;
+
+        }
+
+
+        if (
+            core === "psp" ||
+            core === "dosbox_pure" ||
+            core === "azahar"
+        ) {
+
+            window.EJS_threads =
+                true;
+
+        }
+
+
+        /*
+            Không EJS_AdUrl
+            để không bật ads.html.
+        */
+
+
+        script.src =
+            cdn + "loader.js";
+
+
+        document.body.appendChild(
+            script
+        );
 
     }
+);
 
 
-    if (
-        core === "psp" ||
-        core === "dosbox_pure" ||
-        core === "azahar"
-    ) {
+/* =========================================================
+   DRAG
+========================================================= */
 
-        window.EJS_threads = true;
+box.ondragover =
+    function () {
 
-    }
+        box.setAttribute(
+            "drag",
+            true
+        );
 
-
-    script.src =
-        cdn + "loader.js";
-
-
-    document.body.appendChild(script);
-
-});
+    };
 
 
-box.ondragover = function () {
+box.ondragleave =
+    function () {
 
-    box.setAttribute("drag", true);
+        box.removeAttribute(
+            "drag"
+        );
 
-};
-
-
-box.ondragleave = function () {
-
-    box.removeAttribute("drag");
-
-};
+    };
 
 </script>
 
