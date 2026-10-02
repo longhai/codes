@@ -2,23 +2,65 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PWA Test</title>
-</head><body><button id="install">Cài đặt</button>
+<title>EmulatorJS</title><style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0
+}
 
-<div id="pwa-status-msg"></div><script>
+body{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#0d0e12;
+    color:#f0f0f0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif
+}
+
+button{
+    padding:10px 18px;
+    border:0;
+    border-radius:8px;
+    background:#1AAFFF;
+    color:#fff;
+    cursor:pointer;
+    font-size:14px
+}
+
+button:disabled{
+    opacity:.5;
+    cursor:not-allowed
+}
+
+#pwa-status-msg{
+    margin-top:10px;
+    font-size:12px;
+    color:#f44336;
+    text-align:center
+}
+</style></head><body><div>
+    <button id="install">Cài đặt</button>
+    <div id="pwa-status-msg"></div>
+</div><script>
+
 let installPrompt=null;
+
+
+/* =========================
+   PWA LOGIC — GIỮ NGUYÊN
+   ========================= */
 
 function checkPwa(){
 
     const isVi=
-        window.language==="vi"||
-        (
-            window.language==="auto"&&
-            navigator.language.startsWith("vi")
-        );
+        navigator.language.startsWith("vi");
 
     const st=
-        window.matchMedia("(display-mode: standalone)").matches||
+        window.matchMedia(
+            '(display-mode: standalone)'
+        ).matches ||
         navigator.standalone;
 
     const mk=
@@ -26,26 +68,27 @@ function checkPwa(){
 
     $("install").textContent=
         (
-            st||
-            (mk&&!installPrompt)
+            st ||
+            (mk && !installPrompt)
         )
-        ?(
-            isVi
-            ?"Đã cài đặt"
-            :"Installed"
-        )
-        :(
-            isVi
-            ?"Cài đặt"
-            :"Install"
-        );
+        ? "Đã cài đặt"
+        : "Cài đặt";
 
     $("install").disabled=
-        st||
-        (mk&&!installPrompt)||
+        st ||
+        (mk && !installPrompt) ||
         !installPrompt;
 }
 
+
+function $(id){
+    return document.getElementById(id);
+}
+
+
+/* =========================
+   TRÌNH DUYỆT CHO PHÉP CÀI
+   ========================= */
 
 window.addEventListener(
     "beforeinstallprompt",
@@ -56,9 +99,10 @@ window.addEventListener(
         installPrompt=e;
 
         /*
-         * Giống code gốc:
-         * khi trình duyệt cho phép cài lại,
-         * xóa trạng thái cũ.
+         * Giữ nguyên logic gốc:
+         * nếu đã gỡ ứng dụng thì trình duyệt
+         * phát lại beforeinstallprompt,
+         * lúc đó mới xóa trạng thái cũ.
          */
         localStorage.removeItem("pwa_installed");
 
@@ -67,15 +111,14 @@ window.addEventListener(
 );
 
 
+/* =========================
+   CÀI ĐẶT THÀNH CÔNG
+   ========================= */
+
 window.addEventListener(
     "appinstalled",
     ()=>{
 
-        /*
-         * Giống code gốc:
-         * chỉ sau khi app được cài,
-         * mới lưu trạng thái đã cài.
-         */
         localStorage.setItem(
             "pwa_installed",
             "true"
@@ -88,38 +131,44 @@ window.addEventListener(
 );
 
 
-function $(id){
-    return document.getElementById(id);
-}
-
-
-/*
- * ===== MANIFEST + SERVICE WORKER =====
- * Giữ nguyên cách của code gốc.
- */
+/* =========================
+   MANIFEST + SERVICE WORKER
+   GIỮ NGUYÊN LOGIC GỐC
+   ========================= */
 
 (()=>{
+
     try{
 
         const m={
-            name:"PWA Test",
-            short_name:"PWA Test",
+
+            name:"EmulatorJS Demo",
+
+            short_name:"EmulatorJS",
+
             start_url:location.href,
+
             display:"standalone",
+
             background_color:"#0d0e12",
+
             theme_color:"#1AAFFF",
 
             icons:[{
+
                 src:
-                "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><path fill='%231AAFFF' d='M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768zM768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256zM554.667 661.547c0-59.093 47.68-106.88 106.88-106.88h212.907c59.093 0 106.88 47.68 106.88 106.88v212.907c0 59.093-47.68 106.88-106.88 106.88h-212.907A106.731 106.731 0 0 1 554.667 874.453v-212.906zm85.333 0v212.906c0 12.032 9.536 21.547 21.547 21.547h212.907c12.032 0 21.547-9.536 21.547-21.547v-212.906c0-12.032-9.536-21.547-21.547-21.547h-212.907c-12.032 0-21.547 9.536-21.547 21.547zM183.829 109.888c36.118-61.163 108.246-61.248 144.427 0l126.208 213.653c35.733 60.523 3.52 124.437-66.816 124.437H124.437c-70.613 0-102.635-63.765-66.816-124.437L183.829 109.91zM133.653 362.667h244.8l-122.41-207.232-122.39 207.232z'/>",
+                "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><path fill='%231AAFFF' d='M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768zM768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256zM554.667 661.547c0-59.093 47.68-106.88 106.88-106.88h212.907c59.093 0 106.88 47.68 106.88 106.88v212.907c0 59.093-47.68 106.88-106.88 106.88h-212.907A106.731 106.731 0 0 1 554.667 874.453v-212.906zm85.333 0v212.906c0 12.032 9.536 21.547 21.547 21.547h212.907c12.032 0 21.547-9.536 21.547-21.547v-212.906c0-12.032-9.536-21.547-21.547-21.547h-212.907c-12.032 0-21.547 9.536-21.547 21.547zM183.829 109.888c36.118-61.163 108.246-61.248 144.427 0l126.208 213.653c35.733 60.523 3.52 124.437-66.816 124.437H124.437c-70.613 0-102.635-63.765-66.816-124.437L183.829 109.91zM133.653 362.667h244.8l-122.41-207.232-122.39 207.232z' /></svg>",
 
                 sizes:"192x192 512x512",
+
                 type:"image/svg+xml"
+
             }]
         };
 
 
-        const l=document.createElement("link");
+        const l=
+            document.createElement("link");
 
         l.rel="manifest";
 
@@ -127,7 +176,9 @@ function $(id){
             URL.createObjectURL(
                 new Blob(
                     [JSON.stringify(m)],
-                    {type:"application/json"}
+                    {
+                        type:"application/json"
+                    }
                 )
             );
 
@@ -135,7 +186,7 @@ function $(id){
 
 
         if(
-            "serviceWorker"in navigator&&
+            "serviceWorker" in navigator &&
             location.protocol.startsWith("http")
         ){
 
@@ -143,33 +194,39 @@ function $(id){
 
                 URL.createObjectURL(
 
-                    new Blob(
-                        [
-                            "self.addEventListener('install',e=>e.waitUntil(self.skipWaiting()));"+
-                            "self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));"+
-                            "self.addEventListener('fetch',e=>e.respondWith(fetch(e.request)));"
-                        ],
-                        {
-                            type:"application/javascript"
-                        }
-                    )
+                    new Blob([
+
+                        "self.addEventListener('install',e=>e.waitUntil(self.skipWaiting()));"+
+
+                        "self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));"+
+
+                        "self.addEventListener('fetch',e=>e.respondWith(fetch(e.request)));"
+
+                    ],{
+
+                        type:
+                        "application/javascript"
+
+                    })
 
                 )
 
             ).catch(()=>{});
+
         }
 
     }catch(e){}
+
 
     checkPwa();
 
 })();
 
 
-/*
- * ===== NÚT CÀI ĐẶT =====
- * Giữ nguyên logic code gốc.
- */
+/* =========================
+   NÚT CÀI ĐẶT
+   GIỮ NGUYÊN LOGIC GỐC
+   ========================= */
 
 $("install").onclick=async()=>{
 
@@ -204,16 +261,10 @@ $("install").onclick=async()=>{
     }else{
 
         $("pwa-status-msg").textContent=
-            (
-                window.language==="en"||
-                (
-                    window.language==="auto"&&
-                    !navigator.language.startsWith("vi")
-                )
-            )
-            ?"PWA requires HTTPS or localhost."
-            :"PWA yêu cầu môi trường HTTPS/localhost.";
+            "PWA yêu cầu môi trường HTTPS/localhost.";
+
     }
+
 };
 
 </script></body>
