@@ -1,13 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
     <title>EmulatorJS | Demo</title>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48 64x64" type="image/vnd.microsoft.icon">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><path fill='%231AAFFF' d='M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768zM768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256zM554.667 661.547c0-59.093 47.68-106.88 106.88-106.88h212.907c59.093 0 106.88 47.68 106.88 106.88v212.907c0 59.093-47.68 106.88-106.88 106.88h-212.907A106.731 106.731 0 0 1 554.667 874.453v-212.906zm85.333 0v212.906c0 12.032 9.536 21.547 21.547 21.547h212.907c12.032 0 21.547-9.536 21.547-21.547v-212.906c0-12.032-9.536-21.547-21.547-21.547h-212.907c-12.032 0-21.547 9.536-21.547 21.547zM183.829 109.888c36.118-61.163 108.246-61.248 144.427 0l126.208 213.653c35.733 60.523 3.52 124.437-66.816 124.437H124.437c-70.613 0-102.635-63.765-66.816-124.437L183.829 109.91zM133.653 362.667h244.8l-122.41-207.232-122.39 207.232z'/></svg>">
     <link rel="apple-touch-icon" href="img/icon.png">
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000">
     <link rel="stylesheet" href="https://demo.emulatorjs.org/main.css">
+
+    <style>
+        #popup-settings .buttonbox{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:10px;
+        }
+
+        #popup-settings input[type="text"]{
+            max-width:55%;
+        }
+
+        #pwa-status-msg{
+            font-size:12px;
+            margin-top:4px;
+            text-align:right;
+        }
+    </style>
 </head>
 
 <body>
@@ -18,71 +38,94 @@
 </div>
 
 <div id="version">
+
     <select id="version-select"></select>
 
     <button id="download" class="hide" onclick="downloadversion()">
+
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
             <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 6.854-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708"/>
         </svg>
+
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
             <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 4.854-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7 8.793l2.646-2.647a.5.5 0 0 1 .708.708"/>
         </svg>
+
     </button>
 
     <button id="settings">
+
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
             <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
         </svg>
+
     </button>
+
 </div>
+
 
 <!-- SETTINGS -->
 
 <div id="popup-settings" class="popup popup-animate">
+
     <div class="content">
 
         <div class="title">
-            <h1>Settings</h1>
+            <h1 id="settings-title">
+                Settings
+            </h1>
         </div>
 
         <div class="options">
 
             <div class="buttonbox">
-                <p>
+                <p id="label-debug">
                     Enable Debuging:
-                    <label class="switch">
-                        <input type="checkbox" id="debug">
-                        <span class="slider round"></span>
-                    </label>
                 </p>
+
+                <label class="switch">
+                    <input type="checkbox" id="debug">
+                    <span class="slider round"></span>
+                </label>
             </div>
 
             <br>
 
             <div class="buttonbox">
-                <p>Clean Cache:</p>
-                <button id="cache">Clean</button>
+                <p id="label-cache">
+                    Clean Cache:
+                </p>
+
+                <button id="cache">
+                    Clean
+                </button>
             </div>
 
             <br>
 
             <div class="buttonbox">
-                <p>Language:</p>
+                <p id="label-lang">
+                    Language:
+                </p>
+
                 <select id="language"></select>
-                <p id="languageHelp"></p>
             </div>
 
             <br>
 
-            <div class="buttonbox last">
-                <p>Custom Path:</p>
+            <div class="buttonbox">
+                <p id="label-cdn">
+                    Custom Path:
+                </p>
+
                 <input
                     type="text"
                     id="customPath"
                     placeholder="https://cdn.emulatorjs.org/stable/data/"
                 >
-                <p id="customPathValid"></p>
             </div>
+
+            <p id="customPathValid"></p>
 
             <p id="offline-status">
                 Offline Status: CHECKING
@@ -94,46 +137,70 @@
 
             <p class="hide">
                 Remove All Saved Versions:
-                <button id="remove-version" onclick="removeallsaved()">
+                <button id="remove-version"
+                        onclick="removeallsaved()">
                     Remove All
                 </button>
             </p>
 
             <div id="installbox" class="buttonbox">
-                <p id="installboxtext">Install PWA:</p>
-                <button id="install">Install</button>
+
+                <p id="label-pwa">
+                    Install PWA:
+                </p>
+
+                <button id="install" disabled>
+                    Install
+                </button>
+
             </div>
 
-            <p id="pwa-status-msg"
-               style="font-size:12px;color:#f44336">
-            </p>
-
-            <br>
+            <p id="pwa-status-msg"></p>
 
         </div>
 
         <div class="bottom">
-            <button id="settings-close">Close</button>
+
+            <button id="settings-close">
+                Close
+            </button>
+
         </div>
 
     </div>
+
 </div>
 
 <div class="popup-overlay"></div>
+
 
 <script src="https://demo.emulatorjs.org/main.js"></script>
 
 <script>
 
 /* =========================
-   DEMO ORIGINAL
-========================= */
+   ORIGINAL DEMO
+   ========================= */
 
 if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.getRegistrations()
-        .then(rs => rs.forEach(r => r.unregister()))
-        .catch(() => {});
+
+    async function unregisterServiceWorkers() {
+
+        try {
+
+            const registrations =
+                await navigator.serviceWorker.getRegistrations();
+
+            for (const registration of registrations)
+                await registration.unregister();
+
+        } catch (e) {}
+
+    }
+
+    unregisterServiceWorkers();
 }
+
 
 loadJSON("/versions", response => {
 
@@ -157,20 +224,19 @@ loadJSON("/versions", response => {
         offlineStatus.textContent =
             "Offline Status: READY";
     }
+
 });
+
 
 loadSettings();
 
 
-/* =========================
-   ROM LOADING
-========================= */
-
 input.addEventListener("change", async () => {
 
     const url = input.files[0];
-    const parts = input.files[0].name.split(".");
-    const ext = (parts.pop() || "").toLowerCase();
+
+    const parts =
+        input.files[0].name.split(".");
 
     const core = await (async ext => {
 
@@ -183,7 +249,7 @@ input.addEventListener("change", async () => {
         if (["z64","n64"].includes(ext))
             return "n64";
 
-        if (ext === "pce")
+        if (["pce"].includes(ext))
             return "pce";
 
         if (["ngp","ngc"].includes(ext))
@@ -195,15 +261,16 @@ input.addEventListener("change", async () => {
         if (["col","cv"].includes(ext))
             return "coleco";
 
-        if (ext === "d64")
+        if (["d64"].includes(ext))
             return "vice_x64";
 
-        if (["nds","gba","gb"].includes(ext))
+        if (["nds","gba","gb","z64","n64"].includes(ext))
             return ext;
 
         return await new Promise(resolve => {
 
             const cores = {
+
                 "Nintendo 64":"n64",
                 "Nintendo Game Boy":"gb",
                 "Nintendo Game Boy Advance":"gba",
@@ -237,11 +304,13 @@ input.addEventListener("change", async () => {
                 "DOS":"dosbox_pure"
             };
 
+
             const button =
                 document.createElement("button");
 
             const select =
                 document.createElement("select");
+
 
             for (const type in cores) {
 
@@ -257,8 +326,12 @@ input.addEventListener("change", async () => {
                 select.appendChild(option);
             }
 
+
             button.onclick = () =>
-                resolve(select.value);
+                resolve(
+                    select[select.selectedIndex].value
+                );
+
 
             button.textContent =
                 "Load game";
@@ -270,7 +343,7 @@ input.addEventListener("change", async () => {
 
         });
 
-    })(ext);
+    })(parts.pop());
 
 
     const div =
@@ -282,14 +355,12 @@ input.addEventListener("change", async () => {
     const script =
         document.createElement("script");
 
+
     sub.id = "game";
     div.id = "display";
 
 
-    /*
-     * #top không có trong HTML này,
-     * nên dùng ?. để không làm dừng EmulatorJS.
-     */
+    /* FIX #top */
 
     document.getElementById("top")?.remove();
     document.getElementById("version")?.remove();
@@ -300,13 +371,15 @@ input.addEventListener("change", async () => {
     document.body.appendChild(div);
 
 
-    /* =========================
-       EMULATORJS ORIGINAL CONFIG
-    ========================= */
+    /*
+     * ORIGINAL EMULATORJS CONFIG
+     */
 
     const cdn =
         window.cdn ||
+        localStorage.getItem("custom_cdn") ||
         "https://cdn.emulatorjs.org/stable/data/";
+
 
     window.EJS_player =
         "#game";
@@ -329,29 +402,31 @@ input.addEventListener("change", async () => {
     window.EJS_startOnLoaded =
         true;
 
+
     /*
      * Không có EJS_AdUrl
+     * => không gọi ads.html
      */
 
     window.EJS_DEBUG_XX =
         window.debug;
 
-    if (window.language !== "auto") {
+
+    if (window.language !== "auto")
         window.EJS_language =
             window.language;
-    }
+
 
     if (
         core === "psp" ||
         core === "dosbox_pure" ||
         core === "azahar"
-    ) {
-        window.EJS_threads =
-            true;
-    }
+    )
+        window.EJS_threads = true;
+
 
     /*
-     * Giữ nguyên loader của Demo
+     * ORIGINAL LOADER
      */
 
     script.src =
@@ -371,51 +446,11 @@ box.ondragleave = () =>
 
 /* =========================
    SETTINGS
-========================= */
+   ========================= */
 
-const settingsPopup =
-    document.getElementById("popup-settings");
+const langs = {
 
-settings.onclick = () =>
-    settingsPopup.classList.add("show");
-
-document.getElementById("settings-close").onclick =
-    () => settingsPopup.classList.remove("show");
-
-
-/* =========================
-   DEBUG
-========================= */
-
-const params =
-    new URLSearchParams(location.search);
-
-debug.checked =
-    ["1","true"].includes(
-        params.get("debug")
-    );
-
-debug.onchange = () => {
-
-    const u =
-        new URL(location.href);
-
-    if (debug.checked)
-        u.searchParams.set("debug","1");
-    else
-        u.searchParams.delete("debug");
-
-    location.href =
-        u.toString();
-};
-
-
-/* =========================
-   LANGUAGE
-========================= */
-
-const languages = {
-    auto:"Auto",
+    auto:"Tự động",
     en:"English",
     vi:"Tiếng Việt",
     pt:"Português",
@@ -425,37 +460,80 @@ const languages = {
     de:"Deutsch",
     fr:"Français",
     ru:"Русский"
+
 };
+
+
+const ejsLangMap = {
+
+    auto:"",
+    en:"en-US",
+    vi:"vi-VN",
+    pt:"pt-BR",
+    es:"es-ES",
+    ja:"ja-JP",
+    zh:"zh-CN",
+    de:"de-DE",
+    fr:"fr-FR",
+    ru:"ru-RU"
+
+};
+
 
 const language =
     document.getElementById("language");
 
-for (const l in languages)
+
+for (const l in langs)
     language.add(
-        new Option(languages[l],l)
+        new Option(langs[l], l)
     );
+
 
 window.language =
     localStorage.getItem("language") ||
     "auto";
 
+
 language.value =
     window.language;
 
+
 language.onchange = () => {
+
+    window.language =
+        language.value;
 
     localStorage.setItem(
         "language",
         language.value
     );
 
-    location.reload();
 };
 
 
-/* =========================
-   CUSTOM CDN
-========================= */
+document.getElementById("debug").checked =
+    localStorage.getItem("debug") === "true";
+
+
+document.getElementById("debug").onchange = e => {
+
+    localStorage.setItem(
+        "debug",
+        e.target.checked
+    );
+
+    window.debug =
+        e.target.checked;
+
+};
+
+
+window.debug =
+    document.getElementById("debug").checked;
+
+
+/* CDN */
 
 const customPath =
     document.getElementById("customPath");
@@ -463,12 +541,15 @@ const customPath =
 const customPathValid =
     document.getElementById("customPathValid");
 
-const savedCDN =
+
+const savedCdn =
     localStorage.getItem("custom_cdn");
 
-if (savedCDN)
+
+if (savedCdn)
     customPath.value =
-        savedCDN;
+        savedCdn;
+
 
 customPath.onchange = () => {
 
@@ -476,166 +557,168 @@ customPath.onchange = () => {
         customPath.value.trim();
 
     if (
-        value &&
+        !value ||
         /^https?:\/\/.+\/$/.test(value)
     ) {
 
-        localStorage.setItem(
-            "custom_cdn",
-            value
-        );
+        if (value) {
 
-        customPathValid.textContent =
-            "Valid";
+            localStorage.setItem(
+                "custom_cdn",
+                value
+            );
 
-        customPathValid.style.color =
-            "#4caf50";
+            customPathValid.textContent =
+                "URL hợp lệ";
+
+            customPathValid.style.color =
+                "#4caf50";
+
+        } else {
+
+            localStorage.removeItem(
+                "custom_cdn"
+            );
+
+            customPathValid.textContent =
+                "";
+
+        }
 
     } else {
 
-        localStorage.removeItem(
-            "custom_cdn"
-        );
-
         customPathValid.textContent =
-            value ? "Invalid URL" : "";
+            "URL không hợp lệ (cần /)";
 
         customPathValid.style.color =
             "#f44336";
     }
+
 };
 
 
-/* =========================
-   CACHE
-========================= */
+/* CACHE */
 
 document.getElementById("cache").onclick =
     async () => {
 
-        if (!confirm(
-            "Clean all cache and saved data?"
-        ))
+        if (
+            !confirm(
+                "Xóa toàn bộ cache và dữ liệu lưu?"
+            )
+        )
             return;
+
 
         localStorage.clear();
 
-        if (window.indexedDB?.databases) {
 
-            try {
+        if (indexedDB.databases) {
 
-                const dbs =
-                    await indexedDB.databases();
+            const dbs =
+                await indexedDB.databases();
 
-                dbs.forEach(db => {
+            for (const db of dbs) {
 
-                    if (db.name)
-                        indexedDB.deleteDatabase(
-                            db.name
-                        );
+                if (db.name)
+                    indexedDB.deleteDatabase(
+                        db.name
+                    );
 
-                });
-
-            } catch(e) {}
+            }
 
         }
+
 
         if (window.caches) {
 
-            try {
+            const keys =
+                await caches.keys();
 
-                const keys =
-                    await caches.keys();
+            for (const key of keys)
+                await caches.delete(key);
 
-                await Promise.all(
-                    keys.map(k =>
-                        caches.delete(k)
-                    )
-                );
-
-            } catch(e) {}
         }
 
+
         location.reload();
+
     };
+
+
+/* SETTINGS OPEN/CLOSE */
+
+const popup =
+    document.getElementById("popup-settings");
+
+
+document.getElementById("settings").onclick =
+    () => {
+
+        checkPwa();
+
+        popup.classList.add("show");
+
+    };
+
+
+document.getElementById("settings-close").onclick =
+    () =>
+        popup.classList.remove("show");
 
 
 /* =========================
    PWA
-   - SVG DATA URL
-   - BLOB MANIFEST
-========================= */
+   ========================= */
 
-let installPrompt = null;
+let installPrompt =
+    null;
+
 
 const installButton =
     document.getElementById("install");
+
 
 const pwaStatus =
     document.getElementById("pwa-status-msg");
 
 
-const icon =
-"data:image/svg+xml," +
-encodeURIComponent(`
-<svg xmlns="http://www.w3.org/2000/svg"
-     viewBox="0 0 1024 1024">
-<path fill="#1AAFFF"
-d="M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768z
-M768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256z
-M554.667 661.547c0-59.093 47.68-106.88 106.88-106.88h212.907c59.093 0 106.88 47.68 106.88 106.88v212.907c0 59.093-47.68 106.88-106.88 106.88h-212.907A106.731 106.731 0 0 1 554.667 874.453v-212.906z
-M640 661.547v212.906c0 12.032 9.536 21.547 21.547 21.547h212.907c12.032 0 21.547-9.536 21.547-21.547v-212.906c0-12.032-9.536-21.547-21.547-21.547h-212.907c-12.032 0-21.547 9.536-21.547 21.547z
-M183.829 109.888c36.118-61.163 108.246-61.248 144.427 0l126.208 213.653c35.733 60.523 3.52 124.437-66.816 124.437H124.437c-70.613 0-102.635-63.765-66.816-124.437L183.829 109.91z
-M133.653 362.667h244.8l-122.41-207.232-122.39 207.232z"/>
-</svg>
-`);
+function checkPwa() {
+
+    const standalone =
+        window.matchMedia(
+            "(display-mode: standalone)"
+        ).matches ||
+        navigator.standalone;
 
 
-/* Manifest */
-
-try {
-
-    const manifest = {
-        name: "EmulatorJS",
-        short_name: "EmulatorJS",
-        start_url: location.href,
-        display: "standalone",
-        background_color: "#000000",
-        theme_color: "#1AAFFF",
-        icons: [
-            {
-                src: icon,
-                sizes: "192x192 512x512",
-                type: "image/svg+xml"
-            }
-        ]
-    };
-
-    const manifestURL =
-        URL.createObjectURL(
-            new Blob(
-                [JSON.stringify(manifest)],
-                {type:"application/json"}
-            )
-        );
-
-    const manifestLink =
-        document.createElement("link");
-
-    manifestLink.rel =
-        "manifest";
-
-    manifestLink.href =
-        manifestURL;
-
-    document.head.appendChild(
-        manifestLink
-    );
-
-} catch(e) {}
+    const installed =
+        localStorage.getItem(
+            "pwa_installed"
+        ) === "true";
 
 
-/* PWA prompt */
+    if (standalone || installed) {
+
+        installButton.textContent =
+            "Installed";
+
+        installButton.disabled =
+            true;
+
+        return;
+
+    }
+
+
+    installButton.textContent =
+        "Install";
+
+    installButton.disabled =
+        !installPrompt;
+
+}
+
 
 window.addEventListener(
     "beforeinstallprompt",
@@ -646,11 +729,12 @@ window.addEventListener(
         installPrompt =
             event;
 
-        installButton.disabled =
-            false;
+        localStorage.removeItem(
+            "pwa_installed"
+        );
 
-        installButton.textContent =
-            "Install";
+        checkPwa();
+
     }
 );
 
@@ -667,53 +751,10 @@ window.addEventListener(
         installPrompt =
             null;
 
-        installButton.textContent =
-            "Installed";
+        checkPwa();
 
-        installButton.disabled =
-            true;
     }
 );
-
-
-function checkPwa() {
-
-    const standalone =
-        window.matchMedia(
-            "(display-mode: standalone)"
-        ).matches ||
-        navigator.standalone;
-
-    const installed =
-        localStorage.getItem(
-            "pwa_installed"
-        ) === "true";
-
-    if (standalone || installed) {
-
-        installButton.textContent =
-            "Installed";
-
-        installButton.disabled =
-            true;
-
-    } else if (installPrompt) {
-
-        installButton.textContent =
-            "Install";
-
-        installButton.disabled =
-            false;
-
-    } else {
-
-        installButton.textContent =
-            "Install";
-
-        installButton.disabled =
-            true;
-    }
-}
 
 
 installButton.onclick =
@@ -722,10 +763,12 @@ installButton.onclick =
         if (!installPrompt) {
 
             pwaStatus.textContent =
-                "PWA requires HTTPS or localhost.";
+                "PWA yêu cầu HTTPS hoặc localhost.";
 
             return;
+
         }
+
 
         try {
 
@@ -733,6 +776,7 @@ installButton.onclick =
 
             const result =
                 await installPrompt.userChoice;
+
 
             if (
                 result &&
@@ -746,20 +790,119 @@ installButton.onclick =
 
             }
 
+
             installPrompt =
                 null;
 
             checkPwa();
 
-        } catch(e) {
+        } catch (e) {
 
             pwaStatus.textContent =
-                "PWA error: " + e.message;
+                "Lỗi PWA: " + e.message;
+
         }
+
     };
 
 
-checkPwa();
+/*
+ * SVG DATA URI
+ * dùng icon giống Code 1
+ */
+
+(() => {
+
+    try {
+
+        const icon =
+            "data:image/svg+xml," +
+            "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'>" +
+            "<path fill='%231AAFFF' d='" +
+            "M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768z" +
+            "M768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256z" +
+            "M554.667 661.547c0-59.093 47.68-106.88 106.88-106.88h212.907c59.093 0 106.88 47.68 106.88 106.88v212.907c0 59.093-47.68 106.88-106.88 106.88h-212.907A106.731 106.731 0 0 1 554.667 874.453v-212.906z" +
+            "m85.333 0v212.906c0 12.032 9.536 21.547 21.547 21.547h212.907c12.032 0 21.547-9.536 21.547-21.547v-212.906c0-12.032-9.536-21.547-21.547-21.547h-212.907c-12.032 0-21.547 9.536-21.547 21.547z" +
+            "M183.829 109.888c36.118-61.163 108.246-61.248 144.427 0l126.208 213.653c35.733 60.523 3.52 124.437-66.816 124.437H124.437c-70.613 0-102.635-63.765-66.816-124.437L183.829 109.91zM133.653 362.667h244.8l-122.41-207.232-122.39 207.232z'/>" +
+            "</svg>";
+
+
+        const manifest = {
+
+            name:"EmulatorJS",
+            short_name:"EmulatorJS",
+            start_url:location.href,
+            display:"standalone",
+            background_color:"#0d0e12",
+            theme_color:"#1AAFFF",
+
+            icons:[{
+
+                src:icon,
+                sizes:"192x192 512x512",
+                type:"image/svg+xml"
+
+            }]
+
+        };
+
+
+        const link =
+            document.createElement("link");
+
+
+        link.rel =
+            "manifest";
+
+
+        link.href =
+            URL.createObjectURL(
+                new Blob(
+                    [JSON.stringify(manifest)],
+                    {type:"application/json"}
+                )
+            );
+
+
+        document.head.appendChild(link);
+
+
+        /*
+         * Giữ cách PWA của Code 1:
+         * tạo Service Worker bằng Blob.
+         */
+
+        if (
+            "serviceWorker" in navigator &&
+            location.protocol.startsWith("http")
+        ) {
+
+            navigator.serviceWorker.register(
+
+                URL.createObjectURL(
+
+                    new Blob(
+                        [
+                            "self.addEventListener('install',e=>self.skipWaiting());",
+                            "self.addEventListener('activate',e=>self.clients.claim());",
+                            "self.addEventListener('fetch',e=>e.respondWith(fetch(e.request)));"
+                        ],
+                        {
+                            type:"application/javascript"
+                        }
+                    )
+
+                )
+
+            ).catch(() => {});
+
+        }
+
+    } catch (e) {}
+
+    checkPwa();
+
+})();
 
 </script>
 
