@@ -260,7 +260,7 @@ const cdn=window.cdn||"https://cdn.emulatorjs.org/stable/data/";
 
 window.EJS_player="#game";
 window.EJS_gameName=parts.join(".");
-window.EJS_biosUrl:core==="psx"?"https://longhai.github.io/bios/psx.7z":["arcade","mame2003_plus"].includes(core)?"https://longhai.github.io/bios/arcade.7z":"",
+window.EJS_biosUrl=core==="psx"?"https://longhai.github.io/bios/psx.7z":["arcade","mame2003_plus"].includes(core)?"https://longhai.github.io/bios/arcade.7z":"";
 window.EJS_gameUrl=file;
 window.EJS_core=core;
 window.EJS_pathtodata=cdn;
@@ -374,24 +374,6 @@ status.style.color="#f44336";
 
 /* CACHE */
 
-document.getElementById("cache").onclick=async()=>{
-
-if(!confirm("Xóa cache và dữ liệu lưu?"))
-return;
-
-localStorage.clear();
-
-if(indexedDB.databases)
-for(const db of await indexedDB.databases())
-if(db.name)
-indexedDB.deleteDatabase(db.name);
-
-for(const c of await caches.keys())
-await caches.delete(c);
-
-location.reload();
-
-};
 
 
 /* =========================
