@@ -1,8 +1,7 @@
-# Cấu hình phân trang
-paginate: 8 # Số lượng bài viết hiển thị trên 1 trang (bạn có thể đổi thành 9, 12, v.v.)
+paginate: 8
 paginate_path: "/page:num/"
+future: true # Thêm dòng này
 
-# Cấu hình mặc định không dùng layout cho _posts
 defaults:
   - scope:
       path: "_posts"
