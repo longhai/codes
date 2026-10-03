@@ -314,7 +314,6 @@ location.href=u.href;
 
 
 
-
 /* CDN */
 
 const customPath=document.getElementById("customPath");
@@ -346,26 +345,6 @@ status.style.color="#f44336";
 };
 
 
-/* CACHE */
-
-document.getElementById("cache").onclick=async()=>{
-
-if(!confirm("Xóa cache và dữ liệu lưu?"))
-return;
-
-localStorage.clear();
-
-if(indexedDB.databases)
-for(const db of await indexedDB.databases())
-if(db.name)
-indexedDB.deleteDatabase(db.name);
-
-for(const c of await caches.keys())
-await caches.delete(c);
-
-location.reload();
-
-};
 
 /* =========================
    PWA
