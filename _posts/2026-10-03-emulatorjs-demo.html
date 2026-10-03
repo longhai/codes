@@ -36,11 +36,12 @@ Drag ROM file or click here
 <button id="settings">
 
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-<path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
+<path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686.1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
 </svg>
 
 </button>
 </div>
+
 
 <div id="popup-settings" class="popup popup-animate">
 <div class="content">
@@ -116,18 +117,23 @@ Remove All Saved Versions:
 
 <div class="popup-overlay"></div>
 
+
 <script src="https://demo.emulatorjs.org/main.js"></script>
 
 <script>
 
-/* SERVICE WORKER */
+/* =========================================================
+   SERVICE WORKER
+========================================================= */
 
 if("serviceWorker" in navigator)
 navigator.serviceWorker.getRegistrations()
 .then(rs=>rs.forEach(r=>r.unregister()));
 
 
-/* OFFLINE */
+/* =========================================================
+   OFFLINE
+========================================================= */
 
 loadJSON("/versions",response=>{
 
@@ -154,7 +160,9 @@ s.textContent="Offline Status: NOT INSTALLED";
 loadSettings();
 
 
-/* ROM */
+/* =========================================================
+   ROM
+========================================================= */
 
 input.addEventListener("change",async()=>{
 
@@ -166,7 +174,9 @@ const parts=file.name.split(".");
 const ext=(parts.pop()||"").toLowerCase();
 
 
-/* EXTENSION → CORE */
+/* =========================================================
+   EXTENSION → CORE
+========================================================= */
 
 const map={
 nes:"fds nes unif unf",
@@ -187,11 +197,14 @@ let core=Object.entries(map)
 .find(([c,e])=>e.split(" ").includes(ext))?.[0];
 
 
-/* CORE SELECT */
+/* =========================================================
+   CHỌN CORE
+========================================================= */
 
 if(!core){
 
 const cores={
+
 "Nintendo 64":"n64",
 "Nintendo Game Boy":"gb",
 "Nintendo Game Boy Advance":"gba",
@@ -223,6 +236,7 @@ const cores={
 "PlayStation Portable":"psp",
 "3DS":"azahar",
 "DOS":"dosbox_pure"
+
 };
 
 const select=document.createElement("select");
@@ -243,7 +257,9 @@ button.onclick=()=>resolve(select.value);
 }
 
 
-/* EMULATORJS */
+/* =========================================================
+   EMULATORJS DISPLAY
+========================================================= */
 
 const div=document.createElement("div");
 const game=document.createElement("div");
@@ -259,6 +275,10 @@ document.getElementById("box")?.remove();
 div.appendChild(game);
 document.body.appendChild(div);
 
+
+/* =========================================================
+   EMULATORJS CONFIG
+========================================================= */
 
 const cdn=window.cdn||
 "https://cdn.emulatorjs.org/stable/data/";
@@ -279,13 +299,14 @@ if(["psp","dosbox_pure","azahar"].includes(core))
 window.EJS_threads=true;
 
 script.src=cdn+"loader.js";
-
 document.body.appendChild(script);
 
 });
 
 
-/* DRAG */
+/* =========================================================
+   DRAG
+========================================================= */
 
 box.ondragover=()=>{
 box.setAttribute("drag",true);
@@ -296,7 +317,9 @@ box.removeAttribute("drag");
 };
 
 
-/* SETTINGS */
+/* =========================================================
+   SETTINGS
+========================================================= */
 
 const settings=document.getElementById("settings");
 const popup=document.getElementById("popup-settings");
@@ -311,7 +334,9 @@ popup.classList.remove("show");
 };
 
 
-/* DEBUG */
+/* =========================================================
+   DEBUG
+========================================================= */
 
 const params=new URLSearchParams(location.search);
 const debug=document.getElementById("debug");
@@ -331,7 +356,9 @@ location.href=u.href;
 };
 
 
-/* LANGUAGE */
+/* =========================================================
+   LANGUAGE
+========================================================= */
 
 const languages={
 auto:"Tự động",
@@ -362,10 +389,15 @@ location.reload();
 };
 
 
-/* CDN */
+/* =========================================================
+   CDN
+========================================================= */
 
-const customPath=document.getElementById("customPath");
-const savedCdn=localStorage.getItem("custom_cdn");
+const customPath=
+document.getElementById("customPath");
+
+const savedCdn=
+localStorage.getItem("custom_cdn");
 
 if(savedCdn)
 customPath.value=savedCdn;
@@ -374,18 +406,24 @@ customPath.onchange=()=>{
 
 const value=customPath.value.trim();
 const valid=/^https?:\/\/.+\/$/.test(value);
-const status=document.getElementById("customPathValid");
+
+const status=
+document.getElementById("customPathValid");
 
 if(valid){
 
 localStorage.setItem("custom_cdn",value);
+
 status.textContent="URL hợp lệ";
 status.style.color="#4caf50";
 
 }else{
 
 localStorage.removeItem("custom_cdn");
-status.textContent=value?"URL không hợp lệ":"";
+
+status.textContent=
+value?"URL không hợp lệ":"";
+
 status.style.color="#f44336";
 
 }
@@ -393,7 +431,9 @@ status.style.color="#f44336";
 };
 
 
-/* CACHE */
+/* =========================================================
+   CACHE
+========================================================= */
 
 document.getElementById("cache").onclick=async()=>{
 
@@ -403,7 +443,6 @@ return;
 localStorage.clear();
 
 if(indexedDB.databases)
-
 for(const db of await indexedDB.databases())
 if(db.name)
 indexedDB.deleteDatabase(db.name);
@@ -416,16 +455,23 @@ location.reload();
 };
 
 
-/* PWA */
+/* =========================================================
+   PWA
+========================================================= */
 
 let installPrompt=null;
 
-const install=document.getElementById("install");
-const pwaStatus=document.getElementById("pwa-status");
+const install=
+document.getElementById("install");
 
-const isStandalone=()=>
+const pwaStatus=
+document.getElementById("pwa-status");
+
+
+const isStandalone=()=>(
 matchMedia("(display-mode: standalone)").matches||
-navigator.standalone===true;
+navigator.standalone===true
+);
 
 
 const updatePWA=()=>{
@@ -450,7 +496,9 @@ installed
 };
 
 
-window.addEventListener("beforeinstallprompt",e=>{
+window.addEventListener(
+"beforeinstallprompt",
+e=>{
 
 e.preventDefault();
 
@@ -463,7 +511,9 @@ updatePWA();
 });
 
 
-window.addEventListener("appinstalled",()=>{
+window.addEventListener(
+"appinstalled",
+()=>{
 
 localStorage.setItem(
 "pwa_installed",
@@ -496,7 +546,8 @@ const result=
 await installPrompt.userChoice;
 
 if(result?.outcome==="accepted")
-pwaStatus.textContent="Đang cài đặt...";
+pwaStatus.textContent=
+"Đang cài đặt...";
 
 installPrompt=null;
 
@@ -512,18 +563,30 @@ pwaStatus.textContent=
 };
 
 
-/* MANIFEST */
+/* =========================================================
+   MANIFEST
+   Không tạo icon động
+   → trình duyệt dùng icon mặc định/chữ cái
+========================================================= */
 
 const manifest={
+
 name:"EmulatorJS Demo",
+
 short_name:"EmulatorJS",
+
 start_url:location.href.split("#")[0],
+
 display:"standalone",
+
 background_color:"#0d0e12",
+
 theme_color:"#1AAFFF"
+
 };
 
-const manifestLink=document.createElement("link");
+const manifestLink=
+document.createElement("link");
 
 manifestLink.rel="manifest";
 
@@ -535,6 +598,11 @@ new Blob(
 );
 
 document.head.appendChild(manifestLink);
+
+
+/* =========================================================
+   INITIAL
+========================================================= */
 
 updatePWA();
 
