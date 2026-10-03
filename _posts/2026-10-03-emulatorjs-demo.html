@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
 <head>
 <title>EmulatorJS | Demo</title>
@@ -23,6 +22,7 @@ Drag ROM file or click here
 <select id="version-select"></select>
 
 <button id="download" class="hide" onclick="downloadversion()">
+
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
 <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 6.854-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708"/>
 </svg>
@@ -30,6 +30,7 @@ Drag ROM file or click here
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
 <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 4.854-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7 8.793l2.646-2.647a.5.5 0 0 1 .708.708"/>
 </svg>
+
 </button>
 
 <button id="settings">
@@ -111,18 +112,14 @@ Remove All Saved Versions:
 
 <script>
 
-/* =========================
-   SERVICE WORKER
-========================= */
+/* SERVICE WORKER */
 
 if("serviceWorker" in navigator)
 navigator.serviceWorker.getRegistrations()
 .then(rs=>rs.forEach(r=>r.unregister()));
 
 
-/* =========================
-   OFFLINE
-========================= */
+/* OFFLINE */
 
 loadJSON("/versions",response=>{
 
@@ -144,19 +141,13 @@ s.textContent="Offline Status: NOT INSTALLED";
 loadSettings();
 
 
-/* =========================
-   ROM
-========================= */
+/* ROM */
 
 input.addEventListener("change",async()=>{
 
 const file=input.files[0];
 const parts=file.name.split(".");
 const ext=(parts.pop()||"").toLowerCase();
-
-/* =========================================================
-   EXTENSION → CORE
-========================================================= */
 
 const map={
 nes:"fds nes unif unf",
@@ -176,10 +167,6 @@ gb:"gb"
 let core=Object.entries(map)
 .find(([c,e])=>e.split(" ").includes(ext))?.[0];
 
-  /* =========================================================
-   CHỌN CORE
-========================================================= */
-  
 if(!core){
 
 const cores={
@@ -223,7 +210,6 @@ for(const name in cores)
 select.add(new Option(name,cores[name]));
 
 button.textContent="Load game";
-button.onclick=()=>resolve(select.value);
 
 box.innerHTML="";
 box.append(select,button);
@@ -235,7 +221,7 @@ button.onclick=()=>resolve(select.value);
 }
 
 
-/* EmulatorJS */
+/* EMULATORJS */
 
 const div=document.createElement("div");
 const game=document.createElement("div");
@@ -281,9 +267,7 @@ box.ondragover=()=>box.setAttribute("drag",true);
 box.ondragleave=()=>box.removeAttribute("drag");
 
 
-/* =========================
-   SETTINGS
-========================= */
+/* SETTINGS */
 
 const settings=document.getElementById("settings");
 const popup=document.getElementById("popup-settings");
@@ -302,9 +286,11 @@ debug.checked=params.get("debug")==="1";
 
 debug.onchange=e=>{
 const u=new URL(location.href);
+
 e.target.checked
 ?u.searchParams.set("debug","1")
 :u.searchParams.delete("debug");
+
 location.href=u.href;
 };
 
@@ -393,19 +379,16 @@ location.reload();
 };
 
 
-/* =========================
-   PWA
-========================= */
+/* PWA */
 
 let installPrompt=null;
 
 const install=document.getElementById("install");
 const pwaStatus=document.getElementById("pwa-status");
 
-const isStandalone=()=>(
+const isStandalone=()=>
 matchMedia("(display-mode: standalone)").matches||
-navigator.standalone===true
-);
+navigator.standalone===true;
 
 const updatePWA=()=>{
 
@@ -476,31 +459,15 @@ pwaStatus.textContent="Lỗi PWA: "+e.message;
 };
 
 
-/* =========================
-   MANIFEST
-========================= */
-
-(()=>{
-
-const icon="data:image/svg+xml,"+
-encodeURIComponent(`
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-<path fill="#1AAFFF"
-d="M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768zM768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256zM554.667 661.547c0-59.093 47.68-106.88 106.88-106.88h212.907c59.093 0 106.88 47.68 106.88 106.88v212.907c0 59.093-47.68 106.88-106.88 106.88h-212.907A106.731 106.731 0 0 1 554.667 874.453v-212.906zm85.333 0v212.906c0 12.032 9.536 21.547 21.547 21.547h212.907c12.032 0 21.547-9.536 21.547-21.547v-212.906c0-12.032-9.536-21.547-21.547-21.547h-212.907c-12.032 0-21.547 9.536-21.547 21.547zM183.829 109.888c36.118-61.163 108.246-61.248 144.427 0l126.208 213.653c35.733 60.523 3.52 124.437-66.816 124.437H124.437c-70.613 0-102.635-63.765-66.816-124.437L183.829 109.91zM133.653 362.667h244.8l-122.41-207.232-122.39 207.232z"/>
-</svg>`);
+/* MANIFEST */
 
 const manifest={
 name:"EmulatorJS",
 short_name:"EmulatorJS",
-start_url:location.href,
+start_url:location.href.split("#")[0],
 display:"standalone",
 background_color:"#0d0e12",
-theme_color:"#1AAFFF",
-icons:[{
-src:icon,
-sizes:"192x192 512x512",
-type:"image/svg+xml"
-}]
+theme_color:"#1AAFFF"
 };
 
 const link=document.createElement("link");
@@ -508,13 +475,11 @@ const link=document.createElement("link");
 link.rel="manifest";
 link.href=URL.createObjectURL(
 new Blob([JSON.stringify(manifest)],{
-type:"application/json"
+type:"application/manifest+json"
 })
 );
 
 document.head.appendChild(link);
-
-})();
 
 updatePWA();
 
