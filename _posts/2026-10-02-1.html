@@ -1,732 +1,687 @@
 <!DOCTYPE html>
 <html>
-<head>
+
+  <head>
     <title>EmulatorJS | Demo</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
 
-    <link rel="icon" href="favicon.ico"
-          sizes="16x16 32x32 48x48 64x64"
-          type="image/vnd.microsoft.icon">
+    <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48 64x64" type="image/vnd.microsoft.icon">
 
     <link rel="apple-touch-icon" href="img/icon.png">
     <meta name="theme-color" content="#000">
-    <link rel="stylesheet"
-          href="https://demo.emulatorjs.org/main.css">
-</head>
+    <link rel="stylesheet" href="https://demo.emulatorjs.org/main.css">
+  </head>
 
-<body>
+  <body>
 
-<div id="box">
-    <input type="file" id="input">
-    Drag ROM file or click here
-</div>
+    <div id="box">
+      <input type="file" id="input">
+      Drag ROM file or click here
+    </div>
 
-<div id="version">
-    <select id="version-select"></select>
+    <div id="version">
+      <select id="version-select"></select>
 
-    <button id="download"
-            class="hide"
-            onclick="downloadversion()">
+      <button id="download" class="hide" onclick="downloadversion()">
 
-        <svg xmlns="http://www.w3.org/2000/svg"
-             viewBox="0 0 16 16">
-            <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 6.854-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708"/>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+          <path
+            d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 6.854-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708" />
         </svg>
 
-        <svg xmlns="http://www.w3.org/2000/svg"
-             viewBox="0 0 16 16">
-            <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 4.854-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7 8.793l2.646-2.647a.5.5 0 0 1 .708.708"/>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+          <path
+            d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 4.854-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7 8.793l2.646-2.647a.5.5 0 0 1 .708.708" />
         </svg>
 
-    </button>
+      </button>
 
-    <button id="settings">
-        <svg xmlns="http://www.w3.org/2000/svg"
-             viewBox="0 0 16 16">
-            <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
+      <button id="settings">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+          <path
+            d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z" />
         </svg>
-    </button>
-</div>
+      </button>
+    </div>
 
 
-<!-- SETTINGS -->
+    <!-- SETTINGS -->
 
-<div id="popup-settings" class="popup popup-animate">
+    <div id="popup-settings" class="popup popup-animate">
 
-    <div class="content">
+      <div class="content">
 
         <div class="title">
-            <h1>Settings</h1>
+          <h1>Settings</h1>
         </div>
 
         <div class="options">
 
-            <div class="buttonbox">
-                <p>
-                    Enable Debuging:
-                    <label class="switch">
-                        <input type="checkbox" id="debug">
-                        <span class="slider round"></span>
-                    </label>
-                </p>
-            </div>
-
-            <br>
-
-            <div class="buttonbox">
-                <p>Clean Cache:</p>
-                <button id="cache">Clean</button>
-            </div>
-
-            <br>
-
-            <div class="buttonbox">
-                <p>Language:</p>
-                <select id="language"></select>
-                <p id="languageHelp"></p>
-            </div>
-
-            <br>
-
-            <div class="buttonbox last">
-                <p>Custom Path:</p>
-                <input type="text"
-                       id="customPath"
-                       placeholder="https://cdn.emulatorjs.org/stable/data/">
-                <p id="customPathValid"></p>
-            </div>
-
-            <p id="offline-status">
-                Offline Status: CHECKING
-            </p>
-
+          <div class="buttonbox">
             <p>
-                Offline Cores will be available soon.
+              Enable Debuging:
+              <label class="switch">
+                <input type="checkbox" id="debug">
+                <span class="slider round"></span>
+              </label>
+            </p>
+          </div>
+
+          <br>
+
+          <div class="buttonbox">
+            <p>Clean Cache:</p>
+            <button id="cache">Clean</button>
+          </div>
+
+          <br>
+
+          <div class="buttonbox">
+            <p>Language:</p>
+            <select id="language"></select>
+            <p id="languageHelp"></p>
+          </div>
+
+          <br>
+
+          <div class="buttonbox last">
+            <p>Custom Path:</p>
+            <input type="text" id="customPath" placeholder="https://cdn.emulatorjs.org/stable/data/">
+            <p id="customPathValid"></p>
+          </div>
+
+          <p id="offline-status">
+            Offline Status: CHECKING
+          </p>
+
+          <p>
+            Offline Cores will be available soon.
+          </p>
+
+          <p class="hide">
+            Remove All Saved Versions:
+            <button onclick="removeallsaved()">
+              Remove All
+            </button>
+          </p>
+
+          <div id="installbox" class="buttonbox">
+
+            <p id="installboxtext">
+              Install PWA:
             </p>
 
-            <p class="hide">
-                Remove All Saved Versions:
-                <button onclick="removeallsaved()">
-                    Remove All
-                </button>
-            </p>
+            <button id="install" disabled>
+              Install
+            </button>
 
-            <div id="installbox"
-                 class="buttonbox">
+          </div>
 
-                <p id="installboxtext">
-                    Install PWA:
-                </p>
+          <p id="pwa-status" style="font-size:12px;text-align:right">
+          </p>
 
-                <button id="install"
-                        disabled>
-                    Install
-                </button>
-
-            </div>
-
-            <p id="pwa-status"
-               style="font-size:12px;text-align:right">
-            </p>
-
-            <br>
+          <br>
 
         </div>
 
         <div class="bottom">
-            <button id="settings-close">
-                Close
-            </button>
+          <button id="settings-close">
+            Close
+          </button>
         </div>
+
+      </div>
 
     </div>
 
-</div>
-
-<div class="popup-overlay"></div>
+    <div class="popup-overlay"></div>
 
 
-<script src="https://demo.emulatorjs.org/main.js"></script>
+    <script src="https://demo.emulatorjs.org/main.js"></script>
 
-<script>
+    <script>
 
-/* =========================
-   DEMO INITIALIZATION
-========================= */
-
-if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.getRegistrations()
-        .then(rs => rs.forEach(r => r.unregister()));
-}
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistrations()
+          .then(rs => rs.forEach(r => r.unregister()));
+      }
 
 
-loadJSON("/versions", response => {
+      loadJSON("/versions", response => {
 
-    const s = document.getElementById("offline-status");
+        const s = document.getElementById("offline-status");
 
-    if (!response) {
+        if (!response) {
 
-        loadJSON(
+          loadJSON(
             "https://cdn.emulatorjs.org/versions.json",
             resp => loadVersions(resp)
-        );
+          );
 
-        s.textContent =
+          s.textContent =
             "Offline Status: NOT INSTALLED";
 
-    } else {
+        } else {
 
-        loadVersions(response);
+          loadVersions(response);
 
-        s.textContent =
+          s.textContent =
             "Offline Status: READY";
-    }
-});
+        }
+      });
 
 
-loadSettings();
+      loadSettings();
 
 
-/* =========================
-   ROM
-========================= */
+      /* =========================
+         ROM
+      ========================= */
 
-input.addEventListener("change", async () => {
+      input.addEventListener("change", async () => {
 
-    const url = input.files[0];
-    const parts = input.files[0].name.split(".");
-    const ext = (parts.pop() || "").toLowerCase();
+        const url = input.files[0];
+        const parts = input.files[0].name.split(".");
+        const ext = (parts.pop() || "").toLowerCase();
 
-    const core = await (async ext => {
+        const core = await (async ext => {
 
-        if (["fds","nes","unif","unf"].includes(ext))
+          if (["fds", "nes", "unif", "unf"].includes(ext))
             return "nes";
 
-        if (["smc","fig","sfc","gd3","gd7","dx2","bsx","swc"].includes(ext))
+          if (["smc", "fig", "sfc", "gd3", "gd7", "dx2", "bsx", "swc"].includes(ext))
             return "snes";
 
-        if (["z64","n64"].includes(ext))
+          if (["z64", "n64"].includes(ext))
             return "n64";
 
-        if (ext === "pce")
+          if (ext === "pce")
             return "pce";
 
-        if (["ngp","ngc"].includes(ext))
+          if (["ngp", "ngc"].includes(ext))
             return "ngp";
 
-        if (["ws","wsc"].includes(ext))
+          if (["ws", "wsc"].includes(ext))
             return "ws";
 
-        if (["col","cv"].includes(ext))
+          if (["col", "cv"].includes(ext))
             return "coleco";
 
-        if (ext === "d64")
+          if (ext === "d64")
             return "vice_x64";
+          
+          if (["chd"].includes(ext))
+            return "psx";
 
-        if (["nds","gba","gb"].includes(ext))
+          if (["nds", "gba", "gb"].includes(ext))
             return ext;
 
-
-        return await new Promise(resolve => {
+          return await new Promise(resolve => {
 
             const cores = {
 
-                "Nintendo 64":"n64",
-                "Nintendo Game Boy":"gb",
-                "Nintendo Game Boy Advance":"gba",
-                "Nintendo DS":"nds",
-                "Nintendo Entertainment System":"nes",
-                "Super Nintendo Entertainment System":"snes",
-                "PlayStation":"psx",
-                "Virtual Boy":"vb",
-                "Sega Mega Drive":"segaMD",
-                "Sega Master System":"segaMS",
-                "Sega CD":"segaCD",
-                "Atari Lynx":"lynx",
-                "Sega 32X":"sega32x",
-                "Atari Jaguar":"jaguar",
-                "Sega Game Gear":"segaGG",
-                "Sega Saturn":"segaSaturn",
-                "Atari 7800":"atari7800",
-                "Atari 2600":"atari2600",
-                "NEC TurboGrafx-16/SuperGrafx/PC Engine":"pce",
-                "NEC PC-FX":"pcfx",
-                "SNK NeoGeo Pocket (Color)":"ngp",
-                "Bandai WonderSwan (Color)":"ws",
-                "ColecoVision":"coleco",
-                "Commodore 64":"vice_x64",
-                "Commodore 128":"vice_x128",
-                "Commodore VIC20":"vice_xvic",
-                "Commodore Plus/4":"vice_xplus4",
-                "Commodore PET":"vice_xpet",
-                "PlayStation Portable":"psp",
-                "3DS":"azahar",
-                "DOS":"dosbox_pure"
+              "Nintendo 64": "n64",
+              "Nintendo Game Boy": "gb",
+              "Nintendo Game Boy Advance": "gba",
+              "Nintendo DS": "nds",
+              "Nintendo Entertainment System": "nes",
+              "Super Nintendo Entertainment System": "snes",
+              "PlayStation": "psx",
+              "Virtual Boy": "vb",
+              "Sega Mega Drive": "segaMD",
+              "Sega Master System": "segaMS",
+              "Sega CD": "segaCD",
+              "Atari Lynx": "lynx",
+              "Sega 32X": "sega32x",
+              "Atari Jaguar": "jaguar",
+              "Sega Game Gear": "segaGG",
+              "Sega Saturn": "segaSaturn",
+              "Atari 7800": "atari7800",
+              "Atari 2600": "atari2600",
+              "NEC TurboGrafx-16/SuperGrafx/PC Engine": "pce",
+              "NEC PC-FX": "pcfx",
+              "SNK NeoGeo Pocket (Color)": "ngp",
+              "Bandai WonderSwan (Color)": "ws",
+              "ColecoVision": "coleco",
+              "Commodore 64": "vice_x64",
+              "Commodore 128": "vice_x128",
+              "Commodore VIC20": "vice_xvic",
+              "Commodore Plus/4": "vice_xplus4",
+              "Commodore PET": "vice_xpet",
+              "PlayStation Portable": "psp",
+              "3DS": "azahar",
+              "DOS": "dosbox_pure"
             };
 
             const select =
-                document.createElement("select");
+              document.createElement("select");
 
             const button =
-                document.createElement("button");
+              document.createElement("button");
 
             for (const type in cores) {
 
-                const option =
-                    document.createElement("option");
+              const option =
+                document.createElement("option");
 
-                option.value =
-                    cores[type];
+              option.value =
+                cores[type];
 
-                option.textContent =
-                    type;
+              option.textContent =
+                type;
 
-                select.appendChild(option);
+              select.appendChild(option);
             }
 
             button.textContent =
-                "Load game";
+              "Load game";
 
             button.onclick =
-                () => resolve(select.value);
+              () => resolve(select.value);
 
             box.innerHTML = "";
 
             box.appendChild(select);
             box.appendChild(button);
 
-        });
+          });
 
-    })(ext);
-
-
-    /* EmulatorJS container */
-
-    const div =
-        document.createElement("div");
-
-    const sub =
-        document.createElement("div");
-
-    const script =
-        document.createElement("script");
+        })(ext);
 
 
-    sub.id = "game";
-    div.id = "display";
+        /* EmulatorJS container */
+
+        const div =
+          document.createElement("div");
+
+        const sub =
+          document.createElement("div");
+
+        const script =
+          document.createElement("script");
 
 
-    document.getElementById("top")?.remove();
-    document.getElementById("version")?.remove();
-    document.getElementById("box")?.remove();
+        sub.id = "game";
+        div.id = "display";
 
 
-    div.appendChild(sub);
-
-    document.body.appendChild(div);
-
-
-    /* =========================
-       ORIGINAL EMULATORJS CONFIG
-    ========================= */
-
-    const cdn =
-        window.cdn ||
-        "https://cdn.emulatorjs.org/stable/data/";
+        document.getElementById("top")?.remove();
+        document.getElementById("version")?.remove();
+        document.getElementById("box")?.remove();
 
 
-    window.EJS_player =
-        "#game";
+        div.appendChild(sub);
 
-    window.EJS_gameName =
-        parts.shift();
-
-    window.EJS_biosUrl =
-        "";
-
-    window.EJS_gameUrl =
-        url;
-
-    window.EJS_core =
-        core;
-
-    window.EJS_pathtodata =
-        cdn;
-
-    window.EJS_startOnLoaded =
-        true;
-
-    window.EJS_DEBUG_XX =
-        window.debug;
+        document.body.appendChild(div);
 
 
-    if (window.language !== "auto")
-        window.EJS_language =
-            window.language;
+        /* =========================
+           ORIGINAL EMULATORJS CONFIG
+        ========================= */
+
+        const cdn = window.cdn || "https://cdn.emulatorjs.org/stable/data/";
+        window.EJS_player = "#game";
+        window.EJS_gameName = parts.shift();
+        window.EJS_biosUrl = "";
+        window.EJS_gameUrl = url;
+        window.EJS_core = core;
+        window.EJS_pathtodata = cdn;
+        window.EJS_startOnLoaded = true;
+        window.EJS_DEBUG_XX = window.debug;
+
+        if (window.language !== "auto")
+          window.EJS_language =
+          window.language;
+        if (
+          core === "psp" ||
+          core === "dosbox_pure" ||
+          core === "azahar"
+        )
+          window.EJS_threads = true;
+
+        script.src = cdn + "loader.js";
+
+        document.body.appendChild(script);
+
+      });
+
+      box.ondragover =
+        () => box.setAttribute("drag", true);
+
+      box.ondragleave =
+        () => box.removeAttribute("drag");
 
 
-    if (
-        core === "psp" ||
-        core === "dosbox_pure" ||
-        core === "azahar"
-    )
-        window.EJS_threads = true;
+      /* =========================
+         SETTINGS
+      ========================= */
+
+      const settings = document.getElementById("settings");
+      const popup = document.getElementById("popup-settings");
+      const close = document.getElementById("settings-close");
 
 
-    /* Không EJS_AdUrl */
+      settings.onclick = () =>
+        popup.classList.add("show");
+
+      close.onclick = () =>
+        popup.classList.remove("show");
 
 
-    script.src =
-        cdn + "loader.js";
+      /* DEBUG */
 
-    document.body.appendChild(script);
+      const params =
+        new URLSearchParams(location.search);
 
-});
+      document.getElementById("debug").checked =
+        params.get("debug") === "1";
 
+      document.getElementById("debug").onchange =
+        e => {
 
-box.ondragover =
-    () => box.setAttribute("drag", true);
-
-box.ondragleave =
-    () => box.removeAttribute("drag");
-
-
-/* =========================
-   SETTINGS
-========================= */
-
-const settings =
-    document.getElementById("settings");
-
-const popup =
-    document.getElementById("popup-settings");
-
-const close =
-    document.getElementById("settings-close");
-
-
-settings.onclick = () =>
-    popup.classList.add("show");
-
-close.onclick = () =>
-    popup.classList.remove("show");
-
-
-/* DEBUG */
-
-const params =
-    new URLSearchParams(location.search);
-
-document.getElementById("debug").checked =
-    params.get("debug") === "1";
-
-document.getElementById("debug").onchange =
-    e => {
-
-        const u =
+          const u =
             new URL(location.href);
 
-        if (e.target.checked)
-            u.searchParams.set("debug","1");
-        else
+          if (e.target.checked)
+            u.searchParams.set("debug", "1");
+          else
             u.searchParams.delete("debug");
 
-        location.href = u.href;
-    };
+          location.href = u.href;
+        };
 
 
-/* LANGUAGE */
+      /* LANGUAGE */
 
-const languages = {
-    auto:"Tự động",
-    en:"English",
-    vi:"Tiếng Việt",
-    pt:"Português",
-    es:"Español",
-    ja:"日本語",
-    zh:"中文",
-    de:"Deutsch",
-    fr:"Français",
-    ru:"Русский"
-};
+      const languages = {
+        auto: "Tự động",
+        en: "English",
+        vi: "Tiếng Việt",
+        pt: "Português",
+        es: "Español",
+        ja: "日本語",
+        zh: "中文",
+        de: "Deutsch",
+        fr: "Français",
+        ru: "Русский"
+      };
 
-const language =
-    document.getElementById("language");
+      const language =
+        document.getElementById("language");
 
-for (const key in languages)
-    language.add(
-        new Option(languages[key], key)
-    );
-
-
-window.language =
-    localStorage.getItem("language") || "auto";
-
-language.value =
-    window.language;
-
-language.onchange = () => {
-
-    localStorage.setItem(
-        "language",
-        language.value
-    );
-
-    location.reload();
-};
+      for (const key in languages)
+        language.add(
+          new Option(languages[key], key)
+        );
 
 
-/* CDN */
+      window.language =
+        localStorage.getItem("language") || "auto";
 
-const customPath =
-    document.getElementById("customPath");
+      language.value =
+        window.language;
 
-const savedCdn =
-    localStorage.getItem("custom_cdn");
-
-if (savedCdn)
-    customPath.value = savedCdn;
-
-
-customPath.onchange = () => {
-
-    const value =
-        customPath.value.trim();
-
-    const valid =
-        /^https?:\/\/.+\/$/.test(value);
-
-    const status =
-        document.getElementById("customPathValid");
-
-    if (valid) {
+      language.onchange = () => {
 
         localStorage.setItem(
+          "language",
+          language.value
+        );
+
+        location.reload();
+      };
+
+
+      /* CDN */
+
+      const customPath =
+        document.getElementById("customPath");
+
+      const savedCdn =
+        localStorage.getItem("custom_cdn");
+
+      if (savedCdn)
+        customPath.value = savedCdn;
+
+
+      customPath.onchange = () => {
+
+        const value =
+          customPath.value.trim();
+
+        const valid =
+          /^https?:\/\/.+\/$/.test(value);
+
+        const status =
+          document.getElementById("customPathValid");
+
+        if (valid) {
+
+          localStorage.setItem(
             "custom_cdn",
             value
-        );
+          );
 
-        status.textContent =
+          status.textContent =
             "URL hợp lệ";
 
-        status.style.color =
+          status.style.color =
             "#4caf50";
 
-    } else {
+        } else {
 
-        localStorage.removeItem(
+          localStorage.removeItem(
             "custom_cdn"
-        );
+          );
 
-        status.textContent =
+          status.textContent =
             value ?
             "URL không hợp lệ" :
             "";
 
-        status.style.color =
+          status.style.color =
             "#f44336";
-    }
-};
+        }
+      };
 
 
-/* CACHE */
+      /* CACHE */
 
-document.getElementById("cache").onclick =
-async () => {
+      document.getElementById("cache").onclick =
+        async () => {
 
-    if (!confirm(
-        "Xóa cache và dữ liệu lưu?"
-    ))
-        return;
+          if (!confirm(
+              "Xóa cache và dữ liệu lưu?"
+            ))
+            return;
 
-    localStorage.clear();
+          localStorage.clear();
 
-    if (indexedDB.databases) {
+          if (indexedDB.databases) {
 
-        const dbs =
-            await indexedDB.databases();
+            const dbs =
+              await indexedDB.databases();
 
-        for (const db of dbs)
-            if (db.name)
+            for (const db of dbs)
+              if (db.name)
                 indexedDB.deleteDatabase(db.name);
-    }
+          }
 
-    const cachesList =
-        await caches.keys();
+          const cachesList =
+            await caches.keys();
 
-    for (const c of cachesList)
-        await caches.delete(c);
+          for (const c of cachesList)
+            await caches.delete(c);
 
-    location.reload();
-};
-
-
-/* =========================
-   PWA
-   CƠ CHẾ GIỐNG CODE 1
-========================= */
-
-let installPrompt = null;
-
-const install =
-    document.getElementById("install");
-
-const pwaStatus =
-    document.getElementById("pwa-status");
+          location.reload();
+        };
 
 
-function checkPwa() {
+      /* =========================
+         PWA
+         CƠ CHẾ GIỐNG CODE 1
+      ========================= */
 
-    const standalone =
-        window.matchMedia(
+      let installPrompt = null;
+
+      const install =
+        document.getElementById("install");
+
+      const pwaStatus =
+        document.getElementById("pwa-status");
+
+
+      function checkPwa() {
+
+        const standalone =
+          window.matchMedia(
             "(display-mode: standalone)"
-        ).matches ||
-        navigator.standalone === true;
+          ).matches ||
+          navigator.standalone === true;
 
-    const saved =
-        localStorage.getItem(
+        const saved =
+          localStorage.getItem(
             "pwa_installed"
-        ) === "true";
+          ) === "true";
 
 
-    if (standalone || (saved && !installPrompt)) {
+        if (standalone || (saved && !installPrompt)) {
 
-        install.textContent =
+          install.textContent =
             "Installed";
 
-        install.disabled =
+          install.disabled =
             true;
 
-        pwaStatus.textContent =
+          pwaStatus.textContent =
             "PWA đã được cài.";
 
-    } else {
+        } else {
 
-        install.textContent =
+          install.textContent =
             "Install";
 
-        install.disabled =
-            !installPrompt;
+          install.disabled = !installPrompt;
 
-        pwaStatus.textContent =
+          pwaStatus.textContent =
             installPrompt ?
             "Sẵn sàng cài đặt." :
             "PWA chưa sẵn sàng.";
 
-    }
-}
+        }
+      }
 
 
-/*
- * Browser cho phép cài
- *
- * Nếu PWA trước đó đã bị xóa,
- * beforeinstallprompt xuất hiện lại.
- *
- * Xóa trạng thái cũ để nút Install
- * trở lại đúng trạng thái.
- */
+      /*
+       * Browser cho phép cài
+       *
+       * Nếu PWA trước đó đã bị xóa,
+       * beforeinstallprompt xuất hiện lại.
+       *
+       * Xóa trạng thái cũ để nút Install
+       * trở lại đúng trạng thái.
+       */
 
-window.addEventListener(
-    "beforeinstallprompt",
-    event => {
+      window.addEventListener(
+        "beforeinstallprompt",
+        event => {
 
-        event.preventDefault();
+          event.preventDefault();
 
-        installPrompt =
+          installPrompt =
             event;
 
-        localStorage.removeItem(
+          localStorage.removeItem(
             "pwa_installed"
-        );
+          );
 
-        checkPwa();
-    }
-);
+          checkPwa();
+        }
+      );
 
 
-/*
- * Cài đặt thành công
- */
+      /*
+       * Cài đặt thành công
+       */
 
-window.addEventListener(
-    "appinstalled",
-    () => {
+      window.addEventListener(
+        "appinstalled",
+        () => {
 
-        localStorage.setItem(
+          localStorage.setItem(
             "pwa_installed",
             "true"
-        );
+          );
 
-        installPrompt =
+          installPrompt =
             null;
 
-        checkPwa();
-    }
-);
-
-
-/*
- * Nút Install
- */
-
-install.onclick =
-async () => {
-
-    if (!installPrompt) {
-
-        pwaStatus.textContent =
-            "PWA yêu cầu HTTPS hoặc localhost.";
-
-        return;
-    }
-
-    try {
-
-        installPrompt.prompt();
-
-        const result =
-            await installPrompt.userChoice;
-
-        if (
-            result &&
-            result.outcome === "accepted"
-        ) {
-
-            /*
-             * appinstalled sẽ xác nhận
-             * chính thức.
-             *
-             * Không đánh dấu Installed
-             * chỉ vì prompt được chấp nhận.
-             */
-
+          checkPwa();
         }
-
-        installPrompt =
-            null;
-
-        checkPwa();
-
-    } catch (e) {
-
-        pwaStatus.textContent =
-            "Lỗi PWA: " + e.message;
-    }
-};
+      );
 
 
-/* =========================
-   MANIFEST
-   SVG DATA URL
-========================= */
+      /*
+       * Nút Install
+       */
 
-(() => {
+      install.onclick =
+        async () => {
 
-    try {
+          if (!installPrompt) {
 
-        const icon =
+            pwaStatus.textContent =
+              "PWA yêu cầu HTTPS hoặc localhost.";
+
+            return;
+          }
+
+          try {
+
+            installPrompt.prompt();
+
+            const result =
+              await installPrompt.userChoice;
+
+            if (
+              result &&
+              result.outcome === "accepted"
+            ) {
+
+              /*
+               * appinstalled sẽ xác nhận
+               * chính thức.
+               *
+               * Không đánh dấu Installed
+               * chỉ vì prompt được chấp nhận.
+               */
+
+            }
+
+            installPrompt =
+              null;
+
+            checkPwa();
+
+          } catch (e) {
+
+            pwaStatus.textContent =
+              "Lỗi PWA: " + e.message;
+          }
+        };
+
+
+      /* =========================
+         MANIFEST
+         SVG DATA URL
+      ========================= */
+
+      (() => {
+
+        try {
+
+          const icon =
             "data:image/svg+xml," +
             encodeURIComponent(`
                 <svg xmlns="http://www.w3.org/2000/svg"
@@ -736,60 +691,48 @@ async () => {
                 </svg>
             `);
 
-
-        const manifest = {
-
+          const manifest = {
             name: "EmulatorJS Demo",
-
             short_name: "EmulatorJS",
-
-            start_url:
-                location.href,
-
-            display:
-                "standalone",
-
-            background_color:
-                "#0d0e12",
-
-            theme_color:
-                "#1AAFFF",
-
+            start_url: location.href,
+            display: "standalone",
+            background_color: "#0d0e12",
+            theme_color: "#1AAFFF",
             icons: [
-
-                {
-                    src: icon,
-                    sizes: "192x192 512x512",
-                    type: "image/svg+xml"
-                }
+              {
+                src: icon,
+                sizes: "192x192 512x512",
+                type: "image/svg+xml"
+              }
 
             ]
-        };
+          };
 
 
-        const link =
+          const link =
             document.createElement("link");
 
-        link.rel =
+          link.rel =
             "manifest";
 
-        link.href =
+          link.href =
             URL.createObjectURL(
-                new Blob(
-                    [JSON.stringify(manifest)],
-                    {type:"application/json"}
-                )
+              new Blob(
+                [JSON.stringify(manifest)], {
+                  type: "application/json"
+                }
+              )
             );
 
-        document.head.appendChild(link);
+          document.head.appendChild(link);
 
-    } catch (e) {}
-})();
+        } catch (e) {}
+      })();
 
 
-checkPwa();
+      checkPwa();
+    </script>
 
-</script>
+  </body>
 
-</body>
 </html>
