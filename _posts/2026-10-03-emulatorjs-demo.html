@@ -398,126 +398,62 @@ location.reload();
 ========================= */
 
 let installPrompt=null;
+const install=document.getElementById("install"),
+      pwaStatus=document.getElementById("pwa-status");
 
-const install=document.getElementById("install");
-const pwaStatus=document.getElementById("pwa-status");
+const standalone=()=>matchMedia("(display-mode:standalone)").matches||navigator.standalone;
 
-const isStandalone=()=>(
-matchMedia("(display-mode: standalone)").matches||
-navigator.standalone===true
-);
+function updatePWA(){
+  const installed=standalone()||localStorage.getItem("pwa_installed")==="true";
+  install.disabled=installed||!installPrompt;
+  install.textContent=installed?"Installed":"Install";
+  pwaStatus.textContent=installed?"PWA đã được cài.":installPrompt?"Sẵn sàng cài đặt.":"PWA chưa sẵn sàng.";
+}
 
-const updatePWA=()=>{
-
-const installed=isStandalone()||
-localStorage.getItem("pwa_installed")==="true";
-
-install.disabled=installed||!installPrompt;
-install.textContent=installed?"Installed":"Install";
-
-pwaStatus.textContent=
-installed
-?"PWA đã được cài."
-:installPrompt
-?"Sẵn sàng cài đặt."
-:"PWA chưa sẵn sàng.";
-
-};
-
-window.addEventListener("beforeinstallprompt",e=>{
-
-e.preventDefault();
-installPrompt=e;
-
-localStorage.removeItem("pwa_installed");
-
-updatePWA();
-
+addEventListener("beforeinstallprompt",e=>{
+  e.preventDefault();
+  installPrompt=e;
+  localStorage.removeItem("pwa_installed");
+  updatePWA();
 });
 
-window.addEventListener("appinstalled",()=>{
-
-localStorage.setItem("pwa_installed","true");
-installPrompt=null;
-
-updatePWA();
-
+addEventListener("appinstalled",()=>{
+  localStorage.setItem("pwa_installed","true");
+  installPrompt=null;
+  updatePWA();
 });
 
 install.onclick=async()=>{
-
-if(!installPrompt){
-
-pwaStatus.textContent=
-"PWA yêu cầu HTTPS hoặc localhost.";
-
-return;
-
-}
-
-try{
-
-await installPrompt.prompt();
-
-const result=await installPrompt.userChoice;
-
-if(result?.outcome==="accepted")
-pwaStatus.textContent="Đang cài đặt...";
-
-installPrompt=null;
-updatePWA();
-
-}catch(e){
-
-pwaStatus.textContent="Lỗi PWA: "+e.message;
-
-}
-
+  if(!installPrompt)return pwaStatus.textContent="PWA yêu cầu HTTPS hoặc localhost.";
+  try{
+    await installPrompt.prompt();
+    const {outcome}=await installPrompt.userChoice;
+    if(outcome==="accepted")pwaStatus.textContent="Đang cài đặt...";
+    installPrompt=null;
+    updatePWA();
+  }catch(e){
+    pwaStatus.textContent="Lỗi PWA: "+e.message;
+  }
 };
 
-
-/* =========================
-   MANIFEST
-========================= */
-
-(()=>{
-
-const icon="data:image/svg+xml,"+
-encodeURIComponent(`
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-<path fill="#1AAFFF"
-d="M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768zM768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256zM554.667 661.547c0-59.093 47.68-106.88 106.88-106.88h212.907c59.093 0 106.88 47.68 106.88 106.88v212.907c0 59.093-47.68 106.88-106.88 106.88h-212.907A106.731 106.731 0 0 1 554.667 874.453v-212.906zm85.333 0v212.906c0 12.032 9.536 21.547 21.547 21.547h212.907c12.032 0 21.547-9.536 21.547-21.547v-212.906c0-12.032-9.536-21.547-21.547-21.547h-212.907c-12.032 0-21.547 9.536-21.547 21.547zM183.829 109.888c36.118-61.163 108.246-61.248 144.427 0l126.208 213.653c35.733 60.523 3.52 124.437-66.816 124.437H124.437c-70.613 0-102.635-63.765-66.816-124.437L183.829 109.91zM133.653 362.667h244.8l-122.41-207.232-122.39 207.232z"/>
-</svg>`);
-
+/* MANIFEST */
 const manifest={
-name:"EmulatorJS",
-short_name:"EmulatorJS",
-start_url:location.href,
-display:"standalone",
-background_color:"#0d0e12",
-theme_color:"#1AAFFF",
-icons:[{
-src:icon,
-sizes:"192x192 512x512",
-type:"image/svg+xml"
-}]
+  name:"EmulatorJS",
+  short_name:"EmulatorJS",
+  start_url:location.href,
+  display:"standalone",
+  background_color:"#0d0e12",
+  theme_color:"#1AAFFF"
 };
 
 const link=document.createElement("link");
-
 link.rel="manifest";
 link.href=URL.createObjectURL(
-new Blob([JSON.stringify(manifest)],{
-type:"application/json"
-})
+  new Blob([JSON.stringify(manifest)],{type:"application/manifest+json"})
 );
-
 document.head.appendChild(link);
 
-})();
-
 updatePWA();
-
 </script>
 
 </body>
