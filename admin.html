@@ -76,7 +76,9 @@ layout: null
         font-weight: bold;
         display: inline-flex;
         align-items: center;
-        justify-content: center
+        justify-content: center;
+        user-select: none;
+        -webkit-user-select: none;
       }
 
       button:disabled {
@@ -125,7 +127,26 @@ layout: null
       .title {
         font-weight: bold;
         width: 100%;
-        flex-shrink: 0
+        flex-shrink: 0;
+        font-size: 14px;
+      }
+
+      .ed-toolbar {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        background: #1e293b;
+        padding: 4px 6px;
+        border: 1px solid #334155;
+        border-radius: 4px;
+        flex-shrink: 0;
+        overflow-x: auto;
+      }
+
+      .ed-toolbar button {
+        padding: 4px 8px;
+        font-size: 11px;
+        white-space: nowrap;
       }
 
       #content {
@@ -139,7 +160,7 @@ layout: null
         min-height: 0;
         border: 1px solid #334155;
         border-radius: 4px;
-        font: 13px monospace
+        font: 13px monospace;
       }
 
       .CodeMirror-scroll {
@@ -192,6 +213,30 @@ layout: null
       .gutter.gutter-vertical {
         cursor: row-resize;
         background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFCAMAAABl/6zIAAAABlBMVEUAAAD///+l2Z/dAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3wYECA4fA68pWAAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAAOSURBVHjaYmBgYACCAAgIAAEAAM4AAY2C8A4AAAAASUVORK5CYII=')
+      }
+
+      /* Notification Toast */
+      .toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px);
+        background: #059669;
+        color: #fff;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        z-index: 9999;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease, transform 0.25s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
       }
 
       @media(min-width:769px) {
@@ -249,6 +294,11 @@ layout: null
         .gutter {
           display: none !important
         }
+
+        /* Prevent auto-zoom and optimize font touch sizing on mobile */
+        .CodeMirror {
+          font-size: 14px;
+        }
       }
     </style>
   </head>
@@ -278,12 +328,25 @@ layout: null
         </div>
       </header>
       <main id="ws" class="show-ed pos-right">
-        <div id="paneEd" class="pane pane-ed"><input id="title" class="title"
-            placeholder="Tiêu đề (tự lấy từ <title> nếu bỏ trống)..."><textarea id="content"
-            placeholder="Mã HTML/CSS/JS..."></textarea></div>
+        <div id="paneEd" class="pane pane-ed">
+          <input id="title" class="title" placeholder="Tiêu đề (tự lấy từ <title> nếu bỏ trống)...">
+          
+          <!-- Thanh công cụ hỗ trợ thao tác nhanh cho Mobile & Desktop -->
+          <div class="ed-toolbar">
+            <button type="button" onclick="copyCode()" style="background:#059669">📋 Chép</button>
+            <button type="button" onclick="pasteCode()" style="background:#d97706">📥 Dán</button>
+            <button type="button" onclick="selectAllCode()" style="background:#6366f1">🔍 Chọn hết</button>
+            <button type="button" onclick="clearCode()" style="background:#475569">🧹 Xóa sạch</button>
+          </div>
+
+          <textarea id="content" placeholder="Mã HTML/CSS/JS..."></textarea>
+        </div>
         <div id="panePrev" class="pane pane-prev"><iframe id="frame"></iframe></div>
       </main>
     </div>
+
+    <div id="toast" class="toast"></div>
+
     <script>
       const $ = t => document.getElementById(t);
       let C = JSON.parse(localStorage.getItem("gh_cfg") || "{}"),
@@ -294,7 +357,9 @@ layout: null
         dirty = !1,
         splitInstance = null,
         editor = null,
-        settingCode = !1;
+        settingCode = !1,
+        toastTimer = null;
+
       const positions = ["right", "bottom", "left", "top"],
         posIcons = {
           right: "➡️ Phải",
@@ -303,6 +368,71 @@ layout: null
           top: "⬆️ Trên"
         };
       let currentPosIndex = 0;
+
+      function showToast(msg) {
+        const t = $("toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          t.classList.remove("show");
+        }, 2200);
+      }
+
+      async function copyCode() {
+        const sel = editor.getSelection();
+        const textToCopy = sel ? sel : editor.getValue();
+        if (!textToCopy) {
+          return showToast("⚠️ Không có nội dung để chép!");
+        }
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(textToCopy);
+          } else {
+            const ta = document.createElement("textarea");
+            ta.value = textToCopy;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            document.execCommand("copy");
+            document.body.removeChild(ta);
+          }
+          showToast(sel ? "📋 Đã chép đoạn bôi đen!" : "📋 Đã chép toàn bộ mã!");
+        } catch (e) {
+          alert("Không thể sao chép: " + e.message);
+        }
+      }
+
+      async function pasteCode() {
+        try {
+          if (navigator.clipboard && navigator.clipboard.readText) {
+            const text = await navigator.clipboard.readText();
+            if (text) {
+              editor.replaceSelection(text);
+              showToast("📥 Đã dán nội dung!");
+              return;
+            }
+          }
+          showToast("⚠️ Vui lòng nhấn giữ ô nhập để dán thủ công.");
+        } catch (e) {
+          alert("Trình duyệt chặn đọc clipboard. Vui lòng bấm giữ trong vùng soạn thảo để dán.");
+        }
+      }
+
+      function selectAllCode() {
+        editor.execCommand("selectAll");
+        editor.focus();
+        showToast("🔍 Đã chọn tất cả!");
+      }
+
+      function clearCode() {
+        if (confirm("Bạn có chắc muốn xóa sạch vùng soạn thảo?")) {
+          setCode("");
+          showToast("🧹 Đã xóa sạch nội dung!");
+        }
+      }
 
       function setCode(t) {
         settingCode = !0, editor.setValue(t || ""), settingCode = !1, editor.refresh()
@@ -350,6 +480,7 @@ layout: null
       function toggleAuth() {
         authBox.classList.toggle("show")
       }
+
       async function saveCfg() {
         if (C = {
             owner: cfgOwner.value.trim(),
@@ -400,6 +531,7 @@ layout: null
       function apiUrl(t) {
         return `https://api.github.com/repos/${encodeURIComponent(C.owner)}/${encodeURIComponent(C.repo)}/contents/${t.split("/").map(encodeURIComponent).join("/")}`
       }
+
       async function req(t, e = "GET", n) {
         const a = {
           method: e,
@@ -412,6 +544,7 @@ layout: null
         };
         return n && (a.body = JSON.stringify(n)), fetch(apiUrl(t), a)
       }
+
       async function fetchFile(t) {
         try {
           const e = await req(t);
@@ -439,6 +572,7 @@ layout: null
             `<option value="${n}"${e.path===t?" selected":""}>${e.name.replace(/^\d{4}-\d{2}-\d{2}-/,"")}</option>`))
           .join("")
       }
+
       async function load() {
         if (C.token) try {
           const t = await req("_posts");
@@ -459,6 +593,7 @@ layout: null
           .value = "", setCode(""), postSelect.value = "", subBtn.textContent = "🚀 Đăng", delBtn.style.display =
           "none", pv())
       }
+
       async function edit(t) {
         const e = await fetchFile(t);
         if (!e.ok) return alert(`❌ Không thể nạp bài (${e.status})`);
@@ -468,6 +603,7 @@ layout: null
           cSha = e.data.sha, cPath = e.data.path || t, dirty = !1, subBtn.textContent = "💾 Lưu", delBtn.style
           .display = "inline-flex", renderList(cPath), pv()
       }
+
       async function uploadFile(t) {
         const e = t.target.files[0];
         if (!e) return;
@@ -489,6 +625,7 @@ layout: null
           } else t.target.value = ""
         }, n.readAsText(e), t.target.value = ""
       }
+
       async function delPost() {
         if (cPath && confirm("⚠️ Xóa bài viết này?")) {
           delBtn.disabled = !0, delBtn.textContent = "⏳ Xóa...";
@@ -525,6 +662,7 @@ layout: null
           }
         }
       }
+
       async function subForm() {
         if (!C.token) return alert("Thiếu Token!");
         let t = title.value.trim();
@@ -584,26 +722,44 @@ layout: null
           subBtn.disabled = !1
         }
       }
-      cfgOwner.value = C.owner || "longhai", cfgRepo.value = C.repo || "codes", cfgToken.value = C.token || "", editor =
-        CodeMirror.fromTextArea(content, {
-          mode: "htmlmixed",
-          theme: "material-darker",
-          lineNumbers: !0,
-          lineWrapping: !1,
-          tabSize: 2,
-          indentUnit: 2,
-          indentWithTabs: !1,
-          autofocus: !1
-        }), editor.on("change", (() => {
-          settingCode || (dirty = !0, pv())
-        })), title.oninput = () => {
-          dirty = !0, pv()
-        }, addEventListener("resize", initSplit), postSelect.onchange = async t => {
-          const e = t.target.value;
-          if (!dirty || confirm("Nội dung chưa lưu. Bạn vẫn muốn chuyển bài?")) return "" === e ? resetForm() :
-            void await edit(list[+e].path);
-          t.target.value = list.findIndex((t => t.path === cPath))
-        }, load(), pv(), initSplit();
+
+      cfgOwner.value = C.owner || "longhai";
+      cfgRepo.value = C.repo || "codes";
+      cfgToken.value = C.token || "";
+
+      // Khởi tạo CodeMirror tối ưu hóa hỗ trợ thao tác cảm ứng trên điện thoại
+      editor = CodeMirror.fromTextArea(content, {
+        mode: "htmlmixed",
+        theme: "material-darker",
+        lineNumbers: !0,
+        lineWrapping: !1,
+        tabSize: 2,
+        indentUnit: 2,
+        indentWithTabs: !1,
+        autofocus: !1,
+        inputStyle: "contenteditable" // Tối ưu con trỏ và bôi đen trên điện thoại
+      });
+
+      editor.on("change", (() => {
+        settingCode || (dirty = !0, pv())
+      }));
+
+      title.oninput = () => {
+        dirty = !0, pv()
+      };
+
+      addEventListener("resize", initSplit);
+
+      postSelect.onchange = async t => {
+        const e = t.target.value;
+        if (!dirty || confirm("Nội dung chưa lưu. Bạn vẫn muốn chuyển bài?")) return "" === e ? resetForm() :
+          void await edit(list[+e].path);
+        t.target.value = list.findIndex((t => t.path === cPath))
+      };
+
+      load();
+      pv();
+      initSplit();
     </script>
   </body>
 
