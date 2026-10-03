@@ -1,657 +1,608 @@
----
-layout: null
----
+--- layout: null ---
 <!DOCTYPE html>
 <html lang="vi">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>Admin</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.5/split.min.js"></script>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{width:100%;height:100dvh;overflow:hidden;background:#0f172a;color:#f8fafc;font:13px sans-serif}
-.app{display:flex;flex-direction:column;height:100%}
-header{background:#1e293b;border-bottom:1px solid #334155;padding:6px 10px;display:flex;flex-direction:column;gap:6px;flex-shrink:0}
-.row{display:flex;gap:6px;align-items:center;justify-content:space-between}
-select,input,button,.btn-file{background:#0f172a;border:1px solid #334155;color:#fff;border-radius:4px;padding:5px 8px;font-size:12px;outline:none}
-button,.btn-file{cursor:pointer;font-weight:bold;display:inline-flex;align-items:center;justify-content:center}
-button:disabled{opacity:.55;cursor:not-allowed}
-.tabs{display:flex;background:#0f172a;border-radius:4px;padding:2px;border:1px solid #334155}
-.tab{border:0;padding:3px 8px;color:#94a3b8;border-radius:3px}
-.tab.active{background:#2563eb;color:#fff}
-main{flex:1;display:flex;position:relative;overflow:hidden;padding:6px;min-height:0}
-.pane{display:flex;flex-direction:column;gap:6px;height:100%;min-height:0;min-width:0}
-.title{font-weight:bold;width:100%;flex-shrink:0}
-textarea{flex:1;width:100%;height:100%;background:#1e293b;border:1px solid #334155;color:#fff;border-radius:4px;padding:8px;font:13px monospace;resize:none;outline:none}
-iframe{width:100%;height:100%;border:1px solid #334155;border-radius:4px;background:#fff}
-.auth-pop{position:absolute;right:0;top:32px;background:#1e293b;border:1px solid #334155;padding:8px;border-radius:6px;display:none;flex-direction:column;gap:6px;z-index:999;width:200px;box-shadow:0 4px 12px #0008}
-.auth-pop.show{display:flex}
-.gutter{background:#334155;background-repeat:no-repeat;background-position:50%}
-.gutter.gutter-horizontal{cursor:col-resize;background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADTJfu3AAAADklEQVR42mNhYGD4DwUACAgBAh555AcAAAAASUVORK5CYII=')}
-.gutter.gutter-vertical{cursor:row-resize;background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFCAMAAABl/6zIAAAABlBMVEUAAAD///+l2Z/dAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3wYECA4fA68pWAAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAAOSURBVHjaYmBgYACCAAgIAAEAAM4AAY2C8A4AAAAASUVORK5CYII=')}
-@media(min-width:769px){
- header{flex-direction:row;align-items:center;justify-content:space-between}
- .row{width:auto}
- .tabs{display:none}
- .layout-btn{display:inline-flex!important}
- main.pos-right{flex-direction:row}
- main.pos-left{flex-direction:row-reverse}
- main.pos-bottom{flex-direction:column}
- main.pos-top{flex-direction:column-reverse}
-}
-@media(max-width:768px){
- .layout-btn{display:none!important}
- .pane{flex:1;width:100%!important;height:100%!important}
- .show-ed .pane-prev,.show-prev .pane-ed{display:none!important}
- .gutter{display:none!important}
-}
-</style>
-</head>
-<body>
-
-<div class="app">
-<header>
-<div class="row" style="flex:1;max-width:450px">
-<button onclick="resetForm()" style="background:#16a34a">➕ Mới</button>
-<label class="btn-file" style="background:#0284c7">📁 File<input type="file" id="fileInput" accept=".html,.htm,.txt,.md" style="display:none" onchange="uploadFile(event)"></label>
-<select id="postSelect" style="flex:1;min-width:0"><option value="">-- Chọn bài --</option></select>
-</div>
-
-<div class="row">
-<div class="tabs">
-<button class="tab active" onclick="tab('ed')">✏️ Sửa</button>
-<button class="tab" onclick="tab('prev')">👁️ Xem</button>
-</div>
-
-<div style="display:flex;gap:6px;position:relative;align-items:center">
-<button class="layout-btn" onclick="cycleLayout()" style="background:#475569;display:none">Layout: ➡️ Phải</button>
-<button onclick="toggleAuth()" style="background:#334155">⚙️ Auth</button>
-
-<div id="authBox" class="auth-pop">
-<input id="cfgOwner" placeholder="User">
-<input id="cfgRepo" placeholder="Repo">
-<input id="cfgToken" type="password" placeholder="Token">
-<button onclick="saveCfg()" style="background:#2563eb">Lưu Auth</button>
-<button onclick="clearKey()" style="background:#dc2626">🗑 Xóa key</button>
-</div>
-
-<button id="delBtn" onclick="delPost()" style="background:#dc2626;display:none">🗑️ Xóa</button>
-<button id="subBtn" onclick="subForm()" style="background:#2563eb">🚀 Đăng</button>
-</div>
-</div>
-</header>
-
-<main id="ws" class="show-ed pos-right">
-<div id="paneEd" class="pane pane-ed">
-<input id="title" class="title" placeholder="Tiêu đề (tự lấy từ <title> nếu bỏ trống)..." oninput="dirty=true;pv()">
-<textarea id="content" placeholder="Mã HTML/CSS/JS..." oninput="dirty=true;pv()"></textarea>
-</div>
-<div id="panePrev" class="pane pane-prev"><iframe id="frame"></iframe></div>
-</main>
-</div>
-
-<script>
-const $=id=>document.getElementById(id);
-let C=JSON.parse(localStorage.getItem('gh_cfg')||'{}'),list=[],cSha=null,cPath=null,bUrl=null,dirty=false,splitInstance=null;
-const positions=['right','bottom','left','top'],posIcons={right:'➡️ Phải',bottom:'⬇️ Dưới',left:'⬅️ Trái',top:'⬆️ Trên'};
-let currentPosIndex=0;
-
-cfgOwner.value=C.owner||'longhai';
-cfgRepo.value=C.repo||'codes';
-cfgToken.value=C.token||'';
-
-function utf8ToBase64(s){
- const b=new TextEncoder().encode(s);let x='';
- for(let i=0;i<b.length;i+=0x8000)x+=String.fromCharCode(...b.subarray(i,i+0x8000));
- return btoa(x);
-}
-
-function base64ToUtf8(s){
- const x=atob(s.replace(/\s/g,'')),b=new Uint8Array(x.length);
- for(let i=0;i<x.length;i++)b[i]=x.charCodeAt(i);
- return new TextDecoder().decode(b);
-}
-
-function initSplit(){
- if(innerWidth<=768){
-  splitInstance?.destroy();
-  splitInstance=null;
-  return;
- }
- splitInstance?.destroy();
- const h=['right','left'].includes(positions[currentPosIndex]);
- splitInstance=Split(['#paneEd','#panePrev'],{
-  sizes:[50,50],
-  minSize:100,
-  gutterSize:6,
-  direction:h?'horizontal':'vertical'
- });
-}
-
-function cycleLayout(){
- currentPosIndex=(currentPosIndex+1)%4;
- const p=positions[currentPosIndex];
- ws.className=`show-ed pos-${p}`;
- document.querySelector('.layout-btn').textContent='Layout: '+posIcons[p];
- initSplit();
-}
-
-addEventListener('resize',initSplit);
-
-function toggleAuth(){
- authBox.classList.toggle('show');
-}
-
-async function saveCfg(){
- C={
-  owner:cfgOwner.value.trim(),
-  repo:cfgRepo.value.trim(),
-  token:cfgToken.value.trim()
- };
-
- if(!C.owner||!C.repo||!C.token)return alert('Vui lòng nhập đủ Auth.');
-
- localStorage.setItem('gh_cfg',JSON.stringify(C));
- authBox.classList.remove('show');
- list=[];
- cSha=cPath=null;
- postSelect.innerHTML='<option value="">-- Chọn bài --</option>';
- await load();
-}
-
-function clearKey(){
- if(!confirm('Xóa key GitHub đã lưu?'))return;
-
- localStorage.removeItem('gh_cfg');
- C={};
- list=[];
- cSha=cPath=null;
- dirty=false;
-
- cfgOwner.value='';
- cfgRepo.value='';
- cfgToken.value='';
-
- postSelect.innerHTML='<option value="">-- Chọn bài --</option>';
-
- alert('Đã xóa key.');
-}
-
-function tab(t){
- ws.className=ws.className.replace(
-  /show-(ed|prev)/,
-  t==='ed'?'show-ed':'show-prev'
- );
-
- document.querySelectorAll('.tab').forEach((b,i)=>
-  b.classList.toggle('active',(i===0)===(t==='ed'))
- );
-
- if(t==='prev')pv();
-}
-
-function pv(){
- if(bUrl)URL.revokeObjectURL(bUrl);
-
- bUrl=URL.createObjectURL(
-  new Blob([content.value],{type:'text/html'})
- );
-
- frame.src=bUrl;
-}
-
-function cleanContent(s){
- return s
-  .replace(/^---[\s\S]*?---\s*/m,'')
-  .replace(/^```[a-z]*\n?/i,'')
-  .replace(/\n?```$/i,'')
-  .trim();
-}
-
-function getTitle(s,name=''){
- const m=s.match(/<title[^>]*>(.*?)<\/title>/i);
- return m?.[1]?.trim()||
-  name.replace(/\.(html|htm|txt|md)$/i,'');
-}
-
-function toSlug(s){
- return s.toLowerCase()
-  .replace(/đ/g,'d')
-  .normalize('NFD')
-  .replace(/[\u0300-\u036f]/g,'')
-  .replace(/[^\w\s-]/g,'')
-  .replace(/\s+/g,'-')
-  .replace(/-+/g,'-')
-  .trim();
-}
-
-function todayPath(t){
- const d=new Date();
- const date=d.getFullYear()+'-'+
-  String(d.getMonth()+1).padStart(2,'0')+'-'+
-  String(d.getDate()).padStart(2,'0');
-
- return `_posts/${date}-${toSlug(t)}.html`;
-}
-
-function apiUrl(path){
- return `https://api.github.com/repos/${encodeURIComponent(C.owner)}/${encodeURIComponent(C.repo)}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;
-}
-
-async function req(path,method='GET',body){
- const o={
-  method,
-  headers:{
-   Authorization:`Bearer ${C.token}`,
-   Accept:'application/vnd.github+json',
-   'Content-Type':'application/json',
-   'X-GitHub-Api-Version':'2022-11-28'
-  }
- };
-
- if(body)o.body=JSON.stringify(body);
-
- return fetch(apiUrl(path),o);
-}
-
-async function fetchFile(path){
- try{
-  const r=await req(path);
-  let d=null;
-
-  try{
-   d=await r.json();
-  }catch{}
-
-  return{
-   ok:r.ok,
-   status:r.status,
-   data:d
-  };
- }catch(error){
-  return{
-   ok:false,
-   status:0,
-   data:null,
-   error
-  };
- }
-}
-
-function renderList(sel=''){
- postSelect.innerHTML=
-  '<option value="">-- Chọn bài ('+list.length+') --</option>'+
-  list.map((x,i)=>
-   `<option value="${i}"${x.path===sel?' selected':''}>`+
-   `${x.name.replace(/^\d{4}-\d{2}-\d{2}-/,'')}`+
-   `</option>`
-  ).join('');
-}
-
-async function load(){
- if(!C.token){
-  postSelect.innerHTML='<option value="">-- Chưa có Auth --</option>';
-  return;
- }
-
- try{
-  const r=await req('_posts');
-  let d=null;
-
-  try{
-   d=await r.json();
-  }catch{}
-
-  if(!r.ok)throw Error(d?.message||`HTTP ${r.status}`);
-
-  list=d
-   .filter(x=>x.type==='file'&&/\.(html|md)$/i.test(x.name))
-   .reverse();
-
-  renderList(cPath||'');
-
- }catch(e){
-  postSelect.innerHTML='<option value="">-- Lỗi tải danh sách --</option>';
-  alert('❌ '+e.message);
- }
-}
-
-postSelect.onchange=async e=>{
- const v=e.target.value;
-
- if(dirty&&!confirm('Nội dung chưa lưu. Bạn vẫn muốn chuyển bài?')){
-  e.target.value=list.findIndex(x=>x.path===cPath);
-  return;
- }
-
- if(v==='')return resetForm();
-
- await edit(list[+v].path);
-};
-
-function resetForm(){
- if(dirty&&!confirm('Nội dung chưa lưu. Bạn muốn tạo bài mới?'))return;
-
- cSha=null;
- cPath=null;
- dirty=false;
-
- title.value='';
- content.value='';
- postSelect.value='';
-
- subBtn.textContent='🚀 Đăng';
- delBtn.style.display='none';
-
- pv();
-}
-
-async function edit(path){
- const r=await fetchFile(path);
-
- if(!r.ok)
-  return alert(`❌ Không thể nạp bài (${r.status})`);
-
- if(!r.data?.content)
-  return alert('❌ GitHub không trả về nội dung file!');
-
- const s=cleanContent(
-  base64ToUtf8(r.data.content)
- );
-
- title.value=path.split('/').pop()
-  .replace(/^\d{4}-\d{2}-\d{2}-/,'')
-  .replace(/\.(html|md)$/,'');
-
- content.value=s;
-
- cSha=r.data.sha;
- cPath=r.data.path||path;
- dirty=false;
-
- subBtn.textContent='💾 Lưu';
- delBtn.style.display='inline-flex';
-
- renderList(cPath);
- pv();
-}
-
-async function uploadFile(e){
- const f=e.target.files[0];
-
- if(!f)return;
-
- if(dirty&&!confirm('Nội dung chưa lưu. Mở file mới?')){
-  e.target.value='';
-  return;
- }
-
- const r=new FileReader();
-
- r.onload=async x=>{
-  const s=cleanContent(x.target.result);
-  const t=getTitle(s,f.name);
-  const path=todayPath(t);
-
-  title.value=t;
-  content.value=s;
-
-  cSha=null;
-  cPath=null;
-  postSelect.value='';
-
-  subBtn.textContent='🚀 Đăng';
-  delBtn.style.display='none';
-
-  dirty=true;
-  pv();
-
-  if(!C.token){
-   e.target.value='';
-   return;
-  }
-
-  try{
-   const exists=await fetchFile(path);
-
-   if(exists.ok){
-    alert(
-     `⚠️ Trùng tên bài viết trong ngày hôm nay!\n\n`+
-     `"${t}"\n\n`+
-     `Vui lòng đổi tiêu đề hoặc tên file rồi tải lên lại.`
-    );
-    return;
-   }
-
-   if(exists.status!==404){
-    alert(
-     `❌ Không kiểm tra được bài viết (${exists.status}).`
-    );
-    return;
-   }
-
-  }catch(err){
-   alert(
-    '❌ Không thể kiểm tra bài viết: '+
-    (err.message||'Lỗi không xác định')
-   );
-  }
- };
-
- r.readAsText(f);
- e.target.value='';
-}
-
-async function delPost(){
- if(!cPath||!confirm('⚠️ Xóa bài viết này?'))return;
-
- delBtn.disabled=true;
- delBtn.textContent='⏳ Xóa...';
-
- try{
-  let r=await fetchFile(cPath);
-
-  if(!r.ok)
-   throw Error(
-    r.status===404?
-    'Bài viết không còn tồn tại.':
-    `Không lấy được SHA (${r.status})`
-   );
-
-  let res=await req(
-   cPath,
-   'DELETE',
-   {
-    message:`Delete ${cPath}`,
-    sha:r.data.sha
-   }
-  );
-
-  let d={};
-
-  try{
-   d=await res.json();
-  }catch{}
-
-  if(res.status===409){
-   r=await fetchFile(cPath);
-
-   if(!r.ok)
-    throw Error('Không lấy được SHA mới.');
-
-   res=await req(
-    cPath,
-    'DELETE',
-    {
-     message:`Delete ${cPath}`,
-     sha:r.data.sha
-    }
-   );
-
-   try{
-    d=await res.json();
-   }catch{}
-  }
-
-  if(!res.ok)
-   throw Error(d.message||`GitHub ${res.status}`);
-
-  list=list.filter(x=>x.path!==cPath);
-
-  cSha=null;
-  cPath=null;
-  dirty=false;
-
-  title.value='';
-  content.value='';
-  postSelect.value='';
-
-  subBtn.textContent='🚀 Đăng';
-  delBtn.style.display='none';
-
-  renderList();
-  pv();
-
-  alert('🗑️ Đã xóa!');
-
- }catch(e){
-  alert('❌ Lỗi xóa: '+e.message);
- }finally{
-  delBtn.disabled=false;
-  delBtn.textContent='🗑️ Xóa';
- }
-}
-
-async function subForm(){
- if(!C.token)return alert('Thiếu Token!');
-
- let t=title.value.trim();
-
- if(!t){
-  const m=content.value.match(
-   /<title[^>]*>(.*?)<\/title>/i
-  );
-
-  if(m)t=title.value=m[1].trim();
- }
-
- if(!t)
-  return alert(
-   'Thiếu Tiêu đề (hoặc không tìm thấy thẻ <title>)!'
-  );
-
- subBtn.disabled=true;
- subBtn.textContent='⏳ Đang lưu...';
-
- try{
-  const path=cPath||todayPath(t);
-  let sha=null;
-
-  if(cPath){
-
-   const r=await fetchFile(path);
-
-   if(!r.ok)
-    throw Error(
-     r.status===404?
-     'Bài viết không còn tồn tại.':
-     `Không lấy được SHA (${r.status})`
-    );
-
-   sha=r.data.sha;
-
-  }else{
-
-   const r=await fetchFile(path);
-
-   if(r.ok){
-    throw Error(
-     `⚠️ Trùng tên bài viết trong ngày hôm nay!\n\n`+
-     `"${t}"\n\n`+
-     `Vui lòng đổi tiêu đề trước khi đăng.`
-    );
-   }
-
-   if(r.status!==404)
-    throw Error(
-     `Không kiểm tra được tên file (${r.status}).`
-    );
-  }
-
-  const body={
-   message:`Save: ${t}`,
-   content:utf8ToBase64(content.value)
-  };
-
-  if(sha)body.sha=sha;
-
-  let res=await req(path,'PUT',body);
-  let d={};
-
-  try{
-   d=await res.json();
-  }catch{}
-
-  if(res.status===409){
-
-   const r=await fetchFile(path);
-
-   if(!r.ok||!r.data?.sha)
-    throw Error('Không lấy được SHA mới.');
-
-   body.sha=r.data.sha;
-
-   res=await req(path,'PUT',body);
-
-   try{
-    d=await res.json();
-   }catch{}
-  }
-
-  if(!res.ok)
-   throw Error(
-    `GitHub ${res.status}: `+
-    (d.message||'Không thể lưu bài!')
-   );
-
-  cPath=d.content?.path||path;
-  cSha=d.content?.sha||body.sha||null;
-  dirty=false;
-
-  const item={
-   name:cPath.split('/').pop(),
-   path:cPath,
-   sha:cSha,
-   type:'file'
-  };
-
-  const i=list.findIndex(
-   x=>x.path===cPath
-  );
-
-  if(i>=0)
-   list[i]=item;
-  else
-   list.unshift(item);
-
-  subBtn.textContent='💾 Lưu';
-  delBtn.style.display='inline-flex';
-
-  renderList(cPath);
-
-  alert('✅ Đã lưu thành công!');
-
- }catch(e){
-  alert('❌ '+e.message);
- }finally{
-  subBtn.disabled=false;
- }
-}
-
-load();
-pv();
-initSplit();
-</script>
-</body>
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>Admin</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.5/split.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/codemirror.min.css">
+    <link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/theme/material-darker.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.20/mode/htmlmixed/htmlmixed.min.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100dvh;
+        overflow: hidden;
+        background: #0f172a;
+        color: #f8fafc;
+        font: 13px sans-serif
+      }
+
+      .app {
+        display: flex;
+        flex-direction: column;
+        height: 100%
+      }
+
+      header {
+        background: #1e293b;
+        border-bottom: 1px solid #334155;
+        padding: 6px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        flex-shrink: 0
+      }
+
+      .row {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        justify-content: space-between
+      }
+
+      select,
+      input,
+      button,
+      .btn-file {
+        background: #0f172a;
+        border: 1px solid #334155;
+        color: #fff;
+        border-radius: 4px;
+        padding: 5px 8px;
+        font-size: 12px;
+        outline: none
+      }
+
+      button,
+      .btn-file {
+        cursor: pointer;
+        font-weight: bold;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center
+      }
+
+      button:disabled {
+        opacity: .55;
+        cursor: not-allowed
+      }
+
+      .tabs {
+        display: flex;
+        background: #0f172a;
+        border-radius: 4px;
+        padding: 2px;
+        border: 1px solid #334155
+      }
+
+      .tab {
+        border: 0;
+        padding: 3px 8px;
+        color: #94a3b8;
+        border-radius: 3px
+      }
+
+      .tab.active {
+        background: #2563eb;
+        color: #fff
+      }
+
+      main {
+        flex: 1;
+        display: flex;
+        position: relative;
+        overflow: hidden;
+        padding: 6px;
+        min-height: 0
+      }
+
+      .pane {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        height: 100%;
+        min-height: 0;
+        min-width: 0
+      }
+
+      .title {
+        font-weight: bold;
+        width: 100%;
+        flex-shrink: 0
+      }
+
+      #content {
+        display: none
+      }
+
+      .CodeMirror {
+        flex: 1;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        border: 1px solid #334155;
+        border-radius: 4px;
+        font: 13px monospace
+      }
+
+      .CodeMirror-scroll {
+        min-height: 0
+      }
+
+      .CodeMirror-gutters {
+        border-right: 1px solid #334155
+      }
+
+      iframe {
+        width: 100%;
+        height: 100%;
+        border: 1px solid #334155;
+        border-radius: 4px;
+        background: #fff
+      }
+
+      .auth-pop {
+        position: absolute;
+        right: 0;
+        top: 32px;
+        background: #1e293b;
+        border: 1px solid #334155;
+        padding: 8px;
+        border-radius: 6px;
+        display: none;
+        flex-direction: column;
+        gap: 6px;
+        z-index: 999;
+        width: 200px;
+        box-shadow: 0 4px 12px #0008
+      }
+
+      .auth-pop.show {
+        display: flex
+      }
+
+      .gutter {
+        background: #334155;
+        background-repeat: no-repeat;
+        background-position: 50%
+      }
+
+      .gutter.gutter-horizontal {
+        cursor: col-resize;
+        background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADTJfu3AAAADklEQVR42mNhYGD4DwUACAgBAh555AcAAAAASUVORK5CYII=')
+      }
+
+      .gutter.gutter-vertical {
+        cursor: row-resize;
+        background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFCAMAAABl/6zIAAAABlBMVEUAAAD///+l2Z/dAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3wYECA4fA68pWAAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAAOSURBVHjaYmBgYACCAAgIAAEAAM4AAY2C8A4AAAAASUVORK5CYII=')
+      }
+
+      @media(min-width:769px) {
+        header {
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between
+        }
+
+        .row {
+          width: auto
+        }
+
+        .tabs {
+          display: none
+        }
+
+        .layout-btn {
+          display: inline-flex !important
+        }
+
+        main.pos-right {
+          flex-direction: row
+        }
+
+        main.pos-left {
+          flex-direction: row-reverse
+        }
+
+        main.pos-bottom {
+          flex-direction: column
+        }
+
+        main.pos-top {
+          flex-direction: column-reverse
+        }
+      }
+
+      @media(max-width:768px) {
+        .layout-btn {
+          display: none !important
+        }
+
+        .pane {
+          flex: 1;
+          width: 100% !important;
+          height: 100% !important
+        }
+
+        .show-ed .pane-prev,
+        .show-prev .pane-ed {
+          display: none !important
+        }
+
+        .gutter {
+          display: none !important
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="app">
+      <header>
+        <div class="row" style="flex:1;max-width:450px"><button onclick="resetForm()" style="background:#16a34a"> ➕ Mới
+          </button><label class="btn-file" style="background:#0284c7"> 📁 File <input type="file" id="fileInput"
+              accept=".html,.htm,.txt,.md" style="display:none" onchange="uploadFile(event)"></label><select
+            id="postSelect" style="flex:1;min-width:0">
+            <option value="">-- Chọn bài --</option>
+          </select></div>
+        <div class="row">
+          <div class="tabs"><button class="tab active" onclick="tab('ed')"> ✏️ Sửa </button><button class="tab"
+              onclick="tab('prev')"> 👁️ Xem </button></div>
+          <div style="display:flex;gap:6px;position:relative;align-items:center"><button class="layout-btn"
+              onclick="cycleLayout()" style="background:#475569;display:none"> Layout: ➡️ Phải </button><button
+              onclick="toggleAuth()" style="background:#334155"> ⚙️ Auth </button>
+            <div id="authBox" class="auth-pop"><input id="cfgOwner" placeholder="User"><input id="cfgRepo"
+                placeholder="Repo"><input id="cfgToken" type="password" placeholder="Token"><button onclick="saveCfg()"
+                style="background:#2563eb"> Lưu Auth </button><button onclick="clearKey()" style="background:#dc2626">
+                🗑 Xóa key </button></div><button id="delBtn" onclick="delPost()"
+              style="background:#dc2626;display:none"> 🗑️ Xóa </button><button id="subBtn" onclick="subForm()"
+              style="background:#2563eb"> 🚀 Đăng </button>
+          </div>
+        </div>
+      </header>
+      <main id="ws" class="show-ed pos-right">
+        <div id="paneEd" class="pane pane-ed"><input id="title" class="title"
+            placeholder="Tiêu đề (tự lấy từ <title> nếu bỏ trống)..."><textarea id="content"
+            placeholder="Mã HTML/CSS/JS..."></textarea></div>
+        <div id="panePrev" class="pane pane-prev"><iframe id="frame"></iframe></div>
+      </main>
+    </div>
+    <script>
+      const $ = t => document.getElementById(t);
+      let C = JSON.parse(localStorage.getItem("gh_cfg") || "{}"),
+        list = [],
+        cSha = null,
+        cPath = null,
+        bUrl = null,
+        dirty = !1,
+        splitInstance = null,
+        editor = null,
+        settingCode = !1;
+      const positions = ["right", "bottom", "left", "top"],
+        posIcons = {
+          right: "➡️ Phải",
+          bottom: "⬇️ Dưới",
+          left: "⬅️ Trái",
+          top: "⬆️ Trên"
+        };
+      let currentPosIndex = 0;
+
+      function setCode(t) {
+        settingCode = !0, editor.setValue(t || ""), settingCode = !1, editor.refresh()
+      }
+
+      function getCode() {
+        return editor.getValue()
+      }
+
+      function utf8ToBase64(t) {
+        const e = (new TextEncoder).encode(t);
+        let n = "";
+        for (let t = 0; t < e.length; t += 32768) n += String.fromCharCode(...e.subarray(t, t + 32768));
+        return btoa(n)
+      }
+
+      function base64ToUtf8(t) {
+        const e = atob(t.replace(/\s/g, "")),
+          n = new Uint8Array(e.length);
+        for (let t = 0; t < e.length; t++) n[t] = e.charCodeAt(t);
+        return (new TextDecoder).decode(n)
+      }
+
+      function initSplit() {
+        if (innerWidth <= 768) return splitInstance?.destroy(), splitInstance = null, void editor?.refresh();
+        splitInstance?.destroy();
+        const t = ["right", "left"].includes(positions[currentPosIndex]);
+        splitInstance = Split(["#paneEd", "#panePrev"], {
+          sizes: [50, 50],
+          minSize: 100,
+          gutterSize: 6,
+          direction: t ? "horizontal" : "vertical"
+        }), setTimeout((() => {
+          editor?.refresh()
+        }), 50)
+      }
+
+      function cycleLayout() {
+        currentPosIndex = (currentPosIndex + 1) % 4;
+        const t = positions[currentPosIndex];
+        ws.className = `show-ed pos-${t}`, document.querySelector(".layout-btn").textContent = "Layout: " + posIcons[t],
+          initSplit()
+      }
+
+      function toggleAuth() {
+        authBox.classList.toggle("show")
+      }
+      async function saveCfg() {
+        if (C = {
+            owner: cfgOwner.value.trim(),
+            repo: cfgRepo.value.trim(),
+            token: cfgToken.value.trim()
+          }, !C.owner || !C.repo || !C.token) return alert("Vui lòng nhập đủ Auth.");
+        localStorage.setItem("gh_cfg", JSON.stringify(C)), authBox.classList.remove("show"), list = [], cSha = cPath =
+          null, postSelect.innerHTML = '<option value="">-- Chọn bài --</option>', await load()
+      }
+
+      function clearKey() {
+        confirm("Xóa key GitHub đã lưu?") && (localStorage.removeItem("gh_cfg"), C = {}, list = [], cSha = cPath = null,
+          dirty = !1, cfgOwner.value = "", cfgRepo.value = "", cfgToken.value = "", postSelect.innerHTML =
+          '<option value="">-- Chọn bài --</option>', alert("Đã xóa key."))
+      }
+
+      function tab(t) {
+        ws.className = ws.className.replace(/show-(ed|prev)/, "ed" === t ? "show-ed" : "show-prev"), document
+          .querySelectorAll(".tab").forEach(((e, n) => e.classList.toggle("active", 0 === n == ("ed" === t)))),
+          "prev" === t && pv()
+      }
+
+      function pv() {
+        bUrl && URL.revokeObjectURL(bUrl), bUrl = URL.createObjectURL(new Blob([getCode()], {
+          type: "text/html"
+        })), frame.src = bUrl
+      }
+
+      function cleanContent(t) {
+        return t.replace(/^---[\s\S]*?---\s*/m, "").replace(/^```[a-z]*\n?/i, "").replace(/\n?```$/i, "").trim()
+      }
+
+      function getTitle(t, e = "") {
+        const n = t.match(/<title[^>]*>(.*?)<\/title>/i);
+        return n?.[1]?.trim() || e.replace(/\.(html|htm|txt|md)$/i, "")
+      }
+
+      function toSlug(t) {
+        return t.toLowerCase().replace(/đ/g, "d").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s-]/g,
+          "").replace(/\s+/g, "-").replace(/-+/g, "-").trim()
+      }
+
+      function todayPath(t) {
+        const e = new Date;
+        return `_posts/${e.getFullYear()+"-"+String(e.getMonth()+1).padStart(2,"0")+"-"+String(e.getDate()).padStart(2,"0")}-${toSlug(t)}.html`
+      }
+
+      function apiUrl(t) {
+        return `https://api.github.com/repos/${encodeURIComponent(C.owner)}/${encodeURIComponent(C.repo)}/contents/${t.split("/").map(encodeURIComponent).join("/")}`
+      }
+      async function req(t, e = "GET", n) {
+        const a = {
+          method: e,
+          headers: {
+            Authorization: `Bearer ${C.token}`,
+            Accept: "application/vnd.github+json",
+            "Content-Type": "application/json",
+            "X-GitHub-Api-Version": "2022-11-28"
+          }
+        };
+        return n && (a.body = JSON.stringify(n)), fetch(apiUrl(t), a)
+      }
+      async function fetchFile(t) {
+        try {
+          const e = await req(t);
+          let n = null;
+          try {
+            n = await e.json()
+          } catch {}
+          return {
+            ok: e.ok,
+            status: e.status,
+            data: n
+          }
+        } catch (t) {
+          return {
+            ok: !1,
+            status: 0,
+            data: null,
+            error: t
+          }
+        }
+      }
+
+      function renderList(t = "") {
+        postSelect.innerHTML = '<option value="">-- Chọn bài (' + list.length + ") --</option>" + list.map(((e, n) =>
+            `<option value="${n}"${e.path===t?" selected":""}>${e.name.replace(/^\d{4}-\d{2}-\d{2}-/,"")}</option>`))
+          .join("")
+      }
+      async function load() {
+        if (C.token) try {
+          const t = await req("_posts");
+          let e = null;
+          try {
+            e = await t.json()
+          } catch {}
+          if (!t.ok) throw Error(e?.message || `HTTP ${t.status}`);
+          list = e.filter((t => "file" === t.type && /\.(html|md)$/i.test(t.name))).reverse(), renderList(cPath ||
+            "")
+        } catch (t) {
+          postSelect.innerHTML = '<option value="">-- Lỗi tải danh sách --</option>', alert("❌ " + t.message)
+        } else postSelect.innerHTML = '<option value="">-- Chưa có Auth --</option>'
+      }
+
+      function resetForm() {
+        dirty && !confirm("Nội dung chưa lưu. Bạn muốn tạo bài mới?") || (cSha = null, cPath = null, dirty = !1, title
+          .value = "", setCode(""), postSelect.value = "", subBtn.textContent = "🚀 Đăng", delBtn.style.display =
+          "none", pv())
+      }
+      async function edit(t) {
+        const e = await fetchFile(t);
+        if (!e.ok) return alert(`❌ Không thể nạp bài (${e.status})`);
+        if (!e.data?.content) return alert("❌ GitHub không trả về nội dung file!");
+        const n = cleanContent(base64ToUtf8(e.data.content));
+        title.value = t.split("/").pop().replace(/^\d{4}-\d{2}-\d{2}-/, "").replace(/\.(html|md)$/, ""), setCode(n),
+          cSha = e.data.sha, cPath = e.data.path || t, dirty = !1, subBtn.textContent = "💾 Lưu", delBtn.style
+          .display = "inline-flex", renderList(cPath), pv()
+      }
+      async function uploadFile(t) {
+        const e = t.target.files[0];
+        if (!e) return;
+        if (dirty && !confirm("Nội dung chưa lưu. Mở file mới?")) return void(t.target.value = "");
+        const n = new FileReader;
+        n.onload = async n => {
+          const a = cleanContent(n.target.result),
+            i = getTitle(a, e.name),
+            o = todayPath(i);
+          if (title.value = i, setCode(a), cSha = null, cPath = null, postSelect.value = "", subBtn.textContent =
+            "🚀 Đăng", delBtn.style.display = "none", dirty = !0, pv(), C.token) try {
+            const t = await fetchFile(o);
+            if (t.ok) return void alert(
+              `⚠️ Trùng tên bài viết trong ngày hôm nay!\n\n"${i}"\n\nVui lòng đổi tiêu đề hoặc tên file rồi tải lên lại.`
+              );
+            if (404 !== t.status) return void alert(`❌ Không kiểm tra được bài viết (${t.status}).`)
+          } catch (t) {
+            alert("❌ Không thể kiểm tra bài viết: " + (t.message || "Lỗi không xác định"))
+          } else t.target.value = ""
+        }, n.readAsText(e), t.target.value = ""
+      }
+      async function delPost() {
+        if (cPath && confirm("⚠️ Xóa bài viết này?")) {
+          delBtn.disabled = !0, delBtn.textContent = "⏳ Xóa...";
+          try {
+            let t = await fetchFile(cPath);
+            if (!t.ok) throw Error(404 === t.status ? "Bài viết không còn tồn tại." :
+              `Không lấy được SHA (${t.status})`);
+            let e = await req(cPath, "DELETE", {
+                message: `Delete ${cPath}`,
+                sha: t.data.sha
+              }),
+              n = {};
+            try {
+              n = await e.json()
+            } catch {}
+            if (409 === e.status) {
+              if (t = await fetchFile(cPath), !t.ok) throw Error("Không lấy được SHA mới.");
+              e = await req(cPath, "DELETE", {
+                message: `Delete ${cPath}`,
+                sha: t.data.sha
+              });
+              try {
+                n = await e.json()
+              } catch {}
+            }
+            if (!e.ok) throw Error(n.message || `GitHub ${e.status}`);
+            list = list.filter((t => t.path !== cPath)), cSha = null, cPath = null, dirty = !1, title.value = "",
+              setCode(""), postSelect.value = "", subBtn.textContent = "🚀 Đăng", delBtn.style.display = "none",
+              renderList(), pv(), alert("🗑️ Đã xóa!")
+          } catch (t) {
+            alert("❌ Lỗi xóa: " + t.message)
+          } finally {
+            delBtn.disabled = !1, delBtn.textContent = "🗑️ Xóa"
+          }
+        }
+      }
+      async function subForm() {
+        if (!C.token) return alert("Thiếu Token!");
+        let t = title.value.trim();
+        const e = getCode();
+        if (!t) {
+          const n = e.match(/<title[^>]*>(.*?)<\/title>/i);
+          n && (t = title.value = n[1].trim())
+        }
+        if (!t) return alert("Thiếu Tiêu đề (hoặc không tìm thấy thẻ <title>)!");
+        subBtn.disabled = !0, subBtn.textContent = "⏳ Đang lưu...";
+        try {
+          const n = cPath || todayPath(t);
+          let a = null;
+          if (cPath) {
+            const t = await fetchFile(n);
+            if (!t.ok) throw Error(404 === t.status ? "Bài viết không còn tồn tại." :
+              `Không lấy được SHA (${t.status})`);
+            a = t.data.sha
+          } else {
+            const e = await fetchFile(n);
+            if (e.ok) throw Error(
+              `⚠️ Trùng tên bài viết trong ngày hôm nay!\n\n"${t}"\n\nVui lòng đổi tiêu đề trước khi đăng.`);
+            if (404 !== e.status) throw Error(`Không kiểm tra được tên file (${e.status}).`)
+          }
+          const i = {
+            message: `Save: ${t}`,
+            content: utf8ToBase64(e)
+          };
+          a && (i.sha = a);
+          let o = await req(n, "PUT", i),
+            r = {};
+          try {
+            r = await o.json()
+          } catch {}
+          if (409 === o.status) {
+            const t = await fetchFile(n);
+            if (!t.ok || !t.data?.sha) throw Error("Không lấy được SHA mới.");
+            i.sha = t.data.sha, o = await req(n, "PUT", i);
+            try {
+              r = await o.json()
+            } catch {}
+          }
+          if (!o.ok) throw Error(`GitHub ${o.status}: ` + (r.message || "Không thể lưu bài!"));
+          cPath = r.content?.path || n, cSha = r.content?.sha || i.sha || null, dirty = !1;
+          const l = {
+              name: cPath.split("/").pop(),
+              path: cPath,
+              sha: cSha,
+              type: "file"
+            },
+            s = list.findIndex((t => t.path === cPath));
+          s >= 0 ? list[s] = l : list.unshift(l), subBtn.textContent = "💾 Lưu", delBtn.style.display = "inline-flex",
+            renderList(cPath), alert("✅ Đã lưu thành công!")
+        } catch (t) {
+          alert("❌ " + t.message)
+        } finally {
+          subBtn.disabled = !1
+        }
+      }
+      cfgOwner.value = C.owner || "longhai", cfgRepo.value = C.repo || "codes", cfgToken.value = C.token || "", editor =
+        CodeMirror.fromTextArea(content, {
+          mode: "htmlmixed",
+          theme: "material-darker",
+          lineNumbers: !0,
+          lineWrapping: !1,
+          tabSize: 2,
+          indentUnit: 2,
+          indentWithTabs: !1,
+          autofocus: !1
+        }), editor.on("change", (() => {
+          settingCode || (dirty = !0, pv())
+        })), title.oninput = () => {
+          dirty = !0, pv()
+        }, addEventListener("resize", initSplit), postSelect.onchange = async t => {
+          const e = t.target.value;
+          if (!dirty || confirm("Nội dung chưa lưu. Bạn vẫn muốn chuyển bài?")) return "" === e ? resetForm() :
+            void await edit(list[+e].path);
+          t.target.value = list.findIndex((t => t.path === cPath))
+        }, load(), pv(), initSplit();
+    </script>
+  </body>
+
 </html>
