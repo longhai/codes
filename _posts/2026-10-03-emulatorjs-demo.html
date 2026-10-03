@@ -43,10 +43,7 @@ Drag ROM file or click here
 </div>
 
 
-<!-- SETTINGS -->
-
 <div id="popup-settings" class="popup popup-animate">
-
 <div class="content">
 
 <div class="title">
@@ -84,38 +81,25 @@ Enable Debuging:
 
 <div class="buttonbox last">
 <p>Custom Path:</p>
-<input type="text"
+<input
+type="text"
 id="customPath"
-placeholder="https://cdn.emulatorjs.org/stable/data/">
+placeholder="https://cdn.emulatorjs.org/stable/data/"
+>
 <p id="customPathValid"></p>
 </div>
 
-<p id="offline-status">
-Offline Status: CHECKING
-</p>
-
-<p>
-Offline Cores will be available soon.
-</p>
+<p id="offline-status">Offline Status: CHECKING</p>
+<p>Offline Cores will be available soon.</p>
 
 <p class="hide">
 Remove All Saved Versions:
 <button onclick="removeallsaved()">Remove All</button>
 </p>
 
-
-<!-- PWA -->
-
 <div id="installbox" class="buttonbox">
-
-<p id="installboxtext">
-Install PWA:
-</p>
-
-<button id="install" disabled>
-Install
-</button>
-
+<p id="installboxtext">Install PWA:</p>
+<button id="install" disabled>Install</button>
 </div>
 
 <p id="pwa-status" style="font-size:12px;text-align:right"></p>
@@ -125,9 +109,7 @@ Install
 </div>
 
 <div class="bottom">
-<button id="settings-close">
-Close
-</button>
+<button id="settings-close">Close</button>
 </div>
 
 </div>
@@ -140,18 +122,21 @@ Close
 
 <script>
 
-/* =========================
+/* =========================================================
    SERVICE WORKER
-========================= */
+========================================================= */
 
-if("serviceWorker" in navigator)
+if("serviceWorker" in navigator){
+
 navigator.serviceWorker.getRegistrations()
 .then(rs=>rs.forEach(r=>r.unregister()));
 
+}
 
-/* =========================
+
+/* =========================================================
    OFFLINE
-========================= */
+========================================================= */
 
 loadJSON("/versions",response=>{
 
@@ -160,7 +145,6 @@ const s=document.getElementById("offline-status");
 if(response){
 
 loadVersions(response);
-
 s.textContent="Offline Status: READY";
 
 }else{
@@ -179,61 +163,51 @@ s.textContent="Offline Status: NOT INSTALLED";
 loadSettings();
 
 
-/* =========================
+/* =========================================================
    ROM
-========================= */
+========================================================= */
 
 input.addEventListener("change",async()=>{
 
 const file=input.files[0];
 
-if(!file)return;
+if(!file)
+return;
 
 const parts=file.name.split(".");
 const ext=(parts.pop()||"").toLowerCase();
 
+
+/* =========================================================
+   EXTENSION → CORE
+   Gom nhiều extension vào cùng một core
+========================================================= */
+
 const map={
-
-fds:"nes",
-nes:"nes",
-unif:"nes",
-unf:"nes",
-
-smc:"snes",
-fig:"snes",
-sfc:"snes",
-gd3:"snes",
-gd7:"snes",
-dx2:"snes",
-bsx:"snes",
-swc:"snes",
-
-z64:"n64",
-n64:"n64",
-
+nes:"fds nes unif unf",
+snes:"smc fig sfc gd3 gd7 dx2 bsx swc",
+n64:"z64 n64",
 pce:"pce",
-
-ngp:"ngp",
-ngc:"ngp",
-
-ws:"ws",
-wsc:"ws",
-
-col:"coleco",
-cv:"coleco",
-
-d64:"vice_x64",
-
-chd:"psx",
-
+ngp:"ngp ngc",
+ws:"ws wsc",
+coleco:"col cv",
+vice_x64:"d64",
+psx:"chd",
 nds:"nds",
 gba:"gba",
 gb:"gb"
-
 };
 
-let core=map[ext];
 
+/* tìm core */
+
+let core=Object.entries(map)
+.find(([c,e])=>e.split(" ").includes(ext))?.[0];
+
+
+/* =========================================================
+   CHỌN CORE THỦ CÔNG
+========================================================= */
 
 if(!core){
 
@@ -291,9 +265,9 @@ button.onclick=()=>resolve(select.value);
 }
 
 
-/* =========================
-   EMULATORJS
-========================= */
+/* =========================================================
+   EMULATORJS DISPLAY
+========================================================= */
 
 const div=document.createElement("div");
 const game=document.createElement("div");
@@ -310,10 +284,11 @@ div.appendChild(game);
 document.body.appendChild(div);
 
 
-/* CONFIG */
+/* =========================================================
+   EMULATORJS CONFIG
+========================================================= */
 
-const cdn=
-window.cdn||
+const cdn=window.cdn||
 "https://cdn.emulatorjs.org/stable/data/";
 
 window.EJS_player="#game";
@@ -338,45 +313,44 @@ document.body.appendChild(script);
 });
 
 
-box.ondragover=
-()=>box.setAttribute("drag",true);
+/* =========================================================
+   DRAG
+========================================================= */
 
-box.ondragleave=
-()=>box.removeAttribute("drag");
+box.ondragover=()=>{
+box.setAttribute("drag",true);
+};
+
+box.ondragleave=()=>{
+box.removeAttribute("drag");
+};
 
 
-/* =========================
+/* =========================================================
    SETTINGS
-========================= */
+========================================================= */
 
-const settings=
-document.getElementById("settings");
+const settings=document.getElementById("settings");
+const popup=document.getElementById("popup-settings");
+const close=document.getElementById("settings-close");
 
-const popup=
-document.getElementById("popup-settings");
+settings.onclick=()=>{
+popup.classList.add("show");
+};
 
-const close=
-document.getElementById("settings-close");
-
-settings.onclick=
-()=>popup.classList.add("show");
-
-close.onclick=
-()=>popup.classList.remove("show");
+close.onclick=()=>{
+popup.classList.remove("show");
+};
 
 
-/* =========================
+/* =========================================================
    DEBUG
-========================= */
+========================================================= */
 
-const params=
-new URLSearchParams(location.search);
+const params=new URLSearchParams(location.search);
+const debug=document.getElementById("debug");
 
-const debug=
-document.getElementById("debug");
-
-debug.checked=
-params.get("debug")==="1";
+debug.checked=params.get("debug")==="1";
 
 debug.onchange=e=>{
 
@@ -392,12 +366,11 @@ location.href=u.href;
 };
 
 
-/* =========================
+/* =========================================================
    LANGUAGE
-========================= */
+========================================================= */
 
 const languages={
-
 auto:"Tự động",
 en:"English",
 vi:"Tiếng Việt",
@@ -408,22 +381,17 @@ zh:"中文",
 de:"Deutsch",
 fr:"Français",
 ru:"Русский"
-
 };
 
-const language=
-document.getElementById("language");
+const language=document.getElementById("language");
 
 for(const k in languages)
-language.add(
-new Option(languages[k],k)
-);
+language.add(new Option(languages[k],k));
 
 window.language=
 localStorage.getItem("language")||"auto";
 
-language.value=
-window.language;
+language.value=window.language;
 
 language.onchange=()=>{
 
@@ -437,26 +405,20 @@ location.reload();
 };
 
 
-/* =========================
-   CUSTOM CDN
-========================= */
+/* =========================================================
+   CDN
+========================================================= */
 
-const customPath=
-document.getElementById("customPath");
-
-const savedCdn=
-localStorage.getItem("custom_cdn");
+const customPath=document.getElementById("customPath");
+const savedCdn=localStorage.getItem("custom_cdn");
 
 if(savedCdn)
 customPath.value=savedCdn;
 
 customPath.onchange=()=>{
 
-const value=
-customPath.value.trim();
-
-const valid=
-/^https?:\/\/.+\/$/.test(value);
+const value=customPath.value.trim();
+const valid=/^https?:\/\/.+\/$/.test(value);
 
 const status=
 document.getElementById("customPathValid");
@@ -468,52 +430,42 @@ localStorage.setItem(
 value
 );
 
-status.textContent=
-"URL hợp lệ";
-
-status.style.color=
-"#4caf50";
+status.textContent="URL hợp lệ";
+status.style.color="#4caf50";
 
 }else{
 
-localStorage.removeItem(
-"custom_cdn"
-);
+localStorage.removeItem("custom_cdn");
 
 status.textContent=
 value
 ?"URL không hợp lệ"
 :"";
 
-status.style.color=
-"#f44336";
+status.style.color="#f44336";
 
 }
 
 };
 
 
-/* =========================
+/* =========================================================
    CACHE
-========================= */
+========================================================= */
 
-document.getElementById("cache").onclick=
-async()=>{
+document.getElementById("cache").onclick=async()=>{
 
 if(!confirm("Xóa cache và dữ liệu lưu?"))
 return;
 
 localStorage.clear();
 
-if(indexedDB.databases){
+if(indexedDB.databases)
 
-for(const db of
-await indexedDB.databases())
+for(const db of await indexedDB.databases())
 
 if(db.name)
 indexedDB.deleteDatabase(db.name);
-
-}
 
 for(const c of await caches.keys())
 await caches.delete(c);
@@ -523,9 +475,9 @@ location.reload();
 };
 
 
-/* =========================
-   PWA
-========================= */
+/* =========================================================
+   PWA INSTALL
+========================================================= */
 
 let installPrompt=null;
 
@@ -536,56 +488,40 @@ const pwaStatus=
 document.getElementById("pwa-status");
 
 
-/* Kiểm tra PWA đang chạy standalone */
-
 const isStandalone=()=>{
 
 return(
-window.matchMedia(
-"(display-mode: standalone)"
-).matches||
+matchMedia("(display-mode: standalone)").matches||
 navigator.standalone===true
 );
 
 };
 
 
-/* Cập nhật giao diện */
-
 const updatePWA=()=>{
 
 const installed=
 isStandalone()||
-localStorage.getItem(
-"pwa_installed"
-)==="true";
-
-if(installed){
-
-install.textContent="Installed";
-install.disabled=true;
-
-pwaStatus.textContent=
-"PWA đã được cài.";
-
-}else{
-
-install.textContent="Install";
+localStorage.getItem("pwa_installed")==="true";
 
 install.disabled=
+installed||
 !installPrompt;
 
+install.textContent=
+installed
+?"Installed"
+:"Install";
+
 pwaStatus.textContent=
-installPrompt
+installed
+?"PWA đã được cài."
+:installPrompt
 ?"Sẵn sàng cài đặt."
 :"PWA chưa sẵn sàng.";
 
-}
-
 };
 
-
-/* Browser cho phép cài */
 
 window.addEventListener(
 "beforeinstallprompt",
@@ -595,10 +531,6 @@ e.preventDefault();
 
 installPrompt=e;
 
-/*
-Nếu PWA trước đó bị gỡ,
-browser phát lại beforeinstallprompt.
-*/
 localStorage.removeItem(
 "pwa_installed"
 );
@@ -607,8 +539,6 @@ updatePWA();
 
 });
 
-
-/* Cài đặt thành công */
 
 window.addEventListener(
 "appinstalled",
@@ -626,8 +556,6 @@ updatePWA();
 });
 
 
-/* Nút Install */
-
 install.onclick=async()=>{
 
 if(!installPrompt){
@@ -641,7 +569,7 @@ return;
 
 try{
 
-installPrompt.prompt();
+await installPrompt.prompt();
 
 const result=
 await installPrompt.userChoice;
@@ -664,25 +592,28 @@ pwaStatus.textContent=
 };
 
 
-/* =========================
-   SVG → PNG → MANIFEST
-========================= */
+/* =========================================================
+   PWA ICON
+   SVG → CANVAS → PNG
+========================================================= */
 
 (async()=>{
 
 try{
 
-/*
-SVG gốc
-*/
+
+/* SVG ICON */
 
 const svg=`
 
-<svg xmlns="http://www.w3.org/2000/svg"
+<svg
+xmlns="http://www.w3.org/2000/svg"
 viewBox="0 0 1024 1024">
 
-<path fill="#1AAFFF"
-d="M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768z
+<path
+fill="#1AAFFF"
+d="
+M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768z
 
 M768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256z
 
@@ -690,25 +621,22 @@ M554.667 661.547c0-59.093 47.68-106.88 106.88-106.88h212.907c59.093 0 106.88 47.
 
 M183.829 109.888c36.118-61.163 108.246-61.248 144.427 0l126.208 213.653c35.733 60.523 3.52 124.437-66.816 124.437H124.437c-70.613 0-102.635-63.765-66.816-124.437L183.829 109.91z
 
-M133.653 362.667h244.8l-122.41-207.232-122.39 207.232z"/>
+M133.653 362.667h244.8l-122.41-207.232-122.39 207.232z
+"/>
 
 </svg>
 `;
 
 
-/*
-SVG → Image
-*/
+/* SVG → IMAGE */
 
-const image=
-new Image();
+const image=new Image();
 
 image.src=
 "data:image/svg+xml;charset=utf-8,"+
 encodeURIComponent(svg);
 
-await new Promise(
-(resolve,reject)=>{
+await new Promise((resolve,reject)=>{
 
 image.onload=resolve;
 image.onerror=reject;
@@ -716,9 +644,9 @@ image.onerror=reject;
 });
 
 
-/*
-Tạo PNG từ Canvas
-*/
+/* =========================================================
+   TẠO PNG
+========================================================= */
 
 const makePNG=size=>{
 
@@ -731,9 +659,20 @@ canvas.height=size;
 const ctx=
 canvas.getContext("2d");
 
-ctx.clearRect(
-0,0,size,size
+
+/* nền app */
+
+ctx.fillStyle="#0d0e12";
+
+ctx.fillRect(
+0,
+0,
+size,
+size
 );
+
+
+/* SVG */
 
 ctx.drawImage(
 image,
@@ -743,6 +682,7 @@ size,
 size
 );
 
+
 return canvas.toDataURL(
 "image/png"
 );
@@ -750,20 +690,42 @@ return canvas.toDataURL(
 };
 
 
-/*
-Tạo icon 192 và 512
-*/
-
-const icon192=
-makePNG(192);
-
-const icon512=
-makePNG(512);
+const icon192=makePNG(192);
+const icon512=makePNG(512);
 
 
-/*
-Manifest
-*/
+/* =========================================================
+   FAVICON
+========================================================= */
+
+const favicon=
+document.createElement("link");
+
+favicon.rel="icon";
+favicon.type="image/png";
+favicon.sizes="192x192";
+favicon.href=icon192;
+
+document.head.appendChild(favicon);
+
+
+/* =========================================================
+   APPLE ICON
+========================================================= */
+
+const apple=
+document.createElement("link");
+
+apple.rel="apple-touch-icon";
+apple.sizes="192x192";
+apple.href=icon192;
+
+document.head.appendChild(apple);
+
+
+/* =========================================================
+   MANIFEST
+========================================================= */
 
 const manifest={
 
@@ -772,7 +734,14 @@ name:"EmulatorJS Demo",
 short_name:"EmulatorJS",
 
 start_url:
-location.href,
+location.href.split("#")[0],
+
+scope:
+location.origin+
+location.pathname.substring(
+0,
+location.pathname.lastIndexOf("/")
+)+"/",
 
 display:"standalone",
 
@@ -785,13 +754,15 @@ icons:[
 {
 src:icon192,
 sizes:"192x192",
-type:"image/png"
+type:"image/png",
+purpose:"any maskable"
 },
 
 {
 src:icon512,
 sizes:"512x512",
-type:"image/png"
+type:"image/png",
+purpose:"any maskable"
 }
 
 ]
@@ -799,45 +770,60 @@ type:"image/png"
 };
 
 
-/*
-Tạo manifest
-*/
+/* =========================================================
+   MANIFEST URL
+========================================================= */
 
 const manifestURL=
 URL.createObjectURL(
+
 new Blob(
-[JSON.stringify(manifest)],
+[
+JSON.stringify(manifest)
+],
 {
 type:"application/manifest+json"
 }
 )
+
 );
 
-const link=
+
+const manifestLink=
 document.createElement("link");
 
-link.rel="manifest";
-link.href=manifestURL;
+manifestLink.rel="manifest";
+manifestLink.href=manifestURL;
 
-document.head.appendChild(link);
+document.head.appendChild(
+manifestLink
+);
 
 
-/*
-Thêm apple icon bằng PNG
-*/
+/* =========================================================
+   DEBUG
+========================================================= */
 
-const apple=
-document.createElement("link");
+console.log(
+"PWA PNG 192:",
+icon192
+);
 
-apple.rel="apple-touch-icon";
-apple.href=icon192;
+console.log(
+"PWA PNG 512:",
+icon512
+);
 
-document.head.appendChild(apple);
+console.log(
+"PWA manifest:",
+manifest
+);
+
 
 }catch(e){
 
 console.error(
-"PWA manifest/icon error:",
+"PWA icon error:",
 e
 );
 
@@ -846,9 +832,9 @@ e
 })();
 
 
-/* =========================
-   INIT PWA
-========================= */
+/* =========================================================
+   INITIAL PWA STATE
+========================================================= */
 
 updatePWA();
 
@@ -856,4 +842,3 @@ updatePWA();
 
 </body>
 </html>
-
