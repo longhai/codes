@@ -8,13 +8,9 @@
         <link rel="apple-touch-icon" href="img/icon.png" />
         <link rel="manifest" href="manifest.json" />
         <meta name="theme-color" content="#000"/>
-        <link rel="stylesheet" href="main.css"/>
+        <link rel="stylesheet" href="https://demo.emulatorjs.org/main.css"/>
     </head>
     <body>
-        <div id="top">
-            <h1>EmulatorJS Demo</h1>
-            <img src="img/logo-light.png" alt="Logo" class="logo">
-        </div>
         <div id="box">
             <input type="file" id="input">
             Drag ROM file or click here
@@ -56,7 +52,7 @@
             </div>
         </div>
         <div class="popup-overlay"></div>
-        <script src="main.js"></script>
+        <script src="https://demo.emulatorjs.org/main.js"></script>
         <script>
             if ("serviceWorker" in navigator) {
                 //const req = navigator.serviceWorker.register("sw.js");
@@ -200,16 +196,12 @@
                 window.EJS_core = core;
                 window.EJS_pathtodata = cdn;
                 window.EJS_startOnLoaded = true;
-                window.EJS_AdUrl = "ads.html";
                 window.EJS_DEBUG_XX = window.debug;
                 if (window.language !== "auto") {
                     window.EJS_language = window.language;
                 }
                 if (core === "psp" || core === "dosbox_pure" || core === "azahar") {
                     window.EJS_threads = true;
-                }
-                window.EJS_ready = function() {
-                    detectAdBlock("data:text/html;base64,DQo8aHRtbD48c3R5bGU+I2FkYmxvY2t7YmFja2dyb3VuZC1jb2xvcjpyZ2JhKDAsMCwwLC44KTtwb3NpdGlvbjpmaXhlZDt3aWR0aDoxMDAlO2hlaWdodDoxMDAlO3RvcDowO2xlZnQ6MDt6LWluZGV4OjEwMDA7dGV4dC1hbGlnbjpjZW50ZXI7Y29sb3I6I2ZmZn1ib2R5LGh0bWx7YmFja2dyb3VuZC1jb2xvcjp0cmFuc3BhcmVudH1hIHtjb2xvcjogIzAwYWZlNDt9PC9zdHlsZT48Ym9keSBzdHlsZT0ibWFyZ2luOjAiPjxkaXYgaWQ9ImFkYmxvY2siPjxoMT5IaSBBZGJsb2NrIFVzZXIhPC9oMT48cD5BZHMgb24gdGhpcyBwYWdlIG1heSBjb21lIGFuZCBnbyBkZXBlbmRpbmcgb24gaG93IG1hbnkgcGVvcGxlIGFyZSBmdW5kaW5nIHRoaXMgcHJvamVjdC48YnI+WW91IGNhbiBoZWxwIGZ1bmQgdGhpcyBwcm9qZWN0IG9uIDxhIHRhcmdldD0iX2Fib3V0IiBocmVmPSJodHRwczovL3BhdHJlb24uY29tL0VtdWxhdG9ySlMiPnBhdHJlb248L2E+PC9wPjwvZGl2PjwvYm9keT48L2h0bWw+");
                 }
 
                 script.src = cdn + "loader.js";
