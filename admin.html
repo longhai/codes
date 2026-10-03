@@ -295,6 +295,7 @@ layout: null
           display: none !important
         }
 
+        /* Prevent auto-zoom and optimize font touch sizing on mobile */
         .CodeMirror {
           font-size: 14px;
         }
@@ -312,7 +313,7 @@ layout: null
             <option value="">-- Chọn bài --</option>
           </select></div>
         <div class="row">
-          <div class="tabs"><button class="tab active" onclick="tab('ed')"> ✏️️ Sửa </button><button class="tab"
+          <div class="tabs"><button class="tab active" onclick="tab('ed')"> ✏️ Sửa </button><button class="tab"
               onclick="tab('prev')"> 👁️ Xem </button></div>
           <div style="display:flex;gap:6px;position:relative;align-items:center"><button class="layout-btn"
               onclick="cycleLayout()" style="background:#475569;display:none"> Layout: ➡️ Phải </button><button
@@ -330,6 +331,7 @@ layout: null
         <div id="paneEd" class="pane pane-ed">
           <input id="title" class="title" placeholder="Tiêu đề (tự lấy từ <title> nếu bỏ trống)...">
           
+          <!-- Thanh công cụ hỗ trợ thao tác nhanh cho Mobile & Desktop -->
           <div class="ed-toolbar">
             <button type="button" onclick="copyCode()" style="background:#059669">📋 Chép</button>
             <button type="button" onclick="pasteCode()" style="background:#d97706">📥 Dán</button>
@@ -361,7 +363,7 @@ layout: null
 
       const positions = ["right", "bottom", "left", "top"],
         posIcons = {
-          right: "➡️️ Phải",
+          right: "➡️ Phải",
           bottom: "⬇️ Dưới",
           left: "⬅️ Trái",
           top: "⬆️ Trên"
@@ -382,7 +384,7 @@ layout: null
         const sel = editor.getSelection();
         const textToCopy = sel ? sel : editor.getValue();
         if (!textToCopy) {
-          return showToast("⚠️️ Không có nội dung để chép!");
+          return showToast("⚠️ Không có nội dung để chép!");
         }
         try {
           if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -542,13 +544,9 @@ layout: null
           "").replace(/\s+/g, "-").replace(/-+/g, "-").trim()
       }
 
-      // Tối ưu chuẩn múi giờ GMT+7 và chèn Giờ-Phút vào tên file để sắp xếp thứ tự chính xác
       function todayPath(t) {
-        const now = new Date();
-        const vnDateStr = now.toLocaleDateString("en-CA", { timeZone: "Asia/Ho_Chi_Minh" });
-        const vnTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
-        const timeStr = String(vnTime.getHours()).padStart(2, '0') + String(vnTime.getMinutes()).padStart(2, '0');
-        return `_posts/${vnDateStr}-${timeStr}-${toSlug(t)}.html`;
+        const e = new Date;
+        return `_posts/${e.getFullYear()+"-"+String(e.getMonth()+1).padStart(2,"0")+"-"+String(e.getDate()).padStart(2,"0")}-${toSlug(t)}.html`
       }
 
       function apiUrl(t) {
@@ -622,7 +620,7 @@ layout: null
         if (!e.ok) return alert(`❌ Không thể nạp bài (${e.status})`);
         if (!e.data?.content) return alert("❌ GitHub không trả về nội dung file!");
         const n = cleanContent(base64ToUtf8(e.data.content));
-        title.value = t.split("/").pop().replace(/^\d{4}-\d{2}-\d{2}-(\d{4}-)?/, "").replace(/\.(html|md)$/, ""), setCode(n),
+        title.value = t.split("/").pop().replace(/^\d{4}-\d{2}-\d{2}-/, "").replace(/\.(html|md)$/, ""), setCode(n),
           cSha = e.data.sha, cPath = e.data.path || t, dirty = !1, subBtn.textContent = "💾 Lưu", delBtn.style
           .display = "inline-flex", renderList(cPath), pv()
       }
@@ -640,7 +638,7 @@ layout: null
             "🚀 Đăng", delBtn.style.display = "none", dirty = !0, pv(), C.token) try {
             const t = await fetchFile(o);
             if (t.ok) return void alert(
-              `⚠️ Trùng tên bài viết trong thời điểm này!\n\n"${i}"\n\nVui lòng đổi tiêu đề hoặc tên file rồi tải lên lại.`
+              `⚠️ Trùng tên bài viết trong ngày hôm nay!\n\n"${i}"\n\nVui lòng đổi tiêu đề hoặc tên file rồi tải lên lại.`
               );
             if (404 !== t.status) return void alert(`❌ Không kiểm tra được bài viết (${t.status}).`)
           } catch (t) {
@@ -707,7 +705,7 @@ layout: null
           } else {
             const e = await fetchFile(n);
             if (e.ok) throw Error(
-              `⚠️ Trùng tên bài viết!\n\n"${t}"\n\nVui lòng đổi tiêu đề trước khi đăng.`);
+              `⚠️ Trùng tên bài viết trong ngày hôm nay!\n\n"${t}"\n\nVui lòng đổi tiêu đề trước khi đăng.`);
             if (404 !== e.status) throw Error(`Không kiểm tra được tên file (${e.status}).`)
           }
           const i = {
@@ -750,6 +748,7 @@ layout: null
       cfgRepo.value = C.repo || "codes";
       cfgToken.value = C.token || "";
 
+      // Khởi tạo CodeMirror tối ưu hóa hỗ trợ thao tác cảm ứng trên điện thoại
       editor = CodeMirror.fromTextArea(content, {
         mode: "htmlmixed",
         theme: "material-darker",
@@ -759,7 +758,7 @@ layout: null
         indentUnit: 2,
         indentWithTabs: !1,
         autofocus: !1,
-        inputStyle: "contenteditable"
+        inputStyle: "contenteditable" // Tối ưu con trỏ và bôi đen trên điện thoại
       });
 
       editor.on("change", (() => {
@@ -785,4 +784,4 @@ layout: null
     </script>
   </body>
 
-</html>
+</html>Đây là admin tôi viết bài
