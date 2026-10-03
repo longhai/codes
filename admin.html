@@ -336,6 +336,7 @@ layout: null
             <button type="button" onclick="copyCode()" style="background:#059669">📋 Chép</button>
             <button type="button" onclick="pasteCode()" style="background:#d97706">📥 Dán</button>
             <button type="button" onclick="selectAllCode()" style="background:#6366f1">🔍 Chọn hết</button>
+            <button type="button" onclick="downloadCode()" style="background:#0284c7">💾 Tải về</button>
             <button type="button" onclick="clearCode()" style="background:#475569">🧹 Xóa sạch</button>
           </div>
 
@@ -425,6 +426,26 @@ layout: null
         editor.execCommand("selectAll");
         editor.focus();
         showToast("🔍 Đã chọn tất cả!");
+      }
+
+      function downloadCode() {
+        const code = getCode();
+        if (!code) {
+          return showToast("⚠️ Không có nội dung để tải về!");
+        }
+        let fileName = title.value.trim() || "index";
+        if (!/\.(html|htm|txt|md)$/i.test(fileName)) {
+          fileName += ".html";
+        }
+        const blob = new Blob([code], { type: "text/html;charset=utf-8" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+        showToast("💾 Đã tải file về máy!");
       }
 
       function clearCode() {
