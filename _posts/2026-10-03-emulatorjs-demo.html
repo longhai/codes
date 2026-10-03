@@ -312,33 +312,7 @@ location.href=u.href;
 
 /* LANGUAGE */
 
-const languages={
-auto:"Tự động",
-en:"English",
-vi:"Tiếng Việt",
-pt:"Português",
-es:"Español",
-ja:"日本語",
-zh:"中文",
-de:"Deutsch",
-fr:"Français",
-ru:"Русский"
-};
 
-const language=document.getElementById("language");
-
-for(const k in languages)
-language.add(new Option(languages[k],k));
-
-window.language=
-localStorage.getItem("language")||"auto";
-
-language.value=window.language;
-
-language.onchange=()=>{
-localStorage.setItem("language",language.value);
-location.reload();
-};
 
 
 /* CDN */
@@ -374,7 +348,24 @@ status.style.color="#f44336";
 
 /* CACHE */
 
+document.getElementById("cache").onclick=async()=>{
 
+if(!confirm("Xóa cache và dữ liệu lưu?"))
+return;
+
+localStorage.clear();
+
+if(indexedDB.databases)
+for(const db of await indexedDB.databases())
+if(db.name)
+indexedDB.deleteDatabase(db.name);
+
+for(const c of await caches.keys())
+await caches.delete(c);
+
+location.reload();
+
+};
 
 /* =========================
    PWA
