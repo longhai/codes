@@ -7,7 +7,7 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
     window.FALLBACK_ARCADE_SVG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzM4YmRmOCI+PHBhdGggZD0iTTE5IDNINWMtMS4xIDAtMiAuOS0yIDJ2MTRjMCAxLjEuOSAyIDIgMmgxNGMxLjEgMCAyLS45IDItMlY1YzAtMS4xLS45LTItMi0yei03IDNjMS42NiAwIDMgMS4zNCAzIDNzLTEuMzQgMy0zIDMtMy0xLjM0LTMtM3MxLjM0LTMgMy0zeG0tNCAxMnYtMmgydjJIZDh6bTggMGgtMnYtMmgydjJ6bTItNUg2di0yaDEydjJ6Ii8+PC9zdmc+";
-    window.FALLBACK_GENRE_SVG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzM4YmRmOCI+PHBhdGggZD0iTTIxLjQxIDExLjU4bC05LTlDMTIuMDUgMi4yMiAxMS41NSAyIDExIDJINGMtMS4xIDAtMiAuOS0yIDJ2N2MwIC41NS4yMiAxLjA1LjU5IDEuNDJsOSA5Yy4zNi4zNi44Ni41OCAxLjQxLjU4LjU1IDAgMS4wNS0uMjIgMS40MS0uNTlsNy03Yy4zNy0uMzYuNTktLjg2LjU5LTEuNDIgMC0uNTUtLjIzLTEuNDYtLjU5LTEuNDJ6TTUuNSA3QzQuNjcgNyA0IDYuMzMgNCA1LjVTNC42NyA0IDUuNSA0IDcgNC42NyA3IDUuNSA2LjMzIDcgNS41IDd6Ii8+PC9zdmc+";
+    window.FALLBACK_GENRE_SVG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzM4YmRmOCI+PHBhdGggZD0iTTIxLjQxIDExLjU4bC05LTlDMTIuMDUgMi4yMiAxMS41NSAyIDExIDJINGMtMS4xIDAtMiAuOS0yIDJ2N2MwIC41NS4yMiAxLjA1LjU5IDEuNDJsOSA5Yy4zNi43Ni44Ni41OCAxLjQxLjU4LjU1IDAgMS4wNS0uMjIgMS40MS0uNTlsNy03Yy4zNy0uMzYuNTktLjg2LjU5LTEuNDIgMC0uNTUtLjIzLTEuMDUtLjU5LTEuNDJ6Ii8+PC9zdmc+";
   </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@600;700;800&display=swap');
@@ -22,9 +22,10 @@
     #svg-container{flex:1.25;width:100%;height:100%;display:flex;align-items:center;justify-content:center;order:1;position:relative;overflow:hidden}
     #svg{width:100%;height:100%;filter:drop-shadow(0 10px 20px rgba(0,0,0,.9));transform:translateZ(0)}
     #preview-container{flex:1.1;width:100%;max-width:680px;aspect-ratio:4/3;max-height:80vh;background:var(--panel);border:2px solid var(--p);border-radius:12px;box-shadow:0 0 25px var(--pg),inset 0 0 25px #000;display:flex;align-items:center;justify-content:center;padding:12px;position:relative;overflow:hidden;backdrop-filter:blur(12px);order:2;transform:translateZ(0)}
-    #preview-img{width:100%;height:100%;object-fit:contain;transition:opacity .15s,transform .15s,max-width .2s,max-height .2s;will-change:transform,opacity}
-    #preview-img.loading{opacity:.3;transform:scale(.98)}
-    #preview-img.is-placeholder{max-width:88px;max-height:88px;opacity:.45;filter:drop-shadow(0 0 12px rgba(234,88,12,.5))}
+    #preview-img{width:100%;height:100%;object-fit:contain;transition:opacity .12s ease-out;will-change:opacity;display:block}
+    #preview-img.is-placeholder{width:88px!important;height:88px!important;max-width:88px!important;max-height:88px!important;min-width:88px!important;min-height:88px!important;object-fit:contain;opacity:.45;filter:drop-shadow(0 0 12px rgba(234,88,12,.5));transform:none!important;transition:none!important}
+    #preview-img.loading{opacity:.55}
+
     .preview-badges{position:absolute;top:8px;right:8px;z-index:20;display:flex;align-items:center;gap:8px}
     .fav-star-btn{font-size:24px;color:#e2e8f0;cursor:pointer;transition:all .2s;opacity:.25;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.9))}
     #preview-container:hover .fav-star-btn{opacity:.5}
@@ -202,9 +203,10 @@
         <div class="help-sec">
           <div class="help-sec-h">⚡ TÍNH NĂNG NỔI BẬT</div>
           <div style="font-size:13px;display:flex;flex-direction:column;gap:6px;">
-            <p>• <b>Lọc theo Thể Loại:</b> Trích xuất thẻ &lt;genre&gt; từ file .DAT, hiển thị menu với biểu tượng hình ảnh từ thư mục genre (bao gồm <code>all.png</code> và <code>uncategorized.png</code>).</p>
+            <p>• <b>Lưu trữ dữ liệu Vĩnh Viễn:</b> Danh sách game và thông tin DAT được lưu vĩnh viễn trên trình duyệt giúp tải tức thì. Chỉ cập nhật khi bấm "Cập Nhật Dữ Liệu". Nếu hết lượt API GitHub, trình duyệt sẽ tự khôi phục dữ liệu đã lưu.</p>
+            <p>• <b>Lọc theo Thể Loại:</b> Trích xuất thẻ &lt;genre&gt; từ file .DAT, hiển thị menu với biểu tượng hình ảnh từ thư mục genre.</p>
             <p>• <b>Game Chưa Phân Loại:</b> Hỗ trợ gom nhóm riêng các game không gắn thẻ thể loại trong file .DAT để bạn dễ kiểm tra.</p>
-            <p>• <b>Game Chính vs Game Con (Clone):</b> Sử dụng dữ liệu .DAT để lọc bớt các bản game clone, hack, hoặc phiên bản phụ, giúp danh sách gọn gàng hơn.</p>
+            <p>• <b>Game Chính vs Game Con (Clone):</b> Sử dụng dữ liệu .DAT để lọc bớt các bản game clone, hack, giúp danh sách gọn gàng hơn.</p>
             <p>• <b>Đồng bộ Google Drive:</b> Đăng nhập Google để sao lưu danh sách Game Yêu Thích lên đám mây, tự động đồng bộ giữa các thiết bị.</p>
           </div>
         </div>
@@ -227,7 +229,7 @@
     const GOOGLE_CLIENT_ID = "2611223495-h3eq8j0sprp9tvhig1u9ihtm0jhnej3v.apps.googleusercontent.com", DRIVE_FILE_NAME = "pandora_favs.json";
     let tokenClient = null, accessToken = null, driveFileId = null, currentUserProfile = null;
 
-    const EMULATOR_URL = "https://longhai.github.io/codes/2026/08/29/emulatorjs.html", ASSETS_BASE = "https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/dot-art/png/", RAW_BASE = "https://raw.githubusercontent.com/longhai/emu/main/", CACHE_TTL = 43200000, EMPTY_GIF = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ea580c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='4' ry='4'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5' fill='%23ea580c'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E";
+    const EMULATOR_URL = "https://longhai.github.io/codes/2026/08/29/emulatorjs.html", ASSETS_BASE = "https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/dot-art/png/", RAW_BASE = "https://raw.githubusercontent.com/longhai/emu/main/", EMPTY_GIF = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ea580c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='4' ry='4'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5' fill='%23ea580c'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E";
     var FALLBACK_ARCADE_SVG = window.FALLBACK_ARCADE_SVG, FALLBACK_GENRE_SVG = window.FALLBACK_GENRE_SVG;
 
     const GAME_SOURCES = [{ owner: "longhai", repo: "emu", branch: "main" }, { owner: "longhai", repo: "ps1", branch: "main", defaultCat: "psx" }];
@@ -255,22 +257,24 @@
     const isFav = g => g?.fullName ? state.favorites.includes(g.fullName) : false;
 
     const getGenreSlug = str => str ? str.toLowerCase().replace(/[^a-z0-9]/g, '') : "all";
-    const getGenreSlugUnderscore = str => str ? str.toLowerCase().trim().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') : "all";
 
-    // Trả về URL PNG cho tất cả genre bao gồm cả 'all' và 'uncategorized'
     const getGenreIconUrl = genreStr => {
       if (!genreStr) return `${RAW_BASE}genre/all.png`;
       return `${RAW_BASE}genre/${getGenreSlug(genreStr)}.png`;
     };
 
     function handleGenreImgError(img) {
-      const genreVal = img.dataset.genre || state.selectedGenre;
-      if (!img.dataset.tried && genreVal) {
-        img.dataset.tried = 'true';
-        img.src = `${RAW_BASE}genre/${getGenreSlugUnderscore(genreVal)}.png`;
-      } else { 
-        img.onerror = null; 
-        img.src = window.FALLBACK_GENRE_SVG; 
+      img.onerror = null;
+      img.src = window.FALLBACK_GENRE_SVG;
+    }
+
+    // Đăng ký lưu trữ vĩnh viễn với trình duyệt
+    async function requestPersistentStorage() {
+      if (navigator.storage && navigator.storage.persist) {
+        const isPersisted = await navigator.storage.persisted();
+        if (!isPersisted) {
+          await navigator.storage.persist();
+        }
       }
     }
 
@@ -282,14 +286,14 @@
       return file && !file.startsWith('.') && !['license', 'readme', 'changelog', 'notice'].some(k => file.startsWith(k)) && VALID_ROM_EXTS.has(file.split('.').pop());
     };
 
-    const imgCache = new Map(), failedUrls = new Set();
-    let currentPreviewToken = 0, persistentImgMap = {};
+    const imgCache = new Map(), failedUrls = new Set(), pendingProbes = new Map();
+    let currentPreviewToken = 0, persistentImgMap = {}, imgSaveTimer = 0, preloadTimer = 0;
     try { persistentImgMap = JSON.parse(lsGet("pandora_img_urls_v2") || "{}"); } catch(e) {}
 
     function savePersistentImgMap() {
       try {
         const keys = Object.keys(persistentImgMap);
-        if (keys.length > 1500) keys.slice(0, 500).forEach(k => delete persistentImgMap[k]);
+        if (keys.length > 3500) keys.slice(0, 700).forEach(k => delete persistentImgMap[k]);
         lsSet("pandora_img_urls_v2", JSON.stringify(persistentImgMap));
       } catch(e) {
         try {
@@ -301,9 +305,13 @@
     }
 
     function cacheSet(k, v) {
-      if (imgCache.size >= 300) imgCache.delete(imgCache.keys().next().value);
+      if (imgCache.size >= 500) imgCache.delete(imgCache.keys().next().value);
       imgCache.set(k, v);
-      if (v) { persistentImgMap[k] = v; savePersistentImgMap(); }
+      if (v) {
+        persistentImgMap[k] = v;
+        clearTimeout(imgSaveTimer);
+        imgSaveTimer = setTimeout(() => { savePersistentImgMap(); imgSaveTimer = 0; }, 300);
+      }
     }
 
     const initialPlaceholderGames = Array.from({ length: 15 }, (_, i) => ({ name: "", fullName: `placeholder_${i}` }));
@@ -316,7 +324,7 @@
       showMainOnly: lsGet('pandora_show_main_only') === 'true',
       selectedGenre: 'all', availableGenres: [], hasUncategorized: false,
       datNameMap: {}, datOrderMap: {}, datCloneMap: {}, datGenreMap: {},
-      favorites: JSON.parse(lsGet('pandora_favs') || '[]'),
+      favorites: (() => { try { const v = JSON.parse(lsGet('pandora_favs') || '[]'); return Array.isArray(v) ? v : []; } catch(e) { return []; } })(),
       isCurved: lsGet('pandora_curved') !== null ? lsGet('pandora_curved') === 'true' : !(window.innerWidth < 820 || window.innerHeight > window.innerWidth),
       numSlots: 5, gamepadConnected: false, gpLastTime: 0, lastGpBtn: {}, resizeTimer: null,
       gpMenuIdx: 0
@@ -468,17 +476,21 @@
       get(k) {
         try {
           const item = JSON.parse(lsGet(k));
-          if (item && Date.now() - item.t < CACHE_TTL) return item.d;
+          if (item && item.d !== undefined) return item.d;
         } catch (e) {} return null;
       },
       set(k, d) {
         try { lsSet(k, JSON.stringify({ t: Date.now(), d })); }
         catch (e) {
-          Object.keys(localStorage).forEach(x => { if (x.startsWith('pandora_')) lsRem(x); });
+          Object.keys(localStorage).forEach(x => { if (x.startsWith('pandora_dat_')) lsRem(x); });
           try { lsSet(k, JSON.stringify({ t: Date.now(), d })); } catch(err){}
         }
       },
-      clearCache() { Object.keys(localStorage).forEach(k => { if (k.startsWith('pandora_full_db') || k.startsWith('pandora_dat_')) lsRem(k); }); }
+      clearCache() { 
+        Object.keys(localStorage).forEach(k => { 
+          if (k.startsWith('pandora_full_db') || k.startsWith('pandora_dat_')) lsRem(k); 
+        }); 
+      }
     };
 
     function toggleCurrentFav() {
@@ -618,7 +630,7 @@
     function getX(y, p) { return !state.isCurved ? p.X0 : p.X0 + (p.X1 - p.X0) * (1 - Math.pow(Math.max(-1, Math.min(1, (y - p.Y_MID) / p.HALF_H)), 2)); }
 
     async function reloadDatabase() {
-      Storage.clearCache(); imgCache.clear(); failedUrls.clear(); closeMenuModal(); closeGenreMenu();
+      closeMenuModal(); closeGenreMenu();
       await loadFullDatabase(true);
     }
 
@@ -628,9 +640,42 @@
       const processCats = list => list.map(i => ({ ...i, displayName: capTitle(i.system || i.name) })).sort((a, b) => a.displayName.localeCompare(b.displayName, 'vi', { sensitivity: 'base' }));
 
       const cacheKey = "pandora_full_db_v13";
-      if (!forceReload) {
-        const cached = Storage.get(cacheKey);
-        if (cached?.datList?.length > 1 && cached?.gamesByCat) {
+      const cached = Storage.get(cacheKey);
+
+      // Nếu không phải force reload và đã có dữ liệu lưu trữ -> sử dụng ngay lập tức
+      if (!forceReload && cached?.datList?.length > 1 && cached?.gamesByCat) {
+        state.datList = processCats(cached.datList);
+        state.gamesByCat = cached.gamesByCat;
+        state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
+        const currCat = state.datList[state.currentDatIdx];
+        state.allGames = state.gamesByCat[currCat?.name] || [];
+        state.datNameMap = {}; state.datOrderMap = {}; state.datCloneMap = {}; state.datGenreMap = {};
+        if (currCat) await loadDatMap(currCat.name);
+        updateNames(); restorePos(); hideLoader(); drawAll();
+        return;
+      }
+
+      try {
+        const gamesByCat = {}, catMap = new Map();
+        let apiFailed = false;
+
+        const results = await Promise.all(GAME_SOURCES.map(async (source) => {
+          try {
+            const resp = await fetch(`https://api.github.com/repos/${source.owner}/${source.repo}/git/trees/${source.branch || "main"}?recursive=1`);
+            if (resp.status === 403 || resp.status === 429) {
+              apiFailed = true;
+              return null;
+            }
+            return resp.ok ? { source, treeData: await resp.json() } : null;
+          } catch (e) {
+            apiFailed = true;
+            return null;
+          }
+        }));
+
+        // Nếu hết lượt API GitHub hoặc lỗi kết nối, nhưng trình duyệt đã có bộ nhớ đệm
+        if (apiFailed && cached?.datList?.length > 1 && cached?.gamesByCat) {
+          showLoader("HẾT LƯỢT API: DÙNG DỮ LIỆU ĐÃ LƯU");
           state.datList = processCats(cached.datList);
           state.gamesByCat = cached.gamesByCat;
           state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
@@ -638,19 +683,11 @@
           state.allGames = state.gamesByCat[currCat?.name] || [];
           state.datNameMap = {}; state.datOrderMap = {}; state.datCloneMap = {}; state.datGenreMap = {};
           if (currCat) await loadDatMap(currCat.name);
-          updateNames(); restorePos(); hideLoader(); drawAll();
+          updateNames(); restorePos(); 
+          setTimeout(hideLoader, 2000);
+          drawAll();
           return;
         }
-      }
-
-      try {
-        const gamesByCat = {}, catMap = new Map();
-        const results = await Promise.all(GAME_SOURCES.map(async (source) => {
-          try {
-            const resp = await fetch(`https://api.github.com/repos/${source.owner}/${source.repo}/git/trees/${source.branch || "main"}?recursive=1`);
-            return resp.ok ? { source, treeData: await resp.json() } : null;
-          } catch (e) { return null; }
-        }));
 
         for (const res of results) {
           if (!res?.treeData?.tree) continue;
@@ -689,13 +726,16 @@
         }
 
         const rawCatList = Array.from(catMap.values());
-        state.datList = processCats(rawCatList);
-        state.gamesByCat = {};
-        for (const catName in gamesByCat) {
-          state.gamesByCat[catName] = gamesByCat[catName].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base', numeric: true }));
-        }
+        if (rawCatList.length > 0) {
+          state.datList = processCats(rawCatList);
+          state.gamesByCat = {};
+          for (const catName in gamesByCat) {
+            state.gamesByCat[catName] = gamesByCat[catName].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base', numeric: true }));
+          }
 
-        if (rawCatList.length > 1) Storage.set(cacheKey, { datList: rawCatList, gamesByCat: state.gamesByCat });
+          // Lưu vĩnh viễn dữ liệu mới tải về LocalStorage
+          Storage.set(cacheKey, { datList: rawCatList, gamesByCat: state.gamesByCat });
+        }
 
         state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
         const currCat = state.datList[state.currentDatIdx];
@@ -704,7 +744,21 @@
         state.datNameMap = {}; state.datOrderMap = {}; state.datCloneMap = {}; state.datGenreMap = {};
         if (currCat) await loadDatMap(currCat.name);
         updateNames(); restorePos(); hideLoader(); drawAll();
-      } catch (e) { showLoader("HOÀN TẤT VỚI DỮ LIỆU CÓ SẴN"); setTimeout(hideLoader, 1500); }
+      } catch (e) { 
+        if (cached?.datList?.length > 1) {
+          showLoader("LỖI KẾT NỐI: KHÔI PHỤC DỮ LIỆU ĐÃ LƯU");
+          state.datList = processCats(cached.datList);
+          state.gamesByCat = cached.gamesByCat;
+          state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
+          const currCat = state.datList[state.currentDatIdx];
+          state.allGames = state.gamesByCat[currCat?.name] || [];
+          if (currCat) await loadDatMap(currCat.name);
+          updateNames(); restorePos();
+        } else {
+          showLoader("HOÀN TẤT VỚI DỮ LIỆU CÓ SẴN");
+        }
+        setTimeout(hideLoader, 1500); 
+      }
     }
 
     function updateNames() {
@@ -738,6 +792,7 @@
       state.allGames.forEach(g => map.set(`${g.romUrl || g.fullName}_${g.name}`, g));
       state.allGames = Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base', numeric: true }));
       filterGames(true); render();
+      preloadWindowAtStart();
     }
 
     function toggleFavFilter() { state.showFavOnly = !state.showFavOnly; filterGames(true); drawAll(); }
@@ -776,7 +831,8 @@
       $('genre-menu-dropdown').innerHTML = `<div class="menu-header">Thể Loại (${items.length - 1})</div>` + items.map((item) => {
         const iconUrl = getGenreIconUrl(item.value);
         const isActive = state.selectedGenre.toLowerCase() === item.value.toLowerCase();
-        return `<div class="menu-item ${isActive ? 'active' : ''}" onclick="switchGenre('${item.value.replace(/'/g, "\\'")}')">
+        const value = JSON.stringify(item.value).replace(/'/g, '&#39;');
+        return `<div class="menu-item ${isActive ? 'active' : ''}" onclick='switchGenre(${value})'>
           <div class="menu-logo-box"><img src="${iconUrl}" data-genre="${item.value.replace(/"/g, '&quot;')}" alt="${item.name}" onerror="handleGenreImgError(this)"/></div>
           <span>${item.name}</span>
         </div>`;
@@ -945,62 +1001,144 @@
       }
     }
 
+    // Snap: lazy-load + cache URL + preload 20 game phía trước.
+    // Chỉ thử nguồn phụ sau khi nguồn chính thất bại; khi đã tìm thấy URL thì dừng ngay.
+    const SNAP_PRELOAD_COUNT = 20;
+    const SNAP_PRELOAD_CONCURRENCY = 4;
+    const snapPreloadQueue = [];
+    const snapPreloadQueued = new Set();
+    let snapPreloadRunning = 0;
+
     function getPreviewCandidates(g) {
       if (!g || g.fullName?.startsWith('placeholder_')) return [];
       const cat = state.datList[state.currentDatIdx]; if (!cat) return [];
-      const catFolder = encodeURIComponent(cat.folderName || cat.name);
-      const fileBase = g.fullName ? g.fullName.split('/').pop().replace(/\.[^/.]+$/, '') : '';
-      const sysName = encodeURIComponent(cat.libretroSys || cat.system || cat.name);
-      
-      const names = Array.from(new Set([fileBase, cleanTitle(g.fullName), g.name])).filter(Boolean);
-      const urls = [];
-      names.forEach(n => {
-        const encoded = encodeURIComponent(n);
-        urls.push(`${RAW_BASE}snap/${catFolder}/${encoded}.png`);
-        if (catFolder.toLowerCase() !== 'arcade') urls.push(`${RAW_BASE}snap/arcade/${encoded}.png`);
-        urls.push(`https://thumbnails.libretro.com/${sysName}/Named_Snaps/${encoded}.png`);
-      });
 
-      return Array.from(new Set(urls)).filter(url => !failedUrls.has(url));
+      const catFolder = encodeURIComponent(cat.folderName || cat.name || cat.system || 'arcade');
+      const playlist = cat.libretroSys || cat.system || cat.name || cat.folderName || 'arcade';
+      const libretroFolder = encodeURIComponent(playlist);
+      const fileBase = g.fullName ? g.fullName.split('/').pop().replace(/\.[^/.]+$/, '') : '';
+      // FBNeo/DAT dùng tên chuẩn của bộ FBNeo trước. Các hệ khác vẫn dùng tên file/tên game gốc.
+      const isFbneo = /^(arcade|fbneo|fba|cps1|cps2|cps3|mame)$/i.test(String(cat.folderName || cat.name || cat.system || ''));
+      const names = isFbneo
+        ? Array.from(new Set([g.name, fileBase, cleanTitle(g.fullName)]))
+        : Array.from(new Set([fileBase, g.name, cleanTitle(g.fullName)]));
+      const filteredNames = names.filter(Boolean);
+      const candidates = [];
+
+      // Ưu tiên snap trong repo. Chỉ khi URL này lỗi mới thử Libretro.
+      for (const n of filteredNames) {
+        const encoded = encodeURIComponent(n);
+        candidates.push(`${RAW_BASE}snap/${catFolder}/${encoded}.png`);
+        candidates.push(`https://thumbnails.libretro.com/${libretroFolder}/Named_Snaps/${encoded}.png`);
+      }
+
+      return candidates.filter(url => !failedUrls.has(url));
     }
 
     function resolveAndCacheImage(g, onDone) {
       if (!g || g.fullName?.startsWith('placeholder_')) return;
       const key = getGameKey(g); if (!key) return;
 
+      // RAM cache: không tạo thêm request.
       if (imgCache.has(key)) return onDone?.(imgCache.get(key));
 
-      if (persistentImgMap[key]) {
-        const pUrl = persistentImgMap[key];
-        if (pUrl === PLACEHOLDER_SVG) { imgCache.set(key, PLACEHOLDER_SVG); return onDone?.(PLACEHOLDER_SVG); }
-        if (!failedUrls.has(pUrl)) { imgCache.set(key, pUrl); return onDone?.(pUrl); }
+      // Persistent URL cache: dùng ngay, không request nguồn phụ.
+      const cached = persistentImgMap[key];
+      if (cached && (cached === PLACEHOLDER_SVG || !failedUrls.has(cached))) {
+        imgCache.set(key, cached);
+        return onDone?.(cached);
+      }
+
+      // Một game chỉ có một probe đang chạy.
+      if (pendingProbes.has(key)) {
+        if (onDone) pendingProbes.get(key).push(onDone);
+        return;
       }
 
       const candidates = getPreviewCandidates(g);
-      if (!candidates.length) { cacheSet(key, PLACEHOLDER_SVG); return onDone?.(PLACEHOLDER_SVG); }
-
-      let idx = 0;
-      function tryNext() {
-        if (idx >= candidates.length) { cacheSet(key, PLACEHOLDER_SVG); onDone?.(PLACEHOLDER_SVG); return; }
-        const url = candidates[idx++];
-        if (failedUrls.has(url)) return tryNext();
-        const tempImg = new Image();
-        tempImg.onload = () => { cacheSet(key, url); onDone?.(url); };
-        tempImg.onerror = () => { failedUrls.add(url); tryNext(); };
-        tempImg.src = url;
+      if (!candidates.length) {
+        cacheSet(key, PLACEHOLDER_SVG);
+        return onDone?.(PLACEHOLDER_SVG);
       }
-      tryNext();
+
+      pendingProbes.set(key, onDone ? [onDone] : []);
+
+      const finish = url => {
+        const cbs = pendingProbes.get(key) || [];
+        pendingProbes.delete(key);
+        cacheSet(key, url);
+        cbs.forEach(cb => cb(url));
+      };
+
+      // Probe tuần tự: tìm thấy URL là DỪNG NGAY, không gửi tiếp nguồn phụ.
+      let index = 0;
+      const probeNext = () => {
+        if (index >= candidates.length) return finish(PLACEHOLDER_SVG);
+        const url = candidates[index++];
+        if (failedUrls.has(url)) return probeNext();
+
+        const im = new Image();
+        let settled = false;
+        const cleanup = () => {
+          im.onload = im.onerror = null;
+        };
+
+        im.onload = () => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          // URL đã biết -> cache ngay và không đụng tới các nguồn còn lại.
+          finish(url);
+        };
+
+        im.onerror = () => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          failedUrls.add(url);
+          probeNext();
+        };
+
+        im.src = url;
+      };
+
+      probeNext();
+    }
+
+    function queueSnapPreload(g) {
+      if (!g || g.fullName?.startsWith('placeholder_')) return;
+      const key = getGameKey(g); if (!key) return;
+      if (imgCache.has(key) || persistentImgMap[key] || pendingProbes.has(key) || snapPreloadQueued.has(key)) return;
+      snapPreloadQueued.add(key);
+      snapPreloadQueue.push(g);
+      runSnapPreloadQueue();
+    }
+
+    function runSnapPreloadQueue() {
+      while (snapPreloadRunning < SNAP_PRELOAD_CONCURRENCY && snapPreloadQueue.length) {
+        const g = snapPreloadQueue.shift();
+        snapPreloadRunning++;
+        const done = () => {
+          snapPreloadRunning--;
+          snapPreloadQueued.delete(getGameKey(g));
+          runSnapPreloadQueue();
+        };
+        resolveAndCacheImage(g, done);
+      }
     }
 
     function preloadNeighbors() {
-      const schedulePreload = () => {
-        [-1, 1, 2].forEach(offset => {
-          const targetGame = state.filteredGames[state.selIdx + offset];
-          if (targetGame) resolveAndCacheImage(targetGame);
-        });
-      };
-      if (window.requestIdleCallback) requestIdleCallback(schedulePreload, { timeout: 1000 });
-      else setTimeout(schedulePreload, 150);
+      clearTimeout(preloadTimer);
+      preloadTimer = setTimeout(() => {
+        const start = state.selIdx + 1;
+        const end = Math.min(state.filteredGames.length, start + SNAP_PRELOAD_COUNT);
+        for (let i = start; i < end; i++) queueSnapPreload(state.filteredGames[i]);
+      }, 0);
+    }
+
+    function preloadWindowAtStart() {
+      const end = Math.min(SNAP_PRELOAD_COUNT, state.filteredGames.length);
+      for (let i = 0; i < end; i++) queueSnapPreload(state.filteredGames[i]);
     }
 
     function updatePreview(g) {
@@ -1016,35 +1154,64 @@
 
       const key = getGameKey(g), token = ++currentPreviewToken;
 
-      const applySrc = (srcUrl) => {
+      // Khi đang tìm snap: KHÔNG hiển thị ảnh mặc định.
+      // Chỉ hiện placeholder nhỏ nếu tất cả nguồn đều thất bại.
+      // Dùng EMPTY_GIF trong lúc chờ để không có flash ảnh mặc định.
+      img.classList.remove('is-placeholder');
+      img.classList.add('loading');
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.maxWidth = '';
+      img.style.maxHeight = '';
+      img.style.minWidth = '';
+      img.style.minHeight = '';
+      img.src = EMPTY_GIF;
+
+      const applySrc = srcUrl => {
         if (token !== currentPreviewToken) return;
-        img.src = srcUrl;
-        img.classList.remove('loading');
-        if (srcUrl === PLACEHOLDER_SVG) img.classList.add('is-placeholder');
-        else img.classList.remove('is-placeholder');
+        if (srcUrl === PLACEHOLDER_SVG) {
+          // Không tìm được snap nào: lúc này mới hiện ảnh mặc định nhỏ.
+          img.classList.add('is-placeholder');
+          img.classList.remove('loading');
+          img.style.width = '88px';
+          img.style.height = '88px';
+          img.style.maxWidth = '88px';
+          img.style.maxHeight = '88px';
+          img.style.minWidth = '88px';
+          img.style.minHeight = '88px';
+          img.src = PLACEHOLDER_SVG;
+        } else {
+          // Có URL thật: bỏ placeholder trước rồi mới gán ảnh thật.
+          img.classList.remove('is-placeholder', 'loading');
+          img.style.width = '';
+          img.style.height = '';
+          img.style.maxWidth = '';
+          img.style.maxHeight = '';
+          img.style.minWidth = '';
+          img.style.minHeight = '';
+          img.src = srcUrl;
+        }
         preloadNeighbors();
       };
 
+      // RAM cache -> hiển thị tức thì.
       if (imgCache.has(key)) return applySrc(imgCache.get(key));
 
-      if (persistentImgMap[key]) {
-        const pUrl = persistentImgMap[key];
-        if (pUrl === PLACEHOLDER_SVG || !failedUrls.has(pUrl)) {
-          imgCache.set(key, pUrl);
-          applySrc(pUrl);
-          return;
-        }
+      // URL cache -> hiển thị tức thì, tuyệt đối không probe nguồn phụ.
+      const cached = persistentImgMap[key];
+      if (cached && (cached === PLACEHOLDER_SVG || !failedUrls.has(cached))) {
+        imgCache.set(key, cached);
+        return applySrc(cached);
       }
 
-      img.src = EMPTY_GIF; img.classList.add('loading'); img.classList.remove('is-placeholder');
-      resolveAndCacheImage(g, winUrl => applySrc(winUrl));
+      resolveAndCacheImage(g, applySrc);
     }
 
     function buildEmuUrl(g, c) {
       if (!g?.fullName || g.fullName.startsWith('placeholder_')) return "";
       let romUrl = g.romUrl || g.fullName;
       try { romUrl = decodeURIComponent(romUrl); } catch (e) {}
-      return `${EMULATOR_URL}?core=${g.core || c?.core || "arcade"}&rom=${encodeURI(romUrl)}`;
+      return `${EMULATOR_URL}?core=${encodeURIComponent(g.core || c?.core || "arcade")}&rom=${encodeURIComponent(romUrl)}`;
     }
 
     function downloadCurrentGame() {
@@ -1138,6 +1305,7 @@
           favBtn.textContent = active ? "★" : "☆";
         }
       }
+      preloadNeighbors();
     }
 
     const moveSelection = step => {
@@ -1329,6 +1497,7 @@
     }
 
     window.onload = () => { 
+      requestPersistentStorage();
       bindEvents(); drawAll(); 
       requestAnimationFrame(() => posOverlays());
       loadFullDatabase(); 
