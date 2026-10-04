@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pandora Arcade</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script>
+    window.FALLBACK_ARCADE_SVG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzM4YmRmOCI+PHBhdGggZD0iTTE5IDNINWMtMS4xIDAtMiAuOS0yIDJ2MTRjMCAxLjEuOSAyIDIgMmgxNGMxLjEgMCAyLS45IDItMlY1YzAtMS4xLS45LTItMi0yei03IDNjMS42NiAwIDMgMS4zNCAzIDNzLTEuMzQgMy0zIDMtMy0xLjM0LTMtM3MxLjM0LTMgMy0zeG0tNCAxMnYtMmgydjJIZDh6bTggMGgtMnYtMmgydjJ6bTItNUg2di0yaDEydjJ6Ii8+PC9zdmc+";
+    window.FALLBACK_GENRE_SVG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzM4YmRmOCI+PHBhdGggZD0iTTIxLjQxIDExLjU4bC05LTlDMTIuMDUgMi4yMiAxMS41NSAyIDExIDJINGMtMS4xIDAtMiAuOS0yIDJ2N2MwIC41NS4yMiAxLjA1LjU5IDEuNDJsOSA5Yy4zNi43Ni44Ni410C0xLjQxLjU4LjU1IDAgMS4wNS0uMjIgMS40MS0uNTlsNy03Yy4zNy0uMzYuNTktLjg2LjU5LTEuNDIgMC0uNTUtLjIzLTEuMDUtLjU5LTEuNDJ6Ii8+PC9zdmc+";
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@600;700;800&display=swap');
+    :root{--p:#ea580c;--pg:rgba(234,88,12,.4);--a:#fbbf24;--ca:#38bdf8;--bg:#050101;--panel:rgba(15,23,42,.94)}
+    *{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-tap-highlight-color:transparent}
+    body{font-family:'Rajdhani',sans-serif;background:radial-gradient(circle at 50% 30%,#c2410c,#7f1d1d 40%,var(--bg));height:100dvh;width:100vw;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#e2e8f0;touch-action:none}
+    #preview-loader{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);z-index:30;background:rgba(15,23,42,.92);border:1px solid var(--ca);border-radius:20px;padding:6px 16px;display:flex;align-items:center;gap:10px;color:var(--a);font:700 12px 'Orbitron',sans-serif;letter-spacing:1px;box-shadow:0 4px 15px rgba(0,0,0,.6);backdrop-filter:blur(6px);pointer-events:none;transition:opacity .2s;white-space:nowrap;max-width:92%}
+    #ld-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .spin{width:16px;height:16px;border:2.5px solid var(--p);border-top-color:transparent;border-radius:50%;animation:s .75s linear infinite;flex-shrink:0}
+    @keyframes s{to{transform:rotate(360deg)}}
+    main{width:100%;height:100dvh;max-width:1320px;display:flex;align-items:center;justify-content:center;gap:12px;padding:20px 30px;will-change:transform}
+    #svg-container{flex:1.25;width:100%;height:100%;display:flex;align-items:center;justify-content:center;order:1;position:relative;overflow:hidden}
+    #svg{width:100%;height:100%;filter:drop-shadow(0 10px 20px rgba(0,0,0,.9));transform:translateZ(0)}
+    #preview-container{flex:1.1;width:100%;max-width:680px;aspect-ratio:4/3;max-height:80vh;background:var(--panel);border:2px solid var(--p);border-radius:12px;box-shadow:0 0 25px var(--pg),inset 0 0 25px #000;display:flex;align-items:center;justify-content:center;padding:12px;position:relative;overflow:hidden;backdrop-filter:blur(12px);order:2;transform:translateZ(0)}
+    #preview-img{width:100%;height:100%;object-fit:contain;transition:opacity .12s ease-out;will-change:opacity;display:block}
+    #preview-img.is-placeholder{width:88px!important;height:88px!important;max-width:88px!important;max-height:88px!important;min-width:88px!important;min-height:88px!important;object-fit:contain;opacity:.45;filter:drop-shadow(0 0 12px rgba(234,88,12,.5));transform:none!important;transition:none!important}
+    #preview-img.loading{opacity:.55}
+
+    .preview-badges{position:absolute;top:8px;right:8px;z-index:20;display:flex;align-items:center;gap:8px}
+    .fav-star-btn{font-size:24px;color:#e2e8f0;cursor:pointer;transition:all .2s;opacity:.25;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.9))}
+    #preview-container:hover .fav-star-btn{opacity:.5}
+    .fav-star-btn.active,#preview-container:hover .fav-star-btn.active{opacity:1;color:var(--a);transform:scale(1.15);filter:drop-shadow(0 0 8px rgba(251,191,36,.8))}
+    .preview-bottom-actions{position:absolute;bottom:10px;right:10px;z-index:20;display:flex;align-items:center;gap:8px}
+    .dl-btn{width:32px;height:32px;background:rgba(15,23,42,.75);border:1px solid var(--ca);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ca);transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.6);backdrop-filter:blur(4px);opacity:.4}
+    #preview-container:hover .dl-btn{opacity:.85}
+    .dl-btn:hover,#preview-container:hover .dl-btn:hover{opacity:1;background:var(--ca);color:#0f172a;transform:scale(1.12);box-shadow:0 0 10px rgba(56,189,248,.8)}
+    .dl-btn svg{width:18px;height:18px;fill:currentColor}
+    #gp-badge{width:20px;height:20px;fill:#4ade80;filter:drop-shadow(0 0 6px rgba(74,222,128,.8));display:none}
+    .hdr-btn-wrap{position:absolute;z-index:100;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s,filter .15s,opacity .2s;width:32px;height:32px;max-width:42px;max-height:42px;min-width:20px;min-height:20px;overflow:hidden;box-sizing:border-box;opacity:0;top:0;left:0}
+    .hdr-btn-wrap.ready{opacity:1}
+    .hdr-btn-wrap:hover{transform:translate(-50%,-50%) scale(1.12);filter:drop-shadow(0 0 6px var(--ca))}
+    .img-box{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:4px;overflow:hidden;flex-shrink:0}
+    .img-box img{width:100%;height:100%;object-fit:contain}
+    .avatar-box{border-radius:50%}
+    .avatar-box img{object-fit:cover;border:1.5px solid #4ade80;border-radius:50%;aspect-ratio:1/1;width:100%;height:100%}
+    .avatar-box svg{width:100%;height:100%;display:block}
+    .dropdown-menu{display:none;position:fixed;z-index:260;background:rgba(15,23,42,.98);border:1.5px solid var(--ca);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.9);max-height:70vh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;backdrop-filter:blur(12px);padding:8px;flex-direction:column;gap:4px;scrollbar-width:thin;scrollbar-color:var(--ca) transparent}
+    .dropdown-menu::-webkit-scrollbar{width:5px}
+    .dropdown-menu::-webkit-scrollbar-thumb{background:var(--ca);border-radius:4px}
+    .dropdown-menu.active{display:flex}
+    #menu-dropdown,#genre-menu-dropdown{width:260px;max-width:88vw}
+    #user-menu-dropdown{min-width:220px;max-height:70vh}
+    .menu-header{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.15);margin:-8px -8px 6px -8px;font-size:13px;color:var(--a);font-weight:bold;line-height:1.3;white-space:normal;word-break:break-word;position:sticky;top:-8px;background:#0f172a;z-index:10;display:flex;align-items:center;gap:10px;border-top-left-radius:10px;border-top-right-radius:10px}
+    .menu-item{display:flex;align-items:center;gap:10px;padding:8px 10px;color:#e2e8f0;font:700 14px 'Rajdhani',sans-serif;border-radius:6px;cursor:pointer;transition:all .15s}
+    .menu-item:hover,.menu-item.active,.menu-item.gp-hover{background:rgba(56,189,248,.2);color:#fff}
+    .menu-item.active{border-left:3px solid var(--ca)}
+    .menu-item.active svg,.menu-item.active .menu-logo-box img{filter:drop-shadow(0 0 8px var(--ca))}
+    .menu-item.active-glow{background:rgba(251,191,36,.18);color:#fff;border-left:3px solid var(--a)}
+    .menu-item.active-glow svg{fill:var(--a);color:var(--a);filter:drop-shadow(0 0 8px rgba(251,191,36,.9))}
+    .logout-icon-btn{background:transparent;border:none;color:#ef4444;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px;border-radius:6px;transition:all .2s;flex-shrink:0}
+    .logout-icon-btn:hover{background:rgba(239,68,68,.2);transform:scale(1.15);filter:drop-shadow(0 0 8px #ef4444)}
+    .logout-icon-btn svg{width:18px;height:18px;fill:currentColor}
+    .menu-logo-box{width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;aspect-ratio:1/1}
+    .menu-logo-box img{width:100%;height:100%;object-fit:contain}
+    .menu-item svg{width:20px;height:20px;object-fit:contain;flex-shrink:0;fill:currentColor}
+    #help-modal{display:none;position:fixed;inset:0;z-index:320;background:rgba(5,1,1,.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:12px}
+    #help-modal.active{display:flex}
+    .help-card{width:100%;max-width:620px;max-height:85vh;background:rgba(15,23,42,.98);border:2px solid var(--ca);border-radius:14px;box-shadow:0 0 30px rgba(56,189,248,.3);display:flex;flex-direction:column;overflow:hidden}
+    .help-header{padding:14px 18px;background:#0f172a;border-bottom:1.5px solid var(--p);display:flex;align-items:center;justify-content:space-between}
+    .help-title{font:800 16px 'Orbitron',sans-serif;color:var(--a);display:flex;align-items:center;gap:8px}
+    .help-body{padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:16px;font-size:14px;color:#cbd5e1;line-height:1.5}
+    .help-sec{background:rgba(30,41,59,.6);padding:12px;border-radius:8px;border-left:3px solid var(--ca)}
+    .help-sec-h{font:700 14px 'Orbitron',sans-serif;color:var(--ca);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+    .help-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+    .help-item{display:flex;align-items:center;justify-content:space-between;background:rgba(15,23,42,.6);padding:6px 10px;border-radius:6px;font-size:13px}
+    .help-key{background:#334155;color:#fff;padding:2px 6px;border-radius:4px;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;border:1px solid #475569}
+    .close-modal-btn{background:transparent;border:none;color:#94a3b8;font-size:22px;cursor:pointer;padding:0 4px;line-height:1}
+    .close-modal-btn:hover{color:#ef4444}
+    #inline-search-bar{display:none;position:absolute;z-index:120;background:rgba(15,23,42,.96);border:1.5px solid var(--ca);border-radius:8px;padding:0 8px;align-items:center;gap:6px;box-shadow:0 0 15px rgba(56,189,248,.4);backdrop-filter:blur(8px)}
+    #inline-search-bar.active{display:flex}
+    #inline-search-bar svg{width:18px;height:18px;flex-shrink:0}
+    #search-input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:#fff;font:700 15px 'Rajdhani',sans-serif}
+    .clear-btn{cursor:pointer;color:#94a3b8;font:700 14px 'Rajdhani',sans-serif;padding:2px 6px}
+    .clear-btn:hover{color:#ef4444}
+    #game-player-modal{display:none;position:fixed;inset:0;z-index:300;background:#000;flex-direction:column}
+    #game-player-modal.active{display:flex}
+    #player-toolbar{height:46px;background:#0f172a;border-bottom:2px solid var(--p);display:flex;align-items:center;justify-content:space-between;padding:0 10px;gap:8px}
+    #player-title{color:var(--a);font:700 12px 'Orbitron',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
+    .player-btn{background:#1e293b;border:1px solid var(--p);color:#fff;padding:5px 9px;border-radius:6px;cursor:pointer;font:700 11px 'Orbitron',sans-serif}
+    .player-btn:hover{background:var(--p)}
+    #game-frame{width:100%;height:calc(100% - 46px);border:none;background:#000}
+    .tn{font:700 18px 'Rajdhani',sans-serif;fill:#e2e8f0}
+    .ta{font:800 20px 'Rajdhani',sans-serif;fill:#fff;filter:drop-shadow(0 2px 4px rgba(0,0,0,.95))}
+    @media (max-width:820px),(max-aspect-ratio:1/1){
+      main{flex-direction:column;justify-content:flex-start;gap:6px;padding:6px}
+      #preview-container{order:1;width:100%;height:32vh;min-height:180px;max-height:280px;aspect-ratio:auto;flex-shrink:0;padding:4px}
+      #svg-container{order:2;flex:1}
+      .btn-lbl{display:none}
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div id="svg-container">
+      <div id="hdr-logo-btn" class="hdr-btn-wrap" onclick="toggleMenuModal(event)" title="Chọn hệ máy">
+        <div class="img-box"><img id="hdr-logo-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="System Logo" onerror="this.onerror=null;this.src=window.FALLBACK_ARCADE_SVG;"/></div>
+      </div>
+      <div id="hdr-genre-btn" class="hdr-btn-wrap" onclick="toggleGenreMenu(event)" title="Lọc Thể Loại">
+        <div class="img-box"><img id="hdr-genre-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Genre Icon" onerror="handleGenreImgError(this)"/></div>
+      </div>
+      <div id="hdr-search-btn" class="hdr-btn-wrap" onclick="toggleInlineSearch(event)" title="Tìm kiếm">
+        <svg viewBox="0 0 24 24" fill="#38bdf8" style="width:100%;height:100%"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      </div>
+      <div id="hdr-avatar-btn" class="hdr-btn-wrap" onclick="toggleUserMenu(event)" title="Tài khoản">
+        <div class="img-box avatar-box">
+          <img id="hdr-avatar-img" src="" alt="Avatar" style="display:none;"/>
+          <svg id="hdr-avatar-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" fill="#38bdf8"/></svg>
+        </div>
+      </div>
+      <div id="menu-dropdown" class="dropdown-menu"></div>
+      <div id="genre-menu-dropdown" class="dropdown-menu"></div>
+      <div id="user-menu-dropdown" class="dropdown-menu">
+        <div class="menu-header" style="justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">
+            <div id="user-menu-avatar-wrap" class="img-box avatar-box" style="width:28px;height:28px;flex-shrink:0;display:none;"><img id="user-menu-avatar-img" src="" alt="Avatar"/></div>
+            <span id="user-menu-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Khách (Chưa đăng nhập)</span>
+          </div>
+          <button id="logout-btn" class="logout-icon-btn" onclick="handleAuthClick()" title="Đăng xuất" style="display:none;">
+            <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+          </button>
+        </div>
+        <div id="auth-menu-item" class="menu-item" onclick="handleAuthClick()"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg><span id="auth-btn-text">Đăng nhập Google</span></div>
+        <div id="fav-menu-item" class="menu-item" onclick="toggleFavFilter();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg><span id="fav-menu-text">Lọc Game Yêu Thích</span></div>
+        <div id="clone-menu-item" class="menu-item" onclick="toggleMainOnlyFilter();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm2 5h12v2H6zm3 5h6v2H9z"/></svg><span id="clone-menu-text">Chỉ Xem Game Chính</span></div>
+        <div id="layout-menu-item" class="menu-item" onclick="toggleLayoutMode();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M3 5v14h18V5H3zm16 12H5V7h14v10z"/></svg><span id="layout-menu-text">Chuyển Giao Diện</span></div>
+        <div id="pwa-install-item" class="menu-item" onclick="installPWA();closeUserMenu()" style="display:none;"><svg viewBox="0 0 24 24"><path d="M18 15v3H6v-3H4v3c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-3h-2zm-1-4l-1.41-1.41L13 12.17V4h-2v8.17L8.41 9.59 7 11l5 5 5-5z"/></svg><span id="pwa-btn-text">Cài đặt Ứng dụng (PWA)</span></div>
+        <div class="menu-item" onclick="reloadDatabase();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg><span>Cập Nhật Dữ Liệu</span></div>
+        <div class="menu-item" onclick="openHelpModal();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg><span>Hướng Dẫn Sử Dụng</span></div>
+      </div>
+      <div id="inline-search-bar">
+        <svg viewBox="0 0 24 24" fill="var(--ca)"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <input type="text" id="search-input" placeholder="Nhập tên game..." oninput="onSearchInput(this.value)" autocomplete="off"/>
+        <span class="clear-btn" onclick="closeInlineSearch(true)">✕</span>
+      </div>
+      <svg id="svg" viewBox="0 0 540 650" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="gn"><stop offset="0%" stop-color="#1e293b"/><stop offset="50%" stop-color="#334155"/><stop offset="100%" stop-color="#1e293b"/></linearGradient>
+          <linearGradient id="ga"><stop offset="0%" stop-color="#dc2626"/><stop offset="50%" stop-color="#ea580c"/><stop offset="100%" stop-color="#dc2626"/></linearGradient>
+          <linearGradient id="gh"><stop offset="0%" stop-color="#0f172a"/><stop offset="50%" stop-color="#1e293b"/><stop offset="100%" stop-color="#0f172a"/></linearGradient>
+          <filter id="gw" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="3" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter>
+          <g id="cd"></g>
+        </defs>
+        <g id="hg"></g><g id="sg"></g>
+      </svg>
+    </div>
+    <div id="preview-container">
+      <div id="preview-loader"><div class="spin"></div><span id="ld-t">ĐANG TẢI DỮ LIỆU...</span></div>
+      <div class="preview-badges">
+        <svg id="gp-badge" viewBox="0 0 24 24" title="Tay cầm đã kết nối"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H9v2H7v-2H5v-2h2V9h2v2h2v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+        <div id="fav-btn" class="fav-star-btn" onclick="event.stopPropagation();toggleCurrentFav();">☆</div>
+      </div>
+      <img id="preview-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Preview"/>
+      <div class="preview-bottom-actions">
+        <div id="dl-btn" class="dl-btn" onclick="event.stopPropagation();downloadCurrentGame();" title="Tải ROM Game">
+          <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="help-modal">
+    <div class="help-card">
+      <div class="help-header"><div class="help-title">📖 HƯỚNG DẪN & TÍNH NĂNG</div><button class="close-modal-btn" onclick="closeHelpModal()">✕</button></div>
+      <div class="help-body">
+        <div class="help-sec">
+          <div class="help-sec-h">⌨️ ĐIỀU KHIỂN BÀN PHÍM</div>
+          <div class="help-grid">
+            <div class="help-item"><span>Chọn Game</span><span class="help-key">↑ / ↓</span></div>
+            <div class="help-item"><span>Chuyển Hệ Máy</span><span class="help-key">← / →</span></div>
+            <div class="help-item"><span>Mở Menu Thể Loại</span><span class="help-key">G</span></div>
+            <div class="help-item"><span>Nhảy Chữ Cái (A-Z)</span><span class="help-key">PageUp / Dn</span></div>
+            <div class="help-item"><span>Vào Game</span><span class="help-key">Enter</span></div>
+            <div class="help-item"><span>Yêu Thích</span><span class="help-key">F</span></div>
+            <div class="help-item"><span>Lọc Yêu Thích</span><span class="help-key">V</span></div>
+            <div class="help-item"><span>Lọc Game Chính</span><span class="help-key">C</span></div>
+            <div class="help-item"><span>Tìm Kiếm</span><span class="help-key">/</span></div>
+            <div class="help-item"><span>Cập Nhật Dữ Liệu</span><span class="help-key">R</span></div>
+          </div>
+        </div>
+        <div class="help-sec">
+          <div class="help-sec-h">🎮 ĐIỀU KHIỂN TAY CẦM (GAMEPAD)</div>
+          <div class="help-grid">
+            <div class="help-item"><span>Di Chuyển Danh Sách / Menu</span><span class="help-key">D-Pad / Analog</span></div>
+            <div class="help-item"><span>Đổi Hệ Máy</span><span class="help-key">Trái / Phải</span></div>
+            <div class="help-item"><span>Nhảy Chữ Cái</span><span class="help-key">LB / RB</span></div>
+            <div class="help-item"><span>Mở Menu Thể Loại</span><span class="help-key">LT / L2</span></div>
+            <div class="help-item"><span>Mở Menu Hệ Máy</span><span class="help-key">RT / R2</span></div>
+            <div class="help-item"><span>Vào Game / Chọn</span><span class="help-key">A / Start</span></div>
+            <div class="help-item"><span>Đánh Dấu Yêu Thích</span><span class="help-key">Nút Y</span></div>
+            <div class="help-item"><span>Lọc Yêu Thích</span><span class="help-key">Nút X</span></div>
+            <div class="help-item"><span>Lọc Game Chính</span><span class="help-key">Nút B</span></div>
+            <div class="help-item"><span>Thoát Game Đang Chơi</span><span class="help-key">Nút Home</span></div>
+          </div>
+        </div>
+        <div class="help-sec">
+          <div class="help-sec-h">⚡ TÍNH NĂNG NỔI BẬT</div>
+          <div style="font-size:13px;display:flex;flex-direction:column;gap:6px;">
+            <p>• <b>Lưu trữ dữ liệu Vĩnh Viễn:</b> Danh sách game và thông tin DAT được lưu vĩnh viễn trên trình duyệt giúp tải tức thì. Chỉ cập nhật khi bấm "Cập Nhật Dữ Liệu". Nếu hết lượt API GitHub, trình duyệt sẽ tự khôi phục dữ liệu đã lưu.</p>
+            <p>• <b>Lọc theo Thể Loại:</b> Trích xuất thẻ &lt;genre&gt; từ file .DAT, hiển thị menu với biểu tượng hình ảnh từ thư mục genre.</p>
+            <p>• <b>Game Chưa Phân Loại:</b> Hỗ trợ gom nhóm riêng các game không gắn thẻ thể loại trong file .DAT để bạn dễ kiểm tra.</p>
+            <p>• <b>Game Chính vs Game Con (Clone):</b> Sử dụng dữ liệu .DAT để lọc bớt các bản game clone, hack, giúp danh sách gọn gàng hơn.</p>
+            <p>• <b>Đồng bộ Google Drive:</b> Đăng nhập Google để sao lưu danh sách Game Yêu Thích lên đám mây, tự động đồng bộ giữa các thiết bị.</p>
+            <p>• <b>Cài đặt PWA:</b> Hỗ trợ cài ứng dụng trực tiếp lên màn hình chính máy tính hoặc điện thoại để trải nghiệm mượt mà hơn.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="game-player-modal">
+    <div id="player-toolbar">
+      <span id="player-title">PANDORA ARCADE</span>
+      <div style="display:flex;gap:6px">
+        <button class="player-btn" onclick="openGameInNewTab()">🔗 <span class="btn-lbl">Tab Mới</span></button>
+        <button class="player-btn" onclick="toggleFullscreen()">⛶ <span class="btn-lbl">Toàn Màn</span></button>
+        <button class="player-btn" onclick="closeGamePlayer()">✕ <span class="btn-lbl">Đóng</span></button>
+      </div>
+    </div>
+    <iframe id="game-frame" src="" allow="autoplay; gamepad; keyboard" allowfullscreen></iframe>
+  </div>
+
+  <script>
+    // --- TÍCH HỢP PWA ---
+    let deferredPrompt = null;
+    const icon="data:image/png;base64,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";  const pwaManifest = {
+      name: "Arcade",
+      short_name: "Arcade",
+      start_url: location.origin + location.pathname,
+      display: "standalone",
+      theme_color: "#050101",
+			background_color: "#050101",
+      icons:[{src:icon,sizes:"512x512",type:"image/png",purpose: "any"}]
+    };
+
+    const pwaLink = document.createElement("link");
+    pwaLink.rel = "manifest";
+    pwaLink.href = URL.createObjectURL(new Blob([JSON.stringify(pwaManifest)], { type: "application/json" }));
+    document.head.append(pwaLink);
+
+    window.addEventListener("beforeinstallprompt", e => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const pwaBtn = document.getElementById("pwa-install-item");
+      if (pwaBtn) pwaBtn.style.display = "flex";
+    });
+
+    async function installPWA() {
+      if (!deferredPrompt) return;
+      await deferredPrompt.prompt();
+      deferredPrompt = null;
+      const pwaBtn = document.getElementById("pwa-install-item");
+      if (pwaBtn) pwaBtn.style.display = "none";
+    }
+
+    // --- CẤU HÌNH PANDORA ARCADE ---
+    const GOOGLE_CLIENT_ID = "2611223495-h3eq8j0sprp9tvhig1u9ihtm0jhnej3v.apps.googleusercontent.com", DRIVE_FILE_NAME = "pandora_favs.json";
+    let tokenClient = null, accessToken = null, driveFileId = null, currentUserProfile = null;
+
+    const EMULATOR_URL = "https://longhai.github.io/codes/2026/08/29/emulatorjs.html", ASSETS_BASE = "https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/dot-art/png/", RAW_BASE = "https://raw.githubusercontent.com/longhai/emu/main/", EMPTY_GIF = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ea580c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='4' ry='4'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5' fill='%23ea580c'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E";
+    var FALLBACK_ARCADE_SVG = window.FALLBACK_ARCADE_SVG, FALLBACK_GENRE_SVG = window.FALLBACK_GENRE_SVG;
+
+    const GAME_SOURCES = [{ owner: "longhai", repo: "emu", branch: "main" }, { owner: "longhai", repo: "ps1", branch: "main", defaultCat: "psx" }];
+    const VALID_ROM_EXTS = new Set(['zip','7z','rar','chd','iso','bin','pbp','cso','rvz','img','cue','z64','n64','v64','nes','snes','smc','sfc','gba','gbc','gb','md','gen','smd','pce','gg','sms','a26','a78','lnx','ngp','ngc','ws','wsc','m3u','gcm','gcz','wbfs','wad']);
+
+    const SYSTEM_PROFILES = [
+      [["arcade","cps1","cps2","cps3","fbneo","fba","mame"], "FBNeo - Arcade Games.png", "Arcade", "arcade", "FBNeo - Arcade Games"],
+      [["neogeo","neo geo","ng"], "SNK - Neo Geo.png", "Neo Geo", "arcade", "SNK - Neo Geo"],
+      [["mega drive","megadrive","genesis","sega","md"], "Sega - Mega Drive - Genesis.png", "Mega Drive", "segaMD", "Sega - Mega Drive - Genesis"],
+      [["snes","super famicom","super famicon","super nintendo","sfc"], "Nintendo - Super Nintendo Entertainment System.png", "SNES", "snes", "Nintendo - Super Nintendo Entertainment System"],
+      [["famicom","famicon","nes","fc"], "Nintendo - Nintendo Entertainment System.png", "NES", "nes", "Nintendo - Nintendo Entertainment System"],
+      [["gba","game boy advance"], "Nintendo - Game Boy Advance.png", "GBA", "gba", "Nintendo - Game Boy Advance"],
+      [["gbc","game boy color"], "Nintendo - Game Boy Color.png", "GBC", "gbc", "Nintendo - Game Boy Color"],
+      [["gb","game boy"], "Nintendo - Game Boy.png", "GB", "gb", "Nintendo - Game Boy"],
+      [["n64","nintendo 64"], "Nintendo - Nintendo 64.png", "N64", "n64", "Nintendo - Nintendo 64"],
+      [["psx","ps1","playstation","sony - playstation"], "Sony - PlayStation.png", "PlayStation", "psx", "Sony - PlayStation"],
+      [["pce","pc engine","pc-engine","turbografx","tg16","tg-16"], "NEC - PC Engine - TurboGrafx 16.png", "PC Engine", "pce", "NEC - PC Engine - TurboGrafx 16"]
+    ];
+
+    const $ = id => document.getElementById(id), lsGet = k => localStorage.getItem(k), lsSet = (k, v) => localStorage.setItem(k, v), lsRem = k => localStorage.removeItem(k);
+    const decodeXml = str => str ? str.replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&') : "";
+    const cleanTitle = str => str ? str.replace(/\.[^/.]+$/, "").replace(/_/g, " ") : "";
+    const capTitle = str => str ? str.replace(/\b\w/g, l => l.toUpperCase()) : "";
+    const getGameKey = g => g ? `${state.datList[state.currentDatIdx]?.name || ""}_${g.fullName || g.name}` : "";
+    const isFav = g => g?.fullName ? state.favorites.includes(g.fullName) : false;
+
+    const getGenreSlug = str => str ? str.toLowerCase().replace(/[^a-z0-9]/g, '') : "all";
+
+    const getGenreIconUrl = genreStr => {
+      if (!genreStr) return `${RAW_BASE}genre/all.png`;
+      return `${RAW_BASE}genre/${getGenreSlug(genreStr)}.png`;
+    };
+
+    function handleGenreImgError(img) {
+      img.onerror = null;
+      img.src = window.FALLBACK_GENRE_SVG;
+    }
+
+    // Đăng ký lưu trữ vĩnh viễn với trình duyệt
+    async function requestPersistentStorage() {
+      if (navigator.storage && navigator.storage.persist) {
+        const isPersisted = await navigator.storage.persisted();
+        if (!isPersisted) {
+          await navigator.storage.persist();
+        }
+      }
+    }
+
+    const buildDirectRomUrl = (src, itemPath) => /^https?:\/\//i.test(itemPath) ? itemPath : `https://${src.repo === 'emu' ? 'raw.githubusercontent.com' : 'media.githubusercontent.com/media'}/${src.owner}/${src.repo}/${src.branch || "main"}/${itemPath}`;
+
+    const isGameFile = path => {
+      if (!path) return false;
+      const file = path.split('/').pop().trim().toLowerCase();
+      return file && !file.startsWith('.') && !['license', 'readme', 'changelog', 'notice'].some(k => file.startsWith(k)) && VALID_ROM_EXTS.has(file.split('.').pop());
+    };
+
+    const imgCache = new Map(), failedUrls = new Set(), pendingProbes = new Map();
+    let currentPreviewToken = 0, persistentImgMap = {}, imgSaveTimer = 0, preloadTimer = 0;
+    try { persistentImgMap = JSON.parse(lsGet("pandora_img_urls_v2") || "{}"); } catch(e) {}
+
+    function savePersistentImgMap() {
+      try {
+        const keys = Object.keys(persistentImgMap);
+        if (keys.length > 3500) keys.slice(0, 700).forEach(k => delete persistentImgMap[k]);
+        lsSet("pandora_img_urls_v2", JSON.stringify(persistentImgMap));
+      } catch(e) {
+        try {
+          const keys = Object.keys(persistentImgMap);
+          keys.slice(0, Math.floor(keys.length / 2)).forEach(k => delete persistentImgMap[k]);
+          lsSet("pandora_img_urls_v2", JSON.stringify(persistentImgMap));
+        } catch(err){}
+      }
+    }
+
+    function cacheSet(k, v) {
+      if (imgCache.size >= 500) imgCache.delete(imgCache.keys().next().value);
+      imgCache.set(k, v);
+      if (v) {
+        persistentImgMap[k] = v;
+        clearTimeout(imgSaveTimer);
+        imgSaveTimer = setTimeout(() => { savePersistentImgMap(); imgSaveTimer = 0; }, 300);
+      }
+    }
+
+    const initialPlaceholderGames = Array.from({ length: 15 }, (_, i) => ({ name: "", fullName: `placeholder_${i}` }));
+
+    const state = {
+      datList: SYSTEM_PROFILES.map(([_, img, name, core, sys]) => ({ name, displayName: name, logo: ASSETS_BASE + encodeURIComponent(img), system: name, core, libretroSys: sys })), 
+      currentDatIdx: 0, gamesByCat: {}, 
+      allGames: initialPlaceholderGames, filteredGames: initialPlaceholderGames, 
+      selIdx: 0, topIdx: 0, slots: [], searchQuery: "", showFavOnly: false, 
+      showMainOnly: lsGet('pandora_show_main_only') === 'true',
+      selectedGenre: 'all', availableGenres: [], hasUncategorized: false,
+      datNameMap: {}, datOrderMap: {}, datCloneMap: {}, datGenreMap: {},
+      favorites: (() => { try { const v = JSON.parse(lsGet('pandora_favs') || '[]'); return Array.isArray(v) ? v : []; } catch(e) { return []; } })(),
+      isCurved: lsGet('pandora_curved') !== null ? lsGet('pandora_curved') === 'true' : !(window.innerWidth < 820 || window.innerHeight > window.innerWidth),
+      numSlots: 5, gamepadConnected: false, gpLastTime: 0, lastGpBtn: {}, resizeTimer: null,
+      gpMenuIdx: 0
+    };
+
+    const getGenreItems = () => [
+      { name: 'Tất Cả Thể Loại', value: 'all' },
+      ...state.availableGenres.map(g => ({ name: g, value: g })),
+      ...(state.hasUncategorized ? [{ name: 'Chưa Phân Loại', value: 'uncategorized' }] : [])
+    ];
+
+    function toggleUserMenu(e) {
+      if (e) e.stopPropagation();
+      closeMenuModal(); closeGenreMenu(); closeInlineSearch();
+      const menu = $('user-menu-dropdown');
+      $('user-menu-name').textContent = currentUserProfile?.name || 'Khách (Chưa đăng nhập)';
+      $('user-menu-avatar-wrap').style.display = currentUserProfile?.picture ? 'flex' : 'none';
+      if (currentUserProfile?.picture) $('user-menu-avatar-img').src = currentUserProfile.picture;
+
+      if ($('logout-btn')) $('logout-btn').style.display = currentUserProfile ? 'flex' : 'none';
+      if ($('auth-menu-item')) $('auth-menu-item').style.display = currentUserProfile ? 'none' : 'flex';
+
+      if ($('fav-menu-item')) {
+        $('fav-menu-item').classList.toggle('active-glow', state.showFavOnly);
+        $('fav-menu-text').textContent = state.showFavOnly ? 'Hiện Tất Cả Game' : 'Chỉ Xem Yêu Thích';
+      }
+      if ($('clone-menu-item')) {
+        $('clone-menu-item').classList.toggle('active-glow', state.showMainOnly);
+        $('clone-menu-text').textContent = state.showMainOnly ? 'Chế Độ: Chỉ Game Chính' : 'Chế Độ: Tất Cả Game';
+      }
+      if ($('layout-menu-item')) {
+        $('layout-menu-item').classList.toggle('active-glow', state.isCurved);
+        $('layout-menu-text').textContent = state.isCurved ? 'Giao Diện: Cong Arcade' : 'Giao Diện: Màn Phẳng';
+      }
+
+      if (menu.classList.contains('active')) closeUserMenu();
+      else { posMenu(menu, $('hdr-avatar-btn'), true); menu.classList.add('active'); }
+    }
+
+    const openHelpModal = () => $('help-modal').classList.add('active'), closeHelpModal = () => $('help-modal').classList.remove('active');
+
+    function posMenu(menu, targetBtn, isRightAlign = false) {
+      if (!menu || !targetBtn) return;
+      const rect = targetBtn.getBoundingClientRect(), topPos = rect.bottom + 8;
+      menu.style.top = `${topPos}px`;
+      if (isRightAlign) {
+        menu.style.right = `${Math.max(10, window.innerWidth - rect.right - 10)}px`;
+        menu.style.left = 'auto';
+      } else {
+        menu.style.left = `${Math.max(10, Math.min(rect.left - 10, window.innerWidth - 270))}px`;
+        menu.style.right = 'auto';
+      }
+      menu.style.maxHeight = `${Math.max(150, window.innerHeight - topPos - 16)}px`;
+    }
+
+    const closeUserMenu = () => $('user-menu-dropdown').classList.remove('active');
+    const closeMenuModal = () => $('menu-dropdown').classList.remove('active');
+    const closeGenreMenu = () => $('genre-menu-dropdown').classList.remove('active');
+    const handleAuthClick = () => { closeUserMenu(); handleGoogleAuth(); };
+
+    function toggleLayoutMode() {
+      state.isCurved = !state.isCurved;
+      lsSet('pandora_curved', state.isCurved);
+      drawAll();
+    }
+
+    function initGoogleDriveAuth() {
+      if (typeof google === 'undefined' || !google.accounts) return;
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/userinfo.profile',
+        callback: async (resp) => {
+          if (resp.error) return;
+          accessToken = resp.access_token;
+          lsSet('pandora_google_token', accessToken);
+          await fetchUserProfile();
+          if (currentUserProfile) lsSet('pandora_google_user', JSON.stringify(currentUserProfile));
+          drawHeader(); await syncFavsFromDrive();
+        },
+      });
+
+      const savedToken = lsGet('pandora_google_token'), savedUser = lsGet('pandora_google_user');
+      if (savedToken && savedUser) {
+        accessToken = savedToken;
+        try { currentUserProfile = JSON.parse(savedUser); drawHeader(); syncFavsFromDrive(); } catch(e) {}
+      }
+    }
+
+    async function fetchUserProfile() {
+      if (!accessToken) return;
+      try {
+        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } });
+        if (res.ok) currentUserProfile = await res.json();
+        else if (res.status === 401) handleAuthLogout();
+      } catch (e) {}
+    }
+
+    function handleAuthLogout() {
+      accessToken = driveFileId = currentUserProfile = null;
+      lsRem('pandora_google_token'); lsRem('pandora_google_user');
+      drawHeader();
+    }
+
+    function handleGoogleAuth() {
+      if (!accessToken) { if (tokenClient) tokenClient.requestAccessToken({ prompt: 'consent' }); }
+      else handleAuthLogout();
+    }
+
+    async function syncFavsFromDrive() {
+      if (!accessToken) return;
+      showLoader("ĐỒNG BỘ CLOUD...");
+      try {
+        const listRes = await fetch("https://www.googleapis.com/drive/v3/files?spaces=appDataFolder", { headers: { Authorization: `Bearer ${accessToken}` } });
+        if (listRes.status === 401) { handleAuthLogout(); return; }
+        const listData = await listRes.json(), file = listData.files?.find(f => f.name === DRIVE_FILE_NAME);
+
+        if (file) {
+          driveFileId = file.id;
+          const cloudFavs = await (await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } })).json();
+          if (Array.isArray(cloudFavs)) {
+            const merged = Array.from(new Set([...state.favorites, ...cloudFavs]));
+            state.favorites = merged;
+            lsSet('pandora_favs', JSON.stringify(state.favorites));
+            if (merged.length > cloudFavs.length) await saveFavsToDrive();
+          }
+        } else await saveFavsToDrive();
+      } catch (err) {} finally { hideLoader(); if (state.showFavOnly) filterGames(true); render(); }
+    }
+
+    async function saveFavsToDrive() {
+      if (!accessToken) return;
+      try {
+        const fileData = JSON.stringify(state.favorites);
+        if (driveFileId) {
+          await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?uploadType=media`, {
+            method: 'PATCH', headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' }, body: fileData
+          });
+        } else {
+          const form = new FormData();
+          form.append('metadata', new Blob([JSON.stringify({ name: DRIVE_FILE_NAME, parents: ['appDataFolder'] })], { type: 'application/json' }));
+          form.append('file', new Blob([fileData], { type: 'application/json' }));
+          const data = await (await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: form })).json();
+          driveFileId = data.id;
+        }
+      } catch (err) {}
+    }
+
+    // --- CACHE INDEXEDDB: database + DAT/XML, không chiếm LocalStorage ---
+    const IDB_NAME = "pandora_arcade_cache", IDB_VERSION = 1, IDB_STORE = "kv";
+    let idbPromise = null;
+
+    function openIDB() {
+      if (idbPromise) return idbPromise;
+      idbPromise = new Promise((resolve, reject) => {
+        if (!window.indexedDB) return reject(new Error("IndexedDB không được hỗ trợ"));
+        const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+        req.onupgradeneeded = () => {
+          if (!req.result.objectStoreNames.contains(IDB_STORE)) req.result.createObjectStore(IDB_STORE, { keyPath: "k" });
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+      return idbPromise;
+    }
+
+    async function idbGet(k) {
+      try {
+        const db = await openIDB();
+        return await new Promise((resolve, reject) => {
+          const req = db.transaction(IDB_STORE, "readonly").objectStore(IDB_STORE).get(k);
+          req.onsuccess = () => resolve(req.result?.v ?? null);
+          req.onerror = () => reject(req.error);
+        });
+      } catch (e) { return null; }
+    }
+
+    async function idbSet(k, v) {
+      try {
+        const db = await openIDB();
+        await new Promise((resolve, reject) => {
+          const req = db.transaction(IDB_STORE, "readwrite").objectStore(IDB_STORE).put({ k, v });
+          req.onsuccess = resolve;
+          req.onerror = () => reject(req.error);
+        });
+        return true;
+      } catch (e) { return false; }
+    }
+
+    async function idbClear() {
+      try {
+        const db = await openIDB();
+        await new Promise((resolve, reject) => {
+          const req = db.transaction(IDB_STORE, "readwrite").objectStore(IDB_STORE).clear();
+          req.onsuccess = resolve;
+          req.onerror = () => reject(req.error);
+        });
+      } catch (e) {}
+    }
+
+    const DB_CACHE_KEY = "pandora_full_db_v14";
+
+    async function clearPandoraCache() {
+      await idbClear();
+      try {
+        Object.keys(localStorage).forEach(k => {
+          if (k.startsWith("pandora_full_db") || k.startsWith("pandora_dat_")) localStorage.removeItem(k);
+        });
+      } catch (e) {}
+    }
+
+
+    function toggleCurrentFav() {
+      if (!state.filteredGames.length) return;
+      const g = state.filteredGames[state.selIdx];
+      if (!g?.fullName) return;
+      const idx = state.favorites.indexOf(g.fullName);
+      if (idx !== -1) state.favorites.splice(idx, 1);
+      else state.favorites.push(g.fullName);
+      lsSet('pandora_favs', JSON.stringify(state.favorites));
+      saveFavsToDrive();
+      if (state.showFavOnly) filterGames(true);
+      render();
+    }
+
+    function restorePos() {
+      const cat = state.datList[state.currentDatIdx];
+      if (!cat || !state.filteredGames.length) { state.selIdx = state.topIdx = 0; return; }
+      const last = lsGet("pandora_lg_" + cat.name);
+      state.selIdx = last ? Math.max(0, state.filteredGames.findIndex(g => g.fullName === last)) : 0;
+    }
+
+    function resolveSys(f) {
+      const rawLower = f.toLowerCase(), normName = rawLower.replace(/[^a-z0-9]/g, '');
+      const match = SYSTEM_PROFILES.find(([keys]) => keys.some(k => {
+        const kLow = k.toLowerCase();
+        return kLow.length <= 3 ? new RegExp(`\\b${kLow}\\b`, 'i').test(rawLower) : (rawLower.includes(kLow) || normName.includes(kLow.replace(/[^a-z0-9]/g, '')));
+      }));
+      return match ? { isKnown: true, logo: ASSETS_BASE + encodeURIComponent(match[1]), system: match[2], core: match[3], libretroSys: match[4] } 
+                   : { isKnown: false, logo: ASSETS_BASE + "FBNeo - Arcade Games.png", system: f, core: "arcade", libretroSys: f };
+    }
+
+    function addDatEntry(map, orderMap, cloneMap, genreMap, key, desc, cloneof, genre, idx) {
+      if (!key || !desc) return;
+      const kLow = key.toLowerCase().trim(), kNoExt = kLow.replace(/\.[^/.]+$/, '');
+      map[kLow] = desc; 
+      if (orderMap[kLow] === undefined) orderMap[kLow] = idx;
+      if (cloneof) cloneMap[kLow] = cloneof.toLowerCase().trim();
+      if (genre) genreMap[kLow] = genre.trim();
+
+      if (kNoExt) { 
+        map[kNoExt] = desc; 
+        if (orderMap[kNoExt] === undefined) orderMap[kNoExt] = idx;
+        if (cloneof) cloneMap[kNoExt] = cloneof.toLowerCase().trim();
+        if (genre) genreMap[kNoExt] = genre.trim();
+      }
+    }
+
+    function parseDatContent(text) {
+      const map = {}, order = {}, cloneMap = {}, genreMap = {}; if (!text) return { map, order, cloneMap, genreMap };
+      let match, count = 0, xmlFound = false;
+      const blockRegex = /<(?:game|machine)\s+[^>]*?\bname=["']([^"']+)["']([^>]*?)>([\s\S]*?)<\/(?:game|machine)>/gi;
+      while ((match = blockRegex.exec(text)) !== null) {
+        xmlFound = true;
+        const name = match[1].trim(), attrs = match[2], inner = match[3];
+        const cloneMatch = /\bcloneof=["']([^"']+)["']/i.exec(attrs);
+        const cloneof = cloneMatch ? cloneMatch[1].trim() : null;
+        const d = /<description>([\s\S]*?)<\/description>/i.exec(inner);
+        const g = /<(?:genre|category)>([\s\S]*?)<\/(?:genre|category)>/i.exec(inner);
+        const genreStr = g?.[1] ? decodeXml(g[1]).trim() : null;
+        if (d?.[1]) addDatEntry(map, order, cloneMap, genreMap, name, decodeXml(d[1]), cloneof, genreStr, count++);
+      }
+      if (!xmlFound) {
+        const clrRegex = /(?:game|machine)\s*\(\s*name\s+["']?([^"'\r\n]+)["']?(?:[\s\S]*?\bcloneof\s+["']?([^"'\r\n]+)["']?)?[\s\S]*?description\s+["']([^"']+)["']/gi;
+        while ((match = clrRegex.exec(text)) !== null) {
+          const inner = match[0];
+          const gMatch = /\b(?:category|genre)\s+["']([^"']+)["']/i.exec(inner);
+          addDatEntry(map, order, cloneMap, genreMap, match[1].trim(), decodeXml(match[3]), match[2] ? match[2].trim() : null, gMatch?.[1] ? gMatch[1].trim() : null, count++);
+        }
+      }
+      return { map, order, cloneMap, genreMap };
+    }
+
+    async function loadDatMap(catName = "arcade") {
+      const catInfo = state.datList[state.currentDatIdx];
+      const sysName = catInfo?.name || catName;
+      const cleanCat = sysName.toLowerCase().trim();
+      const cacheKey = "pandora_dat_v14_" + cleanCat;
+      const cached = await idbGet(cacheKey);
+
+      if (cached?.map && Object.keys(cached.map).length) {
+        state.datNameMap = cached.map;
+        state.datOrderMap = cached.order || {};
+        state.datCloneMap = cached.cloneMap || {};
+        state.datGenreMap = cached.genreMap || {};
+        return;
+      }
+
+      // Chỉ dùng đúng .DAT/.XML đã được GitHub Tree API phát hiện; không đoán đường dẫn.
+      const metaUrl = catInfo?.metaUrl;
+      if (!metaUrl) return;
+
+      try {
+        const resp = await fetch(metaUrl, { cache: "no-cache" });
+        if (!resp.ok) return;
+        const parsed = parseDatContent(await resp.text());
+        if (!Object.keys(parsed.map).length) return;
+
+        state.datNameMap = parsed.map;
+        state.datOrderMap = parsed.order || {};
+        state.datCloneMap = parsed.cloneMap || {};
+        state.datGenreMap = parsed.genreMap || {};
+        await idbSet(cacheKey, parsed);
+      } catch (e) {}
+    }
+
+
+    function isCloneGame(g) {
+      if (!g) return false;
+      const clean = cleanTitle(g.fullName).toLowerCase().trim();
+      const rawKey = g.fullName.toLowerCase().trim().replace(/\.[^/.]+$/, '');
+      if (state.datCloneMap[rawKey] || state.datCloneMap[clean]) return true;
+      return /[\(\[](clone|alt|bootleg|hack|unl|beta|proto|demo|sample)/i.test(g.fullName);
+    }
+
+    function getDisplayName(rawTitle) {
+      if (!rawTitle) return "";
+      const kLow = rawTitle.toLowerCase().trim(), kNoExt = kLow.replace(/\.[^/.]+$/, '');
+      return state.datNameMap[kLow] || state.datNameMap[kNoExt] || rawTitle;
+    }
+
+    const showLoader = m => { const pl = $('preview-loader'); if (pl) { pl.style.display = 'flex'; if ($('ld-t')) $('ld-t').innerText = m; } };
+    const hideLoader = () => { const pl = $('preview-loader'); if (pl) pl.style.display = 'none'; };
+
+    function calcNumSlots() {
+      const h = $('svg-container')?.clientHeight || (window.innerHeight * 0.55);
+      state.numSlots = Math.max(5, Math.min(12, Math.floor((h - 70) / 54)));
+    }
+
+    function updateSvgViewBox() {
+      calcNumSlots();
+      $('svg').setAttribute('viewBox', `0 0 540 ${64 + state.numSlots * 54}`);
+    }
+
+    function getGeom() {
+      calcNumSlots();
+      const s = !state.isCurved, X0 = s ? 8 : 14, X1 = s ? 8 : 85, W = s ? 515 : 435, Y_MID = (70 + (state.numSlots - 1) * 54 + 48) / 2;
+      return { X0, X1, W, Y_MID, HALF_H: Y_MID - 6 };
+    }
+
+    function getX(y, p) { return !state.isCurved ? p.X0 : p.X0 + (p.X1 - p.X0) * (1 - Math.pow(Math.max(-1, Math.min(1, (y - p.Y_MID) / p.HALF_H)), 2)); }
+
+    async function reloadDatabase() {
+      closeMenuModal(); closeGenreMenu();
+      await loadFullDatabase(true);
+    }
+
+    function sourceKey(source) {
+      return `${source.owner}/${source.repo}/${source.branch || "main"}`;
+    }
+
+    function rawMetaUrl(source, path) {
+      return `https://raw.githubusercontent.com/${source.owner}/${source.repo}/${source.branch || "main"}/${path.split('/').map(encodeURIComponent).join('/')}`;
+    }
+
+    function getMetaCategory(path, source) {
+      const parts = path.split('/').filter(Boolean);
+      if (!parts.length) return null;
+      let raw = "";
+      if (/^data$/i.test(parts[0]) && parts[1]) raw = parts[1].replace(/\.(dat|xml)$/i, "");
+      else if (/^roms$/i.test(parts[0]) && parts[1]) raw = parts[1];
+      else raw = parts[0].replace(/\.(dat|xml)$/i, "");
+      if (!raw && source.defaultCat) raw = source.defaultCat;
+      return raw || null;
+    }
+
+    function buildSourceSnapshot(source, treeData) {
+      const gamesByCat = {}, catMap = new Map(), metadata = [];
+      if (!treeData?.tree) return { gamesByCat, datList: [], metadata };
+
+      const cueBases = new Set(treeData.tree
+        .filter(i => i.type === "blob" && /\.(cue|m3u|ccd|gdi)$/i.test(i.path))
+        .map(i => i.path.substring(0, i.path.lastIndexOf('.')).toLowerCase()));
+
+      // Tìm tất cả DAT/XML trước để sau đó gắn đúng file metadata cho từng hệ.
+      treeData.tree.forEach(item => {
+        if (item.type !== "blob" || !/\.(dat|xml)$/i.test(item.path)) return;
+        const rawCat = getMetaCategory(item.path, source);
+        if (!rawCat) return;
+        const info = resolveSys(rawCat);
+        if (!info.isKnown && source.defaultCat) {
+          const def = resolveSys(source.defaultCat);
+          if (def.isKnown) metadata.push({ rawCat, info: def, path: item.path, url: rawMetaUrl(source, item.path), sourceKey: sourceKey(source) });
+        } else if (info.isKnown) {
+          metadata.push({ rawCat, info, path: item.path, url: rawMetaUrl(source, item.path), sourceKey: sourceKey(source) });
+        }
+      });
+
+      treeData.tree.forEach(item => {
+        if (item.type !== "blob" || !isGameFile(item.path)) return;
+        const ext = item.path.split('.').pop().toLowerCase();
+        const basePath = item.path.substring(0, item.path.lastIndexOf('.')).toLowerCase();
+        if (['bin', 'img', 'wav'].includes(ext) && (cueBases.has(basePath) || /track\s*\d+/i.test(item.path))) return;
+
+        const parts = item.path.split('/');
+        let catName = "", fileName = "";
+        if (parts[0].toLowerCase() === "roms") {
+          catName = parts.length >= 3 ? parts[1] : (source.defaultCat || "arcade");
+          fileName = parts.slice(parts.length >= 3 ? 2 : 1).join('/');
+        } else if (parts.length >= 2) {
+          catName = parts[0]; fileName = parts.slice(1).join('/');
+        } else if (source.defaultCat) {
+          catName = source.defaultCat; fileName = item.path;
+        } else return;
+
+        const info = resolveSys(catName);
+        if (!info.isKnown && ['emu', 'main', 'roms'].includes(catName.toLowerCase())) return;
+        const sysKey = info.system;
+        if (!gamesByCat[sysKey]) gamesByCat[sysKey] = [];
+
+        const cleanName = cleanTitle(fileName);
+        if (!cleanName) return;
+        gamesByCat[sysKey].push({
+          name: cleanName,
+          fullName: fileName,
+          romUrl: buildDirectRomUrl(source, item.path),
+          path: item.path,
+          core: info.core
+        });
+
+        if (!catMap.has(sysKey)) {
+          catMap.set(sysKey, {
+            name: sysKey,
+            folderName: catName,
+            logo: info.logo,
+            system: info.system,
+            core: info.core,
+            libretroSys: info.libretroSys,
+            sourceKey: sourceKey(source)
+          });
+        }
+      });
+
+      // Ưu tiên metadata có tên khớp hệ; nếu có cả DAT và XML thì lấy file đầu tiên có dữ liệu.
+      for (const cat of catMap.values()) {
+        const candidates = metadata.filter(m => m.info.system === cat.system || m.rawCat.toLowerCase() === cat.folderName.toLowerCase());
+        const m = candidates[0];
+        if (m) {
+          cat.metaUrl = m.url;
+          cat.metaPath = m.path;
+          cat.metaType = /\.xml$/i.test(m.path) ? "xml" : "dat";
+        }
+      }
+
+      for (const catName in gamesByCat) {
+        gamesByCat[catName].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base', numeric: true }));
+      }
+      return { gamesByCat, datList: Array.from(catMap.values()), metadata };
+    }
+
+    function mergeSourceSnapshots(snapshots) {
+      const gamesByCat = {}, catMap = new Map();
+      for (const snap of snapshots) {
+        if (!snap) continue;
+        for (const [cat, games] of Object.entries(snap.gamesByCat || {})) {
+          if (!gamesByCat[cat]) gamesByCat[cat] = [];
+          gamesByCat[cat].push(...games);
+        }
+        for (const cat of snap.datList || []) {
+          const old = catMap.get(cat.name);
+          if (!old) catMap.set(cat.name, { ...cat });
+          else if (!old.metaUrl && cat.metaUrl) Object.assign(old, cat);
+        }
+      }
+      Object.keys(gamesByCat).forEach(cat => {
+        const seen = new Set();
+        gamesByCat[cat] = gamesByCat[cat].filter(g => {
+          const k = `${g.romUrl}|${g.fullName}`;
+          if (seen.has(k)) return false;
+          seen.add(k); return true;
+        }).sort((a,b) => a.name.localeCompare(b.name, 'vi', { sensitivity:'base', numeric:true }));
+      });
+      return { gamesByCat, datList: Array.from(catMap.values()) };
+    }
+
+    async function fetchTreeSource(source, cachedSource, forceReload) {
+      const headers = {};
+      if (forceReload && cachedSource?.etag) headers['If-None-Match'] = cachedSource.etag;
+      try {
+        const resp = await fetch(`https://api.github.com/repos/${source.owner}/${source.repo}/git/trees/${source.branch || "main"}?recursive=1`, { headers, cache: "no-store" });
+        if (resp.status === 304 && cachedSource?.snapshot) return { source, unchanged: true, snapshot: cachedSource.snapshot, etag: cachedSource.etag || "", sha: cachedSource.sha || "" };
+        if (resp.status === 403 || resp.status === 429) return { source, rateLimited: true };
+        if (!resp.ok) return { source, failed: true };
+        const treeData = await resp.json();
+        return {
+          source,
+          unchanged: false,
+          snapshot: buildSourceSnapshot(source, treeData),
+          etag: resp.headers.get('ETag') || cachedSource?.etag || "",
+          sha: treeData.sha || ""
+        };
+      } catch (e) {
+        return { source, failed: true };
+      }
+    }
+
+    async function applyDatabaseCache(cached, lastCat, loaderText = "") {
+      if (!cached?.datList?.length || !cached?.gamesByCat) return false;
+      if (loaderText) showLoader(loaderText);
+      const processCats = list => list.map(i => ({ ...i, displayName: capTitle(i.system || i.name) }))
+        .sort((a, b) => a.displayName.localeCompare(b.displayName, 'vi', { sensitivity: 'base' }));
+      state.datList = processCats(cached.datList);
+      state.gamesByCat = cached.gamesByCat;
+      const found = state.datList.findIndex(i => i.name === lastCat);
+      state.currentDatIdx = found >= 0 ? found : 0;
+      const currCat = state.datList[state.currentDatIdx];
+      state.allGames = state.gamesByCat[currCat?.name] || [];
+      state.datNameMap = {}; state.datOrderMap = {}; state.datCloneMap = {}; state.datGenreMap = {};
+      if (currCat) await loadDatMap(currCat.name);
+      updateNames(); restorePos(); drawAll();
+      return true;
+    }
+
+    async function loadFullDatabase(forceReload = false) {
+      showLoader(forceReload ? "ĐANG KIỂM TRA CẬP NHẬT..." : "ĐANG TẢI DỮ LIỆU...");
+      const lastCat = lsGet("pandora_last_cat");
+      const cached = await idbGet(DB_CACHE_KEY);
+
+      // Khởi động bình thường: dùng IndexedDB ngay, KHÔNG gọi GitHub API lặp lại.
+      if (!forceReload && cached?.datList?.length && cached?.gamesByCat) {
+        await applyDatabaseCache(cached, lastCat);
+        hideLoader();
+        return;
+      }
+
+      try {
+        const oldSources = cached?.sources || {};
+        const results = await Promise.all(GAME_SOURCES.map(src => fetchTreeSource(src, oldSources[sourceKey(src)], forceReload)));
+        const rateLimited = results.some(r => r?.rateLimited);
+
+        // Nếu GitHub hết quota/mạng lỗi, khôi phục nguyên bộ DB đã lưu.
+        if (rateLimited || results.every(r => r?.failed)) {
+          if (cached?.datList?.length && cached?.gamesByCat) {
+            await applyDatabaseCache(cached, lastCat, "GITHUB KHÔNG KHẢ DỤNG: DÙNG DỮ LIỆU ĐÃ LƯU");
+            setTimeout(hideLoader, 1500);
+            return;
+          }
+          throw new Error("Không tải được dữ liệu GitHub");
+        }
+
+        const snapshots = [];
+        const sourcesMeta = {};
+        for (const r of results) {
+          const key = sourceKey(r.source);
+          const old = oldSources[key];
+          if (r.snapshot) {
+            snapshots.push(r.snapshot);
+            sourcesMeta[key] = { etag: r.etag || old?.etag || "", sha: r.sha || old?.sha || "", snapshot: r.snapshot };
+          } else if (old?.snapshot) {
+            snapshots.push(old.snapshot);
+            sourcesMeta[key] = old;
+          }
+        }
+
+        const merged = mergeSourceSnapshots(snapshots);
+        if (!merged.datList.length) throw new Error("Không tìm thấy ROM hợp lệ");
+
+        const cacheRecord = {
+          version: 14,
+          updatedAt: Date.now(),
+          sources: sourcesMeta,
+          datList: merged.datList,
+          gamesByCat: merged.gamesByCat
+        };
+        await idbSet(DB_CACHE_KEY, cacheRecord);
+
+        state.datList = merged.datList.map(i => ({ ...i, displayName: capTitle(i.system || i.name) }))
+          .sort((a,b) => a.displayName.localeCompare(b.displayName, 'vi', { sensitivity:'base' }));
+        state.gamesByCat = merged.gamesByCat;
+        const found = state.datList.findIndex(i => i.name === lastCat);
+        state.currentDatIdx = found >= 0 ? found : 0;
+        const currCat = state.datList[state.currentDatIdx];
+        state.allGames = state.gamesByCat[currCat?.name] || [];
+        state.datNameMap = {}; state.datOrderMap = {}; state.datCloneMap = {}; state.datGenreMap = {};
+        if (currCat) await loadDatMap(currCat.name);
+        updateNames(); restorePos(); hideLoader(); drawAll();
+      } catch (e) {
+        if (cached?.datList?.length && cached?.gamesByCat) {
+          await applyDatabaseCache(cached, lastCat, "LỖI KẾT NỐI: KHÔI PHỤC DỮ LIỆU ĐÃ LƯU");
+          setTimeout(hideLoader, 1500);
+        } else {
+          showLoader("KHÔNG TẢI ĐƯỢC DỮ LIỆU");
+          setTimeout(hideLoader, 2000);
+        }
+      }
+    }
+
+
+    function updateNames() {
+      const counts = {}, genreSet = new Set();
+      let hasUncategorized = false;
+
+      state.allGames.forEach(g => {
+        const d = getDisplayName(cleanTitle(g.fullName));
+        if (d) g.name = d;
+        const k = g.name.toLowerCase().trim();
+        counts[k] = (counts[k] || 0) + 1;
+
+        const kLow = g.fullName.toLowerCase().trim(), kNoExt = kLow.replace(/\.[^/.]+$/, ''), clean = cleanTitle(g.fullName).toLowerCase().trim();
+        g.genre = state.datGenreMap[kLow] || state.datGenreMap[kNoExt] || state.datGenreMap[clean] || "";
+        if (g.genre) genreSet.add(g.genre);
+        else hasUncategorized = true;
+      });
+
+      state.hasUncategorized = hasUncategorized;
+      state.availableGenres = Array.from(genreSet).sort((a, b) => a.localeCompare(b, 'vi'));
+
+      state.allGames.forEach(g => {
+        const k = g.name.toLowerCase().trim();
+        if (counts[k] > 1 && g.fullName) {
+          const tag = g.fullName.match(/[\(\[]([^\)\]]+)[\)\]]/);
+          if (tag?.[1]) g.name = `${g.name} (${tag[1]})`;
+        }
+      });
+
+      const map = new Map();
+      state.allGames.forEach(g => map.set(`${g.romUrl || g.fullName}_${g.name}`, g));
+      state.allGames = Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base', numeric: true }));
+      filterGames(true); render();
+      preloadWindowAtStart();
+    }
+
+    function toggleFavFilter() { state.showFavOnly = !state.showFavOnly; filterGames(true); drawAll(); }
+    function toggleMainOnlyFilter() { state.showMainOnly = !state.showMainOnly; lsSet('pandora_show_main_only', state.showMainOnly); filterGames(true); drawAll(); }
+
+    function filterGames(preserve = true) {
+      const current = state.filteredGames[state.selIdx], q = state.searchQuery.toLowerCase().trim();
+      let list = state.allGames;
+      if (q) list = list.filter(g => g.name.toLowerCase().includes(q) || g.fullName.toLowerCase().includes(q));
+      if (state.showFavOnly) list = list.filter(g => isFav(g));
+      if (state.showMainOnly) list = list.filter(g => !isCloneGame(g));
+      if (state.selectedGenre && state.selectedGenre !== 'all') {
+        if (state.selectedGenre === 'uncategorized') list = list.filter(g => !g.genre);
+        else list = list.filter(g => g.genre && g.genre.toLowerCase() === state.selectedGenre.toLowerCase());
+      }
+      state.filteredGames = list;
+
+      if (preserve && current?.fullName) {
+        const idx = state.filteredGames.findIndex(g => g.fullName === current.fullName);
+        if (idx !== -1) { state.selIdx = idx; return; }
+      }
+      if (q) state.selIdx = state.topIdx = 0; else restorePos();
+    }
+
+    function renderMenuList() {
+      $('menu-dropdown').innerHTML = `<div class="menu-header">Danh Sách Hệ Máy (${state.datList.length})</div>` + state.datList.map((item, i) =>
+        `<div class="menu-item ${i === state.currentDatIdx ? 'active' : ''}" onclick="switchCat(${i})">
+          <div class="menu-logo-box"><img src="${item.logo}" alt="${item.displayName}" onerror="this.onerror=null;this.src=window.FALLBACK_ARCADE_SVG;"/></div>
+          <span>${item.displayName}</span>
+        </div>`
+      ).join('');
+    }
+
+    function renderGenreMenuList() {
+      const items = getGenreItems();
+      $('genre-menu-dropdown').innerHTML = `<div class="menu-header">Thể Loại (${items.length - 1})</div>` + items.map((item) => {
+        const iconUrl = getGenreIconUrl(item.value);
+        const isActive = state.selectedGenre.toLowerCase() === item.value.toLowerCase();
+        const value = JSON.stringify(item.value).replace(/'/g, '&#39;');
+        return `<div class="menu-item ${isActive ? 'active' : ''}" onclick='switchGenre(${value})'>
+          <div class="menu-logo-box"><img src="${iconUrl}" data-genre="${item.value.replace(/"/g, '&quot;')}" alt="${item.name}" onerror="handleGenreImgError(this)"/></div>
+          <span>${item.name}</span>
+        </div>`;
+      }).join('');
+    }
+
+    const toggleMenuModal = e => {
+      if (e) e.stopPropagation();
+      closeUserMenu(); closeGenreMenu(); closeInlineSearch();
+      const menu = $('menu-dropdown');
+      if (menu.classList.contains('active')) closeMenuModal();
+      else { state.gpMenuIdx = state.currentDatIdx; renderMenuList(); posMenu(menu, $('hdr-logo-btn')); menu.classList.add('active'); updateMenuGpHighlight(menu); }
+    };
+
+    const toggleGenreMenu = e => {
+      if (e) e.stopPropagation();
+      closeUserMenu(); closeMenuModal(); closeInlineSearch();
+      const menu = $('genre-menu-dropdown');
+      if (menu.classList.contains('active')) closeGenreMenu();
+      else {
+        renderGenreMenuList();
+        posMenu(menu, $('hdr-genre-btn'));
+        menu.classList.add('active');
+        const items = getGenreItems();
+        state.gpMenuIdx = Math.max(0, items.findIndex(x => x.value.toLowerCase() === state.selectedGenre.toLowerCase()));
+        updateMenuGpHighlight(menu);
+      }
+    };
+
+    function updateMenuGpHighlight(menu) {
+      if (!menu) return;
+      const items = menu.querySelectorAll('.menu-item');
+      items.forEach((item, idx) => {
+        item.classList.toggle('gp-hover', idx === state.gpMenuIdx);
+        if (idx === state.gpMenuIdx) item.scrollIntoView({ block: 'nearest' });
+      });
+    }
+
+    function switchGenre(genreValue) {
+      state.selectedGenre = genreValue;
+      closeGenreMenu();
+      filterGames(false);
+      drawAll();
+    }
+
+    async function switchCat(i) {
+      if (i === state.currentDatIdx) return closeMenuModal();
+      state.currentDatIdx = i;
+      state.selectedGenre = 'all';
+      const cat = state.datList[i]; if (!cat) return;
+      lsSet("pandora_last_cat", cat.name || ''); closeMenuModal();
+      state.allGames = state.gamesByCat[cat.name] || []; state.searchQuery = "";
+      if ($('search-input')) $('search-input').value = "";
+      state.datNameMap = {}; state.datOrderMap = {}; state.datCloneMap = {}; state.datGenreMap = {};
+      filterGames(false); restorePos(); drawAll();
+      await loadDatMap(cat.name); updateNames();
+    }
+
+    function drawAll() { updateSvgViewBox(); drawHeader(); drawSlots(); render(); }
+
+    function drawHeader() {
+      const p = getGeom(), xl0 = getX(6, p), xl1 = getX(54, p), xlMid = getX(30, p);
+      const isPlaceholder = state.filteredGames.length && state.filteredGames[0]?.fullName?.startsWith('placeholder_');
+      const cntText = isPlaceholder ? 'ĐANG TẢI DỮ LIỆU...' : (state.filteredGames.length ? `${state.showFavOnly ? 'YÊU THÍCH' : (state.showMainOnly ? 'GAME CHÍNH' : 'GAME')}: ${state.selIdx + 1} / ${state.filteredGames.length}` : (state.datList.length ? 'GAME: 0 / 0' : 'ĐANG TẢI...'));
+
+      $('hg').innerHTML = `
+        <polygon points="${xl0.toFixed(1)},6 ${(xl0 + p.W).toFixed(1)},6 ${(xl1 + p.W).toFixed(1)},54 ${xl1.toFixed(1)},54" fill="url(#gh)" stroke="#475569" stroke-width="1.5"/>
+        <line x1="${xl0.toFixed(1)}" y1="6" x2="${xl1.toFixed(1)}" y2="54" stroke="#38bdf8" stroke-width="4"/>
+        <text id="cnt-txt" x="${(xlMid + 92).toFixed(1)}" y="30" dominant-baseline="central" fill="#fbbf24" font-size="14" font-weight="bold" font-family="Orbitron">${cntText}</text>`;
+
+      updateHeaderOverlays();
+    }
+
+    function updateHeaderOverlays() {
+      if ($('hdr-logo-img')) $('hdr-logo-img').src = state.datList[state.currentDatIdx]?.logo || FALLBACK_ARCADE_SVG;
+      if ($('hdr-genre-img')) {
+        const img = $('hdr-genre-img');
+        delete img.dataset.tried;
+        img.dataset.genre = state.selectedGenre;
+        img.src = getGenreIconUrl(state.selectedGenre);
+      }
+      const aImg = $('hdr-avatar-img'), aSvg = $('hdr-avatar-svg');
+      if (currentUserProfile?.picture) { aImg.src = currentUserProfile.picture; aImg.style.display = 'block'; aSvg.style.display = 'none'; }
+      else { aImg.style.display = 'none'; aSvg.style.display = 'block'; }
+      posOverlays();
+    }
+
+    function posOverlays() {
+      const c = $('svg-container'), svg = $('svg'); if (!c || !svg) return;
+      const p = getGeom(), viewBoxH = 64 + state.numSlots * 54, xlMid = getX(30, p), rxMid = xlMid + p.W;
+      const rect = svg.getBoundingClientRect(), cRect = c.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+
+      const scaleMin = Math.min(rect.width / 540, rect.height / viewBoxH);
+      const svgOffsetX = rect.left - cRect.left, svgOffsetY = rect.top - cRect.top;
+
+      const setBtnPos = (btn, xSvg, ySvg, sz) => {
+        if (!btn) return;
+        const size = Math.max(20, Math.min(42, Math.round(sz * scaleMin)));
+        btn.style.left = `${svgOffsetX + (xSvg / 540) * rect.width}px`;
+        btn.style.top = `${svgOffsetY + (ySvg / viewBoxH) * rect.height}px`;
+        btn.style.transform = 'translate(-50%, -50%)';
+        btn.style.width = btn.style.height = `${size}px`;
+        btn.classList.add('ready');
+      };
+
+      setBtnPos($('hdr-logo-btn'), xlMid + 28, 30, 34);
+      setBtnPos($('hdr-genre-btn'), xlMid + 64, 30, 28);
+      setBtnPos($('hdr-search-btn'), rxMid - 56, 30, 28);
+      setBtnPos($('hdr-avatar-btn'), rxMid - 22, 30, 32);
+
+      const bar = $('inline-search-bar');
+      if (bar?.classList.contains('active')) {
+        const startX = xlMid + 88, endX = rxMid - 76;
+        bar.style.left = `${svgOffsetX + (startX / 540) * rect.width}px`;
+        bar.style.top = `${svgOffsetY + (30 / viewBoxH) * rect.height}px`;
+        bar.style.transform = 'translateY(-50%)';
+        bar.style.width = `${((endX - startX) / 540) * rect.width}px`;
+        bar.style.height = `${Math.max(26, Math.min(40, Math.round(34 * (rect.height / viewBoxH))))}px`;
+      }
+
+      if ($('menu-dropdown').classList.contains('active')) posMenu($('menu-dropdown'), $('hdr-logo-btn'));
+      if ($('genre-menu-dropdown').classList.contains('active')) posMenu($('genre-menu-dropdown'), $('hdr-genre-btn'));
+      if ($('user-menu-dropdown').classList.contains('active')) posMenu($('user-menu-dropdown'), $('hdr-avatar-btn'), true);
+    }
+
+    function toggleInlineSearch(e) {
+      if (e) e.stopPropagation();
+      closeUserMenu(); closeMenuModal(); closeGenreMenu();
+      const bar = $('inline-search-bar');
+      if (bar.classList.contains('active')) bar.classList.remove('active');
+      else { bar.classList.add('active'); posOverlays(); $('search-input').focus(); }
+    }
+
+    function closeInlineSearch(clear = false) {
+      $('inline-search-bar').classList.remove('active');
+      if (clear && $('search-input')) { $('search-input').value = ""; onSearchInput(""); }
+    }
+
+    function drawSlots() {
+      const p = getGeom(), grp = $('sg'), defs = $('cd'), svgNS = "http://www.w3.org/2000/svg";
+      grp.innerHTML = defs.innerHTML = ''; state.slots = [];
+
+      for (let i = 0; i < state.numSlots; i++) {
+        const y0 = 60 + i * 54, y1 = y0 + 48, xl0 = getX(y0, p), xl1 = getX(y1, p);
+        const clip = document.createElementNS(svgNS, "clipPath");
+        clip.setAttribute("id", `c${i}`);
+        clip.innerHTML = `<polygon points="${xl0.toFixed(1)},${y0} ${(xl0 + p.W - 12).toFixed(1)},${y0} ${(xl1 + p.W - 12).toFixed(1)},${y1} ${xl1.toFixed(1)},${y1}"/>`;
+        defs.appendChild(clip);
+
+        const el = document.createElementNS(svgNS, "g");
+        el.style.cursor = "pointer";
+        el.innerHTML = `
+          <polygon points="${xl0.toFixed(1)},${y0} ${(xl0 + p.W).toFixed(1)},${y0} ${(xl1 + p.W).toFixed(1)},${y1} ${xl1.toFixed(1)},${y1}" fill="url(#gn)" stroke="#475569" stroke-width="1.5"/>
+          <line x1="${xl0.toFixed(1)}" y1="${y0}" x2="${xl1.toFixed(1)}" y2="${y1}" stroke="#60a5fa" stroke-width="4"/>
+          <text x="${(xl0 + xl1) / 2 + 18}" y="${y0 + 30}" class="tn" clip-path="url(#c${i})"></text>`;
+
+        el.onclick = () => {
+          if (state.topIdx + i < state.filteredGames.length) {
+            if (state.selIdx === state.topIdx + i) launchCurrentGame();
+            else { state.selIdx = state.topIdx + i; render(); }
+          }
+        };
+        grp.appendChild(el);
+        state.slots.push({ poly: el.querySelector('polygon'), line: el.querySelector('line'), txt: el.querySelector('text'), g: el });
+      }
+    }
+
+    // Snap: lazy-load + cache URL + preload 20 game phía trước.
+    // Chỉ thử nguồn phụ sau khi nguồn chính thất bại; khi đã tìm thấy URL thì dừng ngay.
+    const SNAP_PRELOAD_COUNT = 20;
+    const SNAP_PRELOAD_CONCURRENCY = 4;
+    const snapPreloadQueue = [];
+    const snapPreloadQueued = new Set();
+    let snapPreloadRunning = 0;
+
+    function getPreviewCandidates(g) {
+      if (!g || g.fullName?.startsWith('placeholder_')) return [];
+      const cat = state.datList[state.currentDatIdx]; if (!cat) return [];
+
+      const catFolder = encodeURIComponent(cat.folderName || cat.name || cat.system || 'arcade');
+      const playlist = cat.libretroSys || cat.system || cat.name || cat.folderName || 'arcade';
+      const libretroFolder = encodeURIComponent(playlist);
+      const fileBase = g.fullName ? g.fullName.split('/').pop().replace(/\.[^/.]+$/, '') : '';
+      // FBNeo/DAT dùng tên chuẩn của bộ FBNeo trước. Các hệ khác vẫn dùng tên file/tên game gốc.
+      const isFbneo = /^(arcade|fbneo|fba|cps1|cps2|cps3|mame)$/i.test(String(cat.folderName || cat.name || cat.system || ''));
+      const names = isFbneo
+        ? Array.from(new Set([g.name, fileBase, cleanTitle(g.fullName)]))
+        : Array.from(new Set([fileBase, g.name, cleanTitle(g.fullName)]));
+      const filteredNames = names.filter(Boolean);
+      const candidates = [];
+
+      // Ưu tiên snap trong repo. Chỉ khi URL này lỗi mới thử Libretro.
+      for (const n of filteredNames) {
+        const encoded = encodeURIComponent(n);
+        candidates.push(`${RAW_BASE}snap/${catFolder}/${encoded}.png`);
+        candidates.push(`https://thumbnails.libretro.com/${libretroFolder}/Named_Snaps/${encoded}.png`);
+      }
+
+      return candidates.filter(url => !failedUrls.has(url));
+    }
+
+    function resolveAndCacheImage(g, onDone) {
+      if (!g || g.fullName?.startsWith('placeholder_')) return;
+      const key = getGameKey(g); if (!key) return;
+
+      // RAM cache: không tạo thêm request.
+      if (imgCache.has(key)) return onDone?.(imgCache.get(key));
+
+      // Persistent URL cache: dùng ngay, không request nguồn phụ.
+      const cached = persistentImgMap[key];
+      if (cached && (cached === PLACEHOLDER_SVG || !failedUrls.has(cached))) {
+        imgCache.set(key, cached);
+        return onDone?.(cached);
+      }
+
+      // Một game chỉ có một probe đang chạy.
+      if (pendingProbes.has(key)) {
+        if (onDone) pendingProbes.get(key).push(onDone);
+        return;
+      }
+
+      const candidates = getPreviewCandidates(g);
+      if (!candidates.length) {
+        cacheSet(key, PLACEHOLDER_SVG);
+        return onDone?.(PLACEHOLDER_SVG);
+      }
+
+      pendingProbes.set(key, onDone ? [onDone] : []);
+
+      const finish = url => {
+        const cbs = pendingProbes.get(key) || [];
+        pendingProbes.delete(key);
+        cacheSet(key, url);
+        cbs.forEach(cb => cb(url));
+      };
+
+      // Probe tuần tự: tìm thấy URL là DỪNG NGAY, không gửi tiếp nguồn phụ.
+      let index = 0;
+      const probeNext = () => {
+        if (index >= candidates.length) return finish(PLACEHOLDER_SVG);
+        const url = candidates[index++];
+        if (failedUrls.has(url)) return probeNext();
+
+        const im = new Image();
+        let settled = false;
+        const cleanup = () => {
+          im.onload = im.onerror = null;
+        };
+
+        im.onload = () => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          // URL đã biết -> cache ngay và không đụng tới các nguồn còn lại.
+          finish(url);
+        };
+
+        im.onerror = () => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          failedUrls.add(url);
+          probeNext();
+        };
+
+        im.src = url;
+      };
+
+      probeNext();
+    }
+
+    function queueSnapPreload(g) {
+      if (!g || g.fullName?.startsWith('placeholder_')) return;
+      const key = getGameKey(g); if (!key) return;
+      if (imgCache.has(key) || persistentImgMap[key] || pendingProbes.has(key) || snapPreloadQueued.has(key)) return;
+      snapPreloadQueued.add(key);
+      snapPreloadQueue.push(g);
+      runSnapPreloadQueue();
+    }
+
+    function runSnapPreloadQueue() {
+      while (snapPreloadRunning < SNAP_PRELOAD_CONCURRENCY && snapPreloadQueue.length) {
+        const g = snapPreloadQueue.shift();
+        snapPreloadRunning++;
+        const done = () => {
+          snapPreloadRunning--;
+          snapPreloadQueued.delete(getGameKey(g));
+          runSnapPreloadQueue();
+        };
+        resolveAndCacheImage(g, done);
+      }
+    }
+
+    function preloadNeighbors() {
+      clearTimeout(preloadTimer);
+      preloadTimer = setTimeout(() => {
+        const start = state.selIdx + 1;
+        const end = Math.min(state.filteredGames.length, start + SNAP_PRELOAD_COUNT);
+        for (let i = start; i < end; i++) queueSnapPreload(state.filteredGames[i]);
+      }, 0);
+    }
+
+    function preloadWindowAtStart() {
+      const end = Math.min(SNAP_PRELOAD_COUNT, state.filteredGames.length);
+      for (let i = 0; i < end; i++) queueSnapPreload(state.filteredGames[i]);
+    }
+
+    function updatePreview(g) {
+      const img = $('preview-img'), favBtn = $('fav-btn'), dlBtn = $('dl-btn');
+      if (!g || g.fullName?.startsWith('placeholder_')) {
+        img.src = EMPTY_GIF; img.classList.remove('is-placeholder', 'loading');
+        if (favBtn) favBtn.style.display = 'none';
+        if (dlBtn) dlBtn.style.display = 'none';
+        return;
+      }
+      if (favBtn) favBtn.style.display = 'block';
+      if (dlBtn) dlBtn.style.display = 'flex';
+
+      const key = getGameKey(g), token = ++currentPreviewToken;
+
+      // Khi đang tìm snap: KHÔNG hiển thị ảnh mặc định.
+      // Chỉ hiện placeholder nhỏ nếu tất cả nguồn đều thất bại.
+      // Dùng EMPTY_GIF trong lúc chờ để không có flash ảnh mặc định.
+      img.classList.remove('is-placeholder');
+      img.classList.add('loading');
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.maxWidth = '';
+      img.style.maxHeight = '';
+      img.style.minWidth = '';
+      img.style.minHeight = '';
+      img.src = EMPTY_GIF;
+
+      const applySrc = srcUrl => {
+        if (token !== currentPreviewToken) return;
+        if (srcUrl === PLACEHOLDER_SVG) {
+          // Không tìm được snap nào: lúc này mới hiện ảnh mặc định nhỏ.
+          img.classList.add('is-placeholder');
+          img.classList.remove('loading');
+          img.style.width = '88px';
+          img.style.height = '88px';
+          img.style.maxWidth = '88px';
+          img.style.maxHeight = '88px';
+          img.style.minWidth = '88px';
+          img.style.minHeight = '88px';
+          img.src = PLACEHOLDER_SVG;
+        } else {
+          // Có URL thật: bỏ placeholder trước rồi mới gán ảnh thật.
+          img.classList.remove('is-placeholder', 'loading');
+          img.style.width = '';
+          img.style.height = '';
+          img.style.maxWidth = '';
+          img.style.maxHeight = '';
+          img.style.minWidth = '';
+          img.style.minHeight = '';
+          img.src = srcUrl;
+        }
+        preloadNeighbors();
+      };
+
+      // RAM cache -> hiển thị tức thì.
+      if (imgCache.has(key)) return applySrc(imgCache.get(key));
+
+      // URL cache -> hiển thị tức thì, tuyệt đối không probe nguồn phụ.
+      const cached = persistentImgMap[key];
+      if (cached && (cached === PLACEHOLDER_SVG || !failedUrls.has(cached))) {
+        imgCache.set(key, cached);
+        return applySrc(cached);
+      }
+
+      resolveAndCacheImage(g, applySrc);
+    }
+
+    function buildEmuUrl(g, c) {
+      if (!g?.fullName || g.fullName.startsWith('placeholder_')) return "";
+      let romUrl = g.romUrl || g.fullName;
+      try { romUrl = decodeURIComponent(romUrl); } catch (e) {}
+      return `${EMULATOR_URL}?core=${encodeURIComponent(g.core || c?.core || "arcade")}&rom=${encodeURIComponent(romUrl)}`;
+    }
+
+    function downloadCurrentGame() {
+      const g = state.filteredGames[state.selIdx];
+      if (!g || !g.romUrl || g.fullName?.startsWith('placeholder_')) return;
+      const a = document.createElement('a');
+      a.href = g.romUrl;
+      a.download = g.fullName ? g.fullName.split('/').pop() : `${g.name}.zip`;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function launchCurrentGame() {
+      const g = state.filteredGames[state.selIdx], c = state.datList[state.currentDatIdx];
+      if (!g?.fullName || g.fullName.startsWith('placeholder_')) return;
+      $('player-title').textContent = `${g.name.toUpperCase()} [${c?.displayName || c?.name || ''}]`;
+      $('game-frame').src = buildEmuUrl(g, c);
+      $('game-player-modal').classList.add('active');
+    }
+
+    function openGameInNewTab() {
+      const u = buildEmuUrl(state.filteredGames[state.selIdx], state.datList[state.currentDatIdx]);
+      if (u) window.open(u, '_blank');
+    }
+
+    function closeGamePlayer() {
+      $('game-frame').src = "about:blank";
+      $('game-player-modal').classList.remove('active');
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      state.gpLastTime = performance.now() + 400;
+      state.lastGpBtn = { dir: true, cat: true, home: true, favY: true, favX: true, cloneB: true, cloneSelect: true, confirm: true };
+      render();
+    }
+
+    function toggleFullscreen() {
+      const m = $('game-player-modal');
+      if (!document.fullscreenElement) m.requestFullscreen().catch(() => {});
+      else document.exitFullscreen().catch(() => {});
+    }
+
+    function onSearchInput(val) { 
+      state.searchQuery = val; state.selIdx = state.topIdx = 0;
+      filterGames(false); drawSlots(); render(); 
+    }
+
+    function render() {
+      const isPlaceholder = state.filteredGames.length && state.filteredGames[0]?.fullName?.startsWith('placeholder_');
+      const label = state.showFavOnly ? 'YÊU THÍCH' : (state.showMainOnly ? 'GAME CHÍNH' : 'GAME');
+
+      if (!state.filteredGames.length) {
+        if ($('cnt-txt')) $('cnt-txt').textContent = `${label}: 0 / 0`;
+        state.slots.forEach(s => s.g.style.display = "none");
+        updatePreview(null); return;
+      }
+
+      if (state.selIdx < state.topIdx) state.topIdx = state.selIdx;
+      else if (state.selIdx >= state.topIdx + state.numSlots) state.topIdx = state.selIdx - state.numSlots + 1;
+      state.topIdx = Math.max(0, Math.min(state.topIdx, Math.max(0, state.filteredGames.length - state.numSlots)));
+
+      if ($('cnt-txt')) $('cnt-txt').textContent = isPlaceholder ? 'ĐANG TẢI DỮ LIỆU...' : `${label}: ${state.selIdx + 1} / ${state.filteredGames.length}`;
+
+      if (!isPlaceholder && state.datList[state.currentDatIdx] && state.filteredGames[state.selIdx]?.fullName) {
+        lsSet("pandora_lg_" + state.datList[state.currentDatIdx].name, state.filteredGames[state.selIdx].fullName);
+      }
+
+      const maxLen = state.isCurved ? 46 : 64;
+      state.slots.forEach((s, i) => {
+        const idx = state.topIdx + i, active = idx === state.selIdx;
+        if (idx < state.filteredGames.length) {
+          s.g.style.display = "block";
+          const str = state.filteredGames[idx].name;
+          s.txt.textContent = str.length > maxLen ? str.slice(0, maxLen - 2) + "..." : str;
+          s.poly.setAttribute("fill", active ? "url(#ga)" : "url(#gn)");
+          s.poly.setAttribute("stroke", active ? "#fef08a" : "#475569");
+          s.poly.setAttribute("stroke-width", active ? "2.5" : "1.5");
+          if (active) s.poly.setAttribute("filter", "url(#gw)"); else s.poly.removeAttribute("filter");
+          s.line.setAttribute("stroke", active ? "#fef08a" : "#60a5fa");
+          s.line.setAttribute("stroke-width", active ? "5" : "4");
+          s.txt.setAttribute("class", active ? "ta" : "tn");
+        } else s.g.style.display = "none";
+      });
+
+      if (state.filteredGames[state.selIdx]) {
+        updatePreview(state.filteredGames[state.selIdx]);
+        const favBtn = $('fav-btn');
+        if (favBtn) {
+          const active = isFav(state.filteredGames[state.selIdx]);
+          favBtn.classList.toggle('active', active);
+          favBtn.textContent = active ? "★" : "☆";
+        }
+      }
+      preloadNeighbors();
+    }
+
+    const moveSelection = step => {
+      const n = state.selIdx + step;
+      if (n >= 0 && n < state.filteredGames.length) { state.selIdx = n; render(); }
+    };
+
+    function jumpByLetter(dir) {
+      if (!state.filteredGames.length) return;
+      const getChar = g => (g?.name || "").trim().charAt(0).toUpperCase();
+      const currChar = getChar(state.filteredGames[state.selIdx]);
+
+      if (dir > 0) {
+        let targetIdx = state.filteredGames.findIndex((g, idx) => idx > state.selIdx && getChar(g) !== currChar);
+        state.selIdx = targetIdx !== -1 ? targetIdx : state.filteredGames.length - 1;
+      } else {
+        let firstOfCurr = state.filteredGames.findIndex(g => getChar(g) === currChar);
+        if (state.selIdx > firstOfCurr && firstOfCurr !== -1) {
+          state.selIdx = firstOfCurr;
+        } else if (firstOfCurr > 0) {
+          const prevChar = getChar(state.filteredGames[firstOfCurr - 1]);
+          state.selIdx = state.filteredGames.findIndex(g => getChar(g) === prevChar);
+        } else {
+          state.selIdx = 0;
+        }
+      }
+      render();
+    }
+
+    function bindEvents() {
+      const svgContainer = $('svg-container');
+      if (svgContainer && window.ResizeObserver) new ResizeObserver(() => posOverlays()).observe(svgContainer);
+
+      window.onresize = () => {
+        clearTimeout(state.resizeTimer);
+        state.resizeTimer = setTimeout(() => { if (state.datList.length) drawAll(); }, 80);
+      };
+
+      document.addEventListener('click', e => {
+        if (!e.target.closest('#menu-dropdown') && !e.target.closest('#hdr-logo-btn')) closeMenuModal();
+        if (!e.target.closest('#genre-menu-dropdown') && !e.target.closest('#hdr-genre-btn')) closeGenreMenu();
+        if (!e.target.closest('#user-menu-dropdown') && !e.target.closest('#hdr-avatar-btn')) closeUserMenu();
+        if (!e.target.closest('#inline-search-bar') && !e.target.closest('#hdr-search-btn')) closeInlineSearch(false);
+      });
+
+      const blockMenuTouch = e => e.stopPropagation();
+      ['menu-dropdown', 'genre-menu-dropdown', 'user-menu-dropdown'].forEach(id => {
+        const el = $(id);
+        if (el) { el.addEventListener('touchstart', blockMenuTouch, { passive: true }); el.addEventListener('touchmove', blockMenuTouch, { passive: true }); }
+      });
+
+      let touchY = 0, svgC = $('svg-container');
+      if (svgC) {
+        svgC.addEventListener('touchstart', e => { if (e.touches.length) touchY = e.touches[0].clientY; }, { passive: true });
+        svgC.addEventListener('touchmove', e => {
+          if ($('menu-dropdown').classList.contains('active') || $('genre-menu-dropdown').classList.contains('active') || $('user-menu-dropdown').classList.contains('active')) return;
+          if (!state.filteredGames.length || !e.touches.length) return;
+          const d = touchY - e.touches[0].clientY;
+          if (Math.abs(d) > 28) { moveSelection(d > 0 ? 1 : -1); touchY = e.touches[0].clientY; }
+        }, { passive: true });
+      }
+
+      window.onwheel = e => {
+        if ($('game-player-modal').classList.contains('active') || $('menu-dropdown').classList.contains('active') || $('genre-menu-dropdown').classList.contains('active') || $('user-menu-dropdown').classList.contains('active')) return;
+        moveSelection(e.deltaY > 0 ? 1 : -1);
+      };
+
+      window.onkeydown = e => {
+        if ($('help-modal').classList.contains('active')) { if (e.key === 'Escape') closeHelpModal(); return; }
+        if ($('game-player-modal').classList.contains('active')) { if (e.key === 'Escape') closeGamePlayer(); return; }
+        if ($('inline-search-bar')?.classList.contains('active')) {
+          if (e.key === 'Escape') return closeInlineSearch(true);
+          if (e.key === 'Enter') { e.preventDefault(); closeInlineSearch(false); if (state.filteredGames.length) launchCurrentGame(); return; }
+          if (e.key === 'ArrowDown') { e.preventDefault(); moveSelection(1); return; }
+          if (e.key === 'ArrowUp') { e.preventDefault(); moveSelection(-1); return; }
+          if (e.key === 'PageDown') { e.preventDefault(); jumpByLetter(1); return; }
+          if (e.key === 'PageUp') { e.preventDefault(); jumpByLetter(-1); return; }
+          return;
+        }
+        if ($('menu-dropdown').classList.contains('active')) { if (e.key === 'Escape') closeMenuModal(); return; }
+        if ($('genre-menu-dropdown').classList.contains('active')) { if (e.key === 'Escape') closeGenreMenu(); return; }
+        if ($('user-menu-dropdown').classList.contains('active')) { if (e.key === 'Escape') closeUserMenu(); return; }
+
+        const kMap = {
+          ArrowDown: () => moveSelection(1), ArrowUp: () => moveSelection(-1),
+          PageDown: () => jumpByLetter(1), PageUp: () => jumpByLetter(-1),
+          ArrowLeft: () => state.datList.length && switchCat((state.currentDatIdx - 1 + state.datList.length) % state.datList.length),
+          ArrowRight: () => state.datList.length && switchCat((state.currentDatIdx + 1) % state.datList.length),
+          Home: () => state.filteredGames.length && (state.selIdx = 0, render()),
+          f: toggleCurrentFav, F: toggleCurrentFav, v: toggleFavFilter, V: toggleFavFilter,
+          c: toggleMainOnlyFilter, C: toggleMainOnlyFilter, g: toggleGenreMenu, G: toggleGenreMenu,
+          r: reloadDatabase, R: reloadDatabase, Enter: launchCurrentGame, '/': toggleInlineSearch
+        };
+        if (kMap[e.key]) { e.preventDefault(); kMap[e.key](); }
+      };
+    }
+
+    function pollGamepad() {
+      try {
+        const rawGps = navigator.getGamepads ? navigator.getGamepads() : null;
+        let gp = null;
+        if (rawGps) { for (let i = 0; i < rawGps.length; i++) { if (rawGps[i]?.connected) { gp = rawGps[i]; break; } } }
+        const isConnected = !!gp;
+
+        if (isConnected !== state.gamepadConnected) {
+          state.gamepadConnected = isConnected;
+          if ($('gp-badge')) $('gp-badge').style.display = isConnected ? 'block' : 'none';
+        }
+
+        if (isConnected && gp) {
+          const now = performance.now();
+          const isSysMenuOpen = $('menu-dropdown').classList.contains('active');
+          const isGenreMenuOpen = $('genre-menu-dropdown').classList.contains('active');
+
+          if ($('game-player-modal').classList.contains('active')) {
+            if (gp.buttons[16]?.pressed) closeGamePlayer();
+          } else if (isSysMenuOpen || isGenreMenuOpen) {
+            if (now >= state.gpLastTime) {
+              const ay = gp.axes[1] ?? 0;
+              const u = gp.buttons[12]?.pressed || ay < -0.55;
+              const d = gp.buttons[13]?.pressed || ay > 0.55;
+              const menuEl = isSysMenuOpen ? $('menu-dropdown') : $('genre-menu-dropdown');
+              
+              const itemCount = isSysMenuOpen ? state.datList.length : getGenreItems().length;
+
+              if (u || d) {
+                state.gpMenuIdx = (state.gpMenuIdx + (u ? -1 : 1) + itemCount) % itemCount;
+                updateMenuGpHighlight(menuEl);
+                state.gpLastTime = now + 160;
+              }
+
+              if (gp.buttons[0]?.pressed || gp.buttons[9]?.pressed) {
+                if (isSysMenuOpen) switchCat(state.gpMenuIdx);
+                else {
+                  const items = getGenreItems();
+                  switchGenre(items[state.gpMenuIdx]?.value || 'all');
+                }
+                state.gpLastTime = now + 300;
+              } else if (gp.buttons[1]?.pressed || gp.buttons[8]?.pressed) {
+                closeMenuModal(); closeGenreMenu();
+                state.gpLastTime = now + 300;
+              }
+            }
+          } else if (!$('inline-search-bar')?.classList.contains('active') && !$('user-menu-dropdown').classList.contains('active')) {
+            if (now >= state.gpLastTime) {
+              const ay = gp.axes[1] ?? 0, ax = gp.axes[0] ?? 0;
+              const u = gp.buttons[12]?.pressed || ay < -0.55, d = gp.buttons[13]?.pressed || ay > 0.55;
+              const l = gp.buttons[14]?.pressed || ax < -0.55, r = gp.buttons[15]?.pressed || ax > 0.55;
+
+              if (u || d) {
+                if (!state.lastGpBtn.dir || now - state.gpLastTime > 160) { moveSelection(u ? -1 : 1); state.gpLastTime = now; state.lastGpBtn.dir = true; }
+              } else state.lastGpBtn.dir = false;
+
+              const l1 = gp.buttons[4]?.pressed, r1 = gp.buttons[5]?.pressed;
+              if ((l1 || r1) && !state.lastGpBtn.page) {
+                state.lastGpBtn.page = true; jumpByLetter(r1 ? 1 : -1);
+              } else if (!l1 && !r1) state.lastGpBtn.page = false;
+
+              if ((l || r) && !state.lastGpBtn.cat) {
+                state.lastGpBtn.cat = true;
+                if (state.datList.length) switchCat((state.currentDatIdx + (r ? 1 : -1) + state.datList.length) % state.datList.length);
+              } else if (!l && !r) state.lastGpBtn.cat = false;
+
+              const l2 = gp.buttons[6]?.pressed, r2 = gp.buttons[7]?.pressed;
+              if (l2 && !state.lastGpBtn.trigL) { state.lastGpBtn.trigL = true; toggleGenreMenu(); }
+              else if (!l2) state.lastGpBtn.trigL = false;
+
+              if (r2 && !state.lastGpBtn.trigR) { state.lastGpBtn.trigR = true; toggleMenuModal(); }
+              else if (!r2) state.lastGpBtn.trigR = false;
+
+              const checkBtn = (btnIdx, stateKey, action) => {
+                const pressed = gp.buttons[btnIdx]?.pressed;
+                if (pressed && !state.lastGpBtn[stateKey]) { state.lastGpBtn[stateKey] = true; action(); }
+                else if (!pressed) state.lastGpBtn[stateKey] = false;
+              };
+
+              checkBtn(16, 'home', () => { if (state.filteredGames.length) { state.selIdx = 0; render(); } });
+              checkBtn(3, 'favY', toggleCurrentFav);
+              checkBtn(2, 'favX', toggleFavFilter);
+              checkBtn(1, 'cloneB', toggleMainOnlyFilter);
+              checkBtn(0, 'confirm', launchCurrentGame);
+              checkBtn(9, 'confirm', launchCurrentGame);
+            }
+          }
+        }
+      } catch (e) {}
+      requestAnimationFrame(pollGamepad);
+    }
+
+    window.onload = () => { 
+      requestPersistentStorage();
+      bindEvents(); drawAll(); 
+      requestAnimationFrame(() => posOverlays());
+      loadFullDatabase(); 
+      requestAnimationFrame(pollGamepad);
+      const checkGSI = setInterval(() => {
+        if (typeof google !== 'undefined' && google.accounts) {
+          clearInterval(checkGSI); initGoogleDriveAuth();
+        }
+      }, 100);
+    };
+  </script>
+</body>
+</html>
