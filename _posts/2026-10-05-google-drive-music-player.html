@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Drive Music Player</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            900: '#064e3b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0b0f17;
+            color: #f3f4f6;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        @keyframes bounce {
+            0%, 100% { height: 4px; }
+            50% { height: 18px; }
+        }
+        .animate-bar-1 { animation: bounce 1.2s ease-in-out infinite; }
+        .animate-bar-2 { animation: bounce 0.8s ease-in-out infinite 0.2s; }
+        .animate-bar-3 { animation: bounce 1.0s ease-in-out infinite 0.4s; }
+    </style>
+</head>
+<body class="h-screen overflow-hidden selection:bg-brand-500 selection:text-white">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        // Icons
+        const PlayIcon = () => <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>;
+        const PauseIcon = () => <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>;
+        const SkipBackIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 20L9 12l10-8v16zM5 19V5"/></svg>;
+        const SkipForwardIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 4l10 8-10 8V4zM19 5v14"/></svg>;
+        const VolumeIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M11 5L6 9H2v6h4l5 4V5z"/></svg>;
+        const VolumeMuteIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path strokeLinecap="round" strokeLinejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>;
+        const ShuffleIcon = ({ active }) => <svg className={`w-5 h-5 ${active ? 'text-brand-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>;
+        const RepeatIcon = ({ mode }) => (
+            <div className="relative">
+                <svg className={`w-5 h-5 ${mode !== 'off' ? 'text-brand-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {mode === 'one' && <span className="absolute -top-1 -right-1 text-[9px] bg-brand-500 text-black font-bold rounded-full w-3 h-3 flex items-center justify-center">1</span>}
+            </div>
+        );
+        const SearchIcon = () => <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>;
+        const MusicNoteIcon = () => <svg className="w-6 h-6 text-brand-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12 0c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>;
+        const HeartIcon = ({ filled }) => <svg className={`w-5 h-5 ${filled ? 'fill-brand-500 text-brand-500' : 'text-gray-400 hover:text-white'}`} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>;
+        const SettingsIcon = () => <svg className="w-5 h-5 text-gray-400 hover:text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>;
+        const HelpIcon = () => <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>;
+
+        function App() {
+            const [apiKey, setApiKey] = useState('AIzaSyDAWVZAeI2h8rrhrPGypyM4XPbwvFzLns0');
+            const [folderId, setFolderId] = useState('1a0vPTjZYAD24Un1c7-P4-zh1Dm5MKc7e');
+            
+            const [tracks, setTracks] = useState([]);
+            const [currentTrackIndex, setCurrentTrackIndex] = useState(-1);
+            const [isPlaying, setIsPlaying] = useState(false);
+            const [isBuffering, setIsBuffering] = useState(false);
+            const [bufferingTrackId, setBufferingTrackId] = useState(null);
+            const [currentTime, setCurrentTime] = useState(0);
+            const [duration, setDuration] = useState(0);
+            const [volume, setVolume] = useState(0.8);
+            const [isMuted, setIsMuted] = useState(false);
+            const [isShuffle, setIsShuffle] = useState(false);
+            const [repeatMode, setRepeatMode] = useState('off');
+            const [searchQuery, setSearchQuery] = useState('');
+            const [isLoading, setIsLoading] = useState(true);
+            const [error, setError] = useState(null);
+            // Stream modes: 'api' | 'uc_open' | 'uc_dl' | 'cdn' | 'blob'
+            const [streamEngine, setStreamEngine] = useState('api');
+            const [useEmbedFallback, setUseEmbedFallback] = useState(false);
+            const [showTroubleshoot, setShowTroubleshoot] = useState(false);
+
+            const [favorites, setFavorites] = useState(() => {
+                const saved = localStorage.getItem('gdrive_music_favorites');
+                return saved ? JSON.parse(saved) : [];
+            });
+            const [showSettings, setShowSettings] = useState(false);
+            const [tempApiKey, setTempApiKey] = useState(apiKey);
+            const [tempFolderId, setTempFolderId] = useState(folderId);
+
+            const audioRef = useRef(new Audio());
+            const blobCacheRef = useRef({});
+
+            const fetchTracks = async () => {
+                setIsLoading(true);
+                setError(null);
+                try {
+                    const query = encodeURIComponent(`'${folderId}' in parents and trashed = false`);
+                    const fields = encodeURIComponent('files(id, name, mimeType, size, webContentLink, thumbnailLink)');
+                    const url = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=${fields}&pageSize=100&key=${apiKey}`;
+
+                    const res = await fetch(url);
+                    if (!res.ok) {
+                        const errData = await res.json().catch(() => ({}));
+                        throw new Error(errData?.error?.message || 'Không thể tải danh sách nhạc từ Google Drive.');
+                    }
+
+                    const data = await res.json();
+                    
+                    const audioFiles = (data.files || []).filter(file => {
+                        const mime = file.mimeType || '';
+                        const name = (file.name || '').toLowerCase();
+                        return mime.startsWith('audio/') || 
+                               name.endsWith('.mp3') || 
+                               name.endsWith('.m4a') || 
+                               name.endsWith('.wav') || 
+                               name.endsWith('.flac') || 
+                               name.endsWith('.ogg');
+                    });
+
+                    const formattedTracks = audioFiles.map(file => {
+                        let title = file.name.replace(/\.[^/.]+$/, "");
+                        let artist = "Nghệ sĩ chưa rõ";
+
+                        if (title.includes(" - ")) {
+                            const parts = title.split(" - ");
+                            artist = parts[0].trim();
+                            title = parts.slice(1).join(" - ").trim();
+                        }
+
+                        return {
+                            id: file.id,
+                            rawName: file.name,
+                            title,
+                            artist,
+                            webContentLink: file.webContentLink,
+                            thumbnail: file.thumbnailLink || null
+                        };
+                    });
+
+                    setTracks(formattedTracks);
+                    if (formattedTracks.length === 0) {
+                        setError('Không tìm thấy tệp âm thanh nào trong thư mục này. Vui lòng kiểm tra lại Folder ID và quyền chia sẻ.');
+                    }
+                } catch (err) {
+                    console.error("Fetch error:", err);
+                    setError(err.message || 'Lỗi khi kết nối với Google Drive API.');
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            useEffect(() => {
+                fetchTracks();
+            }, [apiKey, folderId]);
+
+            useEffect(() => {
+                const audio = audioRef.current;
+
+                const updateProgress = () => {
+                    setCurrentTime(audio.currentTime);
+                    setDuration(audio.duration || 0);
+                };
+
+                const handleEnded = () => {
+                    if (repeatMode === 'one') {
+                        audio.currentTime = 0;
+                        audio.play();
+                    } else {
+                        handleNextTrack();
+                    }
+                };
+
+                const handleAudioError = (e) => {
+                    console.warn("Audio playback failed with engine:", streamEngine, e);
+                    if (currentTrackIndex >= 0 && tracks[currentTrackIndex]) {
+                        const currentTrack = tracks[currentTrackIndex];
+                        if (streamEngine === 'api') {
+                            setStreamEngine('uc_open');
+                            playWithEngine(currentTrack, 'uc_open');
+                        } else if (streamEngine === 'uc_open') {
+                            setStreamEngine('uc_dl');
+                            playWithEngine(currentTrack, 'uc_dl');
+                        } else if (streamEngine === 'uc_dl') {
+                            setStreamEngine('blob');
+                            playWithEngine(currentTrack, 'blob');
+                        } else {
+                            setUseEmbedFallback(true);
+                            setError(`Google Drive hạn chế phát trực tiếp bài "${currentTrack.title}". Đã tự động kích hoạt trình phát Audio Native dự phòng.`);
+                        }
+                    }
+                };
+
+                audio.addEventListener('timeupdate', updateProgress);
+                audio.addEventListener('ended', handleEnded);
+                audio.addEventListener('error', handleAudioError);
+
+                return () => {
+                    audio.removeEventListener('timeupdate', updateProgress);
+                    audio.removeEventListener('ended', handleEnded);
+                    audio.removeEventListener('error', handleAudioError);
+                };
+            }, [repeatMode, currentTrackIndex, tracks, isShuffle, streamEngine]);
+
+            useEffect(() => {
+                localStorage.setItem('gdrive_music_favorites', JSON.stringify(favorites));
+            }, [favorites]);
+
+            const playWithEngine = async (track, engineMode) => {
+                try {
+                    setIsBuffering(true);
+                    setBufferingTrackId(track.id);
+                    let audioUrl = '';
+
+                    if (engineMode === 'api') {
+                        // High reliability official Google Drive API v3 Media Endpoint
+                        audioUrl = `https://www.googleapis.com/drive/v3/files/${track.id}?alt=media&key=${apiKey}`;
+                    } else if (engineMode === 'uc_open') {
+                        audioUrl = `https://docs.google.com/uc?export=open&id=${track.id}`;
+                    } else if (engineMode === 'uc_dl') {
+                        audioUrl = `https://docs.google.com/uc?export=download&id=${track.id}`;
+                    } else if (engineMode === 'blob') {
+                        if (blobCacheRef.current[track.id]) {
+                            audioUrl = blobCacheRef.current[track.id];
+                        } else {
+                            const apiUrl = `https://www.googleapis.com/drive/v3/files/${track.id}?alt=media&key=${apiKey}`;
+                            const response = await fetch(apiUrl);
+                            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                            const blob = await response.blob();
+                            audioUrl = URL.createObjectURL(blob);
+                            blobCacheRef.current[track.id] = audioUrl;
+                        }
+                    } else {
+                        audioUrl = `https://lh3.googleusercontent.com/d/${track.id}`;
+                    }
+
+                    audioRef.current.src = audioUrl;
+                    audioRef.current.volume = isMuted ? 0 : volume;
+
+                    await audioRef.current.play();
+                    setIsPlaying(true);
+                    setIsBuffering(false);
+                    setBufferingTrackId(null);
+                    setError(null);
+
+                    if ('mediaSession' in navigator) {
+                        navigator.mediaSession.metadata = new MediaMetadata({
+                            title: track.title,
+                            artist: track.artist,
+                            album: 'Google Drive Music'
+                        });
+                    }
+                } catch (err) {
+                    console.error(`Playback failed using engine ${engineMode}:`, err);
+                    setIsBuffering(false);
+                    setBufferingTrackId(null);
+
+                    // Auto switch fallback sequence
+                    if (engineMode === 'api') {
+                        setStreamEngine('uc_open');
+                        playWithEngine(track, 'uc_open');
+                    } else if (engineMode === 'uc_open') {
+                        setStreamEngine('uc_dl');
+                        playWithEngine(track, 'uc_dl');
+                    } else if (engineMode === 'uc_dl') {
+                        setStreamEngine('blob');
+                        playWithEngine(track, 'blob');
+                    } else {
+                        setUseEmbedFallback(true);
+                        setIsPlaying(false);
+                        setError(`Không thể phát trực tiếp bài "${track.title}". Đã chuyển sang chế độ Native Player dự phòng.`);
+                    }
+                }
+            };
+
+            const playTrack = (index) => {
+                if (index < 0 || index >= tracks.length) return;
+                const track = tracks[index];
+                setCurrentTrackIndex(index);
+                setError(null);
+
+                if (useEmbedFallback) {
+                    setIsPlaying(true);
+                    return;
+                }
+
+                playWithEngine(track, streamEngine);
+            };
+
+            const togglePlayPause = () => {
+                if (currentTrackIndex === -1 && tracks.length > 0) {
+                    playTrack(0);
+                    return;
+                }
+
+                if (isPlaying) {
+                    audioRef.current.pause();
+                    setIsPlaying(false);
+                } else {
+                    audioRef.current.play().then(() => setIsPlaying(true)).catch(err => {
+                        console.error("Resume play failed:", err);
+                        if (currentTrackIndex >= 0) playTrack(currentTrackIndex);
+                    });
+                }
+            };
+
+            const handleNextTrack = () => {
+                if (tracks.length === 0) return;
+                if (isShuffle) {
+                    const randomIndex = Math.floor(Math.random() * tracks.length);
+                    playTrack(randomIndex);
+                } else {
+                    const nextIndex = (currentTrackIndex + 1) % tracks.length;
+                    playTrack(nextIndex);
+                }
+            };
+
+            const handlePrevTrack = () => {
+                if (tracks.length === 0) return;
+                if (audioRef.current.currentTime > 3) {
+                    audioRef.current.currentTime = 0;
+                    return;
+                }
+                const prevIndex = (currentTrackIndex - 1 + tracks.length) % tracks.length;
+                playTrack(prevIndex);
+            };
+
+            const handleSeek = (e) => {
+                const seekTime = parseFloat(e.target.value);
+                setCurrentTime(seekTime);
+                audioRef.current.currentTime = seekTime;
+            };
+
+            const handleVolumeChange = (e) => {
+                const val = parseFloat(e.target.value);
+                setVolume(val);
+                setIsMuted(val === 0);
+                audioRef.current.volume = val;
+            };
+
+            const toggleMute = () => {
+                if (isMuted) {
+                    setIsMuted(false);
+                    audioRef.current.volume = volume;
+                } else {
+                    setIsMuted(true);
+                    audioRef.current.volume = 0;
+                }
+            };
+
+            const toggleFavorite = (id, e) => {
+                e.stopPropagation();
+                setFavorites(prev => 
+                    prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+                );
+            };
+
+            const cycleRepeatMode = () => {
+                if (repeatMode === 'off') setRepeatMode('all');
+                else if (repeatMode === 'all') setRepeatMode('one');
+                else setRepeatMode('off');
+            };
+
+            const formatTime = (secs) => {
+                if (isNaN(secs)) return '00:00';
+                const m = Math.floor(secs / 60);
+                const s = Math.floor(secs % 60);
+                return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+            };
+
+            const filteredTracks = useMemo(() => {
+                return tracks.filter(t => 
+                    t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                    t.artist.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+            }, [tracks, searchQuery]);
+
+            const currentTrack = tracks[currentTrackIndex];
+
+            return (
+                <div className="flex h-screen flex-col bg-slate-950 text-slate-100">
+                    
+                    {/* Top Header */}
+                    <header className="glass-panel z-20 flex items-center justify-between px-6 py-4 border-b border-slate-800">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-brand-500/20">
+                                <MusicNoteIcon />
+                            </div>
+                            <div>
+                                <h1 className="font-bold text-lg leading-tight tracking-wide text-white">GDrive Audio Streamer</h1>
+                                <p className="text-xs text-slate-400">Nghe nhạc trực tuyến từ Google Drive</p>
+                            </div>
+                        </div>
+
+                        {/* Search Bar */}
+                        <div className="flex items-center gap-4 flex-1 max-w-md mx-6">
+                            <div className="relative w-full">
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                                    <SearchIcon />
+                                </span>
+                                <input
+                                    type="text"
+                                    placeholder="Tìm kiếm bài hát, nghệ sĩ..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full bg-slate-900/80 text-sm text-slate-200 placeholder-slate-500 rounded-full pl-10 pr-4 py-2 border border-slate-800 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Stream Engine Selector & Actions */}
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setShowTroubleshoot(true)}
+                                className="p-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition-all flex items-center gap-1.5 text-xs font-medium"
+                                title="Hướng dẫn sửa lỗi không nghe được nhạc"
+                            >
+                                <HelpIcon />
+                                <span className="hidden sm:inline">Sửa lỗi âm thanh</span>
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    const engineList = ['api', 'uc_open', 'uc_dl', 'blob', 'embed'];
+                                    let nextIndex = (engineList.indexOf(useEmbedFallback ? 'embed' : streamEngine) + 1) % engineList.length;
+                                    let nextEngine = engineList[nextIndex];
+                                    
+                                    if (nextEngine === 'embed') {
+                                        setUseEmbedFallback(true);
+                                    } else {
+                                        setUseEmbedFallback(false);
+                                        setStreamEngine(nextEngine);
+                                        if (currentTrackIndex >= 0) playWithEngine(tracks[currentTrackIndex], nextEngine);
+                                    }
+                                }}
+                                className={`px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all ${useEmbedFallback ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-brand-500/10 text-brand-400 border-brand-500/30 hover:bg-brand-500/20'}`}
+                                title="Bấm để chuyển nguồn phát âm thanh"
+                            >
+                                {useEmbedFallback ? 'Nguồn: Embedded Fallback' : `Nguồn: ${streamEngine.toUpperCase()} Direct`}
+                            </button>
+
+                            <button 
+                                onClick={() => setShowSettings(true)}
+                                className="p-2.5 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                                title="Cấu hình Google Drive"
+                            >
+                                <SettingsIcon />
+                            </button>
+                        </div>
+                    </header>
+
+                    {}
+                    <div className="flex flex-1 overflow-hidden">
+                        
+                        {/* Sidebar */}
+                        <aside className="w-64 glass-panel border-r border-slate-800 p-4 flex flex-col justify-between hidden md:flex">
+                            <div className="space-y-6">
+                                <div>
+                                    <h2 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Thư viện</h2>
+                                    <nav className="space-y-1">
+                                        <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl bg-brand-500/10 text-brand-500 border border-brand-500/20">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                                            Tất cả bài hát
+                                            <span className="ml-auto text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">{tracks.length}</span>
+                                        </button>
+                                    </nav>
+                                </div>
+
+                                <div>
+                                    <h2 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Trạng thái phát</h2>
+                                    <div className="glass-card p-3 rounded-xl text-xs space-y-2 text-slate-400 border border-slate-800">
+                                        <div>
+                                            <span className="text-slate-500 block">Chế độ nguồn hiện tại:</span>
+                                            <span className="font-semibold text-brand-400 uppercase">{useEmbedFallback ? 'Embed Fallback' : streamEngine}</span>
+                                        </div>
+                                        <div className="truncate">
+                                            <span className="text-slate-500 block">Folder ID:</span>
+                                            <span className="font-mono text-slate-300">{folderId}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-slate-500 block">Tổng số bài:</span>
+                                            <span className="text-slate-300">{tracks.length} tệp</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Mini Track Card */}
+                            {currentTrack && (
+                                <div className="glass-card p-3 rounded-xl border border-slate-800 flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
+                                        {currentTrack.thumbnail ? (
+                                            <img src={currentTrack.thumbnail} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="text-brand-500"><MusicNoteIcon /></div>
+                                        )}
+                                        {isPlaying && (
+                                            <div className="absolute inset-0 bg-black/40 flex items-end justify-center gap-0.5 p-2">
+                                                <div className="w-1 bg-brand-500 rounded-full animate-bar-1"></div>
+                                                <div className="w-1 bg-brand-500 rounded-full animate-bar-2"></div>
+                                                <div className="w-1 bg-brand-500 rounded-full animate-bar-3"></div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="overflow-hidden">
+                                        <p className="text-xs font-bold text-white truncate">{currentTrack.title}</p>
+                                        <p className="text-[11px] text-slate-400 truncate">{currentTrack.artist}</p>
+                                    </div>
+                                </div>
+                            )}
+                        </aside>
+
+                        {/* Main Stream View */}
+                        <main className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-slate-900/50 to-slate-950">
+                            
+                            {/* Loading State */}
+                            {isLoading && (
+                                <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                                    <div className="w-10 h-10 border-4 border-brand-500/30 border-t-brand-500 rounded-full animate-spin"></div>
+                                    <p className="text-slate-400 text-sm">Đang tải danh sách bài hát từ Google Drive...</p>
+                                </div>
+                            )}
+
+                            {/* Error / Warning Banner */}
+                            {!isLoading && error && (
+                                <div className="glass-card border border-amber-500/30 bg-amber-500/10 p-4 rounded-2xl max-w-3xl mx-auto my-4 flex items-start gap-3">
+                                    <HelpIcon />
+                                    <div className="space-y-1 text-xs">
+                                        <div className="text-amber-300 font-bold">Thông báo phát nhạc</div>
+                                        <p className="text-slate-300">{error}</p>
+                                        <button 
+                                            onClick={() => setShowTroubleshoot(true)}
+                                            className="underline text-amber-400 hover:text-amber-300 font-medium"
+                                        >
+                                            Bấm vào đây để xem hướng dẫn sửa lỗi chi tiết
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Native Audio & Embed Player View (Fixes "Không có bản xem trước nào") */}
+                            {useEmbedFallback && currentTrack && (
+                                <div className="max-w-2xl mx-auto mb-6 glass-card p-5 rounded-2xl border border-brand-500/30 space-y-4">
+                                    <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                                        <h3 className="text-xs font-bold text-brand-400 uppercase tracking-wider flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full bg-brand-500 animate-ping"></span>
+                                            Chế độ phát trực tiếp dự phòng (Audio Native)
+                                        </h3>
+                                        <span className="text-xs text-slate-300 font-semibold truncate max-w-xs">{currentTrack.title}</span>
+                                    </div>
+                                    
+                                    {/* Direct API Native HTML5 Audio Control */}
+                                    <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col gap-3">
+                                        <audio 
+                                            controls 
+                                            autoPlay
+                                            src={`https://www.googleapis.com/drive/v3/files/${currentTrack.id}?alt=media&key=${apiKey}`}
+                                            className="w-full h-10"
+                                        >
+                                            Trình duyệt của bạn không hỗ trợ thẻ audio.
+                                        </audio>
+                                        <div className="flex justify-between items-center text-[11px] text-slate-400">
+                                            <span>Nguồn phát: Drive API Direct Stream</span>
+                                            <a 
+                                                href={`https://drive.google.com/file/d/${currentTrack.id}/view`} 
+                                                target="_blank" 
+                                                rel="noreferrer"
+                                                className="text-brand-400 hover:underline flex items-center gap-1"
+                                            >
+                                                Mở tệp trên Google Drive ↗
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {!isLoading && (
+                                <div className="space-y-4 max-w-6xl mx-auto">
+                                    <div className="flex items-center justify-between">
+                                        <h2 className="text-xl font-bold text-white tracking-tight">Danh sách bài hát</h2>
+                                        <span className="text-xs text-slate-400">{filteredTracks.length} bài hát</span>
+                                    </div>
+
+                                    <div className="glass-panel rounded-2xl border border-slate-800/80 overflow-hidden">
+                                        {filteredTracks.length === 0 ? (
+                                            <div className="p-12 text-center text-slate-500">
+                                                Không tìm thấy bài hát phù hợp.
+                                            </div>
+                                        ) : (
+                                            <div className="divide-y divide-slate-800/50">
+                                                {filteredTracks.map((track, index) => {
+                                                    const originalIndex = tracks.findIndex(t => t.id === track.id);
+                                                    const isCurrent = currentTrackIndex === originalIndex;
+                                                    const isFav = favorites.includes(track.id);
+                                                    const isThisBuffering = bufferingTrackId === track.id;
+
+                                                    return (
+                                                        <div 
+                                                            key={track.id}
+                                                            onClick={() => playTrack(originalIndex)}
+                                                            className={`flex items-center justify-between px-5 py-3.5 hover:bg-slate-800/50 cursor-pointer transition-colors group ${isCurrent ? 'bg-brand-500/10 hover:bg-brand-500/15' : ''}`}
+                                                        >
+                                                            <div className="flex items-center gap-4 flex-1 min-w-0 pr-4">
+                                                                <span className="w-6 text-center text-xs font-medium text-slate-500 group-hover:text-slate-300">
+                                                                    {isThisBuffering ? (
+                                                                        <div className="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                                                                    ) : isCurrent && isPlaying ? (
+                                                                        <div className="flex items-end justify-center gap-0.5 h-4">
+                                                                            <span className="w-0.5 bg-brand-500 h-full animate-bar-1"></span>
+                                                                            <span className="w-0.5 bg-brand-500 h-full animate-bar-2"></span>
+                                                                            <span className="w-0.5 bg-brand-500 h-full animate-bar-3"></span>
+                                                                        </div>
+                                                                    ) : (
+                                                                        index + 1
+                                                                    )}
+                                                                </span>
+
+                                                                <div className="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center overflow-hidden flex-shrink-0 border border-slate-700/50">
+                                                                    {track.thumbnail ? (
+                                                                        <img src={track.thumbnail} className="w-full h-full object-cover" />
+                                                                    ) : (
+                                                                        <span className="text-brand-500/80"><MusicNoteIcon /></span>
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="truncate">
+                                                                    <p className={`text-sm font-semibold truncate ${isCurrent ? 'text-brand-500' : 'text-slate-200 group-hover:text-white'}`}>
+                                                                        {track.title}
+                                                                    </p>
+                                                                    <p className="text-xs text-slate-400 truncate mt-0.5">
+                                                                        {track.artist}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="flex items-center gap-4">
+                                                                {isThisBuffering && (
+                                                                    <span className="text-xs text-brand-400 animate-pulse">Đang kết nối...</span>
+                                                                )}
+                                                                <button 
+                                                                    onClick={(e) => toggleFavorite(track.id, e)}
+                                                                    className="p-1.5 rounded-full hover:bg-slate-700/50 text-slate-400 transition-colors"
+                                                                >
+                                                                    <HeartIcon filled={isFav} />
+                                                                </button>
+                                                                <div className="text-xs text-slate-500 w-12 text-right">
+                                                                    {isCurrent ? formatTime(currentTime) : '--:--'}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </main>
+                    </div>
+
+                    {}
+                    <footer className="glass-panel z-30 border-t border-slate-800 px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
+                        
+                        {/* Currently Playing Metadata */}
+                        <div className="flex items-center gap-3 w-full md:w-1/4">
+                            {currentTrack ? (
+                                <>
+                                    <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center overflow-hidden flex-shrink-0 border border-slate-700">
+                                        {currentTrack.thumbnail ? (
+                                            <img src={currentTrack.thumbnail} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="text-brand-500"><MusicNoteIcon /></span>
+                                        )}
+                                    </div>
+                                    <div className="overflow-hidden">
+                                        <h3 className="text-sm font-bold text-white truncate">{currentTrack.title}</h3>
+                                        <p className="text-xs text-slate-400 truncate">{currentTrack.artist}</p>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="text-xs text-slate-500">Chưa chọn bài hát</div>
+                            )}
+                        </div>
+
+                        {/* Player Center Controls */}
+                        <div className="flex flex-col items-center gap-1.5 w-full md:w-2/4">
+                            <div className="flex items-center gap-5">
+                                <button 
+                                    onClick={() => setIsShuffle(!isShuffle)}
+                                    className="p-2 hover:bg-slate-800 rounded-full transition-colors"
+                                    title="Ngẫu nhiên"
+                                >
+                                    <ShuffleIcon active={isShuffle} />
+                                </button>
+                                
+                                <button 
+                                    onClick={handlePrevTrack}
+                                    className="p-2 text-slate-300 hover:text-white transition-colors"
+                                    title="Bài trước"
+                                >
+                                    <SkipBackIcon />
+                                </button>
+
+                                <button 
+                                    onClick={togglePlayPause}
+                                    disabled={isBuffering}
+                                    className="w-11 h-11 rounded-full bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-slate-950 flex items-center justify-center transition-all transform hover:scale-105 shadow-lg shadow-brand-500/25"
+                                    title={isPlaying ? "Tạm dừng" : "Phát"}
+                                >
+                                    {isBuffering ? (
+                                        <div className="w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
+                                    ) : isPlaying ? (
+                                        <PauseIcon />
+                                    ) : (
+                                        <PlayIcon />
+                                    )}
+                                </button>
+
+                                <button 
+                                    onClick={handleNextTrack}
+                                    className="p-2 text-slate-300 hover:text-white transition-colors"
+                                    title="Bài tiếp theo"
+                                >
+                                    <SkipForwardIcon />
+                                </button>
+
+                                <button 
+                                    onClick={cycleRepeatMode}
+                                    className="p-2 hover:bg-slate-800 rounded-full transition-colors"
+                                    title="Lặp lại"
+                                >
+                                    <RepeatIcon mode={repeatMode} />
+                                </button>
+                            </div>
+
+                            {/* Progress Bar */}
+                            <div className="flex items-center gap-3 w-full max-w-md">
+                                <span className="text-[11px] font-mono text-slate-400 w-10 text-right">{formatTime(currentTime)}</span>
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max={duration || 0}
+                                    value={currentTime}
+                                    onChange={handleSeek}
+                                    className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-brand-500 focus:outline-none"
+                                />
+                                <span className="text-[11px] font-mono text-slate-400 w-10">{formatTime(duration)}</span>
+                            </div>
+                        </div>
+
+                        {/* Volume Bar */}
+                        <div className="flex items-center justify-end gap-3 w-full md:w-1/4">
+                            <button onClick={toggleMute} className="text-slate-400 hover:text-white transition-colors">
+                                {isMuted || volume === 0 ? <VolumeMuteIcon /> : <VolumeIcon />}
+                            </button>
+                            <input
+                                type="range"
+                                min="0"
+                                max="1"
+                                step="0.01"
+                                value={isMuted ? 0 : volume}
+                                onChange={handleVolumeChange}
+                                className="w-24 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-brand-500 focus:outline-none"
+                            />
+                        </div>
+                    </footer>
+
+                    {/* Troubleshoot Modal (Explains "Không có bản xem trước nào") */}
+                    {showTroubleshoot && (
+                        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+                            <div className="glass-panel bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 space-y-4 shadow-2xl text-sm">
+                                <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                                    <h3 className="text-base font-bold text-amber-400 flex items-center gap-2">
+                                        <HelpIcon />
+                                        Sửa lỗi "Không có bản xem trước nào" & không phát được nhạc
+                                    </h3>
+                                    <button onClick={() => setShowTroubleshoot(false)} className="text-slate-400 hover:text-white">✕</button>
+                                </div>
+
+                                <div className="space-y-3 text-xs text-slate-300 leading-relaxed">
+                                    <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-500/20 space-y-1">
+                                        <p className="font-bold text-amber-300">Vì sao Google báo "Không có bản xem trước nào"?</p>
+                                        <p className="text-slate-300">
+                                            Google Drive tự động khóa khung xem trước (iframe) đối với các tệp âm thanh MP3/M4A khi truy cập từ ứng dụng bên thứ ba. Hãy áp dụng các giải pháp sau:
+                                        </p>
+                                    </div>
+                                    
+                                    <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
+                                        <p className="font-bold text-brand-400">1. Quyền chia sẻ thư mục Google Drive (Bắt buộc):</p>
+                                        <p className="text-slate-400">
+                                            Mở Google Drive &rarr; Bấm chuột phải vào Thư mục chứa nhạc &rarr; Chọn <strong>Chia sẻ (Share)</strong> &rarr; Đổi thành:
+                                            <br />
+                                            <strong className="text-white">"Bất kỳ ai có liên kết" (Anyone with the link)</strong> với quyền <strong className="text-white">"Người xem" (Viewer)</strong>.
+                                        </p>
+                                    </div>
+
+                                    <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
+                                        <p className="font-bold text-brand-400">2. Chuyển đổi Nguồn Stream (Engine Selector):</p>
+                                        <p className="text-slate-400">
+                                            Bấm vào nút <span className="text-brand-400 font-mono bg-slate-800 px-1.5 py-0.5 rounded">Nguồn: ...</span> góc trên bên phải để chuyển giữa các nguồn: <strong>API Direct</strong> (Tối ưu nhất), <strong>UC_OPEN</strong>, <strong>UC_DL</strong>, hoặc <strong>Blob Stream</strong>.
+                                        </p>
+                                    </div>
+
+                                    <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
+                                        <p className="font-bold text-brand-400">3. Bật Quyền Autoplay trên Trình duyệt:</p>
+                                        <p className="text-slate-400">
+                                            Trình duyệt Chrome/Edge đôi khi chặn âm thanh tự phát. Bạn chỉ cần nhấp vào nút Play ở thanh điều khiển để bắt đầu phát nhạc.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end pt-2">
+                                    <button
+                                        onClick={() => setShowTroubleshoot(false)}
+                                        className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold transition-all"
+                                    >
+                                        Đã hiểu & Hoàn tất
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showSettings && (
+                        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+                            <div className="glass-panel bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 space-y-5 shadow-2xl">
+                                <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                                    <h3 className="text-lg font-bold text-white">Cấu hình Google Drive</h3>
+                                    <button onClick={() => setShowSettings(false)} className="text-slate-400 hover:text-white">✕</button>
+                                </div>
+
+                                <div className="space-y-4 text-sm">
+                                    <div>
+                                        <label className="block text-slate-300 font-medium mb-1">Google API Key</label>
+                                        <input
+                                            type="text"
+                                            value={tempApiKey}
+                                            onChange={(e) => setTempApiKey(e.target.value)}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs font-mono focus:border-brand-500 focus:outline-none"
+                                            placeholder="Nhập API Key..."
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-slate-300 font-medium mb-1">Google Drive Folder ID</label>
+                                        <input
+                                            type="text"
+                                            value={tempFolderId}
+                                            onChange={(e) => setTempFolderId(e.target.value)}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 text-xs font-mono focus:border-brand-500 focus:outline-none"
+                                            placeholder="Nhập Folder ID..."
+                                        />
+                                    </div>
+
+                                    <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-400 space-y-1">
+                                        <p className="font-semibold text-slate-300">Lưu ý về Google Drive Folder:</p>
+                                        <p>Thư mục cần được cài đặt ở chế độ <strong>"Bất kỳ ai có liên kết đều có thể xem"</strong> (Anyone with the link can view) để ứng dụng có thể tải và phát nhạc.</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end gap-3 pt-2">
+                                    <button
+                                        onClick={() => setShowSettings(false)}
+                                        className="px-4 py-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 text-xs font-semibold transition-colors"
+                                    >
+                                        Hủy
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setApiKey(tempApiKey);
+                                            setFolderId(tempFolderId);
+                                            setShowSettings(false);
+                                        }}
+                                        className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-slate-950 text-xs font-bold transition-all"
+                                    >
+                                        Lưu & Tải lại
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
