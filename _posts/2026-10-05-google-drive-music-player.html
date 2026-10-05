@@ -134,6 +134,17 @@
             const audioRef = useRef(new Audio());
             const blobCacheRef = useRef({});
 
+            // State refs to prevent stale closure issues inside Audio event listeners
+            const tracksRef = useRef(tracks);
+            const currentTrackIndexRef = useRef(currentTrackIndex);
+            const isShuffleRef = useRef(isShuffle);
+            const repeatModeRef = useRef(repeatMode);
+
+            useEffect(() => { tracksRef.current = tracks; }, [tracks]);
+            useEffect(() => { currentTrackIndexRef.current = currentTrackIndex; }, [currentTrackIndex]);
+            useEffect(() => { isShuffleRef.current = isShuffle; }, [isShuffle]);
+            useEffect(() => { repeatModeRef.current = repeatMode; }, [repeatMode]);
+
             const fetchTracks = async () => {
                 setIsLoading(true);
                 setError(null);
@@ -206,18 +217,46 @@
                 };
 
                 const handleEnded = () => {
-                    if (repeatMode === 'one') {
+                    const currentTracks = tracksRef.current;
+                    const currentIndex = currentTrackIndexRef.current;
+                    const mode = repeatModeRef.current;
+                    const shuffle = isShuffleRef.current;
+
+                    if (!currentTracks || currentTracks.length === 0) return;
+
+                    // Repeat One Track
+                    if (mode === 'one') {
                         audio.currentTime = 0;
-                        audio.play();
-                    } else {
-                        handleNextTrack();
+                        audio.play().catch(err => console.error("Repeat play error:", err));
+                        return;
                     }
+
+                    // Calculate Next Track Index
+                    let nextIndex = 0;
+                    if (shuffle) {
+                        nextIndex = Math.floor(Math.random() * currentTracks.length);
+                    } else {
+                        nextIndex = currentIndex + 1;
+                    }
+
+                    // Handle End of Playlist
+                    if (nextIndex >= currentTracks.length) {
+                        if (mode === 'all') {
+                            nextIndex = 0; // Loop back to start
+                        } else {
+                            setIsPlaying(false);
+                            return; // Stop at end of list if repeat is off
+                        }
+                    }
+
+                    // Auto-play Next Track
+                    playTrack(nextIndex);
                 };
 
                 const handleAudioError = (e) => {
                     console.warn("Audio playback failed with engine:", streamEngine, e);
-                    if (currentTrackIndex >= 0 && tracks[currentTrackIndex]) {
-                        const currentTrack = tracks[currentTrackIndex];
+                    if (currentTrackIndexRef.current >= 0 && tracksRef.current[currentTrackIndexRef.current]) {
+                        const currentTrack = tracksRef.current[currentTrackIndexRef.current];
                         if (streamEngine === 'api') {
                             setStreamEngine('uc_open');
                             playWithEngine(currentTrack, 'uc_open');
@@ -243,7 +282,7 @@
                     audio.removeEventListener('ended', handleEnded);
                     audio.removeEventListener('error', handleAudioError);
                 };
-            }, [repeatMode, currentTrackIndex, tracks, isShuffle, streamEngine]);
+            }, [streamEngine]);
 
             useEffect(() => {
                 localStorage.setItem('gdrive_music_favorites', JSON.stringify(favorites));
@@ -317,8 +356,9 @@
             };
 
             const playTrack = (index) => {
-                if (index < 0 || index >= tracks.length) return;
-                const track = tracks[index];
+                const currentTracks = tracksRef.current.length > 0 ? tracksRef.current : tracks;
+                if (index < 0 || index >= currentTracks.length) return;
+                const track = currentTracks[index];
                 setCurrentTrackIndex(index);
                 setError(null);
 
