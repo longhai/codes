@@ -837,7 +837,9 @@
       const cached = await readFullDatabaseCache(cacheKey);
 
       // Nếu không phải force reload và đã có dữ liệu lưu trữ -> sử dụng ngay lập tức
-      if (!forceReload && cached?.datList?.length > 1 && cached?.gamesByCat) {
+      // Version 2 bổ sung danh sách URL ảnh đã được xác nhận trực tiếp từ cây thư mục.
+      // Nếu cache cũ chưa có chỉ mục ảnh, thử tải cây thư mục một lần để bổ sung.
+      if (!forceReload && cached?.imageIndexVersion === 2 && cached?.datList?.length > 1 && cached?.gamesByCat) {
         state.datList = processCats(cached.datList);
         state.gamesByCat = cached.gamesByCat;
         state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
@@ -887,6 +889,11 @@
           if (!res?.treeData?.tree) continue;
           const { source, treeData } = res;
           const cueBases = new Set(treeData.tree.filter(i => i.type === "blob" && /\.(cue|m3u|ccd|gdi)$/i.test(i.path)).map(i => i.path.substring(0, i.path.lastIndexOf('.')).toLowerCase()));
+          // Lập chỉ mục ảnh từ chính cây thư mục API. Không cần đoán URL hay hỏi nguồn khác
+          // nếu ảnh đã có sẵn trong repo.
+          const snapPathSet = new Set(treeData.tree
+            .filter(i => i.type === "blob" && /^snap\/.+\.png$/i.test(i.path))
+            .map(i => i.path));
 
           treeData.tree.forEach(item => {
             if (item.type === "blob" && isGameFile(item.path)) {
@@ -912,7 +919,16 @@
               if (!gamesByCat[sysKey]) gamesByCat[sysKey] = [];
               const cleanName = cleanTitle(fileName);
               if (cleanName) {
-                gamesByCat[sysKey].push({ name: cleanName, fullName: fileName, romUrl: buildDirectRomUrl(source, item.path), path: item.path, core: info.core });
+                const fileBase = fileName.split('/').pop().replace(/\.[^/.]+$/, '');
+                const isFbneo = /^(arcade|fbneo|fba|cps1|cps2|cps3|mame)$/i.test(String(catName || sysKey));
+                const imageNames = Array.from(new Set(isFbneo
+                  ? [cleanName, fileBase, cleanTitle(fileName)]
+                  : [fileBase, cleanName, cleanTitle(fileName)])).filter(Boolean);
+                const imageCandidates = imageNames
+                  .map(n => `snap/${catName}/${n}.png`)
+                  .filter(path => snapPathSet.has(path))
+                  .map(path => buildDirectRomUrl(source, path));
+                gamesByCat[sysKey].push({ name: cleanName, fullName: fileName, romUrl: buildDirectRomUrl(source, item.path), path: item.path, core: info.core, imageCandidates, imageUrl: imageCandidates[0] || "" });
                 if (!catMap.has(sysKey)) catMap.set(sysKey, { name: sysKey, folderName: catName, logo: info.logo, system: info.system, core: info.core, libretroSys: info.libretroSys });
               }
             }
@@ -928,7 +944,7 @@
           }
 
           // Lưu toàn bộ danh sách game vào IndexedDB, không nhồi dữ liệu lớn vào LocalStorage.
-          await saveFullDatabaseCache({ datList: rawCatList, gamesByCat: state.gamesByCat });
+          await saveFullDatabaseCache({ datList: rawCatList, gamesByCat: state.gamesByCat, imageIndexVersion: 2 });
         }
 
         state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
@@ -1217,16 +1233,19 @@
         ? Array.from(new Set([g.name, fileBase, cleanTitle(g.fullName)]))
         : Array.from(new Set([fileBase, g.name, cleanTitle(g.fullName)]));
       const filteredNames = names.filter(Boolean);
-      const candidates = [];
-
-      // Ưu tiên snap trong repo. Chỉ khi URL này lỗi mới thử Libretro.
-      for (const n of filteredNames) {
-        const encoded = encodeURIComponent(n);
-        candidates.push(`${RAW_BASE}snap/${catFolder}/${encoded}.png`);
-        candidates.push(`https://thumbnails.libretro.com/${libretroFolder}/Named_Snaps/${encoded}.png`);
+      // Ưu tiên các URL ảnh đã xác nhận tồn tại trong cây thư mục API.
+      // Với cache cũ/ngoại tuyến chưa có imageCandidates, giữ cách dò snap cũ để tương thích.
+      const candidates = Array.isArray(g.imageCandidates) ? [...g.imageCandidates] : [];
+      if (!Array.isArray(g.imageCandidates)) {
+        for (const n of filteredNames) {
+          candidates.push(`${RAW_BASE}snap/${catFolder}/${encodeURIComponent(n)}.png`);
+        }
       }
-
-      return candidates.filter(url => !failedUrls.has(url));
+      // Chỉ thử Libretro sau khi mọi ảnh đã có trong repo (nếu có) đều lỗi.
+      for (const n of filteredNames) {
+        candidates.push(`https://thumbnails.libretro.com/${libretroFolder}/Named_Snaps/${encodeURIComponent(n)}.png`);
+      }
+      return [...new Set(candidates)].filter(url => !failedUrls.has(url));
     }
 
     function resolveAndCacheImage(g, onDone) {
@@ -1238,7 +1257,10 @@
 
       // Persistent URL cache: dùng ngay, không request nguồn phụ.
       const cached = persistentImgMap[key];
-      if (cached && (cached === PLACEHOLDER_SVG || !failedUrls.has(cached))) {
+      const knownTreeImages = Array.isArray(g.imageCandidates) ? g.imageCandidates : [];
+      // Nếu cây thư mục xác nhận có ảnh, bỏ qua URL dự phòng/placeholder cũ để ưu tiên ảnh repo.
+      if (cached && ((cached === PLACEHOLDER_SVG && !knownTreeImages.length) ||
+          (cached !== PLACEHOLDER_SVG && !failedUrls.has(cached) && (!knownTreeImages.length || knownTreeImages.includes(cached))))) {
         imgCache.set(key, cached);
         return onDone?.(cached);
       }
@@ -1400,7 +1422,9 @@
 
       // URL cache -> hiển thị tức thì, tuyệt đối không probe nguồn phụ.
       const cached = persistentImgMap[key];
-      if (cached && (cached === PLACEHOLDER_SVG || !failedUrls.has(cached))) {
+      const knownTreeImages = Array.isArray(g.imageCandidates) ? g.imageCandidates : [];
+      if (cached && ((cached === PLACEHOLDER_SVG && !knownTreeImages.length) ||
+          (cached !== PLACEHOLDER_SVG && !failedUrls.has(cached) && (!knownTreeImages.length || knownTreeImages.includes(cached))))) {
         imgCache.set(key, cached);
         return applySrc(cached);
       }
