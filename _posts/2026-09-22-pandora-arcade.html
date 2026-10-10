@@ -37,8 +37,8 @@
     .dl-btn svg{width:18px;height:18px;fill:currentColor}
     #gp-badge{font-size:21px;line-height:1;filter:drop-shadow(0 0 6px rgba(74,222,128,.8));display:none}
     .hdr-btn-wrap{position:absolute;z-index:100;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s,filter .15s,opacity .2s;width:32px;height:32px;max-width:42px;max-height:42px;min-width:20px;min-height:20px;overflow:hidden;box-sizing:border-box;opacity:0;top:0;left:0}
-    .hdr-btn-wrap.ready{opacity:1}
-    .hdr-btn-wrap:hover{transform:translate(-50%,-50%) scale(1.12);filter:drop-shadow(0 0 6px var(--ca))}
+    .hdr-btn-wrap.ready{opacity:1;transform:translate(-50%,-50%)}
+    .hdr-btn-wrap.ready:hover{transform:translate(-50%,-50%) scale(1.12);filter:drop-shadow(0 0 6px var(--ca))}
     .img-box{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:4px;overflow:hidden;flex-shrink:0}
     .img-box img{width:100%;height:100%;object-fit:contain}
     .avatar-box{border-radius:50%}
@@ -208,7 +208,7 @@
             <div class="help-item"><span>Vào Game / Chọn</span><span class="help-key">A / Start</span></div>
             <div class="help-item"><span>Đánh Dấu Yêu Thích</span><span class="help-key">Nút Y</span></div>
             <div class="help-item"><span>Lọc Yêu Thích</span><span class="help-key">Nút X</span></div>
-            <div class="help-item"><span>Lọc Game Chính</span><span class="help-key">Nút B / Select</span></div>
+            <div class="help-item"><span>Lọc Game Chính</span><span class="help-key">Nút Select</span></div>
             <div class="help-item"><span>Thoát Game Đang Chơi</span><span class="help-key">Nút Home</span></div>
           </div>
         </div>
@@ -312,7 +312,7 @@
     let tokenClient = null, accessToken = null, driveFileId = null, currentUserProfile = null;
 
     const EMULATOR_URL = "https://longhai.github.io/codes/2026/08/29/emulatorjs.html", ASSETS_BASE = "https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/dot-art/png/", RAW_BASE = "https://raw.githubusercontent.com/longhai/emu/main/", EMPTY_GIF = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ea580c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='4' ry='4'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5' fill='%23ea580c'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E";
-    var FALLBACK_ARCADE_SVG = window.FALLBACK_ARCADE_SVG, FALLBACK_GENRE_SVG = window.FALLBACK_GENRE_SVG;
+    // FALLBACK SVG dùng trực tiếp từ window.FALLBACK_* để tránh khai báo trùng
 
     const GAME_SOURCES = ["emu", "ps1"];
     const getSourceDefaultCat = repo => SYSTEM_PROFILES.find(([keys]) => keys.includes(String(repo).toLowerCase()))?.[0].find(key => key === String(repo).toLowerCase()) || "";
@@ -1119,10 +1119,10 @@
     }
 
     function updateHeaderOverlays() {
-      if ($('hdr-logo-img')) $('hdr-logo-img').src = state.datList[state.currentDatIdx]?.logo || FALLBACK_ARCADE_SVG;
+      if ($('hdr-logo-img')) $('hdr-logo-img').src = state.datList[state.currentDatIdx]?.logo || window.FALLBACK_ARCADE_SVG;
       if ($('hdr-genre-img')) {
         const img = $('hdr-genre-img');
-        delete img.dataset.tried;
+        img.onerror = () => handleGenreImgError(img);
         img.dataset.genre = state.selectedGenre;
         img.src = getGenreIconUrl(state.selectedGenre);
       }
@@ -1146,7 +1146,6 @@
         const size = Math.max(20, Math.min(42, Math.round(sz * scaleMin)));
         btn.style.left = `${svgOffsetX + (xSvg / 540) * rect.width}px`;
         btn.style.top = `${svgOffsetY + (ySvg / viewBoxH) * rect.height}px`;
-        btn.style.transform = 'translate(-50%, -50%)';
         btn.style.width = btn.style.height = `${size}px`;
         btn.classList.add('ready');
       };
@@ -1530,7 +1529,7 @@
       $('game-player-modal').classList.remove('active');
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
       state.gpLastTime = performance.now() + 400;
-      state.lastGpBtn = { dir: true, cat: true, home: true, favY: true, favX: true, cloneB: true, cloneSelect: true, confirm: true };
+      state.lastGpBtn = { dir: true, cat: true, home: true, favY: true, favX: true, cloneSelect: true, confirmA: true, confirmStart: true };
       render();
     }
 
@@ -1772,10 +1771,9 @@
               checkBtn(16, 'home', () => { if (state.filteredGames.length) { state.selIdx = 0; render(); } });
               checkBtn(3, 'favY', toggleCurrentFav);
               checkBtn(2, 'favX', toggleFavFilter);
-              checkBtn(1, 'cloneB', toggleMainOnlyFilter);
               checkBtn(8, 'cloneSelect', toggleMainOnlyFilter);
-              checkBtn(0, 'confirm', launchCurrentGame);
-              checkBtn(9, 'confirm', launchCurrentGame);
+              checkBtn(0, 'confirmA', launchCurrentGame);
+              checkBtn(9, 'confirmStart', launchCurrentGame);
             }
           }
         }
