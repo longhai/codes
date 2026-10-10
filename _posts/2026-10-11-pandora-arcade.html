@@ -697,7 +697,12 @@ function getGeom() {
   return { X0, X1, W, Y_MID, HALF_H: Y_MID - 6 };
 }
 function getX(y, p) { return !state.isCurved ? p.X0 : p.X0 + (p.X1 - p.X0) * (1 - Math.pow(Math.max(-1, Math.min(1, (y - p.Y_MID) / p.HALF_H)), 2)); }
-async function reloadDatabase() { closeMenuModal(); closeGenreMenu(); await loadFullDatabase(true); }
+async function reloadDatabase() {
+  closeMenuModal(); closeGenreMenu(); closeInlineSearch(true);
+  state.selectedGenre = 'all'; state.searchQuery = ""; state.selIdx = state.topIdx = 0;
+  const si = $('search-input'); if (si) si.value = "";
+  await loadFullDatabase(true);
+}
 
 const processCats = list => list.map(i => ({ ...i, displayName: capTitle(i.system || i.name) })).sort((a, b) => a.displayName.localeCompare(b.displayName, 'vi', { sensitivity: 'base' }));
 // Dùng dữ liệu cache: logic chung cho cả 3 đường (tải nhanh / hết API / lỗi mạng)
@@ -713,80 +718,88 @@ async function applyCachedDb(cached, msg, hideDelay) {
   updateNames(); restorePos(); drawAll();
   if (hideDelay) setTimeout(hideLoader, hideDelay); else hideLoader();
 }
+function processTree(source, treeData, gamesByCat, catMap) {
+  if (!treeData?.tree) return;
+  const cueBases = new Set(treeData.tree.filter(i => i.type === "blob" && /\.(cue|m3u|ccd|gdi)$/i.test(i.path)).map(i => i.path.substring(0, i.path.lastIndexOf('.')).toLowerCase()));
+  const snapPathSet = new Set(treeData.tree.filter(i => i.type === "blob" && /^snap\/.+\.png$/i.test(i.path)).map(i => i.path));
+  treeData.tree.forEach(item => {
+    if (item.type !== "blob" || !isGameFile(item.path)) return;
+    const ext = item.path.split('.').pop().toLowerCase();
+    const basePath = item.path.substring(0, item.path.lastIndexOf('.')).toLowerCase();
+    if (['bin', 'img', 'wav'].includes(ext) && (cueBases.has(basePath) || /track\s*\d+/i.test(item.path))) return;
+    let catName = "", fileName = "";
+    const parts = item.path.split('/');
+    if (parts[0].toLowerCase() === "roms") {
+      catName = parts.length >= 3 ? parts[1] : (getSourceDefaultCat(source.repo) || "arcade");
+      fileName = parts.slice(parts.length >= 3 ? 2 : 1).join('/');
+    } else if (parts.length >= 2) { catName = parts[0]; fileName = parts.slice(1).join('/'); }
+    else if (getSourceDefaultCat(source.repo)) { catName = getSourceDefaultCat(source.repo); fileName = item.path; }
+    else return;
+    const info = resolveSys(catName);
+    if (!info.isKnown && ['emu', 'main', 'roms'].includes(catName.toLowerCase())) return;
+    const sysKey = info.system;
+    if (!gamesByCat[sysKey]) gamesByCat[sysKey] = [];
+    const cleanName = cleanTitle(fileName);
+    if (cleanName) {
+      const fileBase = fileName.split('/').pop().replace(/\.[^/.]+$/, '');
+      const isFbneo = /^(arcade|fbneo|fba|cps1|cps2|cps3|mame)$/i.test(String(catName || sysKey));
+      const imageNames = [...new Set(isFbneo ? [cleanName, fileBase, cleanTitle(fileName)] : [fileBase, cleanName, cleanTitle(fileName)])].filter(Boolean);
+      const imageCandidates = imageNames.map(n => `snap/${catName}/${n}.png`).filter(p => snapPathSet.has(p)).map(p => buildDirectRomUrl(source, p));
+      gamesByCat[sysKey].push({ name: cleanName, fullName: fileName, romUrl: buildDirectRomUrl(source, item.path), path: item.path, core: info.core, imageCandidates, imageUrl: imageCandidates[0] || "" });
+      if (!catMap.has(sysKey)) catMap.set(sysKey, { name: sysKey, folderName: catName, logo: info.logo, system: info.system, core: info.core, libretroSys: info.libretroSys });
+    }
+  });
+}
+async function applyMapsToState(gamesByCat, catMap, saveCache) {
+  const rawCatList = [...catMap.values()];
+  if (!rawCatList.length) return false;
+  state.datList = processCats(rawCatList);
+  state.gamesByCat = {};
+  for (const catName in gamesByCat) state.gamesByCat[catName] = gamesByCat[catName].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base', numeric: true }));
+  if (saveCache) await saveFullDatabaseCache({ datList: rawCatList, gamesByCat: state.gamesByCat, imageIndexVersion: 2 });
+  const lastCat = lsGet("pandora_last_cat");
+  const keepIdx = state.datList.findIndex(i => i.name === lastCat);
+  const prevCat = state.datList[state.currentDatIdx]?.name;
+  state.currentDatIdx = Math.max(0, keepIdx !== -1 ? keepIdx : state.datList.findIndex(i => i.name === prevCat));
+  const currCat = state.datList[state.currentDatIdx];
+  state.allGames = state.gamesByCat[currCat?.name] || [];
+  resetDatMaps();
+  if (currCat) await loadDatMap(currCat.name);
+  updateNames(); restorePos(); drawAll();
+  return true;
+}
 async function loadFullDatabase(forceReload = false) {
   showLoader("ĐANG TẢI DỮ LIỆU...");
   const cached = await readFullDatabaseCache(IDB_FULL_DB_KEY);
   const hasCache = cached?.datList?.length > 1 && cached?.gamesByCat;
-
-  // Không force reload và đã có cache ảnh v2 -> dùng ngay
   if (!forceReload && cached?.imageIndexVersion === 2 && hasCache) { await applyCachedDb(cached); return; }
-
   try {
     const gamesByCat = {}, catMap = new Map();
-    let apiFailed = false;
-    const results = await Promise.all(GAME_SOURCES.map(async (repo) => {
+    let apiFailed = false, doneCount = 0, okCount = 0;
+    const total = GAME_SOURCES.length;
+    await Promise.all(GAME_SOURCES.map(async (repo) => {
       const source = { owner: "longhai", repo, branch: "main" };
       try {
+        showLoader(`ĐANG TẢI ${repo.toUpperCase()}... (${doneCount + 1}/${total})`);
         const resp = await fetch(`https://api.github.com/repos/${source.owner}/${source.repo}/git/trees/${source.branch}?recursive=1`);
-        if (resp.status === 403 || resp.status === 429) { apiFailed = true; return null; }
-        return resp.ok ? { source, treeData: await resp.json() } : null;
-      } catch (e) { apiFailed = true; return null; }
-    }));
-
-    if (apiFailed && hasCache) { await applyCachedDb(cached, "HẾT LƯỢT API: DÙNG DỮ LIỆU ĐÃ LƯU", 2000); return; }
-
-    for (const res of results) {
-      if (!res?.treeData?.tree) continue;
-      const { source, treeData } = res;
-      const cueBases = new Set(treeData.tree.filter(i => i.type === "blob" && /\.(cue|m3u|ccd|gdi)$/i.test(i.path)).map(i => i.path.substring(0, i.path.lastIndexOf('.')).toLowerCase()));
-      // Lập chỉ mục ảnh từ chính cây thư mục API, không cần đoán URL
-      const snapPathSet = new Set(treeData.tree.filter(i => i.type === "blob" && /^snap\/.+\.png$/i.test(i.path)).map(i => i.path));
-
-      treeData.tree.forEach(item => {
-        if (item.type !== "blob" || !isGameFile(item.path)) return;
-        const ext = item.path.split('.').pop().toLowerCase();
-        const basePath = item.path.substring(0, item.path.lastIndexOf('.')).toLowerCase();
-        if (['bin', 'img', 'wav'].includes(ext) && (cueBases.has(basePath) || /track\s*\d+/i.test(item.path))) return;
-
-        let catName = "", fileName = "";
-        const parts = item.path.split('/');
-        if (parts[0].toLowerCase() === "roms") {
-          catName = parts.length >= 3 ? parts[1] : (getSourceDefaultCat(source.repo) || "arcade");
-          fileName = parts.slice(parts.length >= 3 ? 2 : 1).join('/');
-        } else if (parts.length >= 2) { catName = parts[0]; fileName = parts.slice(1).join('/'); }
-        else if (getSourceDefaultCat(source.repo)) { catName = getSourceDefaultCat(source.repo); fileName = item.path; }
-        else return;
-
-        const info = resolveSys(catName);
-        if (!info.isKnown && ['emu', 'main', 'roms'].includes(catName.toLowerCase())) return;
-        const sysKey = info.system;
-        if (!gamesByCat[sysKey]) gamesByCat[sysKey] = [];
-        const cleanName = cleanTitle(fileName);
-        if (cleanName) {
-          const fileBase = fileName.split('/').pop().replace(/\.[^/.]+$/, '');
-          const isFbneo = /^(arcade|fbneo|fba|cps1|cps2|cps3|mame)$/i.test(String(catName || sysKey));
-          const imageNames = [...new Set(isFbneo ? [cleanName, fileBase, cleanTitle(fileName)] : [fileBase, cleanName, cleanTitle(fileName)])].filter(Boolean);
-          const imageCandidates = imageNames.map(n => `snap/${catName}/${n}.png`).filter(p => snapPathSet.has(p)).map(p => buildDirectRomUrl(source, p));
-          gamesByCat[sysKey].push({ name: cleanName, fullName: fileName, romUrl: buildDirectRomUrl(source, item.path), path: item.path, core: info.core, imageCandidates, imageUrl: imageCandidates[0] || "" });
-          if (!catMap.has(sysKey)) catMap.set(sysKey, { name: sysKey, folderName: catName, logo: info.logo, system: info.system, core: info.core, libretroSys: info.libretroSys });
+        if (resp.status === 403 || resp.status === 429) { apiFailed = true; return; }
+        if (!resp.ok) return;
+        processTree(source, await resp.json(), gamesByCat, catMap);
+        okCount++;
+      } catch (e) { apiFailed = true; }
+      finally {
+        doneCount++;
+        // Hiện ngay nguồn nào xong trước (ps1 nhẹ xong trước, emu nặng xong sau) để không phải load lại trang
+        if (okCount > 0) {
+          showLoader(`ĐANG TẢI... (${doneCount}/${total}) • ĐÃ XONG ${okCount} NGUỒN`);
+          await applyMapsToState(gamesByCat, catMap, false);
         }
-      });
-    }
-
-    const rawCatList = [...catMap.values()];
-    if (rawCatList.length > 0) {
-      state.datList = processCats(rawCatList);
-      state.gamesByCat = {};
-      for (const catName in gamesByCat) state.gamesByCat[catName] = gamesByCat[catName].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base', numeric: true }));
-      await saveFullDatabaseCache({ datList: rawCatList, gamesByCat: state.gamesByCat, imageIndexVersion: 2 });
-    }
-
-    state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lsGet("pandora_last_cat")));
-    const currCat = state.datList[state.currentDatIdx];
-    state.allGames = state.gamesByCat[currCat?.name] || [];
-    resetDatMaps();
-    if (currCat) await loadDatMap(currCat.name);
-    updateNames(); restorePos(); hideLoader(); drawAll();
+      }
+    }));
+    if (apiFailed && okCount === 0 && hasCache) { await applyCachedDb(cached, "HẾT LƯỢT API: DÙNG DỮ LIỆU ĐÃ LƯU", 2000); return; }
+    const saved = await applyMapsToState(gamesByCat, catMap, true);
+    if (!saved && hasCache) { await applyCachedDb(cached, "LỖI KẾT NỐI: KHÔI PHỤC DỮ LIỆU ĐÃ LƯU", 1500); return; }
+    hideLoader();
   } catch (e) {
     if (hasCache) await applyCachedDb(cached, "LỖI KẾT NỐI: KHÔI PHỤC DỮ LIỆU ĐÃ LƯU", 1500);
     else { showLoader("HOÀN TẤT VỚI DỮ LIỆU CÓ SẴN"); setTimeout(hideLoader, 1500); }
