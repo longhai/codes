@@ -23,7 +23,7 @@
     #svg{width:100%;height:100%;filter:drop-shadow(0 10px 20px rgba(0,0,0,.9));transform:translateZ(0)}
     #preview-container{flex:1.1;width:100%;max-width:680px;aspect-ratio:4/3;max-height:80vh;background:var(--panel);border:2px solid var(--p);border-radius:12px;box-shadow:0 0 25px var(--pg),inset 0 0 25px #000;display:flex;align-items:center;justify-content:center;padding:12px;position:relative;overflow:hidden;backdrop-filter:blur(12px);order:2;transform:translateZ(0)}
     #preview-img{width:100%;height:100%;object-fit:contain;transition:opacity .12s ease-out;will-change:opacity;display:block}
-    #preview-img.is-placeholder{width:88px!important;height:88px!important;max-width:88px!important;max-height:88px!important;min-width:88px!important;min-height:88px!important;object-fit:contain;opacity:.45;filter:drop-shadow(0 0 12px rgba(234,88,12,.5));transform:none!important;transition:none!important}
+    #preview-no-image{display:none;position:absolute;inset:12px;align-items:center;justify-content:center;color:#94a3b8;font:700 18px 'Rajdhani',sans-serif;letter-spacing:1px;text-shadow:0 2px 8px #000;pointer-events:none}
     #preview-img.loading{opacity:.55}
 
     .preview-badges{position:absolute;top:8px;right:8px;z-index:20;display:flex;align-items:center;gap:8px}
@@ -35,7 +35,7 @@
     #preview-container:hover .dl-btn{opacity:.85}
     .dl-btn:hover,#preview-container:hover .dl-btn:hover{opacity:1;background:var(--ca);color:#0f172a;transform:scale(1.12);box-shadow:0 0 10px rgba(56,189,248,.8)}
     .dl-btn svg{width:18px;height:18px;fill:currentColor}
-    #gp-badge{width:20px;height:20px;fill:#4ade80;filter:drop-shadow(0 0 6px rgba(74,222,128,.8));display:none}
+    #gp-badge{font-size:21px;line-height:1;filter:drop-shadow(0 0 6px rgba(74,222,128,.8));display:none}
     .hdr-btn-wrap{position:absolute;z-index:100;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s,filter .15s,opacity .2s;width:32px;height:32px;max-width:42px;max-height:42px;min-width:20px;min-height:20px;overflow:hidden;box-sizing:border-box;opacity:0;top:0;left:0}
     .hdr-btn-wrap.ready{opacity:1}
     .hdr-btn-wrap:hover{transform:translate(-50%,-50%) scale(1.12);filter:drop-shadow(0 0 6px var(--ca))}
@@ -167,10 +167,10 @@
     <div id="preview-container">
       <div id="preview-loader"><div class="spin"></div><span id="ld-t">ĐANG TẢI DỮ LIỆU...</span></div>
       <div class="preview-badges">
-        <svg id="gp-badge" viewBox="0 0 24 24" title="Tay cầm đã kết nối"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H9v2H7v-2H5v-2h2V9h2v2h2v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+        <span id="gp-badge" title="Tay cầm đã kết nối" aria-label="Tay cầm đã kết nối">🎮</span>
         <div id="fav-btn" class="fav-star-btn" onclick="event.stopPropagation();toggleCurrentFav();">☆</div>
       </div>
-      <img id="preview-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Preview"/>
+      <img id="preview-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Preview"/><div id="preview-no-image" aria-live="polite">Chưa có ảnh</div>
       <div class="preview-bottom-actions">
         <div id="dl-btn" class="dl-btn" onclick="event.stopPropagation();downloadCurrentGame();" title="Tải ROM Game">
           <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
@@ -1338,7 +1338,8 @@
     function updatePreview(g) {
       const img = $('preview-img'), favBtn = $('fav-btn'), dlBtn = $('dl-btn');
       if (!g || g.fullName?.startsWith('placeholder_')) {
-        img.src = EMPTY_GIF; img.classList.remove('is-placeholder', 'loading');
+        img.src = EMPTY_GIF; img.style.display = 'block'; img.classList.remove('is-placeholder', 'loading');
+        if ($('preview-no-image')) $('preview-no-image').style.display = 'none';
         if (favBtn) favBtn.style.display = 'none';
         if (dlBtn) dlBtn.style.display = 'none';
         return;
@@ -1352,6 +1353,8 @@
       // Chỉ hiện placeholder nhỏ nếu tất cả nguồn đều thất bại.
       // Dùng EMPTY_GIF trong lúc chờ để không có flash ảnh mặc định.
       img.classList.remove('is-placeholder');
+      img.style.display = 'block';
+      if ($('preview-no-image')) $('preview-no-image').style.display = 'none';
       img.classList.add('loading');
       img.style.width = '100%';
       img.style.height = '100%';
@@ -1373,10 +1376,14 @@
           img.style.maxHeight = '88px';
           img.style.minWidth = '88px';
           img.style.minHeight = '88px';
-          img.src = PLACEHOLDER_SVG;
+          img.src = EMPTY_GIF;
+          img.style.display = 'none';
+          if ($('preview-no-image')) $('preview-no-image').style.display = 'flex';
         } else {
           // Có URL thật: bỏ placeholder trước rồi mới gán ảnh thật.
           img.classList.remove('is-placeholder', 'loading');
+          img.style.display = 'block';
+          if ($('preview-no-image')) $('preview-no-image').style.display = 'none';
           img.style.width = '';
           img.style.height = '';
           img.style.maxWidth = '';
