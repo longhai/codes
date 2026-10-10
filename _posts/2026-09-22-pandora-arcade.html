@@ -231,7 +231,7 @@
       <div class="settings-body">
         <label class="settings-row"><span><strong>Giao diện cong Arcade</strong><small>Bật/tắt kiểu danh sách cong.</small></span><input id="setting-curved" class="settings-switch" type="checkbox" onchange="setCurvedSetting(this.checked)"></label>
         <label class="settings-row"><span><strong>Chỉ hiển thị game chính</strong><small>Ẩn các bản clone, hack và bản phụ khi có dữ liệu nhận diện.</small></span><input id="setting-main-only" class="settings-switch" type="checkbox" onchange="setMainOnlySetting(this.checked)"></label>
-        <div class="settings-row"><span><strong>Bộ nhớ dữ liệu</strong><small>Danh sách game được lưu bằng IndexedDB để mở nhanh và dùng lại khi API GitHub hết lượt.</small><div id="storage-status">Đang kiểm tra bộ nhớ...</div></span></div>
+        <div class="settings-row"><span><strong>Bộ nhớ dữ liệu</strong><small>Danh sách game được lưu bằng IndexedDB; chỉ lưu địa chỉ ảnh, không lưu dữ liệu ảnh lâu dài.</small><div id="storage-status">Đang kiểm tra bộ nhớ...</div></span></div>
         <div class="settings-actions">
           <button class="settings-action" onclick="refreshStorageStatus()">🔄 Kiểm tra bộ nhớ</button>
           <button class="settings-action" onclick="reloadDatabase();closeSettingsModal()">⬇ Cập nhật dữ liệu</button>
@@ -375,7 +375,7 @@
     function savePersistentImgMap() {
       try {
         const keys = Object.keys(persistentImgMap);
-        if (keys.length > 3500) keys.slice(0, 700).forEach(k => delete persistentImgMap[k]);
+        if (keys.length > 2000) keys.slice(0, keys.length - 2000).forEach(k => delete persistentImgMap[k]);
         lsSet("pandora_img_urls_v2", JSON.stringify(persistentImgMap));
       } catch(e) {
         try {
@@ -387,7 +387,7 @@
     }
 
     function cacheSet(k, v) {
-      if (imgCache.size >= 500) imgCache.delete(imgCache.keys().next().value);
+      if (imgCache.size >= 150) imgCache.delete(imgCache.keys().next().value);
       imgCache.set(k, v);
       if (v) {
         persistentImgMap[k] = v;
@@ -1211,12 +1211,16 @@
       }
     }
 
-    // Snap: lazy-load + cache URL + preload 20 game phía trước.
-    // Chỉ thử nguồn phụ sau khi nguồn chính thất bại; khi đã tìm thấy URL thì dừng ngay.
-    const SNAP_PRELOAD_COUNT = 20;
+    // Snap: chỉ lưu URL ảnh lâu dài; dữ liệu ảnh do browser cache tự quản lý.
+    // Nạp trước một nhóm nhỏ quanh game đang chọn để vuốt mượt mà không tích lũy bộ nhớ vô hạn.
+    const SNAP_PRELOAD_COUNT = 10;
+    const SNAP_PRELOAD_BACK_COUNT = 3;
     const SNAP_PRELOAD_CONCURRENCY = 4;
+    const MAX_WARMED_IMAGE_URLS = 300;
     const snapPreloadQueue = [];
     const snapPreloadQueued = new Set();
+    const warmedImageUrls = new Set();
+    const warmingImageUrls = new Map();
     let snapPreloadRunning = 0;
 
     function getPreviewCandidates(g) {
@@ -1321,39 +1325,94 @@
       probeNext();
     }
 
+    function warmImageUrl(url, done) {
+      if (!url || url === PLACEHOLDER_SVG || warmedImageUrls.has(url)) { done?.(); return; }
+      if (warmingImageUrls.has(url)) {
+        if (done) warmingImageUrls.get(url).push(done);
+        return;
+      }
+      warmingImageUrls.set(url, done ? [done] : []);
+      const im = new Image();
+      im.decoding = 'async';
+      const finish = () => {
+        warmedImageUrls.add(url);
+        // Danh sách này chỉ giữ URL, không giữ dữ liệu ảnh; giới hạn kích thước để RAM không tăng mãi.
+        if (warmedImageUrls.size > MAX_WARMED_IMAGE_URLS) {
+          const oldest = warmedImageUrls.values().next().value;
+          warmedImageUrls.delete(oldest);
+        }
+        const callbacks = warmingImageUrls.get(url) || [];
+        warmingImageUrls.delete(url);
+        callbacks.forEach(cb => { try { cb(); } catch(e) {} });
+      };
+      im.onload = async () => {
+        try { if (im.decode) await im.decode(); } catch(e) {}
+        finish();
+      };
+      im.onerror = () => {
+        const callbacks = warmingImageUrls.get(url) || [];
+        warmingImageUrls.delete(url);
+        failedUrls.add(url);
+        callbacks.forEach(cb => { try { cb(); } catch(e) {} });
+      };
+      im.src = url;
+      if (im.complete && im.naturalWidth > 0) finish();
+    }
+
     function queueSnapPreload(g) {
       if (!g || g.fullName?.startsWith('placeholder_')) return;
       const key = getGameKey(g); if (!key) return;
-      if (imgCache.has(key) || persistentImgMap[key] || pendingProbes.has(key) || snapPreloadQueued.has(key)) return;
+      if (warmedImageUrls.has(imgCache.get(key)) || snapPreloadQueued.has(key) || pendingProbes.has(key)) return;
+      // URL đã lưu localStorage vẫn phải tải/warm ảnh thật; chỉ lưu URL không đồng nghĩa ảnh đã sẵn sàng.
+      if (imgCache.has(key) || persistentImgMap[key]) {
+        const cachedUrl = imgCache.get(key) || persistentImgMap[key];
+        if (cachedUrl && cachedUrl !== PLACEHOLDER_SVG) {
+          snapPreloadQueued.add(key);
+          snapPreloadQueue.push({ game: g, url: cachedUrl });
+          runSnapPreloadQueue();
+        }
+        return;
+      }
       snapPreloadQueued.add(key);
-      snapPreloadQueue.push(g);
+      snapPreloadQueue.push({ game: g, url: '' });
       runSnapPreloadQueue();
     }
 
     function runSnapPreloadQueue() {
       while (snapPreloadRunning < SNAP_PRELOAD_CONCURRENCY && snapPreloadQueue.length) {
-        const g = snapPreloadQueue.shift();
+        const item = snapPreloadQueue.shift();
+        const g = item.game;
         snapPreloadRunning++;
         const done = () => {
           snapPreloadRunning--;
           snapPreloadQueued.delete(getGameKey(g));
           runSnapPreloadQueue();
         };
-        resolveAndCacheImage(g, done);
+        if (item.url) {
+          warmImageUrl(item.url, done);
+        } else {
+          resolveAndCacheImage(g, url => {
+            if (url && url !== PLACEHOLDER_SVG) warmImageUrl(url, done);
+            else done();
+          });
+        }
       }
     }
 
     function preloadNeighbors() {
       clearTimeout(preloadTimer);
       preloadTimer = setTimeout(() => {
-        const start = state.selIdx + 1;
-        const end = Math.min(state.filteredGames.length, start + SNAP_PRELOAD_COUNT);
-        for (let i = start; i < end; i++) queueSnapPreload(state.filteredGames[i]);
-      }, 0);
+        const games = state.filteredGames;
+        const selected = Math.max(0, Math.min(state.selIdx, games.length - 1));
+        // Nạp cả phía trước lẫn phía sau để vuốt qua lại không bị trễ.
+        const start = Math.max(0, selected - SNAP_PRELOAD_BACK_COUNT);
+        const end = Math.min(games.length, selected + SNAP_PRELOAD_COUNT + 1);
+        for (let i = start; i < end; i++) if (i !== selected) queueSnapPreload(games[i]);
+      }, 40);
     }
 
     function preloadWindowAtStart() {
-      const end = Math.min(SNAP_PRELOAD_COUNT, state.filteredGames.length);
+      const end = Math.min(SNAP_PRELOAD_COUNT + 1, state.filteredGames.length);
       for (let i = 0; i < end; i++) queueSnapPreload(state.filteredGames[i]);
     }
 
