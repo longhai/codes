@@ -314,7 +314,8 @@
     const EMULATOR_URL = "https://longhai.github.io/codes/2026/08/29/emulatorjs.html", ASSETS_BASE = "https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/dot-art/png/", RAW_BASE = "https://raw.githubusercontent.com/longhai/emu/main/", EMPTY_GIF = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ea580c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='4' ry='4'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5' fill='%23ea580c'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E";
     var FALLBACK_ARCADE_SVG = window.FALLBACK_ARCADE_SVG, FALLBACK_GENRE_SVG = window.FALLBACK_GENRE_SVG;
 
-    const GAME_SOURCES = [{ owner: "longhai", repo: "emu", branch: "main" }, { owner: "longhai", repo: "ps1", branch: "main", defaultCat: "psx" }];
+    const GAME_SOURCES = ["emu", "ps1"];
+    const getSourceDefaultCat = repo => SYSTEM_PROFILES.find(([keys]) => keys.includes(String(repo).toLowerCase()))?.[0].find(key => key === String(repo).toLowerCase()) || "";
     const VALID_ROM_EXTS = new Set(['zip','7z','rar','chd','iso','bin','pbp','cso','rvz','img','cue','z64','n64','v64','nes','snes','smc','sfc','gba','gbc','gb','md','gen','smd','pce','gg','sms','a26','a78','lnx','ngp','ngc','ws','wsc','m3u','gcm','gcz','wbfs','wad']);
 
     const SYSTEM_PROFILES = [
@@ -855,9 +856,10 @@
         const gamesByCat = {}, catMap = new Map();
         let apiFailed = false;
 
-        const results = await Promise.all(GAME_SOURCES.map(async (source) => {
+        const results = await Promise.all(GAME_SOURCES.map(async (repo) => {
+          const source = { owner: "longhai", repo, branch: "main" };
           try {
-            const resp = await fetch(`https://api.github.com/repos/${source.owner}/${source.repo}/git/trees/${source.branch || "main"}?recursive=1`);
+            const resp = await fetch(`https://api.github.com/repos/${source.owner}/${source.repo}/git/trees/${source.branch}?recursive=1`);
             if (resp.status === 403 || resp.status === 429) {
               apiFailed = true;
               return null;
@@ -904,12 +906,12 @@
               let catName = "", fileName = "";
               const parts = item.path.split('/');
               if (parts[0].toLowerCase() === "roms") {
-                catName = parts.length >= 3 ? parts[1] : (source.defaultCat || "arcade");
+                catName = parts.length >= 3 ? parts[1] : (getSourceDefaultCat(source.repo) || "arcade");
                 fileName = parts.slice(parts.length >= 3 ? 2 : 1).join('/');
               } else if (parts.length >= 2) {
                 catName = parts[0]; fileName = parts.slice(1).join('/');
-              } else if (source.defaultCat) {
-                catName = source.defaultCat; fileName = item.path;
+              } else if (getSourceDefaultCat(source.repo)) {
+                catName = getSourceDefaultCat(source.repo); fileName = item.path;
               } else return;
 
               const info = resolveSys(catName);
