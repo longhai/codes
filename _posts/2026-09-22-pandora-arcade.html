@@ -18,12 +18,12 @@
     #ld-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .spin{width:16px;height:16px;border:2.5px solid var(--p);border-top-color:transparent;border-radius:50%;animation:s .75s linear infinite;flex-shrink:0}
     @keyframes s{to{transform:rotate(360deg)}}
-    main{width:100%;height:100dvh;max-width:1320px;display:flex;align-items:center;justify-content:center;gap:12px;padding:20px 30px;will-change:transform}
+    main{width:100%;height:100dvh;display:flex;align-items:center;justify-content:center;gap:12px;padding:20px 30px;will-change:transform}
     #svg-container{flex:1.25;width:100%;height:100%;display:flex;align-items:center;justify-content:center;order:1;position:relative;overflow:hidden}
     #svg{width:100%;height:100%;filter:drop-shadow(0 10px 20px rgba(0,0,0,.9));transform:translateZ(0)}
     #preview-container{flex:1.1;width:100%;max-width:680px;aspect-ratio:4/3;max-height:80vh;background:var(--panel);border:2px solid var(--p);border-radius:12px;box-shadow:0 0 25px var(--pg),inset 0 0 25px #000;display:flex;align-items:center;justify-content:center;padding:12px;position:relative;overflow:hidden;backdrop-filter:blur(12px);order:2;transform:translateZ(0)}
     #preview-img{width:100%;height:100%;object-fit:contain;transition:opacity .12s ease-out;will-change:opacity;display:block}
-    #preview-img.is-placeholder{width:88px!important;height:88px!important;max-width:88px!important;max-height:88px!important;min-width:88px!important;min-height:88px!important;object-fit:contain;opacity:.45;filter:drop-shadow(0 0 12px rgba(234,88,12,.5));transform:none!important;transition:none!important}
+    #preview-no-image{display:none;position:absolute;inset:12px;align-items:center;justify-content:center;color:#94a3b8;font:700 18px 'Rajdhani',sans-serif;letter-spacing:1px;text-shadow:0 2px 8px #000;pointer-events:none}
     #preview-img.loading{opacity:.55}
 
     .preview-badges{position:absolute;top:8px;right:8px;z-index:20;display:flex;align-items:center;gap:8px}
@@ -35,7 +35,7 @@
     #preview-container:hover .dl-btn{opacity:.85}
     .dl-btn:hover,#preview-container:hover .dl-btn:hover{opacity:1;background:var(--ca);color:#0f172a;transform:scale(1.12);box-shadow:0 0 10px rgba(56,189,248,.8)}
     .dl-btn svg{width:18px;height:18px;fill:currentColor}
-    #gp-badge{width:20px;height:20px;fill:#4ade80;filter:drop-shadow(0 0 6px rgba(74,222,128,.8));display:none}
+    #gp-badge{font-size:21px;line-height:1;filter:drop-shadow(0 0 6px rgba(74,222,128,.8));display:none}
     .hdr-btn-wrap{position:absolute;z-index:100;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s,filter .15s,opacity .2s;width:32px;height:32px;max-width:42px;max-height:42px;min-width:20px;min-height:20px;overflow:hidden;box-sizing:border-box;opacity:0;top:0;left:0}
     .hdr-btn-wrap.ready{opacity:1}
     .hdr-btn-wrap:hover{transform:translate(-50%,-50%) scale(1.12);filter:drop-shadow(0 0 6px var(--ca))}
@@ -65,6 +65,17 @@
     .menu-item svg{width:20px;height:20px;object-fit:contain;flex-shrink:0;fill:currentColor}
     #help-modal{display:none;position:fixed;inset:0;z-index:320;background:rgba(5,1,1,.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:12px}
     #help-modal.active{display:flex}
+    #settings-modal{display:none;position:fixed;inset:0;z-index:330;background:rgba(5,1,1,.88);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:12px}
+    #settings-modal.active{display:flex}
+    .settings-card{width:100%;max-width:560px;max-height:88vh;background:rgba(15,23,42,.98);border:2px solid var(--ca);border-radius:14px;box-shadow:0 0 30px rgba(56,189,248,.3);display:flex;flex-direction:column;overflow:hidden}
+    .settings-body{padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;font-size:14px;color:#cbd5e1}
+    .settings-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(30,41,59,.72);padding:12px;border-radius:8px}
+    .settings-row strong{color:#fff;display:block}.settings-row small{display:block;color:#94a3b8;margin-top:3px}
+    .settings-switch{width:20px;height:20px;accent-color:var(--ca);flex-shrink:0}
+    .settings-actions{display:flex;flex-wrap:wrap;gap:8px}
+    .settings-action{background:#1e293b;border:1px solid var(--ca);border-radius:7px;padding:9px 12px;color:#fff;font:700 12px 'Rajdhani',sans-serif;cursor:pointer}
+    .settings-action:hover{background:var(--p);border-color:var(--p)}
+    #storage-status{font-size:12px;color:#38bdf8;line-height:1.5;overflow-wrap:anywhere}
     .help-card{width:100%;max-width:620px;max-height:85vh;background:rgba(15,23,42,.98);border:2px solid var(--ca);border-radius:14px;box-shadow:0 0 30px rgba(56,189,248,.3);display:flex;flex-direction:column;overflow:hidden}
     .help-header{padding:14px 18px;background:#0f172a;border-bottom:1.5px solid var(--p);display:flex;align-items:center;justify-content:space-between}
     .help-title{font:800 16px 'Orbitron',sans-serif;color:var(--a);display:flex;align-items:center;gap:8px}
@@ -91,10 +102,10 @@
     #game-frame{width:100%;height:calc(100% - 46px);border:none;background:#000}
     .tn{font:700 18px 'Rajdhani',sans-serif;fill:#e2e8f0}
     .ta{font:800 20px 'Rajdhani',sans-serif;fill:#fff;filter:drop-shadow(0 2px 4px rgba(0,0,0,.95))}
-    @media (max-width:820px),(max-aspect-ratio:1/1){
+    @media (max-width:820px) and (orientation:portrait), (max-aspect-ratio:1/1){
       main{flex-direction:column;justify-content:flex-start;gap:6px;padding:6px}
       #preview-container{order:1;width:100%;height:32vh;min-height:180px;max-height:280px;aspect-ratio:auto;flex-shrink:0;padding:4px}
-      #svg-container{order:2;flex:1}
+      #svg-container{order:2;flex:1;max-width:none;width:100%;min-width:0}
       .btn-lbl{display:none}
     }
   </style>
@@ -133,6 +144,7 @@
         <div id="fav-menu-item" class="menu-item" onclick="toggleFavFilter();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg><span id="fav-menu-text">Lọc Game Yêu Thích</span></div>
         <div id="clone-menu-item" class="menu-item" onclick="toggleMainOnlyFilter();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm2 5h12v2H6zm3 5h6v2H9z"/></svg><span id="clone-menu-text">Chỉ Xem Game Chính</span></div>
         <div id="layout-menu-item" class="menu-item" onclick="toggleLayoutMode();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M3 5v14h18V5H3zm16 12H5V7h14v10z"/></svg><span id="layout-menu-text">Chuyển Giao Diện</span></div>
+        <div id="pwa-install-item" class="menu-item" onclick="installPWA();closeUserMenu()" style="display:none"><svg viewBox="0 0 24 24"><path d="M18 15v3H6v-3H4v3c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-3h-2zm-1-4-1.41-1.41L13 12.17V4h-2v8.17L8.41 9.59 7 11l5 5 5-5z"/></svg><span id="pwa-btn-text">Cài đặt Ứng dụng (PWA)</span></div>
         <div class="menu-item" onclick="reloadDatabase();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg><span>Cập Nhật Dữ Liệu</span></div>
         <div class="menu-item" onclick="openHelpModal();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm1.07-7.75l-.9.92C12.45 11.9 12 12.5 12 14h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg><span>Hướng Dẫn Sử Dụng</span></div>
       </div>
@@ -155,10 +167,10 @@
     <div id="preview-container">
       <div id="preview-loader"><div class="spin"></div><span id="ld-t">ĐANG TẢI DỮ LIỆU...</span></div>
       <div class="preview-badges">
-        <svg id="gp-badge" viewBox="0 0 24 24" title="Tay cầm đã kết nối"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H9v2H7v-2H5v-2h2V9h2v2h2v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 9 18.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+        <span id="gp-badge" title="Tay cầm đã kết nối" aria-label="Tay cầm đã kết nối">🎮</span>
         <div id="fav-btn" class="fav-star-btn" onclick="event.stopPropagation();toggleCurrentFav();">☆</div>
       </div>
-      <img id="preview-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Preview"/>
+      <img id="preview-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Preview"/><div id="preview-no-image" aria-live="polite">Chưa có ảnh</div>
       <div class="preview-bottom-actions">
         <div id="dl-btn" class="dl-btn" onclick="event.stopPropagation();downloadCurrentGame();" title="Tải ROM Game">
           <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
@@ -213,6 +225,22 @@
       </div>
     </div>
   </div>
+  <div id="settings-modal" onclick="if(event.target===this)closeSettingsModal()">
+    <div class="settings-card">
+      <div class="help-header"><div class="help-title">⚙️ CÀI ĐẶT PANDORA</div><button class="close-modal-btn" onclick="closeSettingsModal()">✕</button></div>
+      <div class="settings-body">
+        <label class="settings-row"><span><strong>Giao diện cong Arcade</strong><small>Bật/tắt kiểu danh sách cong.</small></span><input id="setting-curved" class="settings-switch" type="checkbox" onchange="setCurvedSetting(this.checked)"></label>
+        <label class="settings-row"><span><strong>Chỉ hiển thị game chính</strong><small>Ẩn các bản clone, hack và bản phụ khi có dữ liệu nhận diện.</small></span><input id="setting-main-only" class="settings-switch" type="checkbox" onchange="setMainOnlySetting(this.checked)"></label>
+        <div class="settings-row"><span><strong>Bộ nhớ dữ liệu</strong><small>Danh sách game được lưu bằng IndexedDB để mở nhanh và dùng lại khi API GitHub hết lượt.</small><div id="storage-status">Đang kiểm tra bộ nhớ...</div></span></div>
+        <div class="settings-actions">
+          <button class="settings-action" onclick="refreshStorageStatus()">🔄 Kiểm tra bộ nhớ</button>
+          <button class="settings-action" onclick="reloadDatabase();closeSettingsModal()">⬇ Cập nhật dữ liệu</button>
+          <button class="settings-action" onclick="clearDatabaseCacheFromSettings()">🗑 Xóa cache dữ liệu</button>
+        </div>
+        <small>Lưu ý: xóa cache sẽ khiến ứng dụng cần tải lại danh sách game từ GitHub ở lần mở tiếp theo. Không xóa game yêu thích.</small>
+      </div>
+    </div>
+  </div>
   <div id="game-player-modal">
     <div id="player-toolbar">
       <span id="player-title">PANDORA ARCADE</span>
@@ -226,6 +254,60 @@
   </div>
 
   <script>
+    // PWA: tạo manifest động và hiện nút cài đặt khi trình duyệt hỗ trợ.
+    let deferredPrompt = null;
+    const pwaManifest = {
+      name: "Pandora Arcade",
+      short_name: "Arcade",
+      start_url: location.origin + location.pathname,
+      scope: location.origin + location.pathname.replace(/[^/]*$/, ""),
+      display: "standalone",
+      orientation: "any",
+      theme_color: "#050101",
+      background_color: "#050101",
+      icons: [{
+        src: "https://longhai.github.io/codes/icon.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any"
+      }]
+    };
+    const pwaManifestLink = document.createElement("link");
+    pwaManifestLink.rel = "manifest";
+    pwaManifestLink.href = URL.createObjectURL(
+      new Blob([JSON.stringify(pwaManifest)], { type: "application/manifest+json" })
+    );
+    document.head.appendChild(pwaManifestLink);
+
+    async function installPWA() {
+      if (!deferredPrompt) {
+        alert("Nếu chưa thấy hộp thoại cài đặt: mở menu trình duyệt và chọn “Cài đặt ứng dụng” hoặc “Thêm vào màn hình chính”.");
+        return;
+      }
+      try {
+        await deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+      } catch (e) {
+        console.warn("Không thể mở lời nhắc cài PWA:", e);
+      } finally {
+        deferredPrompt = null;
+        const item = document.getElementById("pwa-install-item");
+        if (item) item.style.display = "none";
+      }
+    }
+
+    window.addEventListener("beforeinstallprompt", event => {
+      event.preventDefault();
+      deferredPrompt = event;
+      const item = document.getElementById("pwa-install-item");
+      if (item) item.style.display = "flex";
+    });
+    window.addEventListener("appinstalled", () => {
+      deferredPrompt = null;
+      const item = document.getElementById("pwa-install-item");
+      if (item) item.style.display = "none";
+    });
+
     const GOOGLE_CLIENT_ID = "2611223495-h3eq8j0sprp9tvhig1u9ihtm0jhnej3v.apps.googleusercontent.com", DRIVE_FILE_NAME = "pandora_favs.json";
     let tokenClient = null, accessToken = null, driveFileId = null, currentUserProfile = null;
 
@@ -366,6 +448,46 @@
 
     const openHelpModal = () => $('help-modal').classList.add('active'), closeHelpModal = () => $('help-modal').classList.remove('active');
 
+    function openSettingsModal() {
+      $('setting-curved').checked = !!state.isCurved;
+      $('setting-main-only').checked = !!state.showMainOnly;
+      $('settings-modal').classList.add('active');
+      refreshStorageStatus();
+    }
+    function closeSettingsModal() { $('settings-modal').classList.remove('active'); }
+    function setCurvedSetting(value) {
+      state.isCurved = !!value;
+      lsSet('pandora_curved', state.isCurved);
+      drawAll();
+    }
+    function setMainOnlySetting(value) {
+      state.showMainOnly = !!value;
+      lsSet('pandora_show_main_only', state.showMainOnly);
+      filterGames(false); drawAll();
+    }
+    async function refreshStorageStatus() {
+      const el = $('storage-status');
+      if (!el) return;
+      try {
+        const cached = await idbRead(IDB_FULL_DB_KEY);
+        if (cached?.datList?.length && cached?.gamesByCat) {
+          const cats = cached.datList.length;
+          const games = Object.values(cached.gamesByCat).reduce((n, a) => n + (Array.isArray(a) ? a.length : 0), 0);
+          el.textContent = `IndexedDB: Đã lưu • ${cats} hệ máy • ${games.toLocaleString('vi-VN')} game`;
+        } else {
+          const legacy = Storage.get(IDB_FULL_DB_KEY);
+          el.textContent = legacy?.datList?.length ? 'IndexedDB chưa có dữ liệu; tìm thấy cache LocalStorage cũ.' : 'Chưa có cache danh sách game.';
+        }
+      } catch (e) {
+        el.textContent = 'IndexedDB không khả dụng: ' + (e.message || 'lỗi bộ nhớ');
+      }
+    }
+    async function clearDatabaseCacheFromSettings() {
+      if (!confirm('Xóa cache danh sách game đã lưu? Game yêu thích và cài đặt sẽ được giữ lại.')) return;
+      await clearFullDatabaseCache();
+      $('storage-status').textContent = 'Đã xóa cache danh sách game.';
+    }
+
     function posMenu(menu, targetBtn, isRightAlign = false) {
       if (!menu || !targetBtn) return;
       const rect = targetBtn.getBoundingClientRect(), topPos = rect.bottom + 8;
@@ -492,6 +614,78 @@
         }); 
       }
     };
+
+    // IndexedDB là bộ nhớ chính cho toàn bộ danh sách game; LocalStorage chỉ làm cache dự phòng cũ.
+    const IDB_NAME = "pandora_arcade_db_v1", IDB_STORE = "cache", IDB_FULL_DB_KEY = "pandora_full_db_v13";
+    let idbPromise = null;
+    function openArcadeDB() {
+      if (!("indexedDB" in window)) return Promise.reject(new Error("Trình duyệt không hỗ trợ IndexedDB"));
+      if (idbPromise) return idbPromise;
+      idbPromise = new Promise((resolve, reject) => {
+        const req = indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => { idbPromise = null; reject(req.error || new Error("Không mở được IndexedDB")); };
+        req.onblocked = () => { idbPromise = null; reject(new Error("IndexedDB đang bị chặn bởi tab khác")); };
+      });
+      return idbPromise;
+    }
+    async function idbRead(key) {
+      const db = await openArcadeDB();
+      return new Promise((resolve, reject) => {
+        const req = db.transaction(IDB_STORE, "readonly").objectStore(IDB_STORE).get(key);
+        req.onsuccess = () => resolve(req.result ?? null);
+        req.onerror = () => reject(req.error || new Error("Không đọc được cache"));
+      });
+    }
+    async function idbWrite(key, value) {
+      const db = await openArcadeDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, "readwrite");
+        tx.objectStore(IDB_STORE).put(value, key);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = tx.onabort = () => reject(tx.error || new Error("Không ghi được cache"));
+      });
+    }
+    async function idbDelete(key) {
+      const db = await openArcadeDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, "readwrite");
+        tx.objectStore(IDB_STORE).delete(key);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = tx.onabort = () => reject(tx.error || new Error("Không xóa được cache"));
+      });
+    }
+    async function readFullDatabaseCache(localKey) {
+      try {
+        const cached = await idbRead(IDB_FULL_DB_KEY);
+        if (cached?.datList?.length > 1 && cached?.gamesByCat) return cached;
+      } catch (e) { console.warn("IndexedDB đọc lỗi, thử cache cũ:", e); }
+      const legacy = Storage.get(localKey || IDB_FULL_DB_KEY);
+      if (legacy?.datList?.length > 1 && legacy?.gamesByCat) {
+        idbWrite(IDB_FULL_DB_KEY, legacy).catch(e => console.warn("Không thể chuyển cache sang IndexedDB:", e));
+        return legacy;
+      }
+      return null;
+    }
+    async function saveFullDatabaseCache(data) {
+      try {
+        await idbWrite(IDB_FULL_DB_KEY, { ...data, cacheVersion: 1, savedAt: Date.now() });
+        return true;
+      } catch (e) {
+        console.warn("Không thể lưu dữ liệu vào IndexedDB:", e);
+        // Dự phòng bằng LocalStorage nếu IndexedDB không khả dụng.
+        try { Storage.set(IDB_FULL_DB_KEY, data); } catch (err) {}
+        return false;
+      }
+    }
+    async function clearFullDatabaseCache() {
+      try { await idbDelete(IDB_FULL_DB_KEY); } catch (e) { console.warn(e); }
+      try { Storage.clearCache(); } catch (e) {}
+    }
 
     function toggleCurrentFav() {
       if (!state.filteredGames.length) return;
@@ -623,7 +817,7 @@
 
     function getGeom() {
       calcNumSlots();
-      const s = !state.isCurved, X0 = s ? 8 : 14, X1 = s ? 8 : 85, W = s ? 515 : 435, Y_MID = (70 + (state.numSlots - 1) * 54 + 48) / 2;
+      const s = !state.isCurved, X0 = s ? 8 : 14, X1 = s ? 8 : 85, W = s ? 525 : 445, Y_MID = (70 + (state.numSlots - 1) * 54 + 48) / 2;
       return { X0, X1, W, Y_MID, HALF_H: Y_MID - 6 };
     }
 
@@ -640,10 +834,12 @@
       const processCats = list => list.map(i => ({ ...i, displayName: capTitle(i.system || i.name) })).sort((a, b) => a.displayName.localeCompare(b.displayName, 'vi', { sensitivity: 'base' }));
 
       const cacheKey = "pandora_full_db_v13";
-      const cached = Storage.get(cacheKey);
+      const cached = await readFullDatabaseCache(cacheKey);
 
       // Nếu không phải force reload và đã có dữ liệu lưu trữ -> sử dụng ngay lập tức
-      if (!forceReload && cached?.datList?.length > 1 && cached?.gamesByCat) {
+      // Version 2 bổ sung danh sách URL ảnh đã được xác nhận trực tiếp từ cây thư mục.
+      // Nếu cache cũ chưa có chỉ mục ảnh, thử tải cây thư mục một lần để bổ sung.
+      if (!forceReload && cached?.imageIndexVersion === 2 && cached?.datList?.length > 1 && cached?.gamesByCat) {
         state.datList = processCats(cached.datList);
         state.gamesByCat = cached.gamesByCat;
         state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
@@ -693,6 +889,11 @@
           if (!res?.treeData?.tree) continue;
           const { source, treeData } = res;
           const cueBases = new Set(treeData.tree.filter(i => i.type === "blob" && /\.(cue|m3u|ccd|gdi)$/i.test(i.path)).map(i => i.path.substring(0, i.path.lastIndexOf('.')).toLowerCase()));
+          // Lập chỉ mục ảnh từ chính cây thư mục API. Không cần đoán URL hay hỏi nguồn khác
+          // nếu ảnh đã có sẵn trong repo.
+          const snapPathSet = new Set(treeData.tree
+            .filter(i => i.type === "blob" && /^snap\/.+\.png$/i.test(i.path))
+            .map(i => i.path));
 
           treeData.tree.forEach(item => {
             if (item.type === "blob" && isGameFile(item.path)) {
@@ -718,7 +919,16 @@
               if (!gamesByCat[sysKey]) gamesByCat[sysKey] = [];
               const cleanName = cleanTitle(fileName);
               if (cleanName) {
-                gamesByCat[sysKey].push({ name: cleanName, fullName: fileName, romUrl: buildDirectRomUrl(source, item.path), path: item.path, core: info.core });
+                const fileBase = fileName.split('/').pop().replace(/\.[^/.]+$/, '');
+                const isFbneo = /^(arcade|fbneo|fba|cps1|cps2|cps3|mame)$/i.test(String(catName || sysKey));
+                const imageNames = Array.from(new Set(isFbneo
+                  ? [cleanName, fileBase, cleanTitle(fileName)]
+                  : [fileBase, cleanName, cleanTitle(fileName)])).filter(Boolean);
+                const imageCandidates = imageNames
+                  .map(n => `snap/${catName}/${n}.png`)
+                  .filter(path => snapPathSet.has(path))
+                  .map(path => buildDirectRomUrl(source, path));
+                gamesByCat[sysKey].push({ name: cleanName, fullName: fileName, romUrl: buildDirectRomUrl(source, item.path), path: item.path, core: info.core, imageCandidates, imageUrl: imageCandidates[0] || "" });
                 if (!catMap.has(sysKey)) catMap.set(sysKey, { name: sysKey, folderName: catName, logo: info.logo, system: info.system, core: info.core, libretroSys: info.libretroSys });
               }
             }
@@ -733,8 +943,8 @@
             state.gamesByCat[catName] = gamesByCat[catName].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base', numeric: true }));
           }
 
-          // Lưu vĩnh viễn dữ liệu mới tải về LocalStorage
-          Storage.set(cacheKey, { datList: rawCatList, gamesByCat: state.gamesByCat });
+          // Lưu toàn bộ danh sách game vào IndexedDB, không nhồi dữ liệu lớn vào LocalStorage.
+          await saveFullDatabaseCache({ datList: rawCatList, gamesByCat: state.gamesByCat, imageIndexVersion: 2 });
         }
 
         state.currentDatIdx = Math.max(0, state.datList.findIndex(i => i.name === lastCat));
@@ -1023,16 +1233,19 @@
         ? Array.from(new Set([g.name, fileBase, cleanTitle(g.fullName)]))
         : Array.from(new Set([fileBase, g.name, cleanTitle(g.fullName)]));
       const filteredNames = names.filter(Boolean);
-      const candidates = [];
-
-      // Ưu tiên snap trong repo. Chỉ khi URL này lỗi mới thử Libretro.
-      for (const n of filteredNames) {
-        const encoded = encodeURIComponent(n);
-        candidates.push(`${RAW_BASE}snap/${catFolder}/${encoded}.png`);
-        candidates.push(`https://thumbnails.libretro.com/${libretroFolder}/Named_Snaps/${encoded}.png`);
+      // Ưu tiên các URL ảnh đã xác nhận tồn tại trong cây thư mục API.
+      // Với cache cũ/ngoại tuyến chưa có imageCandidates, giữ cách dò snap cũ để tương thích.
+      const candidates = Array.isArray(g.imageCandidates) ? [...g.imageCandidates] : [];
+      if (!Array.isArray(g.imageCandidates)) {
+        for (const n of filteredNames) {
+          candidates.push(`${RAW_BASE}snap/${catFolder}/${encodeURIComponent(n)}.png`);
+        }
       }
-
-      return candidates.filter(url => !failedUrls.has(url));
+      // Chỉ thử Libretro sau khi mọi ảnh đã có trong repo (nếu có) đều lỗi.
+      for (const n of filteredNames) {
+        candidates.push(`https://thumbnails.libretro.com/${libretroFolder}/Named_Snaps/${encodeURIComponent(n)}.png`);
+      }
+      return [...new Set(candidates)].filter(url => !failedUrls.has(url));
     }
 
     function resolveAndCacheImage(g, onDone) {
@@ -1044,7 +1257,10 @@
 
       // Persistent URL cache: dùng ngay, không request nguồn phụ.
       const cached = persistentImgMap[key];
-      if (cached && (cached === PLACEHOLDER_SVG || !failedUrls.has(cached))) {
+      const knownTreeImages = Array.isArray(g.imageCandidates) ? g.imageCandidates : [];
+      // Nếu cây thư mục xác nhận có ảnh, bỏ qua URL dự phòng/placeholder cũ để ưu tiên ảnh repo.
+      if (cached && ((cached === PLACEHOLDER_SVG && !knownTreeImages.length) ||
+          (cached !== PLACEHOLDER_SVG && !failedUrls.has(cached) && (!knownTreeImages.length || knownTreeImages.includes(cached))))) {
         imgCache.set(key, cached);
         return onDone?.(cached);
       }
@@ -1144,7 +1360,8 @@
     function updatePreview(g) {
       const img = $('preview-img'), favBtn = $('fav-btn'), dlBtn = $('dl-btn');
       if (!g || g.fullName?.startsWith('placeholder_')) {
-        img.src = EMPTY_GIF; img.classList.remove('is-placeholder', 'loading');
+        img.src = EMPTY_GIF; img.style.display = 'block'; img.classList.remove('is-placeholder', 'loading');
+        if ($('preview-no-image')) $('preview-no-image').style.display = 'none';
         if (favBtn) favBtn.style.display = 'none';
         if (dlBtn) dlBtn.style.display = 'none';
         return;
@@ -1158,6 +1375,8 @@
       // Chỉ hiện placeholder nhỏ nếu tất cả nguồn đều thất bại.
       // Dùng EMPTY_GIF trong lúc chờ để không có flash ảnh mặc định.
       img.classList.remove('is-placeholder');
+      img.style.display = 'block';
+      if ($('preview-no-image')) $('preview-no-image').style.display = 'none';
       img.classList.add('loading');
       img.style.width = '100%';
       img.style.height = '100%';
@@ -1179,10 +1398,14 @@
           img.style.maxHeight = '88px';
           img.style.minWidth = '88px';
           img.style.minHeight = '88px';
-          img.src = PLACEHOLDER_SVG;
+          img.src = EMPTY_GIF;
+          img.style.display = 'none';
+          if ($('preview-no-image')) $('preview-no-image').style.display = 'flex';
         } else {
           // Có URL thật: bỏ placeholder trước rồi mới gán ảnh thật.
           img.classList.remove('is-placeholder', 'loading');
+          img.style.display = 'block';
+          if ($('preview-no-image')) $('preview-no-image').style.display = 'none';
           img.style.width = '';
           img.style.height = '';
           img.style.maxWidth = '';
@@ -1199,7 +1422,9 @@
 
       // URL cache -> hiển thị tức thì, tuyệt đối không probe nguồn phụ.
       const cached = persistentImgMap[key];
-      if (cached && (cached === PLACEHOLDER_SVG || !failedUrls.has(cached))) {
+      const knownTreeImages = Array.isArray(g.imageCandidates) ? g.imageCandidates : [];
+      if (cached && ((cached === PLACEHOLDER_SVG && !knownTreeImages.length) ||
+          (cached !== PLACEHOLDER_SVG && !failedUrls.has(cached) && (!knownTreeImages.length || knownTreeImages.includes(cached))))) {
         imgCache.set(key, cached);
         return applySrc(cached);
       }
@@ -1375,6 +1600,7 @@
 
       window.onkeydown = e => {
         if ($('help-modal').classList.contains('active')) { if (e.key === 'Escape') closeHelpModal(); return; }
+        if ($('settings-modal').classList.contains('active')) { if (e.key === 'Escape') closeSettingsModal(); return; }
         if ($('game-player-modal').classList.contains('active')) { if (e.key === 'Escape') closeGamePlayer(); return; }
         if ($('inline-search-bar')?.classList.contains('active')) {
           if (e.key === 'Escape') return closeInlineSearch(true);
