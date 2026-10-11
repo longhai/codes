@@ -686,6 +686,8 @@ function getDisplayName(rawTitle) {
 /* ---------- Tải dữ liệu ---------- */
 const showLoader = m => { const pl = $('preview-loader'); if (pl) { pl.style.display = 'flex'; if ($('ld-t')) $('ld-t').innerText = m; } };
 const hideLoader = () => { const pl = $('preview-loader'); if (pl) pl.style.display = 'none'; };
+// Nhường cho trình duyệt vẽ loader trước khi làm việc nặng (parse JSON lớn), tránh treo giao diện
+const tick = (ms = 30) => new Promise(r => setTimeout(r, ms));
 function calcNumSlots() {
   const h = $('svg-container')?.clientHeight || (window.innerHeight * 0.55);
   state.numSlots = Math.max(5, Math.min(12, Math.floor((h - 70) / 54)));
@@ -753,14 +755,13 @@ function processTree(source, treeData, gamesByCat, catMap) {
 async function applyMapsToState(gamesByCat, catMap, saveCache) {
   const rawCatList = [...catMap.values()];
   if (!rawCatList.length) return false;
-  state.datList = processCats(rawCatList);
+  const prevCatName = state.datList[state.currentDatIdx]?.name; // chụp trước khi gán datList mới
   state.gamesByCat = {};
   for (const catName in gamesByCat) state.gamesByCat[catName] = gamesByCat[catName].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base', numeric: true }));
   if (saveCache) await saveFullDatabaseCache({ datList: rawCatList, gamesByCat: state.gamesByCat, imageIndexVersion: 2 });
   const lastCat = lsGet("pandora_last_cat");
   const keepIdx = state.datList.findIndex(i => i.name === lastCat);
-  const prevCat = state.datList[state.currentDatIdx]?.name;
-  state.currentDatIdx = Math.max(0, keepIdx !== -1 ? keepIdx : state.datList.findIndex(i => i.name === prevCat));
+  state.currentDatIdx = Math.max(0, keepIdx !== -1 ? keepIdx : state.datList.findIndex(i => i.name === prevCatName));
   const currCat = state.datList[state.currentDatIdx];
   state.allGames = state.gamesByCat[currCat?.name] || [];
   resetDatMaps();
@@ -777,13 +778,21 @@ async function loadFullDatabase(forceReload = false) {
     const gamesByCat = {}, catMap = new Map();
     let apiFailed = false, doneCount = 0, okCount = 0;
     const total = GAME_SOURCES.length;
+    // Xếp hàng các lần vẽ UI để 2 nguồn xong gần cùng lúc không giẫm nhau
+    let applyChain = Promise.resolve();
+    const queueApply = (save) => {
+      applyChain = applyChain.then(() => applyMapsToState(gamesByCat, catMap, save)).catch(e => console.warn("applyMapsToState lỗi:", e));
+      return applyChain;
+    };
     await Promise.all(GAME_SOURCES.map(async (repo) => {
       const source = { owner: "longhai", repo, branch: "main" };
       try {
-        showLoader(`ĐANG TẢI ${repo.toUpperCase()}... (${doneCount + 1}/${total})`);
+        showLoader(`ĐANG TẢI ${repo.toUpperCase()}...`);
         const resp = await fetch(`https://api.github.com/repos/${source.owner}/${source.repo}/git/trees/${source.branch}?recursive=1`);
         if (resp.status === 403 || resp.status === 429) { apiFailed = true; return; }
         if (!resp.ok) return;
+        showLoader(`ĐANG XỬ LÝ DỮ LIỆU ${repo.toUpperCase()}...`);
+        await tick(); // để loader kịp vẽ trước khi parse JSON nặng làm treo giao diện
         processTree(source, await resp.json(), gamesByCat, catMap);
         okCount++;
       } catch (e) { apiFailed = true; }
@@ -791,13 +800,20 @@ async function loadFullDatabase(forceReload = false) {
         doneCount++;
         // Hiện ngay nguồn nào xong trước (ps1 nhẹ xong trước, emu nặng xong sau) để không phải load lại trang
         if (okCount > 0) {
-          showLoader(`ĐANG TẢI... (${doneCount}/${total}) • ĐÃ XONG ${okCount} NGUỒN`);
-          await applyMapsToState(gamesByCat, catMap, false);
+          showLoader(`ĐANG VẼ GIAO DIỆN... (${doneCount}/${total})`);
+          await queueApply(false);
+        } else {
+          showLoader(`ĐANG TẢI... (${doneCount}/${total})`);
         }
       }
     }));
+    await applyChain;
     if (apiFailed && okCount === 0 && hasCache) { await applyCachedDb(cached, "HẾT LƯỢT API: DÙNG DỮ LIỆU ĐÃ LƯU", 2000); return; }
-    const saved = await applyMapsToState(gamesByCat, catMap, true);
+    showLoader("ĐANG LƯU DỮ LIỆU...");
+    const allOk = okCount === total;
+    // Không ghi đè cache khi một nguồn lỗi: tránh cache thiếu (vd: emu bị 403 còn ps1 ok) làm mất game ở lần mở sau
+    const saved = await queueApply(allOk);
+    if (!allOk && hasCache) { await applyCachedDb(cached, "MỘT NGUỒN LỖI: DÙNG DỮ LIỆU ĐÃ LƯU", 1500); return; }
     if (!saved && hasCache) { await applyCachedDb(cached, "LỖI KẾT NỐI: KHÔI PHỤC DỮ LIỆU ĐÃ LƯU", 1500); return; }
     hideLoader();
   } catch (e) {
