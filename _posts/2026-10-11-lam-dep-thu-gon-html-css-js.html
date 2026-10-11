@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Làm đẹp & Thu gọn HTML, CSS, JS</title>
+    <title>Web Code Craft - Làm đẹp & Thu gọn HTML, CSS, JS</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
@@ -88,6 +88,7 @@
         .sidebar{width: 320px; max-height: none}
         .sidebar-footer{margin-top: 0}
       }
+      /* Cài đặt dạng menu riêng, tối ưu điện thoại */
       .header-actions{display: flex; align-items: center; gap: 8px}
       .btn-settings{background: var(--border-color); color: var(--text-main); border: 1px solid var(--border-focus); padding: 9px 12px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 7px; font-size: 12px}
       .btn-settings:hover{background: var(--border-focus)}
@@ -170,7 +171,7 @@
                   <option value="compact">Làm đẹp gọn</option>
                   <option value="max">Nén tối đa</option>
                 </select>
-                <p class="settings-hint">Nhẹ: làm đẹp HTML, giữ CSS gần bố cục ban đầu. Gọn: CSS mỗi selector một dòng; JavaScript được định dạng gọn, hạn chế dòng trống. Nén tối đa: giảm dung lượng HTML/CSS/JS.</p>
+                <p class="settings-hint">Nhẹ: làm đẹp HTML, giữ CSS gần bố cục ban đầu. Gọn: CSS mỗi selector một dòng; JavaScript giảm dòng trống nhưng vẫn giữ cấu trúc khối lệnh và thụt lề. Nén tối đa: giảm dung lượng HTML/CSS/JS.</p>
               </div>
               <div class="form-group"><label class="form-label" for="indent-size">Kiểu thụt lề HTML / CSS / JS</label><select id="indent-size" class="form-select">
                   <option value="2" selected>2 khoảng trắng</option>
@@ -206,7 +207,7 @@
       <footer class="app-footer"><span>Giao diện đơn giản hóa - Kiểm soát mã nguồn HTML/CSS/JS</span><span class="footer-copyright">Copyright © 2026 by Long Hải</span></footer>
     </div>
     <script>
-    const $ = e => document.getElementById(e),
+    const $ = t => document.getElementById(t),
       dom = {
         btnBeautify: $("btn-beautify"),
         beautifyLevel: $("beautify-level"),
@@ -228,10 +229,6 @@
         toastText: $("status-text")
       };
     let editor, toastTimeout, historyStack = [];
-
-    function updateProcessButtonLabel() {
-      dom.btnBeautify.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> ${{light:"Làm đẹp nhẹ",compact:"Làm đẹp gọn",max:"Nén tối đa"}[dom.beautifyLevel.value]||"Xử lý code"}`
-    }
     window.addEventListener("DOMContentLoaded", (() => {
       editor = CodeMirror.fromTextArea($("code-editor"), {
         mode: "htmlmixed",
@@ -243,312 +240,436 @@
         indentUnit: 4,
         lineWrapping: !1
       }), editor.setValue(""), editor.on("change", updateStats), setTimeout((() => editor.refresh()), 100), updateProcessButtonLabel(), dom.btnBeautify.addEventListener("click", (() => processCode("beautify"))), dom.beautifyLevel.addEventListener("change", updateProcessButtonLabel), dom.btnSettings.addEventListener("click", (() => {
-        dom.settingsOverlay.classList.remove("hidden"), setTimeout((() => dom.settingsOverlay.querySelector("select").focus()), 30)
+        dom.settingsOverlay.classList.remove("hidden");
+        setTimeout(() => dom.settingsOverlay.querySelector("select").focus(), 30)
       })), dom.btnSettingsClose.addEventListener("click", (() => dom.settingsOverlay.classList.add("hidden"))), dom.settingsOverlay.addEventListener("click", (e => {
-        e.target === dom.settingsOverlay && dom.settingsOverlay.classList.add("hidden")
-      })), document.addEventListener("keydown", (e => {
-        "Escape" === e.key && dom.settingsOverlay.classList.add("hidden")
-      })), dom.btnUndo.addEventListener("click", (() => {
+        if (e.target === dom.settingsOverlay) dom.settingsOverlay.classList.add("hidden")
+      })), document.addEventListener("keydown", e => {
+        if (e.key === "Escape") dom.settingsOverlay.classList.add("hidden")
+      }), dom.btnUndo.addEventListener("click", (() => {
         historyStack.length && (editor.setValue(historyStack.pop()), showToast("Đã hoàn tác", "info"), updateUndoButtonState(), dom.compressionRatio.classList.add("hidden"))
       })), dom.btnClear.addEventListener("click", (() => {
         editor.setValue(""), historyStack = [], updateUndoButtonState(), dom.compressionRatio.classList.add("hidden"), showToast("Đã dọn sạch", "info")
       })), dom.btnCopy.addEventListener("click", (async () => {
-        const e = editor.getValue();
-        if (!e.trim()) return showToast("Không có code!", "warning");
+        const t = editor.getValue();
+        if (!t.trim()) return showToast("Không có code!", "warning");
         try {
-          if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(e);
-          else {
-            const t = document.createElement("textarea");
-            t.value = e, t.setAttribute("readonly", ""), t.style.position = "fixed", t.style.opacity = "0", document.body.appendChild(t), t.select();
-            const n = document.execCommand("copy");
-            if (document.body.removeChild(t), !n) throw new Error("Clipboard copy failed")
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(t)
+          } else {
+            const e = document.createElement("textarea");
+            e.value = t;
+            e.setAttribute("readonly", "");
+            e.style.position = "fixed";
+            e.style.opacity = "0";
+            document.body.appendChild(e);
+            e.select();
+            const ok = document.execCommand("copy");
+            document.body.removeChild(e);
+            if (!ok) throw new Error("Clipboard copy failed")
           }
           showToast("Đã sao chép!", "success")
-        } catch (e) {
-          showToast("Không thể sao chép tự động. Hãy chọn và sao chép thủ công.", "error"), console.error(e)
+        } catch (err) {
+          showToast("Không thể sao chép tự động. Hãy chọn và sao chép thủ công.", "error");
+          console.error(err)
         }
       }))
     }));
+    function updateProcessButtonLabel() {
+      const labels = {
+        light: "Làm đẹp nhẹ",
+        compact: "Làm đẹp gọn",
+        max: "Nén tối đa"
+      };
+      dom.btnBeautify.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> ${labels[dom.beautifyLevel.value]||"Xử lý code"}`
+    }
     const updateUndoButtonState = () => {
-        const e = historyStack.length > 0;
-        dom.btnUndo.disabled = !e, dom.btnUndo.classList.toggle("btn-disabled", !e)
+        const t = historyStack.length > 0;
+        dom.btnUndo.disabled = !t, dom.btnUndo.classList.toggle("btn-disabled", !t)
       },
       updateStats = () => {
         editor && (dom.editorStats.textContent = `Dòng: ${editor.lineCount()} | Ký tự: ${editor.getValue().length}`)
       };
     async function processCode() {
-      const e = editor.getValue();
-      if (!e.trim()) return showToast("Nhập code trước!", "warning");
-      const t = dom.beautifyLevel.value;
+      const source = editor.getValue();
+      if (!source.trim()) return showToast("Nhập code trước!", "warning");
+      const mode = dom.beautifyLevel.value;
       showToast("Đang xử lý...", "info");
       try {
-        if (historyStack.push(e), historyStack.length > 10 && historyStack.shift(), updateUndoButtonState(), "max" === t) {
-          const t = await minifyHTMLwithCSSAndJS(e);
-          editor.setValue(t);
-          const n = e.length ? Math.round(100 * (1 - t.length / e.length)) : 0;
-          dom.compressionRatio.textContent = `Giảm: ${n}%`, dom.compressionRatio.classList.remove("hidden"), showToast("Đã nén code tối đa!", "success")
+        historyStack.push(source);
+        if (historyStack.length > 10) historyStack.shift();
+        updateUndoButtonState();
+        if (mode === "max") {
+          const result = await minifyHTMLwithCSSAndJS(source);
+          editor.setValue(result);
+          const ratio = source.length ? Math.round(100 * (1 - result.length / source.length)) : 0;
+          dom.compressionRatio.textContent = `Giảm: ${ratio}%`;
+          dom.compressionRatio.classList.remove("hidden");
+          showToast("Đã nén code tối đa!", "success")
         } else {
-          const n = dom.indentSize.value;
-          let s = html_beautify(e, {
-            indent_size: "tab" === n ? 1 : parseInt(n),
-            indent_char: "tab" === n ? "\t" : " ",
+          const indent = dom.indentSize.value;
+          let result = html_beautify(source, {
+            indent_size: indent === "tab" ? 1 : parseInt(indent),
+            indent_char: indent === "tab" ? "\t" : " ",
             max_preserve_newlines: parseInt(dom.maxPreserve.value),
             indent_inner_html: dom.optIndentInner.checked,
             indent_scripts: dom.optIndentScripts.checked ? "normal" : "keep",
             wrap_line_length: 0
           });
-          "compact" === t && (s = compactEmbeddedCss(s), s = compactEmbeddedJs(s)), editor.setValue(s), dom.compressionRatio.classList.add("hidden"), showToast("compact" === t ? "Làm đẹp gọn thành công!" : "Làm đẹp nhẹ thành công!", "success")
+          if (mode === "compact") {
+            result = compactEmbeddedCss(result);
+            result = compactEmbeddedJs(result);
+          }
+          editor.setValue(result);
+          dom.compressionRatio.classList.add("hidden");
+          showToast(mode === "compact" ? "Làm đẹp gọn thành công!" : "Làm đẹp nhẹ thành công!", "success")
         }
         updateStats()
-      } catch (e) {
-        historyStack.pop(), updateUndoButtonState(), dom.compressionRatio.classList.add("hidden"), showToast("Lỗi khi xử lý code: " + (e && e.message ? e.message : "không xác định"), "error"), console.error(e)
+      } catch (error) {
+        historyStack.pop();
+        updateUndoButtonState();
+        dom.compressionRatio.classList.add("hidden");
+        showToast("Lỗi khi xử lý code: " + (error && error.message ? error.message : "không xác định"), "error");
+        console.error(error)
       }
     }
-
-    function compactEmbeddedJs(e) {
-      return e.replace(/(<script\b[^>]*>)([\s\S]*?)(<\/script\s*>)/gi, ((e, t, n, s, o, i) => {
-        if (/\bsrc\s*=/i.test(t)) return e;
-        const a = t.match(/\btype\s*=\s*["']([^"']+)["']/i);
-        if (a && !/(?:java|ecma)script|module/i.test(a[1]) && !/text\/javascript/i.test(a[1])) return e;
-        if (!n.trim()) return e;
+    /* Làm gọn JavaScript mà vẫn giữ cấu trúc khối lệnh dễ đọc.
+       Không xử lý script có src hoặc script chứa dữ liệu không phải JavaScript. */
+    function compactEmbeddedJs(html) {
+      return html.replace(/(<script\b[^>]*>)([\s\S]*?)(<\/script\s*>)/gi, (all, open, js, close, offset, whole) => {
+        // Bỏ qua script lấy từ URL, script rỗng và các khối dữ liệu không phải JavaScript.
+        if (/\bsrc\s*=/i.test(open) || !js.trim()) return all;
+        const typeMatch = open.match(/\btype\s*=\s*["']([^"']+)["']/i);
+        if (typeMatch && !/(?:java|ecma)script|module/i.test(typeMatch[1]) && !/text\/javascript/i.test(typeMatch[1])) return all;
         try {
-          const e = dom.indentSize.value,
-            a = "tab" === e ? 1 : parseInt(e) || 2,
-            r = "tab" === e ? "\t" : " ",
-            c = i.lastIndexOf("\n", o) + 1,
-            d = (i.slice(c, o).match(/^[ \t]*/) || [""])[0],
-            l = js_beautify(n, {
-              indent_size: a,
-              indent_char: r,
-              preserve_newlines: !1,
-              max_preserve_newlines: 1,
-              wrap_line_length: 0,
-              brace_style: "collapse,preserve-inline",
-              keep_array_indentation: !1,
-              end_with_newline: !1
-            }).trim();
-          return t + "\n" + l.split("\n").map((e => e ? d + e : e)).join("\n") + "\n" + d + s
-        } catch (t) {
-          return console.warn("Không thể định dạng JavaScript gọn, giữ nguyên script:", t), e
+          const indentValue = dom.indentSize.value;
+          const indentSize = indentValue === "tab" ? 1 : (parseInt(indentValue) || 2);
+          const indentChar = indentValue === "tab" ? "\t" : " ";
+          const lineStart = whole.lastIndexOf("\n", offset) + 1;
+          const baseIndent = (whole.slice(lineStart, offset).match(/^[ \t]*/) || [""])[0];
+          let formatted = js_beautify(js, {
+            indent_size: indentSize,
+            indent_char: indentChar,
+            preserve_newlines: false,
+            max_preserve_newlines: 0,
+            wrap_line_length: 0,
+            brace_style: "collapse,preserve-inline",
+            keep_array_indentation: false,
+            end_with_newline: false
+          }).trim();
+          // Không để dòng trống chen giữa các câu lệnh; vẫn giữ nguyên cấu trúc khối,
+          // dấu ngoặc và mức thụt lề do js-beautify tạo ra.
+          formatted = formatted.split("\n").filter(line => line.trim() !== "").join("\n");
+          const nested = formatted.split("\n").map(line => baseIndent + line).join("\n");
+          return open + "\n" + nested + "\n" + baseIndent + close;
+        } catch (error) {
+          console.warn("Không thể định dạng JavaScript gọn, giữ nguyên script:", error);
+          return all;
         }
-      }))
+      });
     }
-
-    function beautifyEmbeddedCss(e) {
-      const t = "tab" === dom.indentSize.value ? 1 : parseInt(dom.indentSize.value) || 2,
-        n = "tab" === dom.indentSize.value ? "\t" : " ";
-      return e.replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style\s*>)/gi, ((e, s, o, i) => s + "\n" + css_beautify(o, {
-        indent_size: t,
-        indent_char: n,
-        selector_separator_newline: !0,
-        newline_between_rules: !0,
-        preserve_newlines: !0,
-        end_with_newline: !1
-      }) + "\n" + i))
+    function beautifyEmbeddedCss(html) {
+      const indentSize = dom.indentSize.value === "tab" ? 1 : (parseInt(dom.indentSize.value) || 2);
+      const indentChar = dom.indentSize.value === "tab" ? "\t" : " ";
+      return html.replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style\s*>)/gi, (all, open, css, close) => {
+        const pretty = css_beautify(css, {
+          indent_size: indentSize,
+          indent_char: indentChar,
+          selector_separator_newline: true,
+          newline_between_rules: true,
+          preserve_newlines: true,
+          end_with_newline: false
+        });
+        return open + "\n" + pretty + "\n" + close;
+      });
     }
-
-    function compactEmbeddedCss(e) {
-      return e.replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style\s*>)/gi, ((e, t, n, s, o, i) => {
-        const a = i.lastIndexOf("\n", o) + 1,
-          r = (i.slice(a, o).match(/^[ \t]*/) || [""])[0];
+    function compactEmbeddedCss(html) {
+      return html.replace(/(<style\b[^>]*>)([\s\S]*?)(<\/style\s*>)/gi, (all, open, css, close, offset, whole) => {
+        const lineStart = whole.lastIndexOf("\n", offset) + 1;
+        const baseIndent = (whole.slice(lineStart, offset).match(/^[ \t]*/) || [""])[0];
         try {
-          const e = dom.indentSize.value,
-            o = "tab" === e ? "\t" : " ".repeat(parseInt(e) || 2);
-          return t + "\n" + formatCssPandora(n, o, r) + "\n" + r + s
+          const indentValue = dom.indentSize.value;
+          const indentUnit = indentValue === "tab" ? "\t" : " ".repeat(parseInt(indentValue) || 2);
+          const formatted = formatCssPandora(css, indentUnit, baseIndent);
+          return open + "\n" + formatted + "\n" + baseIndent + close;
         } catch (e) {
           console.warn("Không thể định dạng CSS kiểu Pandora, dùng CSS beautifier:", e);
-          return t + "\n" + css_beautify(n, {
-            indent_size: "tab" === dom.indentSize.value ? 1 : parseInt(dom.indentSize.value) || 2,
-            indent_char: "tab" === dom.indentSize.value ? "\t" : " "
-          }).split("\n").map((e => e ? r + e : e)).join("\n") + "\n" + r + s
+          const pretty = css_beautify(css, {
+            indent_size: dom.indentSize.value === "tab" ? 1 : parseInt(dom.indentSize.value) || 2,
+            indent_char: dom.indentSize.value === "tab" ? "\t" : " "
+          });
+          return open + "\n" + pretty.split("\n").map(line => line ? baseIndent + line : line).join("\n") + "\n" + baseIndent + close;
         }
-      }))
+      });
     }
-
-    function formatCssPandora(e, t, n = "") {
-      const s = e.replace(/\r\n?/g, "\n").trim();
-      if (!s) return "";
-      const o = (e, t) => {
-        for (; t < e.length && /\s/.test(e[t]);) t++;
-        return t
+    /* Định dạng CSS kiểu Pandora:
+       - Mỗi selector/quy tắc thông thường nằm trên một dòng.
+       - Các thuộc tính trong cùng quy tắc nằm cùng hàng.
+       - Các khối @media/@supports/... vẫn xuống dòng và thụt lề.
+       - Không làm thay đổi khoảng trắng nằm trong chuỗi, URL hoặc comment. */
+    function formatCssPandora(css, indentUnit, baseIndent = "") {
+      const source = css.replace(/\r\n?/g, "\n").trim();
+      if (!source) return "";
+      const skipSpace = (s, i) => {
+        while (i < s.length && /\s/.test(s[i])) i++;
+        return i
       };
-
-      function i(e, t) {
-        let n = "",
-          s = !1,
-          o = 0,
-          i = 0;
-        for (let a = t; a < e.length; a++) {
-          const t = e[a],
-            r = e[a + 1];
-          if (s) "*" === t && "/" === r && (s = !1, a++);
-          else if (n) {
-            if ("\\" === t) {
-              a++;
-              continue
+      function scanBoundary(s, start) {
+        let quote = "",
+          comment = false,
+          paren = 0,
+          bracket = 0;
+        for (let i = start; i < s.length; i++) {
+          const c = s[i],
+            n = s[i + 1];
+          if (comment) {
+            if (c === "*" && n === "/") {
+              comment = false;
+              i++;
             }
-            t === n && (n = "")
-          } else if ("/" !== t || "*" !== r)
-            if ('"' !== t && "'" !== t)
-              if ("(" !== t)
-                if (")" !== t)
-                  if ("[" !== t)
-                    if ("]" !== t) {
-                      if (0 === o && 0 === i && ("{" === t || ";" === t || "}" === t)) return {
-                        index: a,
-                        char: t
-                      }
-                    } else i = Math.max(0, i - 1);
-          else i++;
-          else o = Math.max(0, o - 1);
-          else o++;
-          else n = t;
-          else s = !0, a++
-        }
-        return {
-          index: e.length,
-          char: ""
-        }
-      }
-
-      function a(e) {
-        let t = "",
-          n = "",
-          s = !1,
-          o = !1;
-        for (let i = 0; i < e.length; i++) {
-          const a = e[i],
-            r = e[i + 1];
-          if (s) t += a, "*" === a && "/" === r && (t += "/", i++, s = !1);
-          else if (n) {
-            if (t += a, "\\" === a) {
-              i + 1 < e.length && (t += e[++i]);
-              continue
-            }
-            a === n && (n = "")
-          } else if ("/" !== a || "*" !== r)
-            if ('"' !== a && "'" !== a)
-              if (/\s/.test(a)) o = !0;
-              else if (":{},;".includes(a)) o = !1, t = t.replace(/[ \t]+$/, ""), t += a, "," === a && (t += " ");
-          else {
-            if (o && t && !/[ \t\n]$/.test(t)) {
-              const e = t[t.length - 1];
-              "([{".includes(e) || ")]".includes(a) || (t += " ")
-            }
-            o = !1, t += a
-          } else o && t && !/[ \t\n]$/.test(t) && (t += " "), o = !1, n = a, t += a;
-          else o && t && !/[ \t\n]$/.test(t) && (t += " "), o = !1, t += "/*", i++, s = !0
-        }
-        return t.trim()
-      }
-
-      function r(e, t) {
-        let n = 1,
-          s = "",
-          o = !1;
-        for (let i = t + 1; i < e.length; i++) {
-          const t = e[i],
-            a = e[i + 1];
-          if (o) "*" === t && "/" === a && (o = !1, i++);
-          else if (s) {
-            if ("\\" === t) {
+            continue
+          }
+          if (quote) {
+            if (c === "\\") {
               i++;
               continue
             }
-            t === s && (s = "")
-          } else if ("/" !== t || "*" !== a)
-            if ('"' !== t && "'" !== t) {
-              if ("{" === t) n++;
-              else if ("}" === t && 0 == --n) return i
-            } else s = t;
-          else o = !0, i++
-        }
-        return e.length
-      }
-      return function e(s, c) {
-        let d = 0,
-          l = [];
-        for (; d < s.length;) {
-          for (d = o(s, d); s.startsWith("/*", d);) {
-            const e = s.indexOf("*/", d + 2);
-            if (e < 0) return l.push(n + t.repeat(c) + s.slice(d).trim()), l;
-            l.push(n + t.repeat(c) + s.slice(d, e + 2).trim()), d = o(s, e + 2)
+            if (c === quote) quote = "";
+            continue
           }
-          if (d >= s.length) break;
-          const p = i(s, d),
-            u = s.slice(d, p.index).trim();
-          if (u || "}" !== p.char)
-            if (";" !== p.char)
-              if ("}" !== p.char) {
-                if ("{" !== p.char) {
-                  u && l.push(n + t.repeat(c) + a(u));
-                  break
-                } {
-                  const o = r(s, p.index),
-                    i = s.slice(p.index + 1, o),
-                    m = a(u);
-                  if (/^@(?:media|supports|container|layer|document|scope|keyframes|-webkit-keyframes|starting-style)\b/i.test(m)) l.push(n + t.repeat(c) + m + "{"), l.push(...e(i, c + 1)), l.push(n + t.repeat(c) + "}");
-                  else {
-                    const e = a(i).replace(/;\s*$/, "");
-                    l.push(n + t.repeat(c) + m + "{" + e + "}")
-                  }
-                  d = o < s.length ? o + 1 : s.length
-                }
-              } else u && l.push(n + t.repeat(c) + a(u)), d = p.index + 1;
-          else u && l.push(n + t.repeat(c) + a(u) + ";"), d = p.index + 1;
-          else d = p.index + 1
+          if (c === "/" && n === "*") {
+            comment = true;
+            i++;
+            continue
+          }
+          if (c === '"' || c === "'") {
+            quote = c;
+            continue
+          }
+          if (c === "(") {
+            paren++;
+            continue
+          }
+          if (c === ")") {
+            paren = Math.max(0, paren - 1);
+            continue
+          }
+          if (c === "[") {
+            bracket++;
+            continue
+          }
+          if (c === "]") {
+            bracket = Math.max(0, bracket - 1);
+            continue
+          }
+          if (paren === 0 && bracket === 0 && (c === "{" || c === ";" || c === "}")) return {
+            index: i,
+            char: c
+          };
         }
-        return l
-      }(s, 1).join("\n")
-    }
-    async function minifyHTMLwithCSSAndJS(e) {
-      const t = [],
-        n = [];
-      let s = e.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, ((e, n) => {
-        const s = `___JS_${t.length}___`;
-        return t.push({
-          fullTag: e,
-          content: n,
-          placeholder: s
-        }), s
-      })).replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, ((e, t) => {
-        const s = `___CSS_${n.length}___`;
-        return n.push({
-          fullTag: e,
-          content: t,
-          placeholder: s
-        }), s
-      }));
-      s = s.replace(/<!--(?!\[if)[\s\S]*?-->/g, "").replace(/\s+/g, " ").replace(/>\s+</g, "><").trim();
-      for (const e of n) {
-        const t = e.content.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\s+/g, " ").replace(/\s*([\{\}:;,])\s*/g, "$1").replace(/;\}/g, "}").trim();
-        s = s.replace(e.placeholder, (() => e.fullTag.replace(e.content, t)))
+        return {
+          index: s.length,
+          char: ""
+        };
       }
-      for (const n of t) {
-        let t = n.content;
-        if (n.content.trim()) try {
-          const e = await Terser.minify(n.content, {
+      function safeCompact(s) {
+        let out = "",
+          quote = "",
+          comment = false,
+          pendingSpace = false;
+        for (let i = 0; i < s.length; i++) {
+          const c = s[i],
+            n = s[i + 1];
+          if (comment) {
+            out += c;
+            if (c === "*" && n === "/") {
+              out += "/";
+              i++;
+              comment = false
+            }
+            continue
+          }
+          if (quote) {
+            out += c;
+            if (c === "\\") {
+              if (i + 1 < s.length) out += s[++i];
+              continue
+            }
+            if (c === quote) quote = "";
+            continue
+          }
+          if (c === "/" && n === "*") {
+            if (pendingSpace && out && !/[ \t\n]$/.test(out)) out += " ";
+            pendingSpace = false;
+            out += "/*";
+            i++;
+            comment = true;
+            continue
+          }
+          if (c === '"' || c === "'") {
+            if (pendingSpace && out && !/[ \t\n]$/.test(out)) out += " ";
+            pendingSpace = false;
+            quote = c;
+            out += c;
+            continue
+          }
+          if (/\s/.test(c)) {
+            pendingSpace = true;
+            continue
+          }
+          if (":{},;".includes(c)) {
+            pendingSpace = false;
+            out = out.replace(/[ \t]+$/, "");
+            out += c;
+            if (c === ",") out += " ";
+            continue;
+          }
+          if (pendingSpace && out && !/[ \t\n]$/.test(out)) {
+            const prev = out[out.length - 1];
+            if (!"([{".includes(prev) && !")]".includes(c)) out += " ";
+          }
+          pendingSpace = false;
+          out += c;
+        }
+        return out.trim();
+      }
+      function parseRules(s, depth) {
+        let i = 0,
+          lines = [];
+        while (i < s.length) {
+          i = skipSpace(s, i);
+          while (s.startsWith("/*", i)) {
+            const end = s.indexOf("*/", i + 2);
+            if (end < 0) {
+              lines.push(baseIndent + indentUnit.repeat(depth) + s.slice(i).trim());
+              return lines
+            }
+            lines.push(baseIndent + indentUnit.repeat(depth) + s.slice(i, end + 2).trim());
+            i = skipSpace(s, end + 2);
+          }
+          if (i >= s.length) break;
+          const b = scanBoundary(s, i);
+          const head = s.slice(i, b.index).trim();
+          if (!head && b.char === "}") {
+            i = b.index + 1;
+            continue
+          }
+          if (b.char === ";") {
+            if (head) lines.push(baseIndent + indentUnit.repeat(depth) + safeCompact(head) + ";");
+            i = b.index + 1;
+            continue;
+          }
+          if (b.char === "}") {
+            if (head) lines.push(baseIndent + indentUnit.repeat(depth) + safeCompact(head));
+            i = b.index + 1;
+            continue;
+          }
+          if (b.char === "{") {
+            const close = findMatchingBrace(s, b.index);
+            const inner = s.slice(b.index + 1, close);
+            const compactHead = safeCompact(head);
+            const isContainer = /^@(?:media|supports|container|layer|document|scope|keyframes|-webkit-keyframes|starting-style)\b/i.test(compactHead);
+            if (isContainer) {
+              lines.push(baseIndent + indentUnit.repeat(depth) + compactHead + "{");
+              lines.push(...parseRules(inner, depth + 1));
+              lines.push(baseIndent + indentUnit.repeat(depth) + "}");
+            } else {
+              const body = safeCompact(inner).replace(/;\s*$/, "");
+              lines.push(baseIndent + indentUnit.repeat(depth) + compactHead + "{" + body + "}");
+            }
+            i = close < s.length ? close + 1 : s.length;
+            continue;
+          }
+          if (head) lines.push(baseIndent + indentUnit.repeat(depth) + safeCompact(head));
+          break;
+        }
+        return lines;
+      }
+      function findMatchingBrace(s, open) {
+        let level = 1,
+          quote = "",
+          comment = false;
+        for (let i = open + 1; i < s.length; i++) {
+          const c = s[i],
+            n = s[i + 1];
+          if (comment) {
+            if (c === "*" && n === "/") {
+              comment = false;
+              i++
+            }
+            continue
+          }
+          if (quote) {
+            if (c === "\\") {
+              i++;
+              continue
+            }
+            if (c === quote) quote = "";
+            continue
+          }
+          if (c === "/" && n === "*") {
+            comment = true;
+            i++;
+            continue
+          }
+          if (c === '"' || c === "'") {
+            quote = c;
+            continue
+          }
+          if (c === "{") level++;
+          else if (c === "}" && --level === 0) return i;
+        }
+        return s.length;
+      }
+      return parseRules(source, 1).join("\n");
+    }
+    async function minifyHTMLwithCSSAndJS(t) {
+      const e = [],
+        o = [];
+      let n = t.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, ((t, o) => {
+        const n = `___JS_${e.length}___`;
+        return e.push({
+          fullTag: t,
+          content: o,
+          placeholder: n
+        }), n
+      })).replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, ((t, e) => {
+        const n = `___CSS_${o.length}___`;
+        return o.push({
+          fullTag: t,
+          content: e,
+          placeholder: n
+        }), n
+      }));
+      n = n.replace(/<!--(?!\[if)[\s\S]*?-->/g, "").replace(/\s+/g, " ").replace(/>\s+</g, "><").trim();
+      for (const t of o) {
+        const e = t.content.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\s+/g, " ").replace(/\s*([\{\}:;,])\s*/g, "$1").replace(/;\}/g, "}").trim();
+        n = n.replace(t.placeholder, (() => t.fullTag.replace(t.content, e)))
+      }
+      for (const t of e) {
+        let e = t.content;
+        if (t.content.trim()) try {
+          const o = await Terser.minify(t.content, {
             mangle: dom.optMangle.checked,
             toplevel: dom.optToplevel.checked,
             compress: !0
           });
-          e.code && (t = e.code.trim())
-        } catch (e) {
-          console.warn(e)
+          o.code && (e = o.code.trim())
+        } catch (t) {
+          console.warn(t)
         }
-        s = s.replace(n.placeholder, (() => n.fullTag.replace(n.content, t)))
+        n = n.replace(t.placeholder, (() => t.fullTag.replace(t.content, e)))
       }
-      return s
+      return n
     }
-
-    function showToast(e, t = "info") {
-      const n = {
+    function showToast(t, e = "info") {
+      const o = {
         success: "toast-success",
         error: "toast-error",
         warning: "toast-warning",
         info: "toast-info"
       };
-      dom.toastText.textContent = e, dom.toast.className = `toast toast-show ${n[t]||n.info}`, clearTimeout(toastTimeout), toastTimeout = setTimeout((() => {
+      dom.toastText.textContent = t, dom.toast.className = `toast toast-show ${o[e]||o.info}`, clearTimeout(toastTimeout), toastTimeout = setTimeout((() => {
         dom.toast.className = "toast"
       }), 3e3)
     }
