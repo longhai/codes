@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Demo nghe nhạc từ Google Drive</title>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  :root { color-scheme: dark; }
+  html, body { overflow-x: hidden; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #14161c; color: #eee; margin: 0; padding: 58px 0 148px; }
+  #topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; background: #1e222c; border-bottom: 1px solid #2a2f3b; }
+  .topbar-text { flex: 1; min-width: 0; }
+  .app-title { font-size: 16px; font-weight: 700; }
+  #settingsBtn, #searchBtn { background: none; border: none; cursor: pointer; padding: 4px 6px; color: #eee; flex: 0 0 auto; display: flex; align-items: center; }
+  #settingsBtn .material-icons, #searchBtn .material-icons { font-size: 24px; }
+  #searchbar { display: none; position: fixed; top: 58px; left: 0; right: 0; z-index: 19; background: #1e222c; border-bottom: 1px solid #2a2f3b; padding: 8px 12px; }
+  #searchbar.open { display: flex; gap: 8px; }
+  #searchbar input { flex: 1; min-width: 0; padding: 10px; border-radius: 8px; border: 1px solid #333a48; background: #14161c; color: #eee; font-size: 16px; }
+  #searchClear { background: none; border: none; color: #99a; cursor: pointer; padding: 4px 8px; flex: 0 0 auto; display: flex; align-items: center; }
+  body.search-open { padding-top: 116px; }
+  #status { font-size: 11px; color: #99a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  #status.err { color: #ff7b7b; }
+  ul { list-style: none; padding: 6px 10px; margin: 0; }
+  li { background: #1e222c; border-radius: 8px; padding: 9px 10px; display: flex; justify-content: space-between; align-items: center; gap: 6px; cursor: pointer; min-width: 0; margin-bottom: 6px; }
+  li.playing { background: #25324a; border: 1px solid #4c8dff; }
+  li.playing .name { color: #8ab4ff; font-weight: 700; }
+  li .name { font-size: 14px; word-break: break-all; }
+  li .track-main { flex: 1; min-width: 0; }
+  li .folder { font-size: 11px; color: #667; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+  li .size { font-size: 11px; color: #99a; white-space: nowrap; }
+  .album-head { display: flex; align-items: center; gap: 8px; background: #14161c; border-radius: 0; padding: 10px; font-size: 14px; font-weight: 700; color: #eee; cursor: pointer; min-width: 0; margin-bottom: 2px; }
+  .album-head .arrow { color: #4c8dff; flex: 0 0 auto; display: flex; align-items: center; }
+  .album-head .album-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #empty { text-align: center; color: #99a; padding: 48px 24px; font-size: 14px; line-height: 1.6; }
+  #bar { position: fixed; left: 0; right: 0; bottom: 0; background: #1e222c; padding: 8px 12px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid #2a2f3b; }
+  #nowRow { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  #now { flex: 1; min-width: 0; font-size: 13px; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #gotoBtn { background: none; border: none; color: #4c8dff; font-size: 18px; cursor: pointer; padding: 2px 6px; flex: 0 0 auto; }
+  #progressRow { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  #timeCur, #timeTotal { font-size: 11px; color: #99a; flex: 0 0 auto; min-width: 38px; }
+  #timeTotal { text-align: right; }
+  #seekBar { flex: 1; min-width: 0; -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px; background: #3a4152; outline: none; }
+  #seekBar::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #4c8dff; cursor: pointer; }
+  #seekBar::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #4c8dff; border: none; cursor: pointer; }
+  #controlsRow { display: flex; align-items: center; justify-content: center; gap: 18px; }
+  #controlsRow button { background: none; border: none; color: #99a; cursor: pointer; padding: 4px 8px; min-width: 44px; min-height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+  #controlsRow .material-icons { font-size: 26px; }
+  #playBtn .material-icons { font-size: 34px; }
+  #playBtn { color: #4c8dff !important; }
+  #shuffleBtn.active, #repeatBtn.active { background: #4c8dff; color: #fff; }
+  audio { width: 100%; max-width: 100%; display: block; }
+  .modal { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.6); display: flex; align-items: flex-start; justify-content: center; padding: 24px 16px; overflow-y: auto; }
+  .modal.hidden { display: none; }
+  .modal-box { background: #1e222c; border: 1px solid #2a2f3b; border-radius: 14px; padding: 16px; width: 100%; max-width: 420px; }
+  .modal-head { display: flex; justify-content: space-between; align-items: center; font-size: 17px; font-weight: 700; margin-bottom: 12px; }
+  #closeSettings { background: none; border: none; color: #99a; font-size: 18px; cursor: pointer; padding: 4px 8px; }
+  .src-manage-head { font-size: 14px; font-weight: 700; margin: 14px 0 8px; }
+  #srcList { list-style: none; padding: 0; margin: 0 0 4px; }
+  #srcList li { padding: 6px 10px; cursor: pointer; margin-bottom: 2px; }
+  #srcList li span:first-child { font-size: 14px; }
+  #srcList li.src-active { outline: 2px solid #4c8dff; }
+  .src-del, .src-edit, .src-ref { background: none; border: none; font-size: 16px; cursor: pointer; padding: 4px; }
+  .src-more { background: none; border: none; cursor: pointer; padding: 2px 6px; color: #99a; display: flex; align-items: center; }
+  .src-menu { position: fixed; z-index: 60; background: #2a2f3b; border: 1px solid #3a4152; border-radius: 10px; padding: 4px; min-width: 170px; box-shadow: 0 4px 16px rgba(0,0,0,.5); }
+  .src-menu.hidden { display: none; }
+  .src-menu button { display: block; width: 100%; text-align: left; background: none; border: none; color: #eee; padding: 11px 12px; font-size: 15px; cursor: pointer; border-radius: 6px; }
+  .src-menu button:active { background: #3a4152; }
+  .src-btns { display: flex; gap: 2px; flex: 0 0 auto; }
+  #cancelEditBtn { width: 100%; margin-top: 8px; padding: 10px; border: 1px solid #333a48; border-radius: 10px; background: none; color: #99a; font-size: 14px; cursor: pointer; }
+  .src-empty { color: #667; font-size: 13px; text-align: center; padding: 8px; }
+  .modal-box label { display: block; font-size: 13px; color: #99a; margin-bottom: 10px; }
+  .modal-box input { width: 100%; max-width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #333a48; background: #14161c; color: #eee; font-size: 16px; margin-top: 4px; }
+  #addSrcBtn { width: 100%; padding: 12px; border: 0; border-radius: 10px; background: #4c8dff; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; }
+  #addSrcBtn:disabled { opacity: .5; cursor: default; }
+  .note { font-size: 12px; color: #667; margin: 10px 0 0; line-height: 1.5; }
+</style>
+</head>
+<body>
+<header id="topbar">
+  <div class="topbar-text">
+    <div class="app-title"><span class="material-icons" style="font-size:20px;vertical-align:-4px">music_note</span> Drive Music</div>
+    <div id="status"></div>
+  </div>
+  <button id="searchBtn" aria-label="Tìm kiếm"><span class="material-icons">search</span></button>
+  <button id="settingsBtn" aria-label="Cài đặt"><span class="material-icons">settings</span></button>
+</header>
+<div id="searchbar">
+  <input id="searchInput" placeholder="Tìm tên bài hoặc album..." autocomplete="off" />
+  <button id="searchClear" aria-label="Đóng tìm kiếm"><span class="material-icons">close</span></button>
+</div>
+<ul id="list"></ul>
+<div id="settingsModal" class="modal hidden">
+  <div class="modal-box">
+    <div class="modal-head"><span><span class="material-icons" style="vertical-align:-4px">settings</span> Cài đặt</span><button id="closeSettings"><span class="material-icons">close</span></button></div>
+    <div class="src-manage-head">Nguồn nhạc</div>
+    <ul id="srcList"></ul>
+    <label>Tên nguồn mới
+      <input id="srcName" placeholder="vd: Nhạc Trịnh" />
+    </label>
+    <label>Dán link folder chia sẻ hoặc Folder ID
+      <input id="newFolderId" placeholder="https://drive.google.com/drive/folders/..." />
+    </label>
+    <button id="addSrcBtn"><span class="material-icons" style="vertical-align:-4px">add</span> Thêm nguồn</button>
+    <button id="cancelEditBtn" style="display:none">Hủy sửa</button>
+    <p class="note">Bấm vào nguồn để nghe, bấm <span class="material-icons" style="font-size:14px;vertical-align:-2px">more_vert</span> để cập nhật/sửa/xóa.</p>
+  </div>
+</div>
+<div id="srcMenu" class="src-menu hidden">
+  <button data-act="refresh"><span class="material-icons" style="vertical-align:-4px">refresh</span> Cập nhật danh sách</button>
+  <button data-act="edit"><span class="material-icons" style="vertical-align:-4px">edit</span> Sửa tên/link</button>
+  <button data-act="delete"><span class="material-icons" style="vertical-align:-4px">delete</span> Xóa nguồn</button>
+</div>
+<div id="bar">
+  <div id="nowRow">
+    <div id="now">Chưa chọn bài nào</div>
+    <button id="gotoBtn" aria-label="Tới bài đang phát"><span class="material-icons" style="font-size:20px">my_location</span></button>
+  </div>
+  <div id="progressRow">
+    <span id="timeCur">0:00</span>
+    <input id="seekBar" type="range" min="0" max="1000" value="0" aria-label="Tua bài hát" />
+    <span id="timeTotal">0:00</span>
+  </div>
+  <div id="controlsRow">
+    <button id="shuffleBtn" aria-label="Phát ngẫu nhiên"><span class="material-icons">shuffle</span></button>
+    <button id="prevBtn" aria-label="Bài trước"><span class="material-icons">skip_previous</span></button>
+    <button id="playBtn" aria-label="Phát / Tạm dừng"><span class="material-icons">play_arrow</span></button>
+    <button id="nextBtn" aria-label="Bài tiếp"><span class="material-icons">skip_next</span></button>
+    <button id="repeatBtn" aria-label="Lặp lại"><span class="material-icons">repeat</span></button>
+  </div>
+  <audio id="player" preload="none"></audio>
+</div>
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var API_KEY = "AIzaSyDAWVZAeI2h8rrhrPGypyM4XPbwvFzLns0"; // key của Hải, không hiện trong cài đặt
+  var statusEl = $("status"),
+      listEl = $("list"), player = $("player"), nowEl = $("now"),
+      srcListEl = $("srcList"),
+      settingsModal = $("settingsModal");
+  var tracks = [], current = -1, playSeq = 0;
+  var searchQuery = "", searchOpen = false;
+  var shuffleOn = false, repeatMode = 0; // 0=tắt, 1=lặp tất cả, 2=lặp 1 bài
+
+  // Nhiều nguồn nhạc: { sources: [{name, folderId}], current }
+  var store = { sources: [], current: -1 };
+  try {
+    var saved = JSON.parse(localStorage.getItem("driveMusicDemo") || "{}");
+    if (saved.sources && saved.sources.length) {
+      store.sources = saved.sources;
+      store.current = Math.min(saved.current | 0, store.sources.length - 1);
+    } else if (saved.folderId) {
+      store.sources = [{ name: "Nhạc của tôi", folderId: saved.folderId }];
+      store.current = 0;
+    }
+  } catch (e) { /* bỏ qua */ }
+  function saveStore() {
+    try { localStorage.setItem("driveMusicDemo", JSON.stringify(store)); } catch (e) { /* bỏ qua */ }
+  }
+
+  function openSettings() { settingsModal.classList.remove("hidden"); }
+  function closeSettings() { settingsModal.classList.add("hidden"); closeSrcMenu(); }
+  $("settingsBtn").addEventListener("click", openSettings);
+  $("closeSettings").addEventListener("click", closeSettings);
+  settingsModal.addEventListener("click", function (e) {
+    if (e.target === settingsModal) closeSettings();
+  });
+
+  // Tìm kiếm
+  var searchbarEl = $("searchbar"), searchInputEl = $("searchInput");
+  function setSearch(open) {
+    searchOpen = open;
+    searchbarEl.classList.toggle("open", open);
+    document.body.classList.toggle("search-open", open);
+    if (open) {
+      searchInputEl.focus();
+    } else {
+      searchQuery = "";
+      searchInputEl.value = "";
+      buildList();
+    }
+  }
+  $("searchBtn").addEventListener("click", function () { setSearch(!searchOpen); });
+  $("searchClear").addEventListener("click", function () { setSearch(false); });
+  searchInputEl.addEventListener("input", function () {
+    searchQuery = searchInputEl.value;
+    buildList();
+  });
+
+  var editingIdx = -1; // đang sửa nguồn nào (-1 = đang thêm mới)
+
+  function renderSrcList() {
+    srcListEl.innerHTML = "";
+    store.sources.forEach(function (s, i) {
+      var li = document.createElement("li");
+      if (i === store.current) li.className = "src-active";
+      var nm = document.createElement("span");
+      if (i === store.current) {
+        nm.innerHTML = '<span class="material-icons" style="font-size:16px;vertical-align:-3px;color:#4c8dff">play_arrow</span> ';
+      }
+      nm.appendChild(document.createTextNode(s.name));
+      var btns = document.createElement("span");
+      btns.className = "src-btns";
+      var more = document.createElement("button");
+      more.className = "src-more";
+      more.innerHTML = '<span class="material-icons">more_vert</span>';
+      more.setAttribute("aria-label", "Tùy chọn nguồn " + s.name);
+      more.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (menuSourceIdx === i && !srcMenuEl.classList.contains("hidden")) closeSrcMenu();
+        else openSrcMenu(i, more);
+      });
+      btns.appendChild(more);
+      li.appendChild(nm);
+      li.appendChild(btns);
+      li.addEventListener("click", function () { loadSource(i); });
+      srcListEl.appendChild(li);
+    });
+    if (!store.sources.length) srcListEl.innerHTML = '<div class="src-empty">Chưa có nguồn nào.</div>';
+  }
+
+  // Menu more_vert cho mỗi nguồn (gọn hơn 3 nút riêng)
+  var srcMenuEl = $("srcMenu"), menuSourceIdx = -1;
+  function openSrcMenu(i, anchorBtn) {
+    menuSourceIdx = i;
+    srcMenuEl.classList.remove("hidden");
+    var r = anchorBtn.getBoundingClientRect();
+    var menuH = 150;
+    var top = r.bottom + 4;
+    if (top + menuH > window.innerHeight) top = Math.max(8, r.top - menuH - 4);
+    srcMenuEl.style.top = top + "px";
+    srcMenuEl.style.left = Math.max(8, r.right - 180) + "px";
+  }
+  function closeSrcMenu() {
+    srcMenuEl.classList.add("hidden");
+    menuSourceIdx = -1;
+  }
+  srcMenuEl.addEventListener("click", function (e) {
+    var btn = e.target.closest ? e.target.closest("button[data-act]") : null;
+    if (!btn || menuSourceIdx < 0) return;
+    var act = btn.getAttribute("data-act"), idx = menuSourceIdx;
+    closeSrcMenu();
+    if (act === "refresh") loadSource(idx, true);
+    else if (act === "edit") startEdit(idx);
+    else if (act === "delete") deleteSource(idx);
+  });
+  document.addEventListener("click", function (e) {
+    if (menuSourceIdx < 0) return;
+    var t = e.target;
+    var insideMenu = t.closest ? t.closest("#srcMenu") : false;
+    var onMore = t.closest ? t.closest(".src-more") : false;
+    if (!insideMenu && !onMore) closeSrcMenu();
+  });
+
+  function startEdit(i) {
+    editingIdx = i;
+    var s = store.sources[i];
+    $("srcName").value = s.name;
+    $("newFolderId").value = s.folderId;
+    $("addSrcBtn").textContent = "💾 Lưu thay đổi";
+    $("cancelEditBtn").style.display = "";
+  }
+
+  function cancelEdit() {
+    editingIdx = -1;
+    $("srcName").value = "";
+    $("newFolderId").value = "";
+    $("addSrcBtn").innerHTML = '<span class="material-icons" style="vertical-align:-4px">add</span> Thêm nguồn';
+    $("cancelEditBtn").style.display = "none";
+  }
+
+  $("addSrcBtn").addEventListener("click", function () {
+    var folderId = extractFolderId($("newFolderId").value);
+    var name = $("srcName").value.trim() || ("Nguồn " + (store.sources.length + 1));
+    if (!folderId) { setStatus("Nhập link/ID folder đã nhé.", true); return; }
+    if (editingIdx >= 0 && store.sources[editingIdx]) {
+      var old = store.sources[editingIdx];
+      if (old.folderId !== folderId) clearCache(old.folderId); // đổi folder thì xóa cache cũ
+      old.name = name;
+      old.folderId = folderId;
+      var idx = editingIdx;
+      cancelEdit();
+      saveStore();
+      renderSrcList();
+      loadSource(idx, true); // quét lại folder mới
+    } else {
+      store.sources.push({ name: name, folderId: folderId });
+      cancelEdit();
+      saveStore();
+      renderSrcList();
+      loadSource(store.sources.length - 1);
+    }
+  });
+  $("cancelEditBtn").addEventListener("click", cancelEdit);
+
+  function deleteSource(i) {
+    var removed = store.sources[i];
+    if (removed) clearCache(removed.folderId);
+    if (editingIdx === i) cancelEdit();
+    store.sources.splice(i, 1);
+    if (store.current >= store.sources.length) store.current = store.sources.length - 1;
+    saveStore();
+    renderSrcList();
+    if (store.current >= 0) {
+      loadSource(store.current);
+    } else {
+      tracks = []; current = -1;
+      try { player.pause(); } catch (e) {}
+      stopWebAudio();
+      listEl.innerHTML = "";
+      nowEl.textContent = "Chưa chọn bài nào";
+      setStatus("Đã xóa hết nguồn. Vào Cài đặt để thêm folder nhạc.");
+    }
+  }
+
+  renderSrcList();
+  setupMediaSession();
+  // Mở IndexedDB trước rồi mới tải nguồn (để đọc cache lớn được)
+  openIDB().then(function () {
+    if (store.sources.length && store.current >= 0) {
+      loadSource(store.current);
+    } else {
+      openSettings();
+    }
+  });
+
+  function setStatus(msg, isErr) {
+    statusEl.textContent = msg;
+    statusEl.className = isErr ? "err" : "";
+  }
+
+  function fmtSize(b) {
+    b = +b || 0;
+    if (b < 1024) return b + " B";
+    if (b < 1048576) return (b / 1024).toFixed(1) + " KB";
+    return (b / 1048576).toFixed(1) + " MB";
+  }
+
+  function extractFolderId(v) {
+    v = (v || "").trim();
+    var m = v.match(/folders\/([-\w]+)/);
+    return m ? m[1] : v;
+  }
+
+  function streamUrl(id) {
+    // Lấy bytes nhạc qua alt=media trên www.googleapis.com (cùng host với Drive API):
+    // host drive.google.com / drive.usercontent.google.com có mạng chặn, fetch không tới được.
+    return "https://www.googleapis.com/drive/v3/files/" + encodeURIComponent(id) +
+      "?alt=media&key=" + encodeURIComponent(API_KEY);
+  }
+
+  var MAX_DEPTH = 4; // quét sâu tối đa 4 cấp thư mục
+
+  // Drive đôi khi gán mimeType lạ (vd FLAC thành application/x-flac) nên nhận theo đuôi file nữa
+  var AUDIO_EXT_RE = /\.(mp3|wav|flac|m4a|m4b|aac|ogg|oga|opus|wma|aiff|aif|ape|mpc)$/i;
+  function isAudioFile(f) {
+    if (/^audio\//.test(f.mimeType || "")) return true;
+    return AUDIO_EXT_RE.test(f.name || "");
+  }
+
+  function listFolder(folderId, key) {
+    // Liệt kê hết 1 folder (phân trang), tách riêng file và folder con
+    var files = [], folders = [], pageToken = "";
+    function fetchPage() {
+      var url = "https://www.googleapis.com/drive/v3/files" +
+        "?q=" + encodeURIComponent("'" + folderId + "' in parents and trashed=false") +
+        "&fields=" + encodeURIComponent("nextPageToken,files(id,name,mimeType,size)") +
+        "&pageSize=100" +
+        (pageToken ? "&pageToken=" + encodeURIComponent(pageToken) : "") +
+        "&key=" + encodeURIComponent(key);
+      return fetch(url).then(function (r) {
+        return r.json().then(function (data) {
+          if (!r.ok) throw new Error((data && data.error && data.error.message) || ("HTTP " + r.status));
+          (data.files || []).forEach(function (f) {
+            if (f.mimeType === "application/vnd.google-apps.folder") folders.push(f);
+            else files.push(f);
+          });
+          if (data.nextPageToken) { pageToken = data.nextPageToken; return fetchPage(); }
+        });
+      });
+    }
+    return fetchPage().then(function () { return { files: files, folders: folders }; });
+  }
+
+  function scanRecursive(folderId, folderName, depth, key, stats, onProgress) {
+    return listFolder(folderId, key).then(function (res) {
+      res.files.forEach(function (f) {
+        if (isAudioFile(f)) {
+          f._folder = folderName; // tên thư mục chứa file = tên album
+          stats.tracks.push(f);
+        }
+      });
+      stats.folders++;
+      onProgress(stats);
+      if (depth >= MAX_DEPTH || !res.folders.length) return null;
+      // Quét từng đợt 6 folder để không dồn quá nhiều request cùng lúc (dễ bị giới hạn)
+      var queue = res.folders.slice();
+      function nextBatch() {
+        if (!queue.length) return null;
+        var batch = queue.splice(0, 6);
+        return Promise.all(batch.map(function (sub) {
+          return scanRecursive(sub.id, sub.name, depth + 1, key, stats, onProgress).catch(function () {
+            stats.errors = (stats.errors || 0) + 1; // 1 folder lỗi không làm sập cả lần quét
+          });
+        })).then(nextBatch);
+      }
+      return nextBatch();
+    });
+  }
+
+  function naturalCmp(a, b) {
+    return (a || "").localeCompare(b || "", undefined, { numeric: true, sensitivity: "base" });
+  }
+
+  // Cache danh sách bài theo folderId để mở app không phải quét lại
+  // Cache dùng IndexedDB (chứa được hàng chục MB cho folder lớn),
+  // fallback localStorage cho folder nhỏ hoặc khi IDB không dùng được.
+  var idb = null;
+  function openIDB() {
+    return new Promise(function (resolve) {
+      try {
+        var req = indexedDB.open("driveMusicDB", 1);
+        req.onupgradeneeded = function (e) {
+          var db = e.target.result;
+          if (!db.objectStoreNames.contains("trackCache")) {
+            db.createObjectStore("trackCache", { keyPath: "folderId" });
+          }
+        };
+        req.onsuccess = function (e) { idb = e.target.result; resolve(true); };
+        req.onerror = function () { resolve(false); };
+        req.onblocked = function () { resolve(false); };
+      } catch (e) { resolve(false); }
+    });
+  }
+  function cacheKey(folderId) { return "driveMusicCache_" + folderId; }
+  function unpackTracks(arr) {
+    return (arr || []).map(function (a) {
+      return { id: a[0], name: a[1], size: a[2], _folder: a[3] || "" };
+    });
+  }
+  function getCache(folderId) {
+    // Trả về Promise; thử IDB trước, rồi localStorage (cache cũ)
+    return new Promise(function (resolve) {
+      function fromLS() {
+        try {
+          var raw = localStorage.getItem(cacheKey(folderId));
+          if (!raw) return resolve(null);
+          var c = JSON.parse(raw);
+          resolve({ at: c.at, tracks: unpackTracks(c.tracks) });
+        } catch (e) { resolve(null); }
+      }
+      if (!idb) return fromLS();
+      try {
+        var req = idb.transaction("trackCache", "readonly").objectStore("trackCache").get(folderId);
+        req.onsuccess = function () {
+          var c = req.result;
+          if (c && c.tracks) resolve({ at: c.at, tracks: unpackTracks(c.tracks) });
+          else fromLS();
+        };
+        req.onerror = fromLS;
+      } catch (e) { fromLS(); }
+    });
+  }
+  function setCache(folderId, list) {
+    // Trả về Promise<boolean>
+    var compact = list.map(function (t) {
+      return [t.id, t.name, t.size, t._folder || ""];
+    });
+    var data = { folderId: folderId, at: Date.now(), tracks: compact };
+    return new Promise(function (resolve) {
+      function toLS() {
+        try {
+          localStorage.setItem(cacheKey(folderId), JSON.stringify({ at: data.at, tracks: compact }));
+          resolve(true);
+        } catch (e) { resolve(false); }
+      }
+      if (!idb) return toLS();
+      try {
+        var req = idb.transaction("trackCache", "readwrite").objectStore("trackCache").put(data);
+        req.onsuccess = function () { resolve(true); };
+        req.onerror = toLS;
+      } catch (e) { toLS(); }
+    });
+  }
+  function clearCache(folderId) {
+    if (idb) {
+      try { idb.transaction("trackCache", "readwrite").objectStore("trackCache").delete(folderId); } catch (e) {}
+    }
+    try { localStorage.removeItem(cacheKey(folderId)); } catch (e) {}
+  }
+
+  function sortTracks() {
+    // Sắp xếp: theo album trước, rồi tên bài (tự nhiên: 1, 2, 10)
+    tracks.sort(function (a, b) {
+      var c = naturalCmp(a._folder, b._folder);
+      return c || naturalCmp(a.name, b.name);
+    });
+  }
+
+  var expanded = {}; // tên album -> true nếu đang mở (accordion)
+
+  function highlightCurrent() {
+    var items = listEl.querySelectorAll("li[data-i]");
+    for (var k = 0; k < items.length; k++) {
+      items[k].classList.toggle("playing", +items[k].getAttribute("data-i") === current);
+    }
+  }
+
+  function buildList() {
+    listEl.innerHTML = "";
+    var q = searchQuery.trim().toLowerCase();
+    if (q) {
+      // Chế độ tìm kiếm: liệt kê phẳng các bài khớp tên bài hoặc tên album
+      var matches = [];
+      tracks.forEach(function (t, i) {
+        var nm = (t.name || "").toLowerCase();
+        var fol = (t._folder || "").toLowerCase();
+        if (nm.indexOf(q) >= 0 || fol.indexOf(q) >= 0) matches.push(i);
+      });
+      if (!matches.length) {
+        listEl.innerHTML = '<div id="empty">Không tìm thấy bài nào khớp.</div>';
+        return;
+      }
+      matches.forEach(function (i) {
+        var t = tracks[i];
+        var li = document.createElement("li");
+        li.setAttribute("data-i", i);
+        if (i === current) li.classList.add("playing");
+        var main = document.createElement("div");
+        main.className = "track-main";
+        var name = document.createElement("div");
+        name.className = "name";
+        name.textContent = t.name;
+        main.appendChild(name);
+        if (t._folder) {
+          var fol = document.createElement("div");
+          fol.className = "folder";
+          fol.textContent = t._folder;
+          main.appendChild(fol);
+        }
+        var size = document.createElement("span");
+        size.className = "size";
+        size.textContent = fmtSize(t.size);
+        li.appendChild(main);
+        li.appendChild(size);
+        li.addEventListener("click", function () { playAt(i); });
+        listEl.appendChild(li);
+      });
+      return;
+    }
+    // Gom bài theo album (tracks đã sắp xếp theo album)
+    var groups = {}, order = [];
+    tracks.forEach(function (t, i) {
+      var f = t._folder || "";
+      if (!groups[f]) { groups[f] = []; order.push(f); }
+      groups[f].push(i);
+    });
+    var showHeaders = order.length > 1;
+    order.forEach(function (f) {
+      var idxs = groups[f];
+      if (showHeaders) {
+        var h = document.createElement("li");
+        h.className = "album-head" + (expanded[f] ? " open" : "");
+        var arrow = document.createElement("span");
+        arrow.className = "arrow";
+        arrow.innerHTML = '<span class="material-icons" style="font-size:20px">' + (expanded[f] ? "expand_more" : "chevron_right") + "</span>";
+        var nm = document.createElement("span");
+        nm.className = "album-name";
+        nm.textContent = (f || "Bài hát lẻ") + " (" + idxs.length + ")";
+        h.appendChild(arrow);
+        h.appendChild(nm);
+        h.addEventListener("click", (function (ff) {
+          return function () {
+            expanded[ff] = !expanded[ff];
+            buildList();
+          };
+        })(f));
+        listEl.appendChild(h);
+      }
+      if (!showHeaders || expanded[f]) {
+        idxs.forEach(function (i) {
+          var t = tracks[i];
+          var li = document.createElement("li");
+          li.setAttribute("data-i", i);
+          if (i === current) li.classList.add("playing");
+          var main = document.createElement("div");
+          main.className = "track-main";
+          var name = document.createElement("div");
+          name.className = "name";
+          name.textContent = t.name;
+          main.appendChild(name);
+          var size = document.createElement("span");
+          size.className = "size";
+          size.textContent = fmtSize(t.size);
+          li.appendChild(main);
+          li.appendChild(size);
+          li.addEventListener("click", function () { playAt(i); });
+          listEl.appendChild(li);
+        });
+      }
+    });
+  }
+
+  function loadSource(i, forceRefresh) {
+    if (i < 0 || i >= store.sources.length) return;
+    store.current = i;
+    saveStore();
+    renderSrcList();
+    closeSettings();
+    var src = store.sources[i];
+    var key = API_KEY;
+    listEl.innerHTML = "";
+    tracks = []; current = -1;
+    expanded = {}; // đổi nguồn thì thu gọn hết lại
+    if (searchOpen) setSearch(false); // đổi nguồn thì tắt tìm kiếm
+    try { player.pause(); } catch (e) { /* chưa phát gì */ }
+    stopWebAudio();
+    nowEl.textContent = "Chưa chọn bài nào";
+
+    // Có cache thì hiện ngay, không quét lại
+    if (!forceRefresh) {
+      setStatus("Đang tải danh sách đã lưu...");
+      getCache(src.folderId).then(function (cached) {
+        if (cached && cached.tracks && cached.tracks.length) {
+          tracks = cached.tracks;
+          // migrate cache cũ: _folder từng lưu đường dẫn dài, giờ chỉ giữ tên thư mục cuối
+          tracks.forEach(function (t) {
+            if (t._folder && t._folder.indexOf(" / ") >= 0) {
+              t._folder = t._folder.split(" / ").pop();
+            }
+          });
+          sortTracks();
+          buildList();
+          var ageMin = Math.round((Date.now() - cached.at) / 60000);
+          var ageTxt = ageMin < 1 ? "vừa xong" : ageMin < 60 ? ageMin + " phút trước" : Math.round(ageMin / 60) + " giờ trước";
+          setStatus("Tìm thấy " + tracks.length + " bài (đã lưu " + ageTxt + "). Vào Cài đặt bấm menu cạnh nguồn để quét lại.");
+        } else {
+          doScan();
+        }
+      });
+      return;
+    }
+    doScan();
+  }
+
+  function doScan() {
+    var src = store.sources[store.current];
+    if (!src) return;
+    var key = API_KEY;
+    var addBtn = $("addSrcBtn");
+    addBtn.disabled = true;
+    var stats = { tracks: [], folders: 0 };
+    scanRecursive(src.folderId, "", 0, key, stats, function (s) {
+      setStatus("Đang quét \"" + src.name + "\": " + s.folders + " thư mục, thấy " + s.tracks.length + " bài...");
+    }).then(function () {
+      tracks = stats.tracks;
+      sortTracks();
+      if (!tracks.length) { setStatus("Không thấy file nhạc nào trong \"" + src.name + "\" (" + stats.folders + " thư mục đã quét).", true); return; }
+      buildList();
+      var errNote = stats.errors ? " (" + stats.errors + " thư mục lỗi, bỏ qua)" : "";
+      setStatus("Tìm thấy " + tracks.length + " bài trong " + stats.folders + " thư mục" + errNote + ". Đang lưu...");
+      setCache(src.folderId, tracks).then(function (cacheOk) {
+        var cacheNote = cacheOk ? "" : " (danh sách quá lớn, không lưu cache được)";
+        setStatus("Tìm thấy " + tracks.length + " bài trong " + stats.folders + " thư mục" + errNote + cacheNote + ". Bấm vào bài để nghe.");
+      });
+    }).catch(function (err) {
+      setStatus("Lỗi: " + err.message, true);
+    }).then(function () { addBtn.disabled = false; });
+  }
+
+  var lastBlobUrl = null;
+
+  function isWav(t) {
+    return /\.wav$/i.test(t.name || "") || (t.mimeType || "").indexOf("audio/wav") === 0;
+  }
+
+  var audioCtx = null, currentSource = null, webAudioTrack = null;
+
+  function getAudioCtx() {
+    if (!audioCtx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) throw new Error("trình duyệt không hỗ trợ WebAudio");
+      audioCtx = new AC();
+    }
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  }
+
+  function stopWebAudio() {
+    webAudioTrack = null;
+    if (currentSource) {
+      var s = currentSource;
+      currentSource = null;
+      try { s.stop(); } catch (e) { /* đã dừng */ }
+    }
+  }
+
+  function fmtDur(s) {
+    s = Math.max(0, Math.floor(s || 0));
+    return Math.floor(s / 60) + ":" + (s % 60 < 10 ? "0" : "") + (s % 60);
+  }
+
+  // Media Session API: thông báo hệ thống + điều khiển từ màn hình khóa khi tắt màn hình
+  function updateMediaSession(t) {
+    if (!("mediaSession" in navigator)) return;
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: t.name || "Không rõ tên",
+        artist: t._folder || "Drive Music",
+        album: t._folder || "Drive Music"
+      });
+      navigator.mediaSession.playbackState = "playing";
+    } catch (e) {}
+  }
+
+  function setMediaPlaybackState(s) {
+    try {
+      if ("mediaSession" in navigator) navigator.mediaSession.playbackState = s;
+    } catch (e) {}
+  }
+
+  function setupMediaSession() {
+    if (!("mediaSession" in navigator)) return;
+    try {
+      navigator.mediaSession.setActionHandler("previoustrack", function () {
+        prevTrack();
+      });
+      navigator.mediaSession.setActionHandler("nexttrack", function () {
+        nextTrack();
+      });
+      navigator.mediaSession.setActionHandler("play", function () {
+        if (webAudioTrack) { if (!currentSource) webAudioToggle(); }
+        else { var p = player.play(); if (p && p.catch) p.catch(function () {}); }
+      });
+      navigator.mediaSession.setActionHandler("pause", function () {
+        if (webAudioTrack) { if (currentSource) webAudioToggle(); }
+        else { try { player.pause(); } catch (e) {} }
+      });
+    } catch (e) {}
+  }
+
+  function startWebAudio(t, ctx, audioBuf, seq) {
+    stopWebAudio();
+    var src = ctx.createBufferSource();
+    src.buffer = audioBuf;
+    src.connect(ctx.destination);
+    webAudioTrack = { t: t, ctx: ctx, audioBuf: audioBuf, seq: seq, offset: 0, startCtxTime: ctx.currentTime };
+    src.onended = function () {
+      if (currentSource === src) {
+        currentSource = null;
+        webAudioTrack = null;
+        setStatus("Phát xong " + t.name);
+        if (seq === playSeq) handleTrackEnded();
+      }
+    };
+    currentSource = src;
+    nowEl.textContent = t.name + " (WebAudio)";
+    src.start();
+    setStatus("Đang phát: " + t.name + " (" + fmtDur(audioBuf.duration) + ") — bấm vào bài để tạm dừng/tiếp tục");
+  }
+
+  function webAudioToggle() {
+    var w = webAudioTrack;
+    if (!w || w.seq !== playSeq) return false;
+    if (currentSource) {
+      w.offset += w.ctx.currentTime - w.startCtxTime;
+      var s = currentSource;
+      currentSource = null;
+      try { s.stop(); } catch (e) {}
+      nowEl.textContent = w.t.name + " (WebAudio)";
+      setMediaPlaybackState("paused");
+      setStatus("Đã tạm dừng ở " + fmtDur(w.offset) + ". Bấm vào bài để nghe tiếp.");
+    } else {
+      var src = w.ctx.createBufferSource();
+      src.buffer = w.audioBuf;
+      src.connect(w.ctx.destination);
+      src.onended = function () {
+        if (currentSource === src) {
+          currentSource = null;
+          webAudioTrack = null;
+          setStatus("Phát xong " + w.t.name);
+          if (w.seq === playSeq) handleTrackEnded();
+        }
+      };
+      currentSource = src;
+      w.startCtxTime = w.ctx.currentTime;
+      var off = w.offset % w.audioBuf.duration;
+      nowEl.textContent = w.t.name + " (WebAudio)";
+      setMediaPlaybackState("playing");
+      try { src.start(0, off); } catch (e) { try { src.start(0, 0); } catch (e2) {} }
+      setStatus("Đang phát tiếp: " + w.t.name + " (" + fmtDur(w.audioBuf.duration) + ")");
+    }
+    return true;
+  }
+
+  function rebuildCleanWav(buf) {
+    // Dựng lại WAV sạch: header 44 byte chuẩn + PCM thô, bỏ hết chunk lạ (LIST...)
+    // vì có file header khai gian làm thẻ <audio> từ chối phát.
+    var d = new DataView(buf);
+    function str(o, n) { var s = ""; for (var i = 0; i < n; i++) s += String.fromCharCode(d.getUint8(o + i)); return s; }
+    if (str(0, 4) !== "RIFF" || str(8, 4) !== "WAVE") return null;
+    var off = 12, fmt = null, dataOff = -1;
+    while (off + 8 <= buf.byteLength) {
+      var id = str(off, 4), sz = d.getUint32(off + 4, true);
+      if (id === "fmt ") fmt = {
+        audioFormat: d.getUint16(off + 8, true),
+        channels: d.getUint16(off + 10, true),
+        sampleRate: d.getUint32(off + 12, true),
+        bitsPerSample: d.getUint16(off + 22, true)
+      };
+      if (id === "data") { dataOff = off + 8; break; }
+      if (sz > buf.byteLength) break;
+      off += 8 + sz + (sz % 2);
+    }
+    if (!fmt || dataOff < 0 || fmt.audioFormat !== 1) return null;
+    var ch = fmt.channels, sr = fmt.sampleRate, bps = fmt.bitsPerSample;
+    if (!ch || !sr || !bps) return null;
+    var pcmLen = buf.byteLength - dataOff;
+    var head = new ArrayBuffer(44), h = new DataView(head);
+    function wstr(o, s) { for (var i = 0; i < s.length; i++) h.setUint8(o + i, s.charCodeAt(i)); }
+    wstr(0, "RIFF"); h.setUint32(4, 36 + pcmLen, true); wstr(8, "WAVE");
+    wstr(12, "fmt "); h.setUint32(16, 16, true); h.setUint16(20, 1, true);
+    h.setUint16(22, ch, true); h.setUint32(24, sr, true);
+    h.setUint32(28, sr * ch * bps / 8, true);
+    h.setUint16(32, ch * bps / 8, true); h.setUint16(34, bps, true);
+    wstr(36, "data"); h.setUint32(40, pcmLen, true);
+    var out = new Uint8Array(44 + pcmLen);
+    out.set(new Uint8Array(head), 0);
+    out.set(new Uint8Array(buf, dataOff, pcmLen), 44);
+    return out.buffer;
+  }
+
+  var audioCache = {}; // id -> ArrayBuffer bytes gốc
+  var audioCacheBytes = 0;
+  var CACHE_MAX_BYTES = 150 * 1048576; // tối đa ~150MB, đầy thì xóa bài cũ nhất
+  function cachePut(id, buf) {
+    if (audioCache[id]) return;
+    var keys = Object.keys(audioCache), ki = 0;
+    while (audioCacheBytes + buf.byteLength > CACHE_MAX_BYTES && ki < keys.length) {
+      var oldId = keys[ki++];
+      audioCacheBytes -= audioCache[oldId].byteLength;
+      delete audioCache[oldId];
+    }
+    audioCache[id] = buf;
+    audioCacheBytes += buf.byteLength;
+  }
+
+  function playWav(t, url) {
+    var seq = ++playSeq;
+    try { player.pause(); } catch (e) { /* chưa phát gì */ }
+    stopWebAudio();
+    fetchAudioBytes(t, url, seq, 0, function (buf) {
+      if (seq !== playSeq) return;
+      useWavBytes(t, buf, seq);
+    });
+  }
+
+  function fetchAudioBytes(t, url, seq, attempt, onOk) {
+    var hit = audioCache[t.id];
+    if (hit) {
+      setStatus("Lấy " + t.name + " từ bộ nhớ đệm (" + fmtSize(hit.byteLength) + ")...");
+      onOk(hit.slice(0));
+      return;
+    }
+    if (attempt === 0) setStatus("Đang tải " + t.name + " (" + fmtSize(t.size) + ")...");
+    fetch(url).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.arrayBuffer();
+    }).then(function (buf) {
+      if (seq !== playSeq) return;
+      cachePut(t.id, buf.slice(0)); // cache giữ bản copy; bản gốc cho decode (decodeAudioData detach buffer)
+      onOk(buf);
+    }).catch(function (e) {
+      if (seq !== playSeq) return;
+      if (attempt === 0) {
+        setStatus("Tải lỗi, tự thử lại sau 3 giây...");
+        setTimeout(function () {
+          if (seq === playSeq) fetchAudioBytes(t, url, seq, 1, onOk);
+        }, 3000);
+      } else {
+        var msg = "" + (e && e.message || e);
+        if (/403/.test(msg)) {
+          setStatus("File này chưa được chia sẻ quyền tải (lỗi 403). Thử bài khác nhé.", true);
+        } else if (/failed to fetch/i.test(msg)) {
+          setStatus("Mạng đang chặn tải file (có thể bị giới hạn tạm thời). Đợi vài phút hoặc đổi mạng rồi bấm lại nhé.", true);
+        } else {
+          setStatus("Lỗi tải file: " + msg + ". Thử tắt/bật mạng rồi bấm lại nhé.", true);
+        }
+      }
+    });
+  }
+
+  function useWavBytes(t, buf, seq) {
+    var clean = rebuildCleanWav(buf);
+    if (!clean) {
+      if (seq === playSeq) setStatus("Không parse được WAV (không phải PCM)", true);
+      return;
+    }
+    tryAudioBlob(t, buf, clean, seq);
+  }
+
+  function tryAudioBlob(t, buf, clean, seq) {
+    // Phát wav qua thẻ <audio> để khung media điều khiển được (play/pause/tua).
+    // Nếu thẻ audio chê file thì tự rớt xuống WebAudio (đường đã kiểm chứng kêu được).
+    stopWebAudio();
+    if (lastBlobUrl) { URL.revokeObjectURL(lastBlobUrl); lastBlobUrl = null; }
+    var blobUrl = URL.createObjectURL(new Blob([clean], { type: "audio/wav" }));
+    lastBlobUrl = blobUrl;
+    var fellBack = false;
+    function fallback() {
+      if (fellBack || seq !== playSeq) return;
+      fellBack = true;
+      player.removeEventListener("error", onErr);
+      player.removeEventListener("playing", onPlaying);
+      URL.revokeObjectURL(blobUrl);
+      if (lastBlobUrl === blobUrl) lastBlobUrl = null;
+      player.removeAttribute("src");
+      player.load();
+      setStatus("Thẻ audio không phát được file này, chuyển sang WebAudio...");
+      playWavWebAudioBuf(t, buf, seq);
+    }
+    function onErr() { fallback(); }
+    function onPlaying() {
+      player.removeEventListener("playing", onPlaying);
+      player.removeEventListener("error", onErr);
+    }
+    player.addEventListener("error", onErr);
+    player.addEventListener("playing", onPlaying);
+    nowEl.textContent = t.name;
+    player.src = blobUrl;
+    var p = player.play();
+    if (p && typeof p.catch === "function") p.catch(function (e) {
+      if (e && e.name === "NotSupportedError") fallback();
+      else if (seq === playSeq) setStatus("play() bị từ chối: " + (e && e.name || e), true);
+    });
+  }
+
+  function playWavWebAudioBuf(t, buf, seq) {
+    var ctx;
+    try { ctx = getAudioCtx(); }
+    catch (e) { setStatus("Không tạo được AudioContext: " + e.message, true); return; }
+    var clean = rebuildCleanWav(buf);
+    if (!clean) { setStatus("Không dựng được WAV sạch", true); return; }
+    ctx.decodeAudioData(clean).then(function (audioBuf) {
+      if (seq !== playSeq) return;
+      startWebAudio(t, ctx, audioBuf, seq);
+    }).catch(function (e) {
+      if (seq !== playSeq) return;
+      setStatus("WebAudio lỗi: " + (e && e.message || e), true);
+    });
+  }
+
+  function playGeneric(t, url) {
+    // MP3/FLAC/...: thử thẻ <audio> trước; nếu trình duyệt chê định dạng thì rớt xuống WebAudio.
+    var seq = ++playSeq;
+    try { player.pause(); } catch (e) { /* chưa phát gì */ }
+    stopWebAudio();
+    if (lastBlobUrl) { URL.revokeObjectURL(lastBlobUrl); lastBlobUrl = null; }
+    nowEl.textContent = t.name;
+    var settled = false;
+    function cleanup() {
+      player.removeEventListener("error", onErr);
+      player.removeEventListener("playing", onPlaying);
+    }
+    function onErr() {
+      if (settled || seq !== playSeq) return;
+      settled = true; cleanup();
+      var c = player.error ? player.error.code : 0;
+      fallbackToWebAudio(t, url, seq, "audio lỗi code " + c);
+    }
+    function onPlaying() {
+      if (settled || seq !== playSeq) return;
+      settled = true; cleanup();
+    }
+    player.addEventListener("error", onErr);
+    player.addEventListener("playing", onPlaying);
+    player.src = url;
+    var p = player.play();
+    if (p && typeof p.catch === "function") p.catch(function (e) {
+      if (settled || seq !== playSeq) return;
+      if (e && e.name === "NotSupportedError") {
+        settled = true; cleanup();
+        fallbackToWebAudio(t, url, seq, "play() NotSupportedError");
+      } else if (e && e.name) {
+        setStatus("play() bị từ chối: " + e.name + " — thử bấm nút play trên thanh phát nhạc.", true);
+      }
+    });
+  }
+
+  function fallbackToWebAudio(t, url, seq, reason) {
+    var ctx;
+    try { ctx = getAudioCtx(); }
+    catch (e) { setStatus("Không tạo được AudioContext: " + e.message, true); return; }
+    if ((+t.size || 0) > 30 * 1048576) {
+      setStatus("File quá lớn (" + fmtSize(t.size) + ") mà trình duyệt không hỗ trợ định dạng này nên không phát được.", true);
+      return;
+    }
+    var canPlay = "";
+    try { canPlay = document.createElement("audio").canPlayType(t.mimeType || ""); } catch (e) {}
+    setStatus("Trình duyệt chê định dạng " + (t.mimeType || "") + " (" + reason + ", canPlayType=" + JSON.stringify(canPlay) + "). Đang tải về giải mã bằng WebAudio...");
+    fetchAudioBytes(t, url, seq, 0, function (buf) {
+      if (seq !== playSeq) return;
+      ctx.decodeAudioData(buf).then(function (audioBuf) {
+        if (seq !== playSeq) return;
+        startWebAudio(t, ctx, audioBuf, seq);
+      }).catch(function (e) {
+        if (seq !== playSeq) return;
+        setStatus("WebAudio cũng không giải mã được định dạng này. Thử convert sang MP3 hoặc cập nhật Chrome mới nhất nhé.", true);
+      });
+    });
+  }
+
+  function playAt(i) {
+    if (i < 0 || i >= tracks.length) return;
+    // Bấm vào bài đang phát ở chế độ WebAudio -> tạm dừng / nghe tiếp
+    if (i === current && webAudioTrack && webAudioTrack.seq === playSeq) {
+      webAudioToggle();
+      return;
+    }
+    current = i;
+    var t = tracks[i];
+    var af = t._folder || "";
+    if (!searchQuery.trim() && !expanded[af]) {
+      // Tự chuyển sang album khác (không phải lúc đang tìm kiếm) -> đóng hết album cũ, chỉ mở album đang phát
+      for (var k in expanded) {
+        if (expanded.hasOwnProperty(k)) expanded[k] = false;
+      }
+      expanded[af] = true;
+      buildList();
+      var el = listEl.querySelector('li[data-i="' + i + '"]');
+      if (el && el.scrollIntoView) el.scrollIntoView({ block: "nearest" });
+    } else {
+      highlightCurrent();
+    }
+    var url = streamUrl(t.id);
+    updateMediaSession(t); // hiện tên bài trên thông báo hệ thống / màn hình khóa
+    if (isWav(t) && (+t.size || 0) < 20 * 1048576) {
+      playWav(t, url);
+    } else {
+      playGeneric(t, url);
+    }
+  }
+
+  // Nút tới bài đang phát trong danh sách
+  $("gotoBtn").addEventListener("click", function () {
+    if (current < 0 || current >= tracks.length) return;
+    var t = tracks[current];
+    var af = t._folder || "";
+    if (!searchQuery.trim() && !expanded[af]) {
+      for (var k in expanded) {
+        if (expanded.hasOwnProperty(k)) expanded[k] = false;
+      }
+      expanded[af] = true;
+      buildList();
+    }
+    var el = listEl.querySelector('li[data-i="' + current + '"]');
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: "center" });
+  });
+
+  // Trình phát riêng: play/pause, qua bài, shuffle, repeat, tua
+  var playBtnEl = $("playBtn"), shuffleBtnEl = $("shuffleBtn"), repeatBtnEl = $("repeatBtn");
+  var seekBarEl = $("seekBar"), timeCurEl = $("timeCur"), timeTotalEl = $("timeTotal");
+  var seeking = false;
+
+  function updatePlayBtn() {
+    var playing = false;
+    if (webAudioTrack && webAudioTrack.seq === playSeq) {
+      playing = !!currentSource;
+    } else if (player) {
+      playing = !player.paused && !player.ended;
+    }
+    playBtnEl.innerHTML = '<span class="material-icons">' + (playing ? "pause" : "play_arrow") + "</span>";
+  }
+
+  function togglePlay() {
+    if (current < 0 || current >= tracks.length) return;
+    if (webAudioTrack && webAudioTrack.seq === playSeq) {
+      webAudioToggle();
+    } else {
+      if (player.paused) player.play().catch(function () {});
+      else player.pause();
+    }
+    updatePlayBtn();
+  }
+
+  function randomIdx() {
+    if (tracks.length < 2) return current;
+    var i;
+    do { i = Math.floor(Math.random() * tracks.length); } while (i === current);
+    return i;
+  }
+
+  function handleTrackEnded() {
+    // Dùng chung cho cả <audio> và WebAudio
+    if (repeatMode === 2) playAt(current);
+    else if (shuffleOn) playAt(randomIdx());
+    else if (current + 1 < tracks.length) playAt(current + 1);
+    else if (repeatMode === 1) playAt(0);
+    updatePlayBtn();
+  }
+
+  function nextTrack() {
+    if (!tracks.length) return;
+    if (shuffleOn) playAt(randomIdx());
+    else if (current + 1 < tracks.length) playAt(current + 1);
+    else if (repeatMode === 1) playAt(0);
+  }
+
+  function prevTrack() {
+    if (!tracks.length) return;
+    if (shuffleOn) playAt(randomIdx());
+    else if (current > 0) playAt(current - 1);
+  }
+
+  playBtnEl.addEventListener("click", togglePlay);
+  $("nextBtn").addEventListener("click", nextTrack);
+  $("prevBtn").addEventListener("click", prevTrack);
+  shuffleBtnEl.addEventListener("click", function () {
+    shuffleOn = !shuffleOn;
+    shuffleBtnEl.classList.toggle("active", shuffleOn);
+    setStatus(shuffleOn ? "Đã bật phát ngẫu nhiên." : "Đã tắt phát ngẫu nhiên.");
+  });
+  function updateRepeatBtn() {
+    // 0=tắt, 1=lặp tất cả, 2=lặp 1 bài — icon Material khác nhau rõ ràng
+    var icon = repeatMode === 2 ? "repeat_one" : "repeat";
+    repeatBtnEl.innerHTML = '<span class="material-icons">' + icon + "</span>";
+    repeatBtnEl.classList.toggle("active", repeatMode > 0);
+  }
+  repeatBtnEl.addEventListener("click", function () {
+    repeatMode = (repeatMode + 1) % 3;
+    updateRepeatBtn();
+    var msg = ["Đã tắt lặp lại.", "Lặp lại: tất cả bài.", "Lặp lại: 1 bài đang phát."][repeatMode];
+    setStatus(msg);
+  });
+
+  function getPosition() {
+    // Trả về {cur, total} giây
+    if (webAudioTrack && webAudioTrack.seq === playSeq) {
+      var w = webAudioTrack;
+      var cur = w.offset + (currentSource ? (w.ctx.currentTime - w.startCtxTime) : 0);
+      return { cur: cur, total: w.audioBuf.duration || 0 };
+    }
+    return { cur: player.currentTime || 0, total: player.duration || 0 };
+  }
+
+  function updateProgress() {
+    if (seeking) return;
+    var p = getPosition();
+    timeCurEl.textContent = fmtDur(p.cur);
+    timeTotalEl.textContent = fmtDur(p.total);
+    seekBarEl.value = p.total > 0 ? Math.round(p.cur / p.total * 1000) : 0;
+    updatePlayBtn();
+  }
+
+  seekBarEl.addEventListener("input", function () { seeking = true; });
+  seekBarEl.addEventListener("change", function () {
+    seeking = false;
+    var p = getPosition();
+    if (p.total <= 0) return;
+    var newTime = seekBarEl.value / 1000 * p.total;
+    if (webAudioTrack && webAudioTrack.seq === playSeq) {
+      // WebAudio: dừng và phát lại từ vị trí mới
+      var w = webAudioTrack;
+      w.offset = newTime;
+      if (currentSource) {
+        var s = currentSource;
+        currentSource = null;
+        try { s.stop(); } catch (e) {}
+        // Phát lại từ offset mới
+        var src = w.ctx.createBufferSource();
+        src.buffer = w.audioBuf;
+        src.connect(w.ctx.destination);
+        src.onended = s.onended;
+        currentSource = src;
+        w.startCtxTime = w.ctx.currentTime;
+        try { src.start(0, newTime % w.audioBuf.duration); } catch (e) { try { src.start(0, 0); } catch (e2) {} }
+      }
+    } else {
+      player.currentTime = newTime;
+    }
+    updateProgress();
+  });
+
+  // Cập nhật tiến trình khi đang phát
+  setInterval(updateProgress, 500);
+
+  player.addEventListener("ended", function () {
+    handleTrackEnded();
+  });
+
+  player.addEventListener("loadedmetadata", function () {
+    setStatus("Nhận metadata OK, độ dài: " + (isFinite(player.duration) ? player.duration.toFixed(2) + "s" : String(player.duration)));
+  });
+  player.addEventListener("playing", function () {
+    setStatus("Đang phát: " + (tracks[current] ? tracks[current].name : ""));
+  });
+})();
+</script>
+</body>
+</html>
