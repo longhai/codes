@@ -220,6 +220,8 @@
       srcListEl = $("srcList"),
       settingsModal = $("settingsModal");
   var tracks = [], current = -1, playSeq = 0;
+  // Danh sách đang phát (có thể khác với tracks đang hiển thị khi chuyển nguồn giữa chừng)
+  var playTracks = [], playCurrent = -1, playFolderId = "";
   var searchQuery = "", searchOpen = false;
   var shuffleOn = false, repeatMode = 0; // 0=tắt, 1=lặp tất cả, 2=lặp 1 bài
   var pendingResume = null; // { trackId, idx, time } — vị trí cũ, chờ Hải bấm vào bài để nghe tiếp
@@ -262,13 +264,14 @@
     if (resumeMem && resumeMem[folderId]) { delete resumeMem[folderId]; saveResumeMem(); }
   }
   function saveResumePoint() {
-    var fid = curFolderId();
-    if (!fid || current < 0 || current >= tracks.length) return;
+    // Dùng danh sách đang phát (có thể khác danh sách hiển thị)
+    var fid = playFolderId || curFolderId();
+    if (!fid || playCurrent < 0 || playCurrent >= playTracks.length) return;
     var p = getPosition();
     if (p.cur < 10) return; // mới nghe vài giây thì không đáng nhớ
     if (p.total > 0 && p.cur > p.total - 10) return; // gần hết bài thì bỏ
     if (!resumeMem) loadResumeMem();
-    resumeMem[fid] = { trackId: tracks[current].id, time: Math.floor(p.cur), updated: Date.now() };
+    resumeMem[fid] = { trackId: playTracks[playCurrent].id, time: Math.floor(p.cur), updated: Date.now() };
     saveResumeMem();
   }
 
@@ -796,8 +799,31 @@
     setStatus("Đã nhớ: \"" + tracks[idx].name + "\" từ " + fmtDur(r.time) + " — bấm vào bài để nghe tiếp.");
   }
 
+  // Khôi phục vị trí bài đang phát khi quay lại nguồn cũ
+  var pendingGoto = false; // bấm nút tìm bài khi đang xem nguồn khác -> load xong tự cuộn tới
+  function restorePlayingPosition(folderId) {
+    if (folderId !== playFolderId || playCurrent < 0 || playCurrent >= playTracks.length) return;
+    var playingId = playTracks[playCurrent].id;
+    for (var i = 0; i < tracks.length; i++) {
+      if (tracks[i].id === playingId) {
+        current = i;
+        playTracks = tracks;
+        playCurrent = i;
+        highlightCurrent();
+        if (pendingGoto) {
+          pendingGoto = false;
+          var el = listEl.querySelector('li[data-i="' + i + '"]');
+          if (el && el.scrollIntoView) el.scrollIntoView({ block: "center" });
+        }
+        break;
+      }
+    }
+  }
+
   function loadSource(i, forceRefresh) {
     if (i < 0 || i >= store.sources.length) return;
+    // Lưu folder nguồn cũ TRƯỚC khi đổi store.current (để biết nguồn đang phát)
+    var oldFolderId = curFolderId();
     store.current = i;
     saveStore();
     renderSrcList();
@@ -809,13 +835,23 @@
       return;
     }
     var key = store.apiKey;
+    // Nếu đang phát nhạc: giữ nguyên audio, lưu danh sách đang phát riêng
+    // để chuyển nguồn không làm dừng nhạc.
+    var isPlaying = false;
+    try {
+      isPlaying = (webAudioTrack && webAudioTrack.seq === playSeq && currentSource) ||
+                  (player && !player.paused && !player.ended && player.src);
+    } catch (e) { /* bỏ qua */ }
+    if (isPlaying && tracks.length && current >= 0) {
+      playTracks = tracks;
+      playCurrent = current;
+      playFolderId = oldFolderId; // nguồn ĐANG PHÁT (cũ), không phải nguồn mới chuyển tới
+    }
     listEl.innerHTML = "";
     tracks = []; current = -1;
     expanded = {}; // đổi nguồn thì thu gọn hết lại
     if (searchOpen) setSearch(false); // đổi nguồn thì tắt tìm kiếm
-    try { player.pause(); } catch (e) { /* chưa phát gì */ }
-    stopWebAudio();
-    nowEl.textContent = "Chưa chọn bài nào";
+    // KHÔNG dừng nhạc ở đây nữa — để bài đang phát tiếp tục.
 
     // Có cache thì hiện ngay, không quét lại
     if (!forceRefresh) {
@@ -831,6 +867,7 @@
           });
           sortTracks();
           buildList();
+          restorePlayingPosition(src.folderId);
           var ageMin = Math.round((Date.now() - cached.at) / 60000);
           var ageTxt = ageMin < 1 ? "vừa xong" : ageMin < 60 ? ageMin + " phút trước" : Math.round(ageMin / 60) + " giờ trước";
           setStatus("Tìm thấy " + tracks.length + " bài (đã lưu " + ageTxt + "). Vào Cài đặt bấm menu cạnh nguồn để quét lại.");
@@ -862,6 +899,7 @@
       sortTracks();
       if (!tracks.length) { setStatus("Không thấy file nhạc nào trong \"" + src.name + "\" (" + stats.folders + " thư mục đã quét).", true); return; }
       buildList();
+      restorePlayingPosition(src.folderId);
       var errNote = stats.errors ? " (" + stats.errors + " thư mục lỗi, bỏ qua)" : "";
       setStatus("Tìm thấy " + tracks.length + " bài trong " + stats.folders + " thư mục" + errNote + ". Đang lưu...");
       setCache(src.folderId, tracks).then(function (cacheOk) {
@@ -1260,6 +1298,10 @@
       pendingSeek = null; // không có vị trí nhớ -> bỏ mọi tua chờ còn sót
     }
     current = i;
+    // Bấm bài trong danh sách đang hiển thị -> phát từ nguồn này
+    playTracks = tracks;
+    playCurrent = i;
+    playFolderId = curFolderId();
     var t = tracks[i];
     var af = t._folder || "";
     if (!searchQuery.trim() && !expanded[af]) {
@@ -1285,6 +1327,24 @@
 
   // Nút tới bài đang phát trong danh sách
   $("gotoBtn").addEventListener("click", function () {
+    // Đang xem nguồn khác với nguồn đang phát -> quay về nguồn đang phát
+    // (chỉ khi thực sự đang có nhạc phát)
+    var actuallyPlaying = false;
+    try {
+      actuallyPlaying = (webAudioTrack && webAudioTrack.seq === playSeq && currentSource) ||
+                        (player && !player.paused && !player.ended && player.src);
+    } catch (e) { /* bỏ qua */ }
+    if (actuallyPlaying && playFolderId && playFolderId !== curFolderId()) {
+      var idx = -1;
+      for (var s = 0; s < store.sources.length; s++) {
+        if (store.sources[s].folderId === playFolderId) { idx = s; break; }
+      }
+      if (idx >= 0) {
+        pendingGoto = true;
+        loadSource(idx);
+        return;
+      }
+    }
     if (current < 0 || current >= tracks.length) return;
     var t = tracks[current];
     var af = t._folder || "";
@@ -1333,26 +1393,53 @@
     return i;
   }
 
+  function randomPlayIdx() {
+    if (playTracks.length < 2) return playCurrent;
+    var i;
+    do { i = Math.floor(Math.random() * playTracks.length); } while (i === playCurrent);
+    return i;
+  }
+
+  // Phát từ danh sách đang phát (playTracks), không đụng tới UI danh sách hiển thị.
+  // Dùng khi bấm Next/Prev hoặc tự chuyển bài mà đang xem nguồn khác.
+  function playPlaybackAt(i) {
+    if (i < 0 || i >= playTracks.length) return;
+    playCurrent = i;
+    // Nếu đang phát từ nguồn đang hiển thị thì đồng bộ current cho nút tìm bài
+    if (playTracks === tracks) current = i;
+    var t = playTracks[i];
+    var url = streamUrl(t.id);
+    updateMediaSession(t);
+    nowEl.textContent = t.name;
+    if (isWav(t) && (+t.size || 0) < 20 * 1048576) {
+      playWav(t, url);
+    } else {
+      playGeneric(t, url);
+    }
+  }
+
   function handleTrackEnded() {
-    // Dùng chung cho cả <audio> và WebAudio
-    if (repeatMode === 2) playAt(current);
-    else if (shuffleOn) playAt(randomIdx());
-    else if (current + 1 < tracks.length) playAt(current + 1);
-    else if (repeatMode === 1) playAt(0);
+    // Dùng chung cho cả <audio> và WebAudio — dùng danh sách đang phát
+    if (!playTracks.length) return;
+    if (repeatMode === 2) playPlaybackAt(playCurrent);
+    else if (shuffleOn) playPlaybackAt(randomPlayIdx());
+    else if (playCurrent + 1 < playTracks.length) playPlaybackAt(playCurrent + 1);
+    else if (repeatMode === 1) playPlaybackAt(0);
     updatePlayBtn();
   }
 
   function nextTrack() {
-    if (!tracks.length) return;
-    if (shuffleOn) playAt(randomIdx());
-    else if (current + 1 < tracks.length) playAt(current + 1);
-    else if (repeatMode === 1) playAt(0);
+    // Dùng danh sách đang phát (có thể khác danh sách hiển thị)
+    if (!playTracks.length) return;
+    if (shuffleOn) playPlaybackAt(randomPlayIdx());
+    else if (playCurrent + 1 < playTracks.length) playPlaybackAt(playCurrent + 1);
+    else if (repeatMode === 1) playPlaybackAt(0);
   }
 
   function prevTrack() {
-    if (!tracks.length) return;
-    if (shuffleOn) playAt(randomIdx());
-    else if (current > 0) playAt(current - 1);
+    if (!playTracks.length) return;
+    if (shuffleOn) playPlaybackAt(randomPlayIdx());
+    else if (playCurrent > 0) playPlaybackAt(playCurrent - 1);
   }
 
   playBtnEl.addEventListener("click", togglePlay);
