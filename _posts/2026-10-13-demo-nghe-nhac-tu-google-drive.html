@@ -12,7 +12,12 @@
   #topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; background: #1e222c; border-bottom: 1px solid #2a2f3b; }
   .topbar-text { flex: 1; min-width: 0; }
   .app-title { font-size: 16px; font-weight: 700; }
-  #settingsBtn, #refreshBtn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 2px 6px; color: #eee; flex: 0 0 auto; }
+  #settingsBtn, #refreshBtn, #searchBtn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 2px 6px; color: #eee; flex: 0 0 auto; }
+  #searchbar { display: none; position: fixed; top: 58px; left: 0; right: 0; z-index: 19; background: #1e222c; border-bottom: 1px solid #2a2f3b; padding: 8px 12px; }
+  #searchbar.open { display: flex; gap: 8px; }
+  #searchbar input { flex: 1; min-width: 0; padding: 10px; border-radius: 8px; border: 1px solid #333a48; background: #14161c; color: #eee; font-size: 16px; }
+  #searchClear { background: none; border: none; color: #99a; font-size: 18px; cursor: pointer; padding: 4px 8px; flex: 0 0 auto; }
+  body.search-open { padding-top: 116px; }
   #status { font-size: 11px; color: #99a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
   #status.err { color: #ff7b7b; }
   ul { list-style: none; padding: 6px 10px; margin: 0; }
@@ -56,8 +61,13 @@
     <div id="status"></div>
   </div>
   <button id="refreshBtn" aria-label="Quét lại danh sách">↻</button>
+  <button id="searchBtn" aria-label="Tìm kiếm">🔍</button>
   <button id="settingsBtn" aria-label="Cài đặt">⚙️</button>
 </header>
+<div id="searchbar">
+  <input id="searchInput" placeholder="Tìm tên bài hoặc album..." autocomplete="off" />
+  <button id="searchClear" aria-label="Đóng tìm kiếm">✕</button>
+</div>
 <ul id="list"></ul>
 <div id="settingsModal" class="modal hidden">
   <div class="modal-box">
@@ -89,6 +99,7 @@
       srcListEl = $("srcList"),
       settingsModal = $("settingsModal");
   var tracks = [], current = -1, playSeq = 0;
+  var searchQuery = "", searchOpen = false;
 
   // Nhiều nguồn nhạc: { sources: [{name, folderId}], current }
   var store = { sources: [], current: -1 };
@@ -116,6 +127,27 @@
   $("closeSettings").addEventListener("click", closeSettings);
   settingsModal.addEventListener("click", function (e) {
     if (e.target === settingsModal) closeSettings();
+  });
+
+  // Tìm kiếm
+  var searchbarEl = $("searchbar"), searchInputEl = $("searchInput");
+  function setSearch(open) {
+    searchOpen = open;
+    searchbarEl.classList.toggle("open", open);
+    document.body.classList.toggle("search-open", open);
+    if (open) {
+      searchInputEl.focus();
+    } else {
+      searchQuery = "";
+      searchInputEl.value = "";
+      buildList();
+    }
+  }
+  $("searchBtn").addEventListener("click", function () { setSearch(!searchOpen); });
+  $("searchClear").addEventListener("click", function () { setSearch(false); });
+  searchInputEl.addEventListener("input", function () {
+    searchQuery = searchInputEl.value;
+    buildList();
   });
 
   var editingIdx = -1; // đang sửa nguồn nào (-1 = đang thêm mới)
@@ -358,6 +390,46 @@
 
   function buildList() {
     listEl.innerHTML = "";
+    var q = searchQuery.trim().toLowerCase();
+    if (q) {
+      // Chế độ tìm kiếm: liệt kê phẳng các bài khớp tên bài hoặc tên album
+      var matches = [];
+      tracks.forEach(function (t, i) {
+        var nm = (t.name || "").toLowerCase();
+        var fol = (t._folder || "").toLowerCase();
+        if (nm.indexOf(q) >= 0 || fol.indexOf(q) >= 0) matches.push(i);
+      });
+      if (!matches.length) {
+        listEl.innerHTML = '<div id="empty">Không tìm thấy bài nào khớp.</div>';
+        return;
+      }
+      matches.forEach(function (i) {
+        var t = tracks[i];
+        var li = document.createElement("li");
+        li.setAttribute("data-i", i);
+        if (i === current) li.classList.add("playing");
+        var main = document.createElement("div");
+        main.className = "track-main";
+        var name = document.createElement("div");
+        name.className = "name";
+        name.textContent = t.name;
+        main.appendChild(name);
+        if (t._folder) {
+          var fol = document.createElement("div");
+          fol.className = "folder";
+          fol.textContent = t._folder;
+          main.appendChild(fol);
+        }
+        var size = document.createElement("span");
+        size.className = "size";
+        size.textContent = fmtSize(t.size);
+        li.appendChild(main);
+        li.appendChild(size);
+        li.addEventListener("click", function () { playAt(i); });
+        listEl.appendChild(li);
+      });
+      return;
+    }
     // Gom bài theo album (tracks đã sắp xếp theo album)
     var groups = {}, order = [];
     tracks.forEach(function (t, i) {
@@ -422,6 +494,7 @@
     listEl.innerHTML = "";
     tracks = []; current = -1;
     expanded = {}; // đổi nguồn thì thu gọn hết lại
+    if (searchOpen) setSearch(false); // đổi nguồn thì tắt tìm kiếm
     try { player.pause(); } catch (e) { /* chưa phát gì */ }
     stopWebAudio();
     nowEl.textContent = "Chưa chọn bài nào";
@@ -816,8 +889,8 @@
     current = i;
     var t = tracks[i];
     var af = t._folder || "";
-    if (!expanded[af]) {
-      // Tự chuyển sang album khác -> đóng hết album cũ, chỉ mở album đang phát
+    if (!searchQuery.trim() && !expanded[af]) {
+      // Tự chuyển sang album khác (không phải lúc đang tìm kiếm) -> đóng hết album cũ, chỉ mở album đang phát
       for (var k in expanded) {
         if (expanded.hasOwnProperty(k)) expanded[k] = false;
       }
