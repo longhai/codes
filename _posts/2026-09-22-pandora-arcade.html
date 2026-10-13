@@ -259,7 +259,7 @@ let deferredPrompt = null;
 const pwaManifest = { name: "Pandora Arcade", short_name: "Arcade",
   start_url: location.origin + location.pathname,
   scope: location.origin + location.pathname.replace(/[^/]*$/, ""),
-  display: "standalone", orientation: "any", theme_color: "#050101", background_color: "#050101",
+  display: "fullscreen", orientation: "any", theme_color: "#050101", background_color: "#050101",
   icons: [{ src: "https://longhai.github.io/codes/icon.png", sizes: "512x512", type: "image/png", purpose: "any" }] };
 document.head.appendChild(Object.assign(document.createElement("link"), { rel: "manifest",
   href: URL.createObjectURL(new Blob([JSON.stringify(pwaManifest)], { type: "application/manifest+json" })) }));
