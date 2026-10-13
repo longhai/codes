@@ -817,7 +817,10 @@
     var t = tracks[i];
     var af = t._folder || "";
     if (!expanded[af]) {
-      // Phát tới album đang thu gọn (vd tự chuyển bài) -> tự bung ra
+      // Tự chuyển sang album khác -> đóng hết album cũ, chỉ mở album đang phát
+      for (var k in expanded) {
+        if (expanded.hasOwnProperty(k)) expanded[k] = false;
+      }
       expanded[af] = true;
       buildList();
       var el = listEl.querySelector('li[data-i="' + i + '"]');
