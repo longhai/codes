@@ -21,6 +21,9 @@
   li .track-main { flex: 1; min-width: 0; }
   li .folder { font-size: 11px; color: #667; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
   li .size { font-size: 11px; color: #99a; white-space: nowrap; }
+  .album-head { position: -webkit-sticky; position: sticky; top: 58px; z-index: 5; display: flex; align-items: center; gap: 8px; background: #14161c; border-radius: 0; padding: 10px; font-size: 14px; font-weight: 700; color: #eee; cursor: pointer; min-width: 0; }
+  .album-head .arrow { color: #4c8dff; font-size: 12px; flex: 0 0 auto; }
+  .album-head .album-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #empty { text-align: center; color: #99a; padding: 48px 24px; font-size: 14px; line-height: 1.6; }
   #bar { position: fixed; left: 0; right: 0; bottom: 0; background: #1e222c; padding: 6px 12px calc(6px + env(safe-area-inset-bottom)); border-top: 1px solid #2a2f3b; }
   #now { font-size: 12px; color: #99a; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -281,11 +284,11 @@
     return fetchPage().then(function () { return { files: files, folders: folders }; });
   }
 
-  function scanRecursive(folderId, path, depth, key, stats, onProgress) {
+  function scanRecursive(folderId, folderName, depth, key, stats, onProgress) {
     return listFolder(folderId, key).then(function (res) {
       res.files.forEach(function (f) {
         if (isAudioFile(f)) {
-          f._folder = path; // nhớ album để hiển thị + sắp xếp
+          f._folder = folderName; // tên thư mục chứa file = tên album
           stats.tracks.push(f);
         }
       });
@@ -298,8 +301,7 @@
         if (!queue.length) return null;
         var batch = queue.splice(0, 6);
         return Promise.all(batch.map(function (sub) {
-          var subPath = path ? path + " / " + sub.name : sub.name;
-          return scanRecursive(sub.id, subPath, depth + 1, key, stats, onProgress).catch(function () {
+          return scanRecursive(sub.id, sub.name, depth + 1, key, stats, onProgress).catch(function () {
             stats.errors = (stats.errors || 0) + 1; // 1 folder lỗi không làm sập cả lần quét
           });
         })).then(nextBatch);
@@ -344,29 +346,67 @@
     });
   }
 
+  var expanded = {}; // tên album -> true nếu đang mở (accordion)
+
+  function highlightCurrent() {
+    var items = listEl.querySelectorAll("li[data-i]");
+    for (var k = 0; k < items.length; k++) {
+      items[k].classList.toggle("playing", +items[k].getAttribute("data-i") === current);
+    }
+  }
+
   function buildList() {
     listEl.innerHTML = "";
+    // Gom bài theo album (tracks đã sắp xếp theo album)
+    var groups = {}, order = [];
     tracks.forEach(function (t, i) {
-      var li = document.createElement("li");
-      var main = document.createElement("div");
-      main.className = "track-main";
-      var name = document.createElement("div");
-      name.className = "name";
-      name.textContent = t.name;
-      main.appendChild(name);
-      if (t._folder) {
-        var fol = document.createElement("div");
-        fol.className = "folder";
-        fol.textContent = t._folder;
-        main.appendChild(fol);
+      var f = t._folder || "";
+      if (!groups[f]) { groups[f] = []; order.push(f); }
+      groups[f].push(i);
+    });
+    var showHeaders = order.length > 1;
+    order.forEach(function (f) {
+      var idxs = groups[f];
+      if (showHeaders) {
+        var h = document.createElement("li");
+        h.className = "album-head" + (expanded[f] ? " open" : "");
+        var arrow = document.createElement("span");
+        arrow.className = "arrow";
+        arrow.textContent = expanded[f] ? "▼" : "▶";
+        var nm = document.createElement("span");
+        nm.className = "album-name";
+        nm.textContent = (f || "Bài hát lẻ") + " (" + idxs.length + ")";
+        h.appendChild(arrow);
+        h.appendChild(nm);
+        h.addEventListener("click", (function (ff) {
+          return function () {
+            expanded[ff] = !expanded[ff];
+            buildList();
+          };
+        })(f));
+        listEl.appendChild(h);
       }
-      var size = document.createElement("span");
-      size.className = "size";
-      size.textContent = fmtSize(t.size);
-      li.appendChild(main);
-      li.appendChild(size);
-      li.addEventListener("click", function () { playAt(i); });
-      listEl.appendChild(li);
+      if (!showHeaders || expanded[f]) {
+        idxs.forEach(function (i) {
+          var t = tracks[i];
+          var li = document.createElement("li");
+          li.setAttribute("data-i", i);
+          if (i === current) li.classList.add("playing");
+          var main = document.createElement("div");
+          main.className = "track-main";
+          var name = document.createElement("div");
+          name.className = "name";
+          name.textContent = t.name;
+          main.appendChild(name);
+          var size = document.createElement("span");
+          size.className = "size";
+          size.textContent = fmtSize(t.size);
+          li.appendChild(main);
+          li.appendChild(size);
+          li.addEventListener("click", function () { playAt(i); });
+          listEl.appendChild(li);
+        });
+      }
     });
   }
 
@@ -380,6 +420,7 @@
     var key = API_KEY;
     listEl.innerHTML = "";
     tracks = []; current = -1;
+    expanded = {}; // đổi nguồn thì thu gọn hết lại
     try { player.pause(); } catch (e) { /* chưa phát gì */ }
     stopWebAudio();
     nowEl.textContent = "Chưa chọn bài nào";
@@ -766,9 +807,17 @@
       return;
     }
     current = i;
-    var items = listEl.children;
-    for (var k = 0; k < items.length; k++) items[k].classList.toggle("playing", k === i);
     var t = tracks[i];
+    var af = t._folder || "";
+    if (!expanded[af]) {
+      // Phát tới album đang thu gọn (vd tự chuyển bài) -> tự bung ra
+      expanded[af] = true;
+      buildList();
+      var el = listEl.querySelector('li[data-i="' + i + '"]');
+      if (el && el.scrollIntoView) el.scrollIntoView({ block: "nearest" });
+    } else {
+      highlightCurrent();
+    }
     var url = streamUrl(t.id);
     updateMediaSession(t); // hiện tên bài trên thông báo hệ thống / màn hình khóa
     if (isWav(t) && (+t.size || 0) < 20 * 1048576) {
