@@ -197,6 +197,13 @@
 
   var MAX_DEPTH = 4; // quét sâu tối đa 4 cấp thư mục
 
+  // Drive đôi khi gán mimeType lạ (vd FLAC thành application/x-flac) nên nhận theo đuôi file nữa
+  var AUDIO_EXT_RE = /\.(mp3|wav|flac|m4a|m4b|aac|ogg|oga|opus|wma|aiff|aif|ape|mpc)$/i;
+  function isAudioFile(f) {
+    if (/^audio\//.test(f.mimeType || "")) return true;
+    return AUDIO_EXT_RE.test(f.name || "");
+  }
+
   function listFolder(folderId, key) {
     // Liệt kê hết 1 folder (phân trang), tách riêng file và folder con
     var files = [], folders = [], pageToken = "";
@@ -224,7 +231,7 @@
   function scanRecursive(folderId, path, depth, key, stats, onProgress) {
     return listFolder(folderId, key).then(function (res) {
       res.files.forEach(function (f) {
-        if (/^audio\//.test(f.mimeType || "")) {
+        if (isAudioFile(f)) {
           f._folder = path; // nhớ album để hiển thị + sắp xếp
           stats.tracks.push(f);
         }
