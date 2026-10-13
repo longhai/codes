@@ -6,39 +6,39 @@
 <title>Demo nghe nhạc từ Google Drive</title>
 <style>
   * { box-sizing: border-box; }
-  body { font-family: system-ui, -apple-system, sans-serif; background: #14161c; color: #eee; margin: 0; padding: 0; padding-bottom: 110px; }
-  #topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #1e222c; border-bottom: 1px solid #2a2f3b; }
-  .app-title { font-size: 17px; font-weight: 700; }
-  #settingsBtn { background: none; border: none; font-size: 22px; cursor: pointer; padding: 4px 6px; }
-  #status { font-size: 13px; color: #99a; padding: 10px 16px 0; min-height: 18px; }
+  html, body { overflow-x: hidden; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #14161c; color: #eee; margin: 0; padding: 0; padding-bottom: 104px; }
+  #topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: #1e222c; border-bottom: 1px solid #2a2f3b; }
+  .app-title { font-size: 16px; font-weight: 700; }
+  #settingsBtn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 2px 6px; color: #eee; }
+  #status { font-size: 12px; color: #99a; padding: 8px 12px 0; min-height: 16px; }
   #status.err { color: #ff7b7b; }
-  ul { list-style: none; padding: 8px 12px; margin: 0; display: grid; gap: 8px; }
-  li { background: #1e222c; border-radius: 10px; padding: 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; cursor: pointer; }
+  ul { list-style: none; padding: 6px 10px; margin: 0; display: grid; gap: 6px; }
+  li { background: #1e222c; border-radius: 8px; padding: 9px 10px; display: flex; justify-content: space-between; align-items: center; gap: 6px; cursor: pointer; min-width: 0; }
   li.playing { outline: 2px solid #4c8dff; }
-  li .name { font-size: 15px; word-break: break-all; }
-  li .size { font-size: 12px; color: #99a; white-space: nowrap; }
+  li .name { font-size: 14px; word-break: break-all; }
+  li .track-main { flex: 1; min-width: 0; }
+  li .folder { font-size: 11px; color: #667; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+  li .size { font-size: 11px; color: #99a; white-space: nowrap; }
   #empty { text-align: center; color: #99a; padding: 48px 24px; font-size: 14px; line-height: 1.6; }
-  #bar { position: fixed; left: 0; right: 0; bottom: 0; background: #1e222c; padding: 8px 16px calc(8px + env(safe-area-inset-bottom)); border-top: 1px solid #2a2f3b; }
-  #now { font-size: 13px; color: #99a; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  audio { width: 100%; }
-  .modal { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.6); display: flex; align-items: flex-start; justify-content: center; padding: 64px 16px 16px; }
+  #bar { position: fixed; left: 0; right: 0; bottom: 0; background: #1e222c; padding: 6px 12px calc(6px + env(safe-area-inset-bottom)); border-top: 1px solid #2a2f3b; }
+  #now { font-size: 12px; color: #99a; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  audio { width: 100%; max-width: 100%; display: block; }
+  .modal { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.6); display: flex; align-items: flex-start; justify-content: center; padding: 24px 16px; overflow-y: auto; }
   .modal.hidden { display: none; }
   .modal-box { background: #1e222c; border: 1px solid #2a2f3b; border-radius: 14px; padding: 16px; width: 100%; max-width: 420px; }
   .modal-head { display: flex; justify-content: space-between; align-items: center; font-size: 17px; font-weight: 700; margin-bottom: 12px; }
   #closeSettings { background: none; border: none; color: #99a; font-size: 18px; cursor: pointer; padding: 4px 8px; }
-  #srcChips { display: flex; gap: 8px; padding: 10px 12px 2px; overflow-x: auto; }
-  .chip { flex: 0 0 auto; padding: 8px 14px; border-radius: 20px; background: #1e222c; border: 1px solid #2a2f3b; color: #eee; font-size: 14px; cursor: pointer; }
-  .chip.active { background: #4c8dff; border-color: #4c8dff; color: #fff; font-weight: 600; }
-  .chip.add { border-style: dashed; color: #99a; }
   .src-manage-head { font-size: 14px; font-weight: 700; margin: 14px 0 8px; }
   #srcList { list-style: none; padding: 0; margin: 0 0 4px; display: grid; gap: 6px; }
-  #srcList li { padding: 10px 12px; }
+  #srcList li { padding: 10px 12px; cursor: pointer; }
+  #srcList li.src-active { outline: 2px solid #4c8dff; }
   .src-del { background: none; border: none; font-size: 16px; cursor: pointer; padding: 4px; }
   .src-empty { color: #667; font-size: 13px; text-align: center; padding: 8px; }
   .modal-box label { display: block; font-size: 13px; color: #99a; margin-bottom: 10px; }
-  .modal-box input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #333a48; background: #14161c; color: #eee; font-size: 14px; margin-top: 4px; }
-  #loadBtn { width: 100%; padding: 12px; border: 0; border-radius: 10px; background: #4c8dff; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; }
-  #loadBtn:disabled { opacity: .5; cursor: default; }
+  .modal-box input { width: 100%; max-width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #333a48; background: #14161c; color: #eee; font-size: 16px; margin-top: 4px; }
+  #addSrcBtn { width: 100%; padding: 12px; border: 0; border-radius: 10px; background: #4c8dff; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; }
+  #addSrcBtn:disabled { opacity: .5; cursor: default; }
   .note { font-size: 12px; color: #667; margin: 10px 0 0; line-height: 1.5; }
 </style>
 </head>
@@ -47,7 +47,6 @@
   <div class="app-title">🎵 Drive Music</div>
   <button id="settingsBtn" aria-label="Cài đặt">⚙️</button>
 </header>
-<div id="srcChips"></div>
 <div id="status"></div>
 <ul id="list"></ul>
 <div id="settingsModal" class="modal hidden">
@@ -65,7 +64,7 @@
       <input id="newFolderId" placeholder="https://drive.google.com/drive/folders/..." />
     </label>
     <button id="addSrcBtn">＋ Thêm nguồn</button>
-    <p class="note">Bấm vào tên nguồn ở màn hình chính để đổi folder. Key và danh sách nguồn được lưu trên máy này.</p>
+    <p class="note">Bấm vào nguồn để nghe, 🗑 để xóa. Key và danh sách nguồn được lưu trên máy này.</p>
   </div>
 </div>
 <div id="bar">
@@ -79,7 +78,7 @@
   var keyInput = $("apiKey"),
       statusEl = $("status"),
       listEl = $("list"), player = $("player"), nowEl = $("now"),
-      chipsEl = $("srcChips"), srcListEl = $("srcList"),
+      srcListEl = $("srcList"),
       settingsModal = $("settingsModal");
   var tracks = [], current = -1, playSeq = 0;
 
@@ -113,36 +112,24 @@
     if (e.target === settingsModal) closeSettings();
   });
 
-  function renderChips() {
-    chipsEl.innerHTML = "";
-    var add = document.createElement("button");
-    add.className = "chip add";
-    add.textContent = "＋";
-    add.setAttribute("aria-label", "Thêm nguồn");
-    add.addEventListener("click", openSettings);
-    chipsEl.appendChild(add);
-    store.sources.forEach(function (s, i) {
-      var c = document.createElement("button");
-      c.className = "chip" + (i === store.current ? " active" : "");
-      c.textContent = s.name;
-      c.addEventListener("click", function () { loadSource(i); });
-      chipsEl.appendChild(c);
-    });
-  }
-
   function renderSrcList() {
     srcListEl.innerHTML = "";
     store.sources.forEach(function (s, i) {
       var li = document.createElement("li");
+      if (i === store.current) li.className = "src-active";
       var nm = document.createElement("span");
-      nm.textContent = s.name;
+      nm.textContent = (i === store.current ? "▶ " : "") + s.name;
       var del = document.createElement("button");
       del.className = "src-del";
       del.textContent = "🗑";
       del.setAttribute("aria-label", "Xóa nguồn " + s.name);
-      del.addEventListener("click", function () { deleteSource(i); });
+      del.addEventListener("click", function (e) {
+        e.stopPropagation();
+        deleteSource(i);
+      });
       li.appendChild(nm);
       li.appendChild(del);
+      li.addEventListener("click", function () { loadSource(i); });
       srcListEl.appendChild(li);
     });
     if (!store.sources.length) srcListEl.innerHTML = '<div class="src-empty">Chưa có nguồn nào.</div>';
@@ -157,7 +144,6 @@
     $("srcName").value = "";
     $("newFolderId").value = "";
     saveStore();
-    renderChips();
     renderSrcList();
     loadSource(store.sources.length - 1);
   });
@@ -166,7 +152,6 @@
     store.sources.splice(i, 1);
     if (store.current >= store.sources.length) store.current = store.sources.length - 1;
     saveStore();
-    renderChips();
     renderSrcList();
     if (store.current >= 0) {
       loadSource(store.current);
@@ -176,11 +161,10 @@
       stopWebAudio();
       listEl.innerHTML = "";
       nowEl.textContent = "Chưa chọn bài nào";
-      setStatus("Đã xóa hết nguồn. Bấm ＋ để thêm folder nhạc.");
+      setStatus("Đã xóa hết nguồn. Vào ⚙️ Cài đặt để thêm folder nhạc.");
     }
   }
 
-  renderChips();
   renderSrcList();
   if (store.sources.length && store.current >= 0) {
     loadSource(store.current);
@@ -213,31 +197,14 @@
       "?alt=media&key=" + encodeURIComponent(keyInput.value.trim());
   }
 
-  function loadSource(i) {
-    if (i < 0 || i >= store.sources.length) return;
-    store.current = i;
-    store.apiKey = keyInput.value.trim();
-    saveStore();
-    renderChips();
-    renderSrcList();
-    closeSettings();
-    var src = store.sources[i];
-    var key = store.apiKey;
-    if (!key) { setStatus("Nhập API key trong ⚙️ Cài đặt đã nhé.", true); openSettings(); return; }
-    var addBtn = $("addSrcBtn");
-    addBtn.disabled = true;
-    setStatus("Đang tải \"" + src.name + "\"...");
-    listEl.innerHTML = "";
-    tracks = []; current = -1;
-    try { player.pause(); } catch (e) { /* chưa phát gì */ }
-    stopWebAudio();
-    nowEl.textContent = "Chưa chọn bài nào";
+  var MAX_DEPTH = 4; // quét sâu tối đa 4 cấp thư mục
 
-    var all = [];
-    var pageToken = "";
+  function listFolder(folderId, key) {
+    // Liệt kê hết 1 folder (phân trang), tách riêng file và folder con
+    var files = [], folders = [], pageToken = "";
     function fetchPage() {
       var url = "https://www.googleapis.com/drive/v3/files" +
-        "?q=" + encodeURIComponent("'" + src.folderId + "' in parents and trashed=false") +
+        "?q=" + encodeURIComponent("'" + folderId + "' in parents and trashed=false") +
         "&fields=" + encodeURIComponent("nextPageToken,files(id,name,mimeType,size)") +
         "&pageSize=100" +
         (pageToken ? "&pageToken=" + encodeURIComponent(pageToken) : "") +
@@ -245,29 +212,90 @@
       return fetch(url).then(function (r) {
         return r.json().then(function (data) {
           if (!r.ok) throw new Error((data && data.error && data.error.message) || ("HTTP " + r.status));
-          (data.files || []).forEach(function (f) { all.push(f); });
+          (data.files || []).forEach(function (f) {
+            if (f.mimeType === "application/vnd.google-apps.folder") folders.push(f);
+            else files.push(f);
+          });
           if (data.nextPageToken) { pageToken = data.nextPageToken; return fetchPage(); }
         });
       });
     }
+    return fetchPage().then(function () { return { files: files, folders: folders }; });
+  }
 
-    fetchPage().then(function () {
-      tracks = all.filter(function (f) { return /^audio\//.test(f.mimeType || ""); });
-      // Sắp xếp tự nhiên: 1, 2, 10 (không phải 1, 10, 2)
-      tracks.sort(function (a, b) {
-        return (a.name || "").localeCompare(b.name || "", undefined, { numeric: true, sensitivity: "base" });
+  function scanRecursive(folderId, path, depth, key, stats, onProgress) {
+    return listFolder(folderId, key).then(function (res) {
+      res.files.forEach(function (f) {
+        if (/^audio\//.test(f.mimeType || "")) {
+          f._folder = path; // nhớ album để hiển thị + sắp xếp
+          stats.tracks.push(f);
+        }
       });
-      if (!tracks.length) { setStatus("Không thấy file nhạc nào trong \"" + src.name + "\" (thấy " + all.length + " file).", true); return; }
-      setStatus("Tìm thấy " + tracks.length + " bài trong \"" + src.name + "\". Bấm vào bài để nghe.");
+      stats.folders++;
+      onProgress(stats);
+      if (depth >= MAX_DEPTH || !res.folders.length) return null;
+      return Promise.all(res.folders.map(function (sub) {
+        var subPath = path ? path + " / " + sub.name : sub.name;
+        return scanRecursive(sub.id, subPath, depth + 1, key, stats, onProgress).catch(function () {
+          stats.errors = (stats.errors || 0) + 1; // 1 folder lỗi không làm sập cả lần quét
+        });
+      }));
+    });
+  }
+
+  function naturalCmp(a, b) {
+    return (a || "").localeCompare(b || "", undefined, { numeric: true, sensitivity: "base" });
+  }
+
+  function loadSource(i) {
+    if (i < 0 || i >= store.sources.length) return;
+    store.current = i;
+    store.apiKey = keyInput.value.trim();
+    saveStore();
+    renderSrcList();
+    closeSettings();
+    var src = store.sources[i];
+    var key = store.apiKey;
+    if (!key) { setStatus("Nhập API key trong ⚙️ Cài đặt đã nhé.", true); openSettings(); return; }
+    var addBtn = $("addSrcBtn");
+    addBtn.disabled = true;
+    listEl.innerHTML = "";
+    tracks = []; current = -1;
+    try { player.pause(); } catch (e) { /* chưa phát gì */ }
+    stopWebAudio();
+    nowEl.textContent = "Chưa chọn bài nào";
+
+    var stats = { tracks: [], folders: 0 };
+    scanRecursive(src.folderId, "", 0, key, stats, function (s) {
+      setStatus("Đang quét \"" + src.name + "\": " + s.folders + " thư mục, thấy " + s.tracks.length + " bài...");
+    }).then(function () {
+      tracks = stats.tracks;
+      // Sắp xếp: theo album trước, rồi tên bài (tự nhiên: 1, 2, 10)
+      tracks.sort(function (a, b) {
+        var c = naturalCmp(a._folder, b._folder);
+        return c || naturalCmp(a.name, b.name);
+      });
+      if (!tracks.length) { setStatus("Không thấy file nhạc nào trong \"" + src.name + "\" (" + stats.folders + " thư mục đã quét).", true); return; }
+      var errNote = stats.errors ? " (" + stats.errors + " thư mục lỗi, bỏ qua)" : "";
+      setStatus("Tìm thấy " + tracks.length + " bài trong " + stats.folders + " thư mục" + errNote + ". Bấm vào bài để nghe.");
       tracks.forEach(function (t, i) {
         var li = document.createElement("li");
-        var name = document.createElement("span");
+        var main = document.createElement("div");
+        main.className = "track-main";
+        var name = document.createElement("div");
         name.className = "name";
         name.textContent = t.name;
+        main.appendChild(name);
+        if (t._folder) {
+          var fol = document.createElement("div");
+          fol.className = "folder";
+          fol.textContent = t._folder;
+          main.appendChild(fol);
+        }
         var size = document.createElement("span");
         size.className = "size";
         size.textContent = fmtSize(t.size);
-        li.appendChild(name);
+        li.appendChild(main);
         li.appendChild(size);
         li.addEventListener("click", function () { playAt(i); });
         listEl.appendChild(li);
@@ -446,7 +474,12 @@
           if (seq === playSeq) fetchAudioBytes(t, url, seq, 1, onOk);
         }, 3000);
       } else {
-        setStatus("Lỗi tải file: " + (e && e.message || e) + ". Thử tắt/bật mạng rồi bấm lại nhé.", true);
+        var msg = "" + (e && e.message || e);
+        if (/403/.test(msg)) {
+          setStatus("File này chưa được chia sẻ quyền tải (lỗi 403). Thử bài khác nhé.", true);
+        } else {
+          setStatus("Lỗi tải file: " + msg + ". Thử tắt/bật mạng rồi bấm lại nhé.", true);
+        }
       }
     });
   }
@@ -552,6 +585,10 @@
     var ctx;
     try { ctx = getAudioCtx(); }
     catch (e) { setStatus("Không tạo được AudioContext: " + e.message, true); return; }
+    if ((+t.size || 0) > 30 * 1048576) {
+      setStatus("File quá lớn (" + fmtSize(t.size) + ") mà trình duyệt không hỗ trợ định dạng này nên không phát được.", true);
+      return;
+    }
     var canPlay = "";
     try { canPlay = document.createElement("audio").canPlayType(t.mimeType || ""); } catch (e) {}
     setStatus("Trình duyệt chê định dạng " + (t.mimeType || "") + " (" + reason + ", canPlayType=" + JSON.stringify(canPlay) + "). Đang tải về giải mã bằng WebAudio...");
