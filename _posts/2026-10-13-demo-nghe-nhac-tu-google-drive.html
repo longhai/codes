@@ -6,6 +6,7 @@
 <title>Demo nghe nhạc từ Google Drive</title>
 <style>
   * { box-sizing: border-box; }
+  :root { color-scheme: dark; }
   html, body { overflow-x: hidden; }
   body { font-family: system-ui, -apple-system, sans-serif; background: #14161c; color: #eee; margin: 0; padding: 58px 0 104px; }
   #topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; background: #1e222c; border-bottom: 1px solid #2a2f3b; }
@@ -14,14 +15,14 @@
   #settingsBtn, #refreshBtn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 2px 6px; color: #eee; flex: 0 0 auto; }
   #status { font-size: 11px; color: #99a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
   #status.err { color: #ff7b7b; }
-  ul { list-style: none; padding: 6px 10px; margin: 0; display: grid; gap: 6px; }
-  li { background: #1e222c; border-radius: 8px; padding: 9px 10px; display: flex; justify-content: space-between; align-items: center; gap: 6px; cursor: pointer; min-width: 0; }
+  ul { list-style: none; padding: 6px 10px; margin: 0; }
+  li { background: #1e222c; border-radius: 8px; padding: 9px 10px; display: flex; justify-content: space-between; align-items: center; gap: 6px; cursor: pointer; min-width: 0; margin-bottom: 6px; }
   li.playing { outline: 2px solid #4c8dff; }
   li .name { font-size: 14px; word-break: break-all; }
   li .track-main { flex: 1; min-width: 0; }
   li .folder { font-size: 11px; color: #667; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
   li .size { font-size: 11px; color: #99a; white-space: nowrap; }
-  .album-head { position: -webkit-sticky; position: sticky; top: 58px; z-index: 5; display: flex; align-items: center; gap: 8px; background: #14161c; border-radius: 0; padding: 10px; font-size: 14px; font-weight: 700; color: #eee; cursor: pointer; min-width: 0; }
+  .album-head { display: flex; align-items: center; gap: 8px; background: #14161c; border-radius: 0; padding: 10px; font-size: 14px; font-weight: 700; color: #eee; cursor: pointer; min-width: 0; margin-bottom: 2px; }
   .album-head .arrow { color: #4c8dff; font-size: 12px; flex: 0 0 auto; }
   .album-head .album-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #empty { text-align: center; color: #99a; padding: 48px 24px; font-size: 14px; line-height: 1.6; }
@@ -430,6 +431,12 @@
       var cached = getCache(src.folderId);
       if (cached && cached.tracks && cached.tracks.length) {
         tracks = cached.tracks;
+        // migrate cache cũ: _folder từng lưu đường dẫn dài, giờ chỉ giữ tên thư mục cuối
+        tracks.forEach(function (t) {
+          if (t._folder && t._folder.indexOf(" / ") >= 0) {
+            t._folder = t._folder.split(" / ").pop();
+          }
+        });
         sortTracks();
         buildList();
         var ageMin = Math.round((Date.now() - cached.at) / 60000);
