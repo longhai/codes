@@ -11,7 +11,7 @@
   #topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; background: #1e222c; border-bottom: 1px solid #2a2f3b; }
   .topbar-text { flex: 1; min-width: 0; }
   .app-title { font-size: 16px; font-weight: 700; }
-  #settingsBtn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 2px 6px; color: #eee; flex: 0 0 auto; }
+  #settingsBtn, #refreshBtn { background: none; border: none; font-size: 20px; cursor: pointer; padding: 2px 6px; color: #eee; flex: 0 0 auto; }
   #status { font-size: 11px; color: #99a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
   #status.err { color: #ff7b7b; }
   ul { list-style: none; padding: 6px 10px; margin: 0; display: grid; gap: 6px; }
@@ -49,6 +49,7 @@
     <div class="app-title">🎵 Drive Music</div>
     <div id="status"></div>
   </div>
+  <button id="refreshBtn" aria-label="Quét lại danh sách">↻</button>
   <button id="settingsBtn" aria-label="Cài đặt">⚙️</button>
 </header>
 <ul id="list"></ul>
@@ -146,6 +147,8 @@
   });
 
   function deleteSource(i) {
+    var removed = store.sources[i];
+    if (removed) clearCache(removed.folderId);
     store.sources.splice(i, 1);
     if (store.current >= store.sources.length) store.current = store.sources.length - 1;
     saveStore();
@@ -164,6 +167,9 @@
 
   renderSrcList();
   setupMediaSession();
+  $("refreshBtn").addEventListener("click", function () {
+    loadSource(store.current, true); // quét lại từ Drive, bỏ qua cache
+  });
   if (store.sources.length && store.current >= 0) {
     loadSource(store.current);
   } else {
@@ -259,7 +265,65 @@
     return (a || "").localeCompare(b || "", undefined, { numeric: true, sensitivity: "base" });
   }
 
-  function loadSource(i) {
+  // Cache danh sách bài theo folderId để mở app không phải quét lại
+  function getCache(folderId) {
+    try {
+      var c = JSON.parse(localStorage.getItem("driveMusicCache") || "{}");
+      return c[folderId] || null;
+    } catch (e) { return null; }
+  }
+  function setCache(folderId, list) {
+    try {
+      var c = JSON.parse(localStorage.getItem("driveMusicCache") || "{}");
+      c[folderId] = { at: Date.now(), tracks: list.map(function (t) {
+        return { id: t.id, name: t.name, mimeType: t.mimeType, size: t.size, _folder: t._folder || "" };
+      }) };
+      localStorage.setItem("driveMusicCache", JSON.stringify(c));
+    } catch (e) { /* bộ nhớ đầy thì bỏ qua */ }
+  }
+  function clearCache(folderId) {
+    try {
+      var c = JSON.parse(localStorage.getItem("driveMusicCache") || "{}");
+      delete c[folderId];
+      localStorage.setItem("driveMusicCache", JSON.stringify(c));
+    } catch (e) {}
+  }
+
+  function sortTracks() {
+    // Sắp xếp: theo album trước, rồi tên bài (tự nhiên: 1, 2, 10)
+    tracks.sort(function (a, b) {
+      var c = naturalCmp(a._folder, b._folder);
+      return c || naturalCmp(a.name, b.name);
+    });
+  }
+
+  function buildList() {
+    listEl.innerHTML = "";
+    tracks.forEach(function (t, i) {
+      var li = document.createElement("li");
+      var main = document.createElement("div");
+      main.className = "track-main";
+      var name = document.createElement("div");
+      name.className = "name";
+      name.textContent = t.name;
+      main.appendChild(name);
+      if (t._folder) {
+        var fol = document.createElement("div");
+        fol.className = "folder";
+        fol.textContent = t._folder;
+        main.appendChild(fol);
+      }
+      var size = document.createElement("span");
+      size.className = "size";
+      size.textContent = fmtSize(t.size);
+      li.appendChild(main);
+      li.appendChild(size);
+      li.addEventListener("click", function () { playAt(i); });
+      listEl.appendChild(li);
+    });
+  }
+
+  function loadSource(i, forceRefresh) {
     if (i < 0 || i >= store.sources.length) return;
     store.current = i;
     saveStore();
@@ -267,49 +331,39 @@
     closeSettings();
     var src = store.sources[i];
     var key = API_KEY;
-    var addBtn = $("addSrcBtn");
-    addBtn.disabled = true;
     listEl.innerHTML = "";
     tracks = []; current = -1;
     try { player.pause(); } catch (e) { /* chưa phát gì */ }
     stopWebAudio();
     nowEl.textContent = "Chưa chọn bài nào";
 
+    // Có cache thì hiện ngay, không quét lại
+    if (!forceRefresh) {
+      var cached = getCache(src.folderId);
+      if (cached && cached.tracks && cached.tracks.length) {
+        tracks = cached.tracks;
+        sortTracks();
+        buildList();
+        var ageMin = Math.round((Date.now() - cached.at) / 60000);
+        var ageTxt = ageMin < 1 ? "vừa xong" : ageMin < 60 ? ageMin + " phút trước" : Math.round(ageMin / 60) + " giờ trước";
+        setStatus("Tìm thấy " + tracks.length + " bài (đã lưu " + ageTxt + "). Bấm ↻ để quét lại.");
+        return;
+      }
+    }
+
+    var addBtn = $("addSrcBtn");
+    addBtn.disabled = true;
     var stats = { tracks: [], folders: 0 };
     scanRecursive(src.folderId, "", 0, key, stats, function (s) {
       setStatus("Đang quét \"" + src.name + "\": " + s.folders + " thư mục, thấy " + s.tracks.length + " bài...");
     }).then(function () {
       tracks = stats.tracks;
-      // Sắp xếp: theo album trước, rồi tên bài (tự nhiên: 1, 2, 10)
-      tracks.sort(function (a, b) {
-        var c = naturalCmp(a._folder, b._folder);
-        return c || naturalCmp(a.name, b.name);
-      });
+      sortTracks();
       if (!tracks.length) { setStatus("Không thấy file nhạc nào trong \"" + src.name + "\" (" + stats.folders + " thư mục đã quét).", true); return; }
+      setCache(src.folderId, tracks);
+      buildList();
       var errNote = stats.errors ? " (" + stats.errors + " thư mục lỗi, bỏ qua)" : "";
       setStatus("Tìm thấy " + tracks.length + " bài trong " + stats.folders + " thư mục" + errNote + ". Bấm vào bài để nghe.");
-      tracks.forEach(function (t, i) {
-        var li = document.createElement("li");
-        var main = document.createElement("div");
-        main.className = "track-main";
-        var name = document.createElement("div");
-        name.className = "name";
-        name.textContent = t.name;
-        main.appendChild(name);
-        if (t._folder) {
-          var fol = document.createElement("div");
-          fol.className = "folder";
-          fol.textContent = t._folder;
-          main.appendChild(fol);
-        }
-        var size = document.createElement("span");
-        size.className = "size";
-        size.textContent = fmtSize(t.size);
-        li.appendChild(main);
-        li.appendChild(size);
-        li.addEventListener("click", function () { playAt(i); });
-        listEl.appendChild(li);
-      });
     }).catch(function (err) {
       setStatus("Lỗi: " + err.message, true);
     }).then(function () { addBtn.disabled = false; });
