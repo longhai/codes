@@ -253,11 +253,14 @@
   $("refreshBtn").addEventListener("click", function () {
     loadSource(store.current, true); // quét lại từ Drive, bỏ qua cache
   });
-  if (store.sources.length && store.current >= 0) {
-    loadSource(store.current);
-  } else {
-    openSettings();
-  }
+  // Mở IndexedDB trước rồi mới tải nguồn (để đọc cache lớn được)
+  openIDB().then(function () {
+    if (store.sources.length && store.current >= 0) {
+      loadSource(store.current);
+    } else {
+      openSettings();
+    }
+  });
 
   function setStatus(msg, isErr) {
     statusEl.textContent = msg;
@@ -348,27 +351,80 @@
   }
 
   // Cache danh sách bài theo folderId để mở app không phải quét lại
+  // Cache dùng IndexedDB (chứa được hàng chục MB cho folder lớn),
+  // fallback localStorage cho folder nhỏ hoặc khi IDB không dùng được.
+  var idb = null;
+  function openIDB() {
+    return new Promise(function (resolve) {
+      try {
+        var req = indexedDB.open("driveMusicDB", 1);
+        req.onupgradeneeded = function (e) {
+          var db = e.target.result;
+          if (!db.objectStoreNames.contains("trackCache")) {
+            db.createObjectStore("trackCache", { keyPath: "folderId" });
+          }
+        };
+        req.onsuccess = function (e) { idb = e.target.result; resolve(true); };
+        req.onerror = function () { resolve(false); };
+        req.onblocked = function () { resolve(false); };
+      } catch (e) { resolve(false); }
+    });
+  }
+  function cacheKey(folderId) { return "driveMusicCache_" + folderId; }
+  function unpackTracks(arr) {
+    return (arr || []).map(function (a) {
+      return { id: a[0], name: a[1], size: a[2], _folder: a[3] || "" };
+    });
+  }
   function getCache(folderId) {
-    try {
-      var c = JSON.parse(localStorage.getItem("driveMusicCache") || "{}");
-      return c[folderId] || null;
-    } catch (e) { return null; }
+    // Trả về Promise; thử IDB trước, rồi localStorage (cache cũ)
+    return new Promise(function (resolve) {
+      function fromLS() {
+        try {
+          var raw = localStorage.getItem(cacheKey(folderId));
+          if (!raw) return resolve(null);
+          var c = JSON.parse(raw);
+          resolve({ at: c.at, tracks: unpackTracks(c.tracks) });
+        } catch (e) { resolve(null); }
+      }
+      if (!idb) return fromLS();
+      try {
+        var req = idb.transaction("trackCache", "readonly").objectStore("trackCache").get(folderId);
+        req.onsuccess = function () {
+          var c = req.result;
+          if (c && c.tracks) resolve({ at: c.at, tracks: unpackTracks(c.tracks) });
+          else fromLS();
+        };
+        req.onerror = fromLS;
+      } catch (e) { fromLS(); }
+    });
   }
   function setCache(folderId, list) {
-    try {
-      var c = JSON.parse(localStorage.getItem("driveMusicCache") || "{}");
-      c[folderId] = { at: Date.now(), tracks: list.map(function (t) {
-        return { id: t.id, name: t.name, mimeType: t.mimeType, size: t.size, _folder: t._folder || "" };
-      }) };
-      localStorage.setItem("driveMusicCache", JSON.stringify(c));
-    } catch (e) { /* bộ nhớ đầy thì bỏ qua */ }
+    // Trả về Promise<boolean>
+    var compact = list.map(function (t) {
+      return [t.id, t.name, t.size, t._folder || ""];
+    });
+    var data = { folderId: folderId, at: Date.now(), tracks: compact };
+    return new Promise(function (resolve) {
+      function toLS() {
+        try {
+          localStorage.setItem(cacheKey(folderId), JSON.stringify({ at: data.at, tracks: compact }));
+          resolve(true);
+        } catch (e) { resolve(false); }
+      }
+      if (!idb) return toLS();
+      try {
+        var req = idb.transaction("trackCache", "readwrite").objectStore("trackCache").put(data);
+        req.onsuccess = function () { resolve(true); };
+        req.onerror = toLS;
+      } catch (e) { toLS(); }
+    });
   }
   function clearCache(folderId) {
-    try {
-      var c = JSON.parse(localStorage.getItem("driveMusicCache") || "{}");
-      delete c[folderId];
-      localStorage.setItem("driveMusicCache", JSON.stringify(c));
-    } catch (e) {}
+    if (idb) {
+      try { idb.transaction("trackCache", "readwrite").objectStore("trackCache").delete(folderId); } catch (e) {}
+    }
+    try { localStorage.removeItem(cacheKey(folderId)); } catch (e) {}
   }
 
   function sortTracks() {
@@ -501,24 +557,34 @@
 
     // Có cache thì hiện ngay, không quét lại
     if (!forceRefresh) {
-      var cached = getCache(src.folderId);
-      if (cached && cached.tracks && cached.tracks.length) {
-        tracks = cached.tracks;
-        // migrate cache cũ: _folder từng lưu đường dẫn dài, giờ chỉ giữ tên thư mục cuối
-        tracks.forEach(function (t) {
-          if (t._folder && t._folder.indexOf(" / ") >= 0) {
-            t._folder = t._folder.split(" / ").pop();
-          }
-        });
-        sortTracks();
-        buildList();
-        var ageMin = Math.round((Date.now() - cached.at) / 60000);
-        var ageTxt = ageMin < 1 ? "vừa xong" : ageMin < 60 ? ageMin + " phút trước" : Math.round(ageMin / 60) + " giờ trước";
-        setStatus("Tìm thấy " + tracks.length + " bài (đã lưu " + ageTxt + "). Bấm ↻ để quét lại.");
-        return;
-      }
+      setStatus("Đang tải danh sách đã lưu...");
+      getCache(src.folderId).then(function (cached) {
+        if (cached && cached.tracks && cached.tracks.length) {
+          tracks = cached.tracks;
+          // migrate cache cũ: _folder từng lưu đường dẫn dài, giờ chỉ giữ tên thư mục cuối
+          tracks.forEach(function (t) {
+            if (t._folder && t._folder.indexOf(" / ") >= 0) {
+              t._folder = t._folder.split(" / ").pop();
+            }
+          });
+          sortTracks();
+          buildList();
+          var ageMin = Math.round((Date.now() - cached.at) / 60000);
+          var ageTxt = ageMin < 1 ? "vừa xong" : ageMin < 60 ? ageMin + " phút trước" : Math.round(ageMin / 60) + " giờ trước";
+          setStatus("Tìm thấy " + tracks.length + " bài (đã lưu " + ageTxt + "). Bấm ↻ để quét lại.");
+        } else {
+          doScan();
+        }
+      });
+      return;
     }
+    doScan();
+  }
 
+  function doScan() {
+    var src = store.sources[store.current];
+    if (!src) return;
+    var key = API_KEY;
     var addBtn = $("addSrcBtn");
     addBtn.disabled = true;
     var stats = { tracks: [], folders: 0 };
@@ -528,10 +594,13 @@
       tracks = stats.tracks;
       sortTracks();
       if (!tracks.length) { setStatus("Không thấy file nhạc nào trong \"" + src.name + "\" (" + stats.folders + " thư mục đã quét).", true); return; }
-      setCache(src.folderId, tracks);
       buildList();
       var errNote = stats.errors ? " (" + stats.errors + " thư mục lỗi, bỏ qua)" : "";
-      setStatus("Tìm thấy " + tracks.length + " bài trong " + stats.folders + " thư mục" + errNote + ". Bấm vào bài để nghe.");
+      setStatus("Tìm thấy " + tracks.length + " bài trong " + stats.folders + " thư mục" + errNote + ". Đang lưu...");
+      setCache(src.folderId, tracks).then(function (cacheOk) {
+        var cacheNote = cacheOk ? "" : " (danh sách quá lớn, không lưu cache được)";
+        setStatus("Tìm thấy " + tracks.length + " bài trong " + stats.folders + " thư mục" + errNote + cacheNote + ". Bấm vào bài để nghe.");
+      });
     }).catch(function (err) {
       setStatus("Lỗi: " + err.message, true);
     }).then(function () { addBtn.disabled = false; });
