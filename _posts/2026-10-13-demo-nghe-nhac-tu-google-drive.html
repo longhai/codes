@@ -129,10 +129,6 @@
       store.current = 0;
     }
   } catch (e) { /* bỏ qua */ }
-  if (!store.sources.length) {
-    store.sources = [{ name: "Nhạc test", folderId: "1TXFmAY23WtUb6d5Pc_dXt7TnKvPX-YkP" }];
-    store.current = 0;
-  }
   function saveStore() {
     try { localStorage.setItem("driveMusicDemo", JSON.stringify(store)); } catch (e) { /* bỏ qua */ }
   }
