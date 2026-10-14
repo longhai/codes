@@ -291,6 +291,46 @@ const EMULATOR_URL = "https://longhai.github.io/codes/2026/08/29/emulatorjs.html
 // FALLBACK SVG dùng trực tiếp từ window.FALLBACK_* để tránh khai báo trùng
 
 const GAME_SOURCES = ["emu", "ps1"];
+  // Host CDN: "raw" cho file thường, "media" cho file Git LFS.
+  // Tự nhận diện qua .gitattributes của từng repo nên thêm nguồn mới
+  // (vd "psp" hay bất kỳ hệ nào) chỉ cần thêm tên repo vào GAME_SOURCES,
+  // không cần khai báo gì thêm.
+  const CDN_HOSTS = { raw: "raw.githubusercontent.com", media: "media.githubusercontent.com/media" };
+  const globToRegExp = (glob) => {
+    let re = "";
+    for (let i = 0; i < glob.length; i++) {
+      const c = glob[i];
+      if (c === "*") { if (glob[i + 1] === "*") { re += ".*"; i++; } else re += "[^/]*"; }
+      else if (c === "?") re += "[^/]";
+      else re += c.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+    }
+    return new RegExp("^" + re + "$", "i");
+  };
+  const isLfsFile = (src, itemPath) => {
+    const pats = src.lfsPatterns;
+    if (!pats || !pats.length || !itemPath) return false;
+    const base = itemPath.split("/").pop();
+    return pats.some(pat => {
+      const rx = globToRegExp(pat);
+      return pat.includes("/") ? rx.test(itemPath) : rx.test(base);
+    });
+  };
+  async function detectLfsPatterns(source, treeData) {
+    try {
+      const hasAttr = (treeData?.tree || []).some(i => i.type === "blob" && i.path.toLowerCase() === ".gitattributes");
+      if (!hasAttr) return [];
+      const res = await fetch(`https://${CDN_HOSTS.raw}/${source.owner}/${source.repo}/${source.branch || "main"}/.gitattributes`);
+      if (!res.ok) return [];
+      const pats = [];
+      for (const line of (await res.text()).split("\n")) {
+        const t = line.trim();
+        if (!t || t.startsWith("#") || t.startsWith("!")) continue;
+        const [pat, ...attrs] = t.split(/\s+/);
+        if (pat && attrs.includes("filter=lfs")) pats.push(pat);
+      }
+      return pats;
+    } catch (e) { return []; }
+  }
 const getSourceDefaultCat = repo => SYSTEM_PROFILES.find(([keys]) => keys.includes(String(repo).toLowerCase()))?.[0].find(key => key === String(repo).toLowerCase()) || "";
 const VALID_ROM_EXTS = new Set(['zip','7z','rar','chd','iso','bin','pbp','cso','rvz','img','cue','z64','n64','v64','nes','snes','smc','sfc','gba','gbc','gb','md','gen','smd','pce','gg','sms','a26','a78','lnx','ngp','ngc','ws','wsc','m3u','gcm','gcz','wbfs','wad']);
 
@@ -325,7 +365,7 @@ async function requestPersistentStorage() {
   try { if (navigator.storage?.persist && !(await navigator.storage.persisted())) await navigator.storage.persist(); } catch (e) {}
 }
 
-const buildDirectRomUrl = (src, itemPath) => /^https?:\/\//i.test(itemPath) ? itemPath : `https://${src.repo === 'emu' ? 'raw.githubusercontent.com' : 'media.githubusercontent.com/media'}/${src.owner}/${src.repo}/${src.branch || "main"}/${itemPath}`;
+const buildDirectRomUrl = (src, itemPath) => /^https?:\/\//i.test(itemPath) ? itemPath : `https://${isLfsFile(src, itemPath) ? CDN_HOSTS.media : CDN_HOSTS.raw}/${src.owner}/${src.repo}/${src.branch || "main"}/${itemPath}`;
 const isGameFile = path => {
   if (!path) return false;
   const file = path.split('/').pop().trim().toLowerCase();
@@ -854,7 +894,9 @@ async function loadFullDatabase(forceReload = false) {
         if (!resp.ok) return;
         showLoader(`ĐANG XỬ LÝ DỮ LIỆU ${repo.toUpperCase()}...`);
         await tick(); // để loader kịp vẽ trước khi parse JSON nặng làm treo giao diện
-        processTree(source, await resp.json(), gamesByCat, catMap);
+        const treeJson = await resp.json();
+        source.lfsPatterns = await detectLfsPatterns(source, treeJson);
+        processTree(source, treeJson, gamesByCat, catMap);
         okCount++;
       } catch (e) { apiFailed = true; }
       finally {
