@@ -1271,16 +1271,28 @@ function buildEmuUrl(g, c) {
   try { romUrl = decodeURIComponent(romUrl); } catch (e) {}
   return `${EMULATOR_URL}?core=${encodeURIComponent(g.core || c?.core || "arcade")}&rom=${encodeURIComponent(romUrl)}`;
 }
-function downloadCurrentGame() {
+async function downloadCurrentGame() {
   const g = state.filteredGames[state.selIdx];
   if (!g || !g.romUrl || g.fullName?.startsWith('placeholder_')) return;
-  const a = document.createElement('a');
-  a.href = g.romUrl;
-  a.download = g.fullName ? g.fullName.split('/').pop() : `${g.name}.zip`;
-  a.target = '_blank';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  const fileName = g.fullName ? g.fullName.split('/').pop() : `${g.name}.zip`;
+  try {
+    showLoader('ĐANG TẢI ROM...');
+    const res = await fetch(g.romUrl);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const blob = await res.blob();
+    hideLoader();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (e) {
+    hideLoader();
+    window.open(g.romUrl, '_blank');
+  }
 }
 function launchCurrentGame() {
   const g = state.filteredGames[state.selIdx], c = state.datList[state.currentDatIdx];
