@@ -14,7 +14,9 @@
     :root{--p:#ea580c;--pg:rgba(234,88,12,.4);--a:#fbbf24;--ca:#38bdf8;--bg:#050101;--panel:rgba(15,23,42,.94)}
     *{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-tap-highlight-color:transparent}
     body{font-family:'Rajdhani',sans-serif;background:radial-gradient(circle at 50% 30%,#c2410c,#7f1d1d 40%,var(--bg));height:100dvh;width:100vw;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#e2e8f0;touch-action:none}
-    #preview-loader{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);z-index:30;background:rgba(15,23,42,.92);border:1px solid var(--ca);border-radius:20px;padding:6px 16px;display:flex;align-items:center;gap:10px;color:var(--a);font:700 12px 'Orbitron',sans-serif;letter-spacing:1px;box-shadow:0 4px 15px rgba(0,0,0,.6);backdrop-filter:blur(6px);pointer-events:none;transition:opacity .2s;white-space:nowrap;max-width:92%}
+    #sg> g.slot-loading polygon{animation:slotPulse 1.15s ease-in-out infinite}
+@keyframes slotPulse{0%,100%{opacity:.35}50%{opacity:.95}}
+#preview-loader{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);z-index:30;background:rgba(15,23,42,.92);border:1px solid var(--ca);border-radius:20px;padding:6px 16px;display:flex;align-items:center;gap:10px;color:var(--a);font:700 12px 'Orbitron',sans-serif;letter-spacing:1px;box-shadow:0 4px 15px rgba(0,0,0,.6);backdrop-filter:blur(6px);pointer-events:none;transition:opacity .2s;white-space:nowrap;max-width:92%}
     #ld-t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .spin{width:16px;height:16px;border:2.5px solid var(--p);border-top-color:transparent;border-radius:50%;animation:s .75s linear infinite;flex-shrink:0}
     @keyframes s{to{transform:rotate(360deg)}}
@@ -95,11 +97,15 @@
     .clear-btn:hover{color:#ef4444}
     #game-player-modal{display:none;position:fixed;inset:0;z-index:300;background:#000;flex-direction:column}
     #game-player-modal.active{display:flex}
-    #player-toolbar{height:46px;background:#0f172a;border-bottom:2px solid var(--p);display:flex;align-items:center;justify-content:space-between;padding:0 10px;gap:8px}
+    #player-toolbar{height:46px;background:#0f172a;border-bottom:2px solid var(--p);display:flex;align-items:center;justify-content:space-between;padding:0 10px;gap:8px;overflow:hidden}
+    #player-toolbar{transition:height .3s ease,opacity .3s ease}
+    #game-player-modal.hide-bar #player-toolbar{height:0;opacity:0;pointer-events:none;border-bottom-color:transparent}
     #player-title{color:var(--a);font:700 12px 'Orbitron',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
     .player-btn{background:#1e293b;border:1px solid var(--p);color:#fff;padding:5px 9px;border-radius:6px;cursor:pointer;font:700 11px 'Orbitron',sans-serif}
     .player-btn:hover{background:var(--p)}
-    #game-frame{width:100%;height:calc(100% - 46px);border:none;background:#000}
+    #game-frame{width:100%;flex:1;border:none;background:#000;min-height:0}
+    #player-hotzone{display:none;position:absolute;top:0;left:0;right:0;height:44px;z-index:310}
+    #game-player-modal.hide-bar #player-hotzone{display:block}
     .tn{font:700 18px 'Rajdhani',sans-serif;fill:#e2e8f0}
     .ta{font:800 20px 'Rajdhani',sans-serif;fill:#fff;filter:drop-shadow(0 2px 4px rgba(0,0,0,.95))}
     @media (max-width:820px) and (orientation:portrait), (max-aspect-ratio:1/1){
@@ -251,6 +257,7 @@
       </div>
     </div>
     <iframe id="game-frame" src="" allow="autoplay; gamepad; keyboard" allowfullscreen></iframe>
+    <div id="player-hotzone"></div>
   </div>
 
   <script>
@@ -535,7 +542,7 @@ const Storage = {
 };
 
 // IndexedDB là bộ nhớ chính cho toàn bộ danh sách game; LocalStorage chỉ làm cache dự phòng cũ.
-const IDB_NAME = "pandora_arcade_db_v1", IDB_STORE = "cache", IDB_FULL_DB_KEY = "pandora_full_db_v13";
+const IDB_NAME = "pandora_arcade_db_v1", IDB_STORE = "cache", IDB_FULL_DB_KEY = "pandora_full_db";
 let idbPromise = null;
 function openArcadeDB() {
   if (!("indexedDB" in window)) return Promise.reject(new Error("Trình duyệt không hỗ trợ IndexedDB"));
@@ -568,6 +575,38 @@ async function idbOp(mode, key, value, isDelete) {
 const idbRead = k => idbOp("readonly", k);
 const idbWrite = (k, v) => idbOp("readwrite", k, v);
 const idbDelete = k => idbOp("readwrite", k, null, true);
+async function idbKeys() {
+  const db = await openArcadeDB();
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(IDB_STORE, "readonly").objectStore(IDB_STORE).getAllKeys();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error || new Error("Lỗi đọc keys IndexedDB"));
+  });
+}
+async function clearDatCache() {
+  try { const keys = await idbKeys(); for (const k of keys) { if (String(k).startsWith("pandora_dat_")) await idbDelete(k); } } catch (e) {}
+  try { Object.keys(localStorage).forEach(k => { if (k.startsWith("pandora_dat_")) lsRem(k); }); } catch (e) {}
+}
+async function migrateCacheKeys() {
+  try {
+    const old = await idbRead("pandora_full_db_v13");
+    if (old?.datList?.length && old?.gamesByCat) { try { await idbWrite("pandora_full_db", old); } catch (e) {} }
+    await idbDelete("pandora_full_db_v13");
+  } catch (e) {}
+  try {
+    for (const k of Object.keys(localStorage)) {
+      if (!k.startsWith("pandora_dat_v11_")) continue;
+      try {
+        const item = JSON.parse(localStorage.getItem(k));
+        const parsed = item && item.d;
+        if (parsed?.map && Object.keys(parsed.map).length > 0) {
+          await idbWrite("pandora_dat_" + k.slice("pandora_dat_v11_".length), {parsed});
+        }
+      } catch (e) {}
+      try { lsRem(k); } catch (e) {}
+    }
+  } catch (e) {}
+}
 async function readFullDatabaseCache(localKey) {
   try {
     const cached = await idbRead(IDB_FULL_DB_KEY);
@@ -581,7 +620,7 @@ async function readFullDatabaseCache(localKey) {
   return null;
 }
 async function saveFullDatabaseCache(data) {
-  try { await idbWrite(IDB_FULL_DB_KEY, { ...data, cacheVersion: 1, savedAt: Date.now() }); return true; }
+  try { await idbWrite(IDB_FULL_DB_KEY, { ...data, savedAt: Date.now() }); return true; }
   catch (e) {
     console.warn("Không thể lưu dữ liệu vào IndexedDB:", e);
     try { Storage.set(IDB_FULL_DB_KEY, data); } catch (err) {}
@@ -591,6 +630,7 @@ async function saveFullDatabaseCache(data) {
 async function clearFullDatabaseCache() {
   try { await idbDelete(IDB_FULL_DB_KEY); } catch (e) { console.warn(e); }
   try { Storage.clearCache(); } catch (e) {}
+  await clearDatCache();
 }
 
 /* ---------- Yêu thích / DAT ---------- */
@@ -656,20 +696,41 @@ function parseDatContent(text) {
 }
 const resetDatMaps = () => { state.datNameMap = {}; state.datOrderMap = {}; state.datCloneMap = {}; state.datGenreMap = {}; };
 const applyDatParsed = p => { state.datNameMap = p.map; state.datOrderMap = p.order || {}; state.datCloneMap = p.cloneMap || {}; state.datGenreMap = p.genreMap || {}; };
-async function loadDatMap(catName = "arcade") {
+const DAT_CACHE_PREFIX = "pandora_dat_";
+async function loadDatMap(catName = "arcade", force = false) {
   const catInfo = state.datList[state.currentDatIdx];
   const sysName = catInfo?.name || catName, folder = catInfo?.folderName || sysName, cleanCat = sysName.toLowerCase().trim();
-  const cacheKey = "pandora_dat_v11_" + cleanCat, cached = Storage.get(cacheKey);
-  if (cached?.map && Object.keys(cached.map).length > 0) { applyDatParsed(cached); return; }
-  for (const u of [...new Set([folder, folder.toLowerCase(), sysName, cleanCat, 'arcade'].map(x => `${RAW_BASE}data/${encodeURIComponent(x)}.dat`))]) {
+  const cacheKey = DAT_CACHE_PREFIX + cleanCat;
+  if (!force) {
     try {
-      const resp = await fetch(u);
-      if (!resp.ok) continue;
-      const parsed = parseDatContent(await resp.text());
-      if (Object.keys(parsed.map).length > 0) { applyDatParsed(parsed); Storage.set(cacheKey, parsed); return; }
+      const cached = await idbRead(cacheKey);
+      if (cached) {
+        if (cached.none) return;
+        if (cached.parsed?.map && Object.keys(cached.parsed.map).length > 0) { applyDatParsed(cached.parsed); return; }
+      }
     } catch (e) {}
   }
+  const baseNames = [...new Set([folder, sysName, cleanCat].map(x => String(x || "").toLowerCase().trim()).filter(Boolean))];
+  const urls = [];
+  for (const x of baseNames) { const p = `data/${encodeURIComponent(x)}`; urls.push(`${RAW_BASE}${p}.dat`, `${RAW_BASE}${p}.xml`); }
+  let httpOk = false;
+  for (const u of urls) {
+    try {
+      const resp = await fetch(u, {cache: "no-store"});
+      httpOk = true;
+      if (!resp.ok) continue;
+      const raw = await resp.text();
+      const parsed = parseDatContent(raw);
+      if (Object.keys(parsed.map).length > 0) {
+        applyDatParsed(parsed);
+        try { await idbWrite(cacheKey, {raw, parsed}); } catch (e) {}
+        return;
+      }
+    } catch (e) {}
+  }
+  if (httpOk) { try { await idbWrite(cacheKey, {none: true}); } catch (e) {} }
 }
+
 function isCloneGame(g) {
   if (!g) return false;
   const clean = cleanTitle(g.fullName).toLowerCase().trim();
@@ -752,20 +813,20 @@ function processTree(source, treeData, gamesByCat, catMap) {
     }
   });
 }
-async function applyMapsToState(gamesByCat, catMap, saveCache) {
+async function applyMapsToState(gamesByCat, catMap, saveCache, forceDat = false) {
   const rawCatList = [...catMap.values()];
   if (!rawCatList.length) return false;
   const prevCatName = state.datList[state.currentDatIdx]?.name; // chụp trước khi gán datList mới
   state.gamesByCat = {};
   for (const catName in gamesByCat) state.gamesByCat[catName] = gamesByCat[catName].sort((a, b) => a.name.localeCompare(b.name, 'vi', { sensitivity: 'base', numeric: true }));
-  if (saveCache) await saveFullDatabaseCache({ datList: rawCatList, gamesByCat: state.gamesByCat, imageIndexVersion: 2 });
+  if (saveCache) await saveFullDatabaseCache({ datList: rawCatList, gamesByCat: state.gamesByCat });
   const lastCat = lsGet("pandora_last_cat");
   const keepIdx = state.datList.findIndex(i => i.name === lastCat);
   state.currentDatIdx = Math.max(0, keepIdx !== -1 ? keepIdx : state.datList.findIndex(i => i.name === prevCatName));
   const currCat = state.datList[state.currentDatIdx];
   state.allGames = state.gamesByCat[currCat?.name] || [];
   resetDatMaps();
-  if (currCat) await loadDatMap(currCat.name);
+  if (currCat) await loadDatMap(currCat.name, forceDat);
   updateNames(); restorePos(); drawAll();
   return true;
 }
@@ -773,15 +834,15 @@ async function loadFullDatabase(forceReload = false) {
   showLoader("ĐANG TẢI DỮ LIỆU...");
   const cached = await readFullDatabaseCache(IDB_FULL_DB_KEY);
   const hasCache = cached?.datList?.length > 1 && cached?.gamesByCat;
-  if (!forceReload && cached?.imageIndexVersion === 2 && hasCache) { await applyCachedDb(cached); return; }
+  if (!forceReload && hasCache) { await applyCachedDb(cached); return; }
   try {
     const gamesByCat = {}, catMap = new Map();
     let apiFailed = false, doneCount = 0, okCount = 0;
     const total = GAME_SOURCES.length;
     // Xếp hàng các lần vẽ UI để 2 nguồn xong gần cùng lúc không giẫm nhau
     let applyChain = Promise.resolve();
-    const queueApply = (save) => {
-      applyChain = applyChain.then(() => applyMapsToState(gamesByCat, catMap, save)).catch(e => console.warn("applyMapsToState lỗi:", e));
+    const queueApply = (save, forceDat = false) => {
+      applyChain = applyChain.then(() => applyMapsToState(gamesByCat, catMap, save, forceDat)).catch(e => console.warn("applyMapsToState lỗi:", e));
       return applyChain;
     };
     await Promise.all(GAME_SOURCES.map(async (repo) => {
@@ -812,7 +873,7 @@ async function loadFullDatabase(forceReload = false) {
     showLoader("ĐANG LƯU DỮ LIỆU...");
     const allOk = okCount === total;
     // Không ghi đè cache khi một nguồn lỗi: tránh cache thiếu (vd: emu bị 403 còn ps1 ok) làm mất game ở lần mở sau
-    const saved = await queueApply(allOk);
+    const saved = await queueApply(allOk, forceReload);
     if (!allOk && hasCache) { await applyCachedDb(cached, "MỘT NGUỒN LỖI: DÙNG DỮ LIỆU ĐÃ LƯU", 1500); return; }
     if (!saved && hasCache) { await applyCachedDb(cached, "LỖI KẾT NỐI: KHÔI PHỤC DỮ LIỆU ĐÃ LƯU", 1500); return; }
     hideLoader();
@@ -928,15 +989,22 @@ async function switchCat(i) {
   state.currentDatIdx = i;
   state.selectedGenre = 'all';
   const cat = state.datList[i]; if (!cat) return;
-  lsSet("pandora_last_cat", cat.name || ''); closeMenuModal();
-  state.allGames = state.gamesByCat[cat.name] || []; state.searchQuery = "";
+  lsSet("pandora_last_cat", cat.name || '');
+  closeMenuModal();
+  state.allGames = state.gamesByCat[cat.name] || [];
+  state.searchQuery = "";
   if ($('search-input')) $('search-input').value = "";
   resetDatMaps();
-  filterGames(false); restorePos(); drawAll();
-  await loadDatMap(cat.name); updateNames();
+    filterGames(false); restorePos();
+  const loaderTimer = setTimeout(() => showLoader("ĐANG TẢI DỮ LIỆU..."), 150);
+  try {
+    await loadDatMap(cat.name);
+    if (state.datList[state.currentDatIdx]?.name === cat.name) { updateNames(); drawAll(); }
+  } finally {
+    clearTimeout(loaderTimer);
+    hideLoader();
+  }
 }
-
-/* ---------- Vẽ SVG ---------- */
 function drawAll() { updateSvgViewBox(); drawHeader(); drawSlots(); render(); }
 function drawHeader() {
   const p = getGeom(), xl0 = getX(6, p), xl1 = getX(54, p), xlMid = getX(30, p);
@@ -1220,6 +1288,7 @@ function launchCurrentGame() {
   $('player-title').textContent = `${g.name.toUpperCase()} [${c?.displayName || c?.name || ''}]`;
   $('game-frame').src = buildEmuUrl(g, c);
   $('game-player-modal').classList.add('active');
+  pokePlayerBar();
 }
 function openGameInNewTab() {
   const u = buildEmuUrl(state.filteredGames[state.selIdx], state.datList[state.currentDatIdx]);
@@ -1227,7 +1296,8 @@ function openGameInNewTab() {
 }
 function closeGamePlayer() {
   $('game-frame').src = "about:blank";
-  $('game-player-modal').classList.remove('active');
+  $('game-player-modal').classList.remove('active', 'hide-bar');
+  clearTimeout(barTimer);
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   state.gpLastTime = performance.now() + 400;
   state.lastGpBtn = { dir: true, cat: true, home: true, favY: true, favX: true, cloneSelect: true, confirmA: true, confirmStart: true };
@@ -1237,6 +1307,17 @@ function toggleFullscreen() {
   const m = $('game-player-modal');
   if (!document.fullscreenElement) m.requestFullscreen().catch(() => {});
   else document.exitFullscreen().catch(() => {});
+}
+// Tự ẩn thanh toolbar khi chơi game: vào game hiện 3s rồi ẩn;
+// chạm hoặc di vào vùng trên cùng thì hiện lại 3s rồi ẩn tiếp (dùng được cả mobile)
+let barTimer = 0, barShownAt = 0;
+function pokePlayerBar() {
+  const m = $('game-player-modal');
+  if (!m || !m.classList.contains('active')) return;
+  if (m.classList.contains('hide-bar')) barShownAt = performance.now();
+  m.classList.remove('hide-bar');
+  clearTimeout(barTimer);
+  barTimer = setTimeout(() => m.classList.add('hide-bar'), 3000);
 }
 
 /* ---------- Render danh sách ---------- */
@@ -1264,6 +1345,7 @@ function render() {
     const idx = state.topIdx + i, active = idx === state.selIdx;
     if (idx < state.filteredGames.length) {
       s.g.style.display = "block";
+      s.g.classList.toggle("slot-loading", !!isPlaceholder);
       const str = state.filteredGames[idx].name;
       s.txt.textContent = str.length > maxLen ? str.slice(0, maxLen - 2) + "..." : str;
       s.poly.setAttribute("fill", active ? "url(#ga)" : "url(#gn)");
@@ -1348,13 +1430,18 @@ function bindEvents() {
       if (Math.abs(d) > 28) { moveSelection(d > 0 ? 1 : -1); touchY = e.touches[0].clientY; }
     }, { passive: true });
   }
+  const hz = $('player-hotzone'), pt = $('player-toolbar');
+  if (hz) { hz.addEventListener('pointerdown', pokePlayerBar); hz.addEventListener('pointermove', pokePlayerBar); }
+  if (pt) { pt.addEventListener('pointerdown', pokePlayerBar); pt.addEventListener('pointermove', pokePlayerBar); }
+  // Chạm vùng trên để hiện thanh: cú chạm đó vô tình rơi trúng nút Đóng vừa hiện ra -> bỏ qua click trong 0.5s đầu sau khi thanh vừa hiện
+  if (pt) pt.addEventListener('click', e => { if (performance.now() - barShownAt < 500) { e.stopPropagation(); e.preventDefault(); } }, true);
   window.onwheel = e => {
     if ($('game-player-modal').classList.contains('active') || $('menu-dropdown').classList.contains('active') || $('genre-menu-dropdown').classList.contains('active') || $('user-menu-dropdown').classList.contains('active')) return;
     moveSelection(e.deltaY > 0 ? 1 : -1);
   };
   window.onkeydown = e => {
     for (const [id, fn] of [['help-modal', closeHelpModal], ['settings-modal', closeSettingsModal], ['game-player-modal', closeGamePlayer]]) {
-      if ($(id).classList.contains('active')) { if (e.key === 'Escape') fn(); return; }
+      if ($(id).classList.contains('active')) { if (id === 'game-player-modal') pokePlayerBar(); if (e.key === 'Escape') fn(); return; }
     }
     if ($('inline-search-bar')?.classList.contains('active')) {
       if (e.key === 'Escape') return closeInlineSearch(true);
@@ -1438,16 +1525,19 @@ function pollGamepad() {
   requestAnimationFrame(pollGamepad);
 }
 
-window.onload = () => {
+function boot() {
+  if (boot.done) return; boot.done = true;
   requestPersistentStorage();
   bindEvents(); drawAll();
   requestAnimationFrame(() => posOverlays());
-  loadFullDatabase();
+  migrateCacheKeys().then(loadFullDatabase);
   requestAnimationFrame(pollGamepad);
   const checkGSI = setInterval(() => {
     if (typeof google !== 'undefined' && google.accounts) { clearInterval(checkGSI); initGoogleDriveAuth(); }
   }, 100);
-};
+}
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+else boot();
 
 </script>
 </body>
