@@ -6,7 +6,7 @@
   <title>Pandora Arcade</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
-    window.FALLBACK_ARCADE_SVG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzM4YmRmOCI+PHBhdGggZD0iTTE5IDNINWMtMS4xIDAtMiAuOS0yIDJ2MTRjMCAxLjEuOSAyIDIgMmgxNGMxLjEgMCAyLS45IDItMlY1YzAtMS4xLS45LTItMi0yei03IDNjMS42NiAwIDMgMS4zNCAzIDNzLTEuMzQgMy0zIDMtMy0xLjM0LTMtM3MxLjM0LTMgMy0zeG0tNCAxMnYtMmgydjJIZDh6bTggMGgtMnYtMmgydjJ6bTItNUg2di0yaDEydjJ6Ii8+PC9zdmc+";
+    window.FALLBACK_ARCADE_SVG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PGRlZnM+PHJhZGlhbEdyYWRpZW50IGlkPSJkIiBjeD0iMzglIiBjeT0iMzIlIiByPSI3NSUiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiNhNWYzZmMiLz48c3RvcCBvZmZzZXQ9IjQ1JSIgc3RvcC1jb2xvcj0iIzM4YmRmOCIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzA3NTk4NSIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxjaXJjbGUgY3g9IjMyIiBjeT0iMzIiIHI9IjMwIiBmaWxsPSJ1cmwoI2QpIi8+PHBhdGggZD0iTTEwIDI0YTI2IDI2IDAgMCAxIDE4LTE2IiBzdHJva2U9IiNlY2ZlZmYiIHN0cm9rZS13aWR0aD0iNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBmaWxsPSJub25lIiBvcGFjaXR5PSIuODUiLz48Y2lyY2xlIGN4PSIzMiIgY3k9IjMyIiByPSI5IiBmaWxsPSIjMGIxMjIwIi8+PGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iOSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYmFlNmZkIiBzdHJva2Utd2lkdGg9IjIuNSIvPjxjaXJjbGUgY3g9IjMyIiBjeT0iMzIiIHI9IjMuMiIgZmlsbD0iIzdkZDNmYyIvPjwvc3ZnPg==";
     window.FALLBACK_GENRE_SVG = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzM4YmRmOCI+PHBhdGggZD0iTTIxLjQxIDExLjU4bC05LTlDMTIuMDUgMi4yMiAxMS41NSAyIDExIDJINGMtMS4xIDAtMiAuOS0yIDJ2N2MwIC41NS4yMiAxLjA1LjU5IDEuNDJsOSA5Yy4zNi43Ni44Ni41OCAxLjQxLjU4LjU1IDAgMS4wNS0uMjIgMS40MS0uNTlsNy03Yy4zNy0uMzYuNTktLjg2LjU5LTEuNDIgMC0uNTUtLjIzLTEuMDUtLjU5LTEuNDJ6Ii8+PC9zdmc+";
   </script>
   <style>
@@ -41,7 +41,7 @@
     .hdr-btn-wrap{position:absolute;z-index:100;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s,filter .15s,opacity .2s;width:32px;height:32px;max-width:42px;max-height:42px;min-width:20px;min-height:20px;overflow:hidden;box-sizing:border-box;opacity:0;top:0;left:0}
     .hdr-btn-wrap.ready{opacity:1;transform:translate(-50%,-50%)}
     .hdr-btn-wrap.ready:hover{transform:translate(-50%,-50%) scale(1.12);filter:drop-shadow(0 0 6px var(--ca))}
-    .img-box{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:4px;overflow:hidden;flex-shrink:0}
+    .img-box{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:4px;overflow:hidden;flex-shrink:0}.img-box{position:relative}.logo-fb{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:26px;line-height:1;pointer-events:none;filter:drop-shadow(0 0 6px rgba(56,189,248,.55))}.img-box img{position:relative;z-index:1}
     .img-box img{width:100%;height:100%;object-fit:contain}
     .avatar-box{border-radius:50%}
     .avatar-box img{object-fit:cover;border:1.5px solid #4ade80;border-radius:50%;aspect-ratio:1/1;width:100%;height:100%}
@@ -62,7 +62,7 @@
     .logout-icon-btn{background:transparent;border:none;color:#ef4444;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:4px;border-radius:6px;transition:all .2s;flex-shrink:0}
     .logout-icon-btn:hover{background:rgba(239,68,68,.2);transform:scale(1.15);filter:drop-shadow(0 0 8px #ef4444)}
     .logout-icon-btn svg{width:18px;height:18px;fill:currentColor}
-    .menu-logo-box{width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;aspect-ratio:1/1}
+    .menu-logo-box{width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;aspect-ratio:1/1}.menu-logo-box{position:relative}.menu-logo-box .logo-fb{font-size:18px}.menu-logo-box img{position:relative;z-index:1}
     .menu-logo-box img{width:100%;height:100%;object-fit:contain}
     .menu-item svg{width:20px;height:20px;object-fit:contain;flex-shrink:0;fill:currentColor}
     #help-modal{display:none;position:fixed;inset:0;z-index:320;background:rgba(5,1,1,.85);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:12px}
@@ -120,7 +120,7 @@
   <main>
     <div id="svg-container">
       <div id="hdr-logo-btn" class="hdr-btn-wrap" onclick="toggleMenuModal(event)" title="Chọn hệ máy">
-        <div class="img-box"><img id="hdr-logo-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="System Logo" onerror="this.onerror=null;this.src=window.FALLBACK_ARCADE_SVG;"/></div>
+        <div class="img-box"><span class="logo-fb" id="hdr-logo-fb">💿</span><img id="hdr-logo-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="System Logo"/></div>
       </div>
       <div id="hdr-genre-btn" class="hdr-btn-wrap" onclick="toggleGenreMenu(event)" title="Lọc Thể Loại">
         <div class="img-box"><img id="hdr-genre-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Genre Icon" onerror="handleGenreImgError(this)"/></div>
@@ -942,7 +942,7 @@ function filterGames(preserve = true) {
 function renderMenuList() {
   $('menu-dropdown').innerHTML = `<div class="menu-header">Danh Sách Hệ Máy (${state.datList.length})</div>` + state.datList.map((item, i) =>
     `<div class="menu-item ${i === state.currentDatIdx ? 'active' : ''}" onclick="switchCat(${i})">
-      <div class="menu-logo-box"><img src="${item.logo}" alt="${item.displayName}" onerror="this.onerror=null;this.src=window.FALLBACK_ARCADE_SVG;"/></div>
+      <div class="menu-logo-box"><span class="logo-fb">💿</span><img src="${item.logo}" alt="${item.displayName}" onload="var s=this.previousElementSibling;if(s)s.style.display='none'" onerror="this.onerror=null;var f=window.FALLBACK_ARCADE_SVG;if(f&&!this.dataset.fb){this.dataset.fb='1';this.src=f}else{this.style.display='none'}"/></div>
       <span>${item.displayName}</span>
     </div>`
   ).join('');
@@ -1017,8 +1017,32 @@ function drawHeader() {
     <text id="cnt-txt" x="${(xlMid + 92).toFixed(1)}" y="30" dominant-baseline="central" fill="#fbbf24" font-size="14" font-weight="bold" font-family="Orbitron">${cntText}</text>`;
   updateHeaderOverlays();
 }
+
+function wireHeaderLogo(){
+  const img = $('hdr-logo-img'), fb = $('hdr-logo-fb');
+  if (!img || img.dataset.wired) return; img.dataset.wired = '1';
+  img.onerror = () => {
+    const f = window.FALLBACK_ARCADE_SVG;
+    if (f && !img.dataset.fb) { img.dataset.fb = '1'; img.src = f; }
+    else { img.dataset.fb = ''; img.style.display = 'none'; if (fb) fb.style.display = 'flex'; }
+  };
+  img.onload = () => { if (img.dataset.has === '1') { img.style.display = ''; if (fb) fb.style.display = 'none'; } };
+}
+function setHeaderLogo(url){
+  const img = $('hdr-logo-img'), fb = $('hdr-logo-fb');
+  if (!img) return;
+  img.dataset.fb = '';
+  if (url) {
+    img.dataset.has = '1'; img.style.display = ''; if (fb) fb.style.display = 'none';
+    if (img.dataset.cur !== url) { img.dataset.cur = url; img.src = url; }
+  } else {
+    img.dataset.has = ''; img.dataset.cur = ''; img.removeAttribute('src');
+    img.style.display = 'none'; if (fb) fb.style.display = 'flex';
+  }
+}
 function updateHeaderOverlays() {
-  if ($('hdr-logo-img')) $('hdr-logo-img').src = state.datList[state.currentDatIdx]?.logo || window.FALLBACK_ARCADE_SVG;
+  setHeaderLogo(state.datList[state.currentDatIdx]?.logo);
+  setHeaderLogo(state.datList[state.currentDatIdx]?.logo);
   if ($('hdr-genre-img')) {
     const img = $('hdr-genre-img');
     img.onerror = () => handleGenreImgError(img);
@@ -1539,6 +1563,7 @@ function pollGamepad() {
 
 function boot() {
   if (boot.done) return; boot.done = true;
+  wireHeaderLogo();
   requestPersistentStorage();
   bindEvents(); drawAll();
   requestAnimationFrame(() => posOverlays());
