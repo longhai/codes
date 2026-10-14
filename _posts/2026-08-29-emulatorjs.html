@@ -134,6 +134,21 @@ async function launch(src){
     obs.observe(div,{childList:!0,subtree:!0,characterData:!0});
 
     if(["psp","dosbox_pure"].includes(core))window.EJS_threads=!0;
+    // Tùy chỉnh cụm nút cảm ứng:
+    // - PS1: giữ joystick, thêm nút vai L1/R1/L2/R2 (mặc định của EmulatorJS thiếu)
+    if(core==="psx")window.EJS_VirtualGamepadSettings=[
+        {type:"zone",id:"dpad",location:"left",left:"50%",top:"50%",joystickInput:!1,inputValues:[4,5,6,7]},
+        {type:"button",text:"L1",id:"l1",location:"left",left:3,top:-90,bold:!0,block:!0,input_value:10},
+        {type:"button",text:"R1",id:"r1",location:"right",right:3,top:-90,bold:!0,block:!0,input_value:11},
+        {type:"button",text:"L2",id:"l2",location:"left",left:3,top:-50,bold:!0,block:!0,input_value:12},
+        {type:"button",text:"R2",id:"r2",location:"right",right:3,top:-50,bold:!0,block:!0,input_value:13},
+        {type:"button",text:"Y",id:"y",location:"right",left:40,bold:!0,input_value:9},
+        {type:"button",text:"X",id:"x",location:"right",top:40,bold:!0,input_value:1},
+        {type:"button",text:"B",id:"b",location:"right",left:81,top:40,bold:!0,input_value:8},
+        {type:"button",text:"A",id:"a",location:"right",left:40,top:80,bold:!0,input_value:0},
+        {type:"button",text:"Start",id:"start",location:"center",left:60,fontSize:15,block:!0,input_value:3},
+        {type:"button",text:"Select",id:"select",location:"center",left:-5,fontSize:15,block:!0,input_value:2}
+    ];
     sc.src=cdn+(cdn.endsWith("data/")?"loader.js":"data/loader.js");
     document.body.appendChild(sc);
 }
