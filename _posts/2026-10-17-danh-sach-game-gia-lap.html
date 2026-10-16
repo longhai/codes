@@ -23,8 +23,8 @@ body{
   line-height:1.5;
 }
 body.playing{overflow:hidden; background:#000;}
-body.playing #app, body.playing #bottomNav, body.playing #installFab,
-body.playing #desktopRail, body.playing #desktopDetail, body.playing #desktopFab,
+body.playing #app, body.playing #bottomNav,
+body.playing #desktopRail, body.playing #desktopDetail,
 body.playing #toast{display:none !important;}
 button,input,select{font:inherit;}
 button{border:0; background:none; cursor:pointer; color:inherit;}
@@ -83,24 +83,6 @@ button{border:0; background:none; cursor:pointer; color:inherit;}
   padding:24px 16px; border-radius:18px; background:var(--card); box-shadow:var(--shadow);
   color:var(--muted); text-align:center; font-size:14px; line-height:1.7;
 }
-
-/* ---------- nút + ---------- */
-.fab{
-  position:fixed; z-index:150;
-  right:max(20px, calc((100vw - 560px)/2 + 20px));
-  bottom:calc(var(--bottom-nav-h) + 20px + env(safe-area-inset-bottom));
-  width:56px; height:56px; border-radius:50%;
-  background:var(--accent); box-shadow:0 4px 14px rgba(52,130,255,.4);
-  display:flex; align-items:center; justify-content:center;
-}
-.fab::before,.fab::after{
-  content:""; position:absolute; left:50%; top:50%;
-  width:26px; height:3px; border-radius:3px; background:#fff;
-  transform:translate(-50%,-50%);
-}
-.fab::after{transform:translate(-50%,-50%) rotate(90deg);}
-.fab:active{transform:scale(.92);}
-.fab input{display:none;}
 
 /* ---------- cài đặt ---------- */
 .settings-card{
@@ -268,9 +250,8 @@ body.playing #playerWrap{display:block;}
 #loading .txt{font-size:15px; color:#ddd;}
 
 /* ---------- desktop ---------- */
-#desktopRail,#desktopDetail,#desktopFab{display:none;}
+#desktopRail,#desktopDetail{display:none;}
 @media screen and (min-width:768px){
-  .fab{display:none;}
   .bottom-nav{display:none;}
   body{padding-bottom:0;}
   #desktopRail{
@@ -325,25 +306,10 @@ body.playing #playerWrap{display:block;}
     font-size:13px; font-weight:600; color:var(--muted);
     text-transform:uppercase; letter-spacing:.5px; margin:14px 0 4px;
   }
-  #desktopFab{
-    position:fixed; right:376px; bottom:28px; z-index:150;
-    width:56px; height:56px; border-radius:50%;
-    background:var(--accent); box-shadow:0 4px 14px rgba(52,130,255,.4);
-    display:flex; align-items:center; justify-content:center;
-  }
-  #desktopFab::before,#desktopFab::after{
-    content:""; position:absolute; left:50%; top:50%;
-    width:26px; height:3px; border-radius:3px; background:#fff;
-    transform:translate(-50%,-50%);
-  }
-  #desktopFab::after{transform:translate(-50%,-50%) rotate(90deg);}
-  #desktopFab:active{transform:scale(.92);}
-  #desktopFab input{display:none;}
 }
 @media screen and (min-width:1100px){
   .app{margin-right:400px; padding:32px 40px 40px;}
   #desktopDetail{width:400px;}
-  #desktopFab{right:416px;}
 }
 </style>
 </head>
@@ -356,7 +322,7 @@ body.playing #playerWrap{display:block;}
       <input class="search" id="searchInput" type="search" placeholder="Tìm kiếm game" autocomplete="off">
     </div>
     <section id="gameList" class="game-list"></section>
-    <section id="emptyState" class="empty" hidden>Chưa cài game nào. Bấm nút + góc dưới-phải để tải ROM lên.</section>
+    <section id="emptyState" class="empty" hidden>Chưa cài game nào. Bấm nút ＋ trên thanh điều hướng để thêm game.</section>
   </section>
 
   <section class="page" id="settingsPage">
@@ -476,14 +442,17 @@ body.playing #playerWrap{display:block;}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 11v4M5 13h4"/><circle cx="15.5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="17.8" cy="14" r="1" fill="currentColor" stroke="none"/></svg>
     Game
   </button>
+  <button class="rail-item" type="button" id="railAdd" title="Thêm game">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    Thêm
+  </button>
   <button class="rail-item" type="button" data-page="settings">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     Cài đặt
   </button>
 </nav>
 
-<label class="fab" id="desktopFab" title="Thêm game" style="display:none;"><input id="romInputDesktop" type="file" multiple hidden></label>
-<label class="fab" id="installFab" title="Thêm game"><input id="romInput" type="file" multiple hidden></label>
+<input id="romInput" type="file" multiple hidden>
 
 <aside id="desktopDetail" class="hidden">
   <div class="detail-empty" id="detailEmpty">Chọn một game để xem chi tiết</div>
@@ -515,6 +484,7 @@ body.playing #playerWrap{display:block;}
 
 <nav class="bottom-nav" id="bottomNav">
   <button class="nav-btn active" type="button" data-page="games"><span class="nav-icon">▣</span><span>Game</span></button>
+  <button class="nav-btn" type="button" id="navAdd" title="Thêm game"><span class="nav-icon">＋</span><span>Thêm</span></button>
   <button class="nav-btn" type="button" data-page="settings"><span class="nav-icon">⚙</span><span>Cài đặt</span></button>
 </nav>
 
@@ -1014,7 +984,10 @@ function onRomInputChange(e){
   e.target.value = "";
 }
 $("romInput").addEventListener("change", onRomInputChange);
-$("romInputDesktop").addEventListener("change", onRomInputChange);
+
+/* ---------- nút + thêm game ---------- */
+$("navAdd").addEventListener("click", ()=>$("romInput").click());
+$("railAdd").addEventListener("click", ()=>$("romInput").click());
 
 async function installSelectedGames(files){
   if(!files.length) return;
@@ -1227,11 +1200,8 @@ function switchPage(page){
     b.classList.toggle("active", b.dataset.page===page));
   document.querySelectorAll("#desktopRail .rail-item").forEach(b=>
     b.classList.toggle("active", b.dataset.page===page));
-  const showFab = games;
-  $("installFab").style.display = showFab ? "" : "none";
   if(isDesktop()){
-    $("desktopFab").style.display = showFab ? "" : "none";
-    selectGame(showFab ? activeGame : null);
+    selectGame(games ? activeGame : null);
   }
   window.scrollTo(0,0);
 }
@@ -1421,23 +1391,19 @@ $("importSavesBtn").onclick = ()=>{
 
   bindSettings();
   if(isDesktop()){
-    $("desktopFab").style.display = "";
     selectGame(null);
   }else{
     $("desktopRail").style.display = "none";
     $("desktopDetail").style.display = "none";
-    $("desktopFab").style.display = "none";
   }
   const relayout = ()=>{
     if(document.body.classList.contains("playing")) return;
     if(isDesktop()){
       $("desktopRail").style.display = "";
-      $("desktopFab").style.display = $("gamesPage").classList.contains("active") ? "" : "none";
       selectGame($("gamesPage").classList.contains("active") ? activeGame : null);
     }else{
       $("desktopRail").style.display = "none";
       $("desktopDetail").style.display = "none";
-      $("desktopFab").style.display = "none";
     }
   };
   window.addEventListener("resize", relayout);
