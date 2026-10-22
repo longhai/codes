@@ -1111,7 +1111,7 @@ function buildPlayerHTML(game, blobUrl, biosUrl, runtimeCore){
     `EJS_gameFileName = ${JSON.stringify(safeFileName(game.fileName||game.name))};`,
     `EJS_gameUrl = ${JSON.stringify(blobUrl)};`,
     `EJS_core = ${JSON.stringify(runtimeCore)};`,
-    `EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';`,
+    `EJS_pathtodata = 'https://cdn.emulatorjs.org/nightly/data/';`,
     `EJS_startOnLoaded = true;`,
     `EJS_fullscreenOnLoaded = ${appSettings.fullscreenOnLoad ? "true":"false"};`,
     `EJS_threads = ${(appSettings.threads || THREAD_CORES.has(runtimeCore) || THREAD_CORES.has(game.core)) ? "true":"false"};`,
@@ -1134,7 +1134,7 @@ function buildPlayerHTML(game, blobUrl, biosUrl, runtimeCore){
     `<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">`+
     `<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}#game{width:100%;height:100%}</style></head>`+
     `<body><div id="game"></div><script>${lines}<\/script>`+
-    `<script src="https://cdn.emulatorjs.org/stable/data/loader.js"><\/script></body></html>`;
+    `<script src="https://cdn.emulatorjs.org/nightly/data/loader.js"><\/script></body></html>`;
 }
 async function launchInstalledGame(id, overrideGame){
   const game = overrideGame || await dbGetGame(id);
