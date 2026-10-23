@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ứng Dụng Thiết Kế Font Pixel</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        /* Custom grid cell styles for smooth pixel drawing */
+        .grid-cell {
+            aspect-ratio: 1;
+            transition: background-color 0.02s ease;
+        }
+        /* Hide scrollbars for clean UI */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Pixelated canvas rendering for crisp preview */
+        canvas {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-indigo-500 selection:text-white pb-16 lg:pb-0">
+
+    <!-- Header / Navbar -->
+    <header class="border-b border-slate-800 bg-slate-950/90 backdrop-blur-md px-4 sm:px-6 py-2.5 sm:py-3.5 flex flex-wrap justify-between items-center gap-3 sticky top-0 z-40">
+        <div class="flex items-center space-x-3">
+            <div class="p-2 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-500/30">
+                <i data-lucide="grid-3x3" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+            </div>
+            <div>
+                <h1 class="text-base sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                    Pixel Font Designer
+                    <span class="text-[10px] sm:text-xs bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full font-normal">v2.6 Pro</span>
+                </h1>
+                <p class="text-[11px] text-slate-400 hidden sm:block">Thiết kế font pixel chuyên nghiệp • Tối ưu PC & Mobile</p>
+            </div>
+        </div>
+
+        <!-- Toolbar Actions -->
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button id="btnExportJson" class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 transition active:scale-95">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span class="hidden xs:inline">Xuất</span> JSON
+            </button>
+            <label for="importJsonInput" class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 transition active:scale-95 cursor-pointer">
+                <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                <span class="hidden xs:inline">Nhập</span> JSON
+                <input type="file" id="importJsonInput" accept=".json" class="hidden">
+            </label>
+            <button id="btnExportPng" class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium rounded-lg shadow-md shadow-indigo-600/20 transition active:scale-95">
+                <i data-lucide="image" class="w-3.5 h-3.5"></i>
+                <span>Font Sheet</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation Tabs (Chỉ hiện trên Mobile để hạn chế phải vuốt trang) -->
+    <div class="lg:hidden flex border-b border-slate-800 bg-slate-950 p-1.5 gap-1 text-xs">
+        <button id="mobTabEditor" class="flex-1 py-2 rounded-lg font-medium text-center bg-indigo-600 text-white flex items-center justify-center gap-1.5">
+            <i data-lucide="pencil" class="w-4 h-4"></i> Vẽ Chữ
+        </button>
+        <button id="mobTabChars" class="flex-1 py-2 rounded-lg font-medium text-center text-slate-400 bg-slate-900 border border-slate-800 flex items-center justify-center gap-1.5">
+            <i data-lucide="type" class="w-4 h-4"></i> Ký Tự
+        </button>
+        <button id="mobTabPreview" class="flex-1 py-2 rounded-lg font-medium text-center text-slate-400 bg-slate-900 border border-slate-800 flex items-center justify-center gap-1.5">
+            <i data-lucide="eye" class="w-4 h-4"></i> Xem Trước
+        </button>
+    </div>
+
+    <!-- Main Content Layout (Desktop 3 cols, Mobile controlled by Section Tabs) -->
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 p-3 sm:p-6 max-w-[1700px] w-full mx-auto">
+        
+        <!-- Left Panel: Character Selector & Font Settings -->
+        <section id="sectionChars" class="hidden lg:flex lg:col-span-3 flex-col gap-4 order-2 lg:order-1">
+            
+            <!-- Grid Size & Tools Setup -->
+            <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 sm:p-5 shadow-sm">
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                    <i data-lucide="settings" class="w-4 h-4 text-indigo-400"></i> Cấu hình & Màu sắc
+                </h2>
+                
+                <div class="grid grid-cols-2 lg:grid-cols-1 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Kích thước ô</label>
+                        <select id="gridSizeSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 transition">
+                            <option value="8">8 x 8 (Tiêu chuẩn)</option>
+                            <option value="12">12 x 12 (Chi tiết)</option>
+                            <option value="16">16 x 16 (Nét cao)</option>
+                            <option value="5">5 x 5 (Mini)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Màu Pixel</label>
+                        <div class="flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-lg p-1 px-2">
+                            <input type="color" id="pixelColorPicker" value="#ffffff" class="w-6 h-6 rounded border-0 bg-transparent cursor-pointer">
+                            <span id="pixelColorHex" class="text-xs font-mono text-slate-300 uppercase">#FFFFFF</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Characters List Panel -->
+            <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 sm:p-5 shadow-sm flex-1 flex flex-col min-h-[280px]">
+                <div class="flex justify-between items-center mb-2.5">
+                    <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                        <i data-lucide="type" class="w-4 h-4 text-indigo-400"></i> Danh sách ký tự
+                    </h2>
+                    <span id="charCountBadge" class="text-[11px] bg-slate-800 text-indigo-300 border border-slate-700 px-2 py-0.5 rounded-full font-mono">0/0</span>
+                </div>
+
+                <!-- Add New Custom Character Box -->
+                <div class="flex gap-1.5 mb-2.5">
+                    <input type="text" id="newCharInput" maxlength="2" placeholder="+ Ký tự mới (vd: Đ, Ô, ★)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 font-mono">
+                    <button id="btnAddNewChar" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-medium rounded-lg transition whitespace-nowrap">
+                        Thêm
+                    </button>
+                </div>
+
+                <!-- Tabs for Character Types -->
+                <div class="flex border-b border-slate-800 mb-2.5 gap-1 overflow-x-auto no-scrollbar">
+                    <button id="tabUppercase" class="tab-btn py-1 px-2.5 text-xs font-medium border-b-2 border-indigo-500 text-indigo-400 whitespace-nowrap">A-Z</button>
+                    <button id="tabLowercase" class="tab-btn py-1 px-2.5 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap">a-z</button>
+                    <button id="tabNumbers" class="tab-btn py-1 px-2.5 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap">0-9 & Dấu</button>
+                    <button id="tabCustom" class="tab-btn py-1 px-2.5 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap">Tự tạo</button>
+                </div>
+
+                <!-- Character Buttons Grid -->
+                <div id="characterListContainer" class="grid grid-cols-6 lg:grid-cols-5 gap-1.5 overflow-y-auto max-h-[300px] lg:max-h-[320px] p-0.5 no-scrollbar">
+                    <!-- Dynamic buttons injected via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Center Panel: The Interactive Pixel Canvas Editor -->
+        <section id="sectionEditor" class="flex lg:col-span-6 flex-col items-center gap-3 order-1 lg:order-2">
+            <div class="w-full bg-slate-950/60 border border-slate-800/80 rounded-xl p-3 sm:p-6 flex flex-col items-center justify-center relative shadow-sm">
+                
+                <!-- Active Char Indicator & Tool Options -->
+                <div class="w-full flex justify-between items-center gap-2 mb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div id="currentCharDisplay" class="w-10 h-10 bg-indigo-600/20 border border-indigo-500/40 rounded-xl flex items-center justify-center text-xl font-bold text-indigo-400">
+                            A
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-sm sm:text-base text-slate-100 flex items-center gap-2">
+                                Chữ: <span id="currentCharText" class="text-indigo-400 font-mono font-bold text-base sm:text-lg">A</span>
+                                <span id="charStatusBadge" class="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">Chưa vẽ</span>
+                            </h3>
+                            <p class="text-[11px] text-slate-400">Chạm vào ô để tô hoặc xóa pixel</p>
+                        </div>
+                    </div>
+
+                    <!-- Editor Canvas Tools Toolbar -->
+                    <div class="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-xl">
+                        <button id="btnToolPencil" class="p-1.5 rounded-lg text-white bg-indigo-600 transition active:scale-95" title="Bút vẽ">
+                            <i data-lucide="pencil" class="w-4 h-4"></i>
+                        </button>
+                        <button id="btnToolEraser" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition active:scale-95" title="Tẩy pixel">
+                            <i data-lucide="eraser" class="w-4 h-4"></i>
+                        </button>
+                        <div class="w-px h-4 bg-slate-800 mx-0.5"></div>
+                        <button id="btnCopyFromPrev" class="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition active:scale-95" title="Sao chép từ chữ trước">
+                            <i data-lucide="copy" class="w-4 h-4"></i>
+                        </button>
+                        <button id="btnInvertCanvas" class="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition active:scale-95" title="Đảo ngược màu">
+                            <i data-lucide="contrast" class="w-4 h-4"></i>
+                        </button>
+                        <button id="btnClearCanvas" class="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition active:scale-95" title="Xóa trắng canvas">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Interactive Pixel Grid Container -->
+                <div class="p-2 sm:p-4 bg-slate-900/90 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-[360px] sm:max-w-[420px] flex flex-col justify-center items-center">
+                    <div id="pixelGrid" class="grid gap-1 bg-slate-950 p-2 rounded-xl border border-slate-800/80 cursor-pointer select-none w-full aspect-square">
+                        <!-- Dynamic cells injected via JS -->
+                    </div>
+                </div>
+
+                <!-- Grid Options -->
+                <div class="mt-3 flex items-center justify-center gap-4 text-xs text-slate-400">
+                    <label class="flex items-center gap-1.5 cursor-pointer">
+                        <input type="checkbox" id="toggleGridLines" checked class="rounded border-slate-700 text-indigo-600 focus:ring-0 bg-slate-900">
+                        <span>Hiện đường lưới</span>
+                    </label>
+                    <span class="text-slate-700">•</span>
+                    <span class="text-[11px] text-slate-500">Tự động lưu bộ nhớ</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Panel: Live Preview & Export Tools -->
+        <section id="sectionPreview" class="hidden lg:flex lg:col-span-3 flex-col gap-4 order-3">
+            <!-- Real-time Preview Box -->
+            <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 sm:p-5 shadow-sm">
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                    <i data-lucide="eye" class="w-4 h-4 text-indigo-400"></i> Xem trước hiển thị Font
+                </h2>
+
+                <div class="space-y-3.5">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Văn bản nhập:</label>
+                        <input type="text" id="previewInput" value="PIXEL FONT" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 font-mono">
+                    </div>
+
+                    <!-- Canvas Container with Horizontal Scroll fallback -->
+                    <div class="p-3 bg-slate-900 border border-slate-800 rounded-xl min-h-[90px] flex flex-col justify-center items-center overflow-x-auto no-scrollbar">
+                        <canvas id="previewCanvas" class="max-w-full"></canvas>
+                    </div>
+
+                    <!-- Letter Spacing (Kerning) Control -->
+                    <div>
+                        <div class="flex justify-between text-xs font-medium text-slate-400 mb-1">
+                            <span>Khoảng cách chữ (Kerning)</span>
+                            <span id="letterSpacingVal" class="text-indigo-400 font-mono">0px</span>
+                        </div>
+                        <input type="range" id="letterSpacing" min="-2" max="8" value="0" step="1" class="w-full accent-indigo-500 cursor-pointer">
+                        <p class="text-[10px] text-slate-500 mt-1">* Kéo về 0px hoặc -1px để thiết kế dính liền chuẩn nét.</p>
+                    </div>
+
+                    <!-- Scale Control -->
+                    <div>
+                        <div class="flex justify-between text-xs font-medium text-slate-400 mb-1">
+                            <span>Tỷ lệ hiển thị (Scale)</span>
+                            <span id="previewScaleVal" class="text-indigo-400 font-mono">3x</span>
+                        </div>
+                        <input type="range" id="previewScale" min="1" max="6" value="3" class="w-full accent-indigo-500 cursor-pointer">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Template Presets -->
+            <div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 sm:p-5 shadow-sm">
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-2">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-indigo-400"></i> Font Mẫu Sẵn
+                </h2>
+                <p class="text-[11px] text-slate-400 mb-2.5">Nạp nhanh mẫu bộ chữ & số chuẩn Pixel 8x8:</p>
+                <button id="btnLoadPresetDemo" class="w-full px-3 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-xs font-medium text-indigo-300 rounded-lg flex items-center justify-between transition active:scale-95">
+                    <span>Áp dụng mẫu Font Pixel 8x8</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4 text-indigo-400"></i>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 left-5 sm:left-auto sm:max-w-md bg-indigo-600 text-white text-xs sm:text-sm px-4 py-3 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-20 opacity-0 flex items-center justify-between gap-2 z-50 pointer-events-none">
+        <div class="flex items-center gap-2">
+            <i data-lucide="check-circle" class="w-4 h-4 shrink-0"></i>
+            <span id="toastMessage">Thông báo</span>
+        </div>
+    </div>
+
+    <!-- Application Logic Javascript -->
+    <script>
+        // State Management
+        const state = {
+            gridSize: 8,
+            currentColor: '#ffffff',
+            currentChar: 'A',
+            charCategory: 'uppercase',
+            activeTool: 'pencil', // 'pencil' or 'eraser'
+            showGridLines: true,
+            letterSpacing: 0,
+            fontData: {}
+        };
+
+        // Character Sets
+        const charSets = {
+            uppercase: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+            lowercase: 'abcdefghijklmnopqrstuvwxyz'.split(''),
+            numbers: '0123456789!?:;+-='.split(''),
+            custom: []
+        };
+
+        // DOM Elements
+        const pixelGrid = document.getElementById('pixelGrid');
+        const gridSizeSelect = document.getElementById('gridSizeSelect');
+        const pixelColorPicker = document.getElementById('pixelColorPicker');
+        const pixelColorHex = document.getElementById('pixelColorHex');
+        const characterListContainer = document.getElementById('characterListContainer');
+        const currentCharDisplay = document.getElementById('currentCharDisplay');
+        const currentCharText = document.getElementById('currentCharText');
+        const charStatusBadge = document.getElementById('charStatusBadge');
+        const charCountBadge = document.getElementById('charCountBadge');
+        
+        const newCharInput = document.getElementById('newCharInput');
+        const btnAddNewChar = document.getElementById('btnAddNewChar');
+        const btnCopyFromPrev = document.getElementById('btnCopyFromPrev');
+        const btnInvertCanvas = document.getElementById('btnInvertCanvas');
+        const btnClearCanvas = document.getElementById('btnClearCanvas');
+        const btnToolPencil = document.getElementById('btnToolPencil');
+        const btnToolEraser = document.getElementById('btnToolEraser');
+        const toggleGridLines = document.getElementById('toggleGridLines');
+
+        const previewInput = document.getElementById('previewInput');
+        const previewCanvas = document.getElementById('previewCanvas');
+        const previewScale = document.getElementById('previewScale');
+        const letterSpacing = document.getElementById('letterSpacing');
+        const letterSpacingVal = document.getElementById('letterSpacingVal');
+
+        const btnExportJson = document.getElementById('btnExportJson');
+        const importJsonInput = document.getElementById('importJsonInput');
+        const btnExportPng = document.getElementById('btnExportPng');
+        const btnLoadPresetDemo = document.getElementById('btnLoadPresetDemo');
+
+        // Mobile Tabs
+        const mobTabEditor = document.getElementById('mobTabEditor');
+        const mobTabChars = document.getElementById('mobTabChars');
+        const mobTabPreview = document.getElementById('mobTabPreview');
+
+        const sectionEditor = document.getElementById('sectionEditor');
+        const sectionChars = document.getElementById('sectionChars');
+        const sectionPreview = document.getElementById('sectionPreview');
+
+        // Categories Tabs
+        const tabUppercase = document.getElementById('tabUppercase');
+        const tabLowercase = document.getElementById('tabLowercase');
+        const tabNumbers = document.getElementById('tabNumbers');
+        const tabCustom = document.getElementById('tabCustom');
+
+        // Initialize App
+        function initApp() {
+            lucide.createIcons();
+            loadLocalStorageData();
+            initFontData();
+            renderCharacterList();
+            renderGrid();
+            updatePreview();
+            setupEventListeners();
+        }
+
+        // Mobile View Section Switcher
+        function switchMobileSection(sectionName) {
+            // Hide all on mobile
+            sectionEditor.classList.add('hidden');
+            sectionChars.classList.add('hidden');
+            sectionPreview.classList.add('hidden');
+
+            mobTabEditor.className = 'flex-1 py-2 rounded-lg font-medium text-center text-slate-400 bg-slate-900 border border-slate-800 flex items-center justify-center gap-1.5';
+            mobTabChars.className = 'flex-1 py-2 rounded-lg font-medium text-center text-slate-400 bg-slate-900 border border-slate-800 flex items-center justify-center gap-1.5';
+            mobTabPreview.className = 'flex-1 py-2 rounded-lg font-medium text-center text-slate-400 bg-slate-900 border border-slate-800 flex items-center justify-center gap-1.5';
+
+            if (sectionName === 'editor') {
+                sectionEditor.classList.remove('hidden');
+                mobTabEditor.className = 'flex-1 py-2 rounded-lg font-medium text-center bg-indigo-600 text-white flex items-center justify-center gap-1.5';
+            } else if (sectionName === 'chars') {
+                sectionChars.classList.remove('hidden');
+                mobTabChars.className = 'flex-1 py-2 rounded-lg font-medium text-center bg-indigo-600 text-white flex items-center justify-center gap-1.5';
+            } else if (sectionName === 'preview') {
+                sectionPreview.classList.remove('hidden');
+                mobTabPreview.className = 'flex-1 py-2 rounded-lg font-medium text-center bg-indigo-600 text-white flex items-center justify-center gap-1.5';
+            }
+        }
+
+        // Local Storage Persistence
+        function saveLocalStorageData() {
+            try {
+                const storeObj = {
+                    gridSize: state.gridSize,
+                    fontData: state.fontData,
+                    customChars: charSets.custom,
+                    letterSpacing: state.letterSpacing
+                };
+                localStorage.setItem('pixel_font_designer_data', JSON.stringify(storeObj));
+            } catch (e) {
+                console.error("Local storage error:", e);
+            }
+        }
+
+        function loadLocalStorageData() {
+            try {
+                const saved = localStorage.getItem('pixel_font_designer_data');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.gridSize) {
+                        state.gridSize = parsed.gridSize;
+                        gridSizeSelect.value = parsed.gridSize;
+                    }
+                    if (parsed.fontData) state.fontData = parsed.fontData;
+                    if (parsed.customChars) charSets.custom = parsed.customChars;
+                    if (typeof parsed.letterSpacing !== 'undefined') {
+                        state.letterSpacing = parsed.letterSpacing;
+                        letterSpacing.value = parsed.letterSpacing;
+                        letterSpacingVal.innerText = parsed.letterSpacing + 'px';
+                    }
+                }
+            } catch (e) {
+                console.error("Error loading local storage:", e);
+            }
+        }
+
+        // Initialize Empty Font Data
+        function initFontData() {
+            const allChars = [...charSets.uppercase, ...charSets.lowercase, ...charSets.numbers, ...charSets.custom];
+            allChars.forEach(char => {
+                if (!state.fontData[char] || state.fontData[char].length !== state.gridSize) {
+                    state.fontData[char] = createEmptyGrid(state.gridSize);
+                }
+            });
+        }
+
+        function createEmptyGrid(size) {
+            return Array(size).fill(0).map(() => Array(size).fill(null));
+        }
+
+        function setActiveTool(tool) {
+            state.activeTool = tool;
+            if (tool === 'pencil') {
+                btnToolPencil.className = 'p-1.5 rounded-lg text-white bg-indigo-600 transition active:scale-95';
+                btnToolEraser.className = 'p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition active:scale-95';
+            } else {
+                btnToolEraser.className = 'p-1.5 rounded-lg text-white bg-indigo-600 transition active:scale-95';
+                btnToolPencil.className = 'p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition active:scale-95';
+            }
+        }
+
+        function addNewCustomCharacter() {
+            const char = newCharInput.value.trim();
+            if (!char) return;
+
+            if (!charSets.custom.includes(char) && !charSets.uppercase.includes(char) && !charSets.lowercase.includes(char) && !charSets.numbers.includes(char)) {
+                charSets.custom.push(char);
+            }
+
+            if (!state.fontData[char]) {
+                state.fontData[char] = createEmptyGrid(state.gridSize);
+            }
+
+            newCharInput.value = '';
+            switchTab('custom', tabCustom);
+            switchCharacter(char);
+            saveLocalStorageData();
+            showToast(`Đã thêm ký tự '${char}'!`);
+        }
+
+        function renderCharacterList() {
+            characterListContainer.innerHTML = '';
+            const currentList = charSets[state.charCategory];
+
+            let designedCount = 0;
+            currentList.forEach(char => {
+                const isDesigned = isCharHasPixels(char);
+                if (isDesigned) designedCount++;
+
+                const btn = document.createElement('button');
+                btn.className = `h-9 rounded-lg font-mono text-xs font-semibold flex items-center justify-center relative transition active:scale-95 ${
+                    char === state.currentChar 
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30 ring-2 ring-indigo-400' 
+                        : isDesigned 
+                            ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-900/40' 
+                            : 'bg-slate-900/80 text-slate-400 border border-slate-800 hover:bg-slate-800'
+                }`;
+
+                btn.innerText = char;
+
+                if (isDesigned && char !== state.currentChar) {
+                    const dot = document.createElement('span');
+                    dot.className = 'absolute top-1 right-1 w-1.5 h-1.5 bg-emerald-400 rounded-full';
+                    btn.appendChild(dot);
+                }
+
+                btn.addEventListener('click', () => {
+                    switchCharacter(char);
+                    // Tự động chuyển về tab Bảng vẽ nếu trên mobile
+                    if (window.innerWidth < 1024) {
+                        switchMobileSection('editor');
+                    }
+                });
+                characterListContainer.appendChild(btn);
+            });
+
+            charCountBadge.innerText = `${designedCount}/${currentList.length}`;
+            updateCharStatusBadge();
+        }
+
+        function isCharHasPixels(char) {
+            const grid = state.fontData[char];
+            if (!grid) return false;
+            return grid.some(row => row.some(cell => cell !== null));
+        }
+
+        function updateCharStatusBadge() {
+            const isDesigned = isCharHasPixels(state.currentChar);
+            if (isDesigned) {
+                charStatusBadge.innerText = "Đã vẽ";
+                charStatusBadge.className = "text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+            } else {
+                charStatusBadge.innerText = "Chưa vẽ";
+                charStatusBadge.className = "text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20";
+            }
+        }
+
+        function switchCharacter(char) {
+            state.currentChar = char;
+            currentCharDisplay.innerText = char;
+            currentCharText.innerText = char;
+            
+            if (!state.fontData[char] || state.fontData[char].length !== state.gridSize) {
+                state.fontData[char] = createEmptyGrid(state.gridSize);
+            }
+
+            renderCharacterList();
+            renderGrid();
+        }
+
+        // Single Tap / Click Cell Drawing Logic
+        function renderGrid() {
+            pixelGrid.innerHTML = '';
+            const size = state.gridSize;
+
+            pixelGrid.style.gridTemplateColumns = `repeat(${size}, minmax(0, 1fr))`;
+            const currentCharGrid = state.fontData[state.currentChar] || createEmptyGrid(size);
+
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    const cell = document.createElement('div');
+                    const color = currentCharGrid[r][c];
+
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.className = `grid-cell rounded-sm border ${
+                        state.showGridLines ? 'border-slate-800/80' : 'border-transparent'
+                    }`;
+
+                    if (color) {
+                        cell.style.backgroundColor = color;
+                    } else {
+                        cell.style.backgroundColor = 'rgba(15, 23, 42, 0.7)';
+                    }
+
+                    // On Click / Tap Event on Cell
+                    cell.addEventListener('click', () => toggleCell(r, c));
+
+                    pixelGrid.appendChild(cell);
+                }
+            }
+        }
+
+        function toggleCell(r, c) {
+            let currentCharGrid = state.fontData[state.currentChar];
+            if (!currentCharGrid) {
+                currentCharGrid = createEmptyGrid(state.gridSize);
+                state.fontData[state.currentChar] = currentCharGrid;
+            }
+
+            if (state.activeTool === 'eraser') {
+                currentCharGrid[r][c] = null;
+            } else {
+                // If pencil, toggle: empty -> filled, filled -> empty
+                if (currentCharGrid[r][c] === null) {
+                    currentCharGrid[r][c] = state.currentColor;
+                } else {
+                    currentCharGrid[r][c] = null;
+                }
+            }
+
+            renderGrid();
+            renderCharacterList();
+            updatePreview();
+            saveLocalStorageData();
+        }
+
+        function clearCurrentGrid() {
+            const size = state.gridSize;
+            state.fontData[state.currentChar] = createEmptyGrid(size);
+            renderGrid();
+            renderCharacterList();
+            updatePreview();
+            saveLocalStorageData();
+            showToast(`Đã xóa sạch chữ '${state.currentChar}'`);
+        }
+
+        function invertCurrentGrid() {
+            const size = state.gridSize;
+            const currentCharGrid = state.fontData[state.currentChar];
+            if (!currentCharGrid) return;
+
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    if (currentCharGrid[r][c]) {
+                        currentCharGrid[r][c] = null;
+                    } else {
+                        currentCharGrid[r][c] = state.currentColor;
+                    }
+                }
+            }
+            renderGrid();
+            renderCharacterList();
+            updatePreview();
+            saveLocalStorageData();
+            showToast(`Đã đảo ngược pixel chữ '${state.currentChar}'`);
+        }
+
+        function copyFromPreviousChar() {
+            const list = charSets[state.charCategory];
+            const currentIndex = list.indexOf(state.currentChar);
+            if (currentIndex > 0) {
+                const prevChar = list[currentIndex - 1];
+                if (state.fontData[prevChar]) {
+                    state.fontData[state.currentChar] = JSON.parse(JSON.stringify(state.fontData[prevChar]));
+                    renderGrid();
+                    renderCharacterList();
+                    updatePreview();
+                    saveLocalStorageData();
+                    showToast(`Sao chép mẫu từ '${prevChar}' sang '${state.currentChar}'`);
+                }
+            } else {
+                showToast('Không có ký tự phía trước!');
+            }
+        }
+
+        function updatePreview() {
+            const rawText = previewInput.value || '';
+            const scale = parseInt(previewScale.value) || 3;
+            const kerning = parseInt(letterSpacing.value) || 0;
+            
+            document.getElementById('previewScaleVal').innerText = scale + 'x';
+            letterSpacingVal.innerText = kerning + 'px';
+
+            const size = state.gridSize;
+            const ctx = previewCanvas.getContext('2d');
+            ctx.imageSmoothingEnabled = false;
+            
+            if (!rawText.length) {
+                previewCanvas.width = 100;
+                previewCanvas.height = size * scale;
+                ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+                return;
+            }
+
+            const charAdvance = size + kerning;
+            const totalWidth = Math.max(1, (rawText.length * charAdvance - kerning) * scale);
+            const totalHeight = Math.max(1, size * scale);
+
+            previewCanvas.width = totalWidth;
+            previewCanvas.height = totalHeight;
+
+            ctx.clearRect(0, 0, totalWidth, totalHeight);
+
+            for (let i = 0; i < rawText.length; i++) {
+                const origChar = rawText[i];
+                let charToDraw = origChar;
+                
+                if (!isCharHasPixels(charToDraw)) {
+                    if (isCharHasPixels(origChar.toUpperCase())) {
+                        charToDraw = origChar.toUpperCase();
+                    } else if (isCharHasPixels(origChar.toLowerCase())) {
+                        charToDraw = origChar.toLowerCase();
+                    }
+                }
+
+                const charGrid = state.fontData[charToDraw];
+
+                if (charGrid) {
+                    for (let r = 0; r < size; r++) {
+                        for (let c = 0; c < size; c++) {
+                            const color = charGrid[r][c];
+                            if (color) {
+                                ctx.fillStyle = color;
+                                const x = (i * charAdvance + c) * scale;
+                                const y = r * scale;
+                                ctx.fillRect(x, y, scale, scale);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function exportJson() {
+            const exportData = {
+                gridSize: state.gridSize,
+                letterSpacing: state.letterSpacing,
+                fontData: state.fontData,
+                customChars: charSets.custom
+            };
+            const jsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", jsonString);
+            downloadAnchor.setAttribute("download", `pixel-font-${state.gridSize}x${state.gridSize}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast('Đã xuất file JSON!');
+        }
+
+        function importJson(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const parsed = JSON.parse(event.target.result);
+                    if (parsed.gridSize && parsed.fontData) {
+                        state.gridSize = parsed.gridSize;
+                        gridSizeSelect.value = state.gridSize;
+                        state.fontData = parsed.fontData;
+
+                        if (typeof parsed.letterSpacing !== 'undefined') {
+                            state.letterSpacing = parsed.letterSpacing;
+                            letterSpacing.value = parsed.letterSpacing;
+                        }
+
+                        if (parsed.customChars && Array.isArray(parsed.customChars)) {
+                            charSets.custom = parsed.customChars;
+                        }
+                        
+                        initFontData();
+                        renderCharacterList();
+                        renderGrid();
+                        updatePreview();
+                        saveLocalStorageData();
+                        showToast('Đã nhập font JSON thành công!');
+                    } else {
+                        showToast('File JSON không đúng định dạng!');
+                    }
+                } catch (err) {
+                    showToast('Lỗi đọc file JSON!');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function exportPngSheet() {
+            const chars = [...charSets.uppercase, ...charSets.lowercase, ...charSets.numbers, ...charSets.custom];
+            const size = state.gridSize;
+            const cols = 10;
+            const rows = Math.ceil(chars.length / cols);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = cols * size;
+            canvas.height = rows * size;
+            const ctx = canvas.getContext('2d');
+
+            chars.forEach((char, idx) => {
+                const col = idx % cols;
+                const row = Math.floor(idx / cols);
+                const charGrid = state.fontData[char];
+
+                if (charGrid) {
+                    for (let r = 0; r < size; r++) {
+                        for (let c = 0; c < size; c++) {
+                            const color = charGrid[r][c];
+                            if (color) {
+                                ctx.fillStyle = color;
+                                ctx.fillRect(col * size + c, row * size + r, 1, 1);
+                            }
+                        }
+                    }
+                }
+            });
+
+            const link = document.createElement('a');
+            link.download = `font-spritesheet-${size}x${size}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            showToast('Đã xuất ảnh Font Sprite Sheet!');
+        }
+
+        function loadPresetDemo() {
+            state.gridSize = 8;
+            gridSizeSelect.value = 8;
+            
+            const C = state.currentColor || '#ffffff';
+            const _ = null;
+
+            const presets = {
+                'A': [[_,_,C,C,C,_,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,C,C,C,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,_,_,_,_,_,_,_]],
+                'B': [[_,C,C,C,C,_,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,C,C,C,_,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,C,C,C,_,_,_],[_,_,_,_,_,_,_,_]],
+                'C': [[_,_,C,C,C,C,_,_],[_,C,_,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,_,C,C,C,C,_,_],[_,_,_,_,_,_,_,_]],
+                'D': [[_,C,C,C,C,_,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,C,C,C,_,_,_],[_,_,_,_,_,_,_,_]],
+                'E': [[_,C,C,C,C,C,_,_],[_,C,_,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,C,C,C,C,_,_,_],[_,C,_,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,C,C,C,C,C,_,_],[_,_,_,_,_,_,_,_]],
+                'F': [[_,C,C,C,C,C,_,_],[_,C,_,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,C,C,C,C,_,_,_],[_,C,_,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,_,_,_,_,_,_,_]],
+                'G': [[_,_,C,C,C,C,_,_],[_,C,_,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,C,_,C,C,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,_,C,C,C,C,_,_],[_,_,_,_,_,_,_,_]],
+                'H': [[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,C,C,C,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,_,_,_,_,_,_,_]],
+                'I': [[_,C,C,C,C,C,_,_],[_,_,_,C,_,_,_,_],[_,_,_,C,_,_,_,_],[_,_,_,C,_,_,_,_],[_,_,_,C,_,_,_,_],[_,_,_,C,_,_,_,_],[_,C,C,C,C,C,_,_],[_,_,_,_,_,_,_,_]],
+                'J': [[_,_,_,C,C,C,_,_],[_,_,_,_,C,_,_,_],[_,_,_,_,C,_,_,_],[_,_,_,_,C,_,_,_],[_,C,_,_,C,_,_,_],[_,C,_,_,C,_,_,_],[_,_,C,C,_,_,_,_],[_,_,_,_,_,_,_,_]],
+                'K': [[_,C,_,_,_,C,_,_],[_,C,_,_,C,_,_,_],[_,C,_,C,_,_,_,_],[_,C,C,_,_,_,_,_],[_,C,_,C,_,_,_,_],[_,C,_,_,C,_,_,_],[_,C,_,_,_,C,_,_],[_,_,_,_,_,_,_,_]],
+                'L': [[_,C,_,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,C,C,C,C,C,_,_],[_,_,_,_,_,_,_,_]],
+                'M': [[_,C,_,_,_,C,_,_],[_,C,C,_,C,C,_,_],[_,C,_,C,_,C,_,_],[_,C,_,C,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,_,_,_,_,_,_,_]],
+                'N': [[_,C,_,_,_,C,_,_],[_,C,C,_,_,C,_,_],[_,C,_,C,_,C,_,_],[_,C,_,_,C,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,_,_,_,_,_,_,_]],
+                'O': [[_,_,C,C,C,_,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,_,C,C,C,_,_,_],[_,_,_,_,_,_,_,_]],
+                'P': [[_,C,C,C,C,_,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,C,C,C,_,_,_],[_,C,_,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,_,_,_,_,_,_,_]],
+                'Q': [[_,_,C,C,C,_,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,C,_,C,_,_],[_,C,_,_,C,_,_,_],[_,_,C,C,_,C,_,_],[_,_,_,_,_,_,_,_]],
+                'R': [[_,C,C,C,C,_,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,C,C,C,_,_,_],[_,C,_,C,_,_,_,_],[_,C,_,_,C,_,_,_],[_,C,_,_,_,C,_,_],[_,_,_,_,_,_,_,_]],
+                'S': [[_,_,C,C,C,C,_,_],[_,C,_,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,_,C,C,C,_,_,_],[_,_,_,_,_,C,_,_],[_,_,_,_,_,C,_,_],[_,C,C,C,C,_,_,_],[_,_,_,_,_,_,_,_]],
+                'T': [[_,C,C,C,C,C,_,_],[_,_,_,C,_,_,_,_],[_,_,_,C,_,_,_,_],[_,_,_,C,_,_,_,_],[_,_,_,C,_,_,_,_],[_,_,_,C,_,_,_,_],[_,_,_,C,_,_,_,_],[_,_,_,_,_,_,_,_]],
+                'U': [[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,_,C,C,C,_,_,_],[_,_,_,_,_,_,_,_]],
+                'V': [[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,_,C,_,C,_,_,_],[_,_,C,_,C,_,_,_],[_,_,_,C,_,_,_,_],[_,_,_,_,_,_,_,_]],
+                'W': [[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,C,_,C,_,_],[_,C,_,C,_,C,_,_],[_,C,C,_,C,C,_,_],[_,C,_,_,_,C,_,_],[_,_,_,_,_,_,_,_]],
+                'X': [[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,_,C,_,C,_,_,_],[_,_,_,C,_,_,_,_],[_,_,C,_,C,_,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,_,_,_,_,_,_,_]],
+                'Y': [[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,_,C,_,C,_,_,_],[_,_,_,C,_,_,_,_],[_,_,_,C,_,_,_,_],[_,_,_,C,_,_,_,_],[_,_,_,C,_,_,_,_],[_,_,_,_,_,_,_,_]],
+                'Z': [[_,C,C,C,C,C,_,_],[_,_,_,_,_,C,_,_],[_,_,_,_,C,_,_,_],[_,_,_,C,_,_,_,_],[_,_,C,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,C,C,C,C,C,_,_],[_,_,_,_,_,_,_,_]],
+                '0': [[_,_,C,C,C,_,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,C,C,_,_],[_,C,_,C,_,C,_,_],[_,C,C,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,_,C,C,C,_,_,_],[_,_,_,_,_,_,_,_]],
+                '1': [[_,_,_,C,_,_,_,_],[_,_,C,C,_,_,_,_],[_,_,_,C,_,_,_,_],[_,_,_,C,_,_,_,_],[_,_,_,C,_,_,_,_],[_,_,_,C,_,_,_,_],[_,C,C,C,C,C,_,_],[_,_,_,_,_,_,_,_]],
+                '2': [[_,_,C,C,C,_,_,_],[_,C,_,_,_,C,_,_],[_,_,_,_,_,C,_,_],[_,_,_,C,C,_,_,_],[_,_,C,_,_,_,_,_],[_,C,_,_,_,_,_,_],[_,C,C,C,C,C,_,_],[_,_,_,_,_,_,_,_]],
+                '3': [[_,C,C,C,C,_,_,_],[_,_,_,_,_,C,_,_],[_,_,_,_,_,C,_,_],[_,_,C,C,C,_,_,_],[_,_,_,_,_,C,_,_],[_,_,_,_,_,C,_,_],[_,C,C,C,C,_,_,_],[_,_,_,_,_,_,_,_]],
+                '4': [[_,C,_,_,C,_,_,_],[_,C,_,_,C,_,_,_],[_,C,_,_,C,_,_,_],[_,C,C,C,C,C,_,_],[_,_,_,_,C,_,_,_],[_,_,_,_,C,_,_,_],[_,_,_,_,C,_,_,_],[_,_,_,_,_,_,_,_]],
+                '5': [[_,C,C,C,C,C,_,_],[_,C,_,_,_,_,_,_],[_,C,C,C,C,_,_,_],[_,_,_,_,_,C,_,_],[_,_,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,_,C,C,C,_,_,_],[_,_,_,_,_,_,_,_]],
+                '6': [[_,_,C,C,C,_,_,_],[_,C,_,_,_,_,_,_],[_,C,C,C,C,_,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,_,C,C,C,_,_,_],[_,_,_,_,_,_,_,_]],
+                '7': [[_,C,C,C,C,C,_,_],[_,_,_,_,_,C,_,_],[_,_,_,_,C,_,_,_],[_,_,_,C,_,_,_,_],[_,_,C,_,_,_,_,_],[_,_,C,_,_,_,_,_],[_,_,C,_,_,_,_,_],[_,_,_,_,_,_,_,_]],
+                '8': [[_,_,C,C,C,_,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,_,C,C,C,_,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,_,C,C,C,_,_,_],[_,_,_,_,_,_,_,_]],
+                '9': [[_,_,C,C,C,_,_,_],[_,C,_,_,_,C,_,_],[_,C,_,_,_,C,_,_],[_,_,C,C,C,C,_,_],[_,_,_,_,_,C,_,_],[_,_,_,_,_,C,_,_],[_,_,C,C,C,_,_,_],[_,_,_,_,_,_,_,_]]
+            };
+
+            initFontData();
+            Object.keys(presets).forEach(char => {
+                state.fontData[char] = presets[char];
+            });
+
+            switchCharacter('A');
+            saveLocalStorageData();
+            showToast('Đã nạp bộ font Pixel 8x8 thành công!');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            toastMessage.innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2200);
+        }
+
+        function setupEventListeners() {
+            // Mobile navigation section switching
+            mobTabEditor.addEventListener('click', () => switchMobileSection('editor'));
+            mobTabChars.addEventListener('click', () => switchMobileSection('chars'));
+            mobTabPreview.addEventListener('click', () => switchMobileSection('preview'));
+
+            // Tool selection
+            btnToolPencil.addEventListener('click', () => setActiveTool('pencil'));
+            btnToolEraser.addEventListener('click', () => setActiveTool('eraser'));
+
+            // Grid size selection
+            gridSizeSelect.addEventListener('change', (e) => {
+                const newSize = parseInt(e.target.value);
+                state.gridSize = newSize;
+                initFontData();
+                renderCharacterList();
+                renderGrid();
+                updatePreview();
+                saveLocalStorageData();
+                showToast(`Đổi kích thước ô sang ${newSize}x${newSize}`);
+            });
+
+            // Color picker
+            pixelColorPicker.addEventListener('input', (e) => {
+                state.currentColor = e.target.value;
+                pixelColorHex.innerText = e.target.value;
+            });
+
+            // Add Custom Char
+            btnAddNewChar.addEventListener('click', addNewCustomCharacter);
+            newCharInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') addNewCustomCharacter();
+            });
+
+            btnCopyFromPrev.addEventListener('click', copyFromPreviousChar);
+            btnInvertCanvas.addEventListener('click', invertCurrentGrid);
+            btnClearCanvas.addEventListener('click', clearCurrentGrid);
+
+            toggleGridLines.addEventListener('change', (e) => {
+                state.showGridLines = e.target.checked;
+                renderGrid();
+            });
+
+            // Category Tab Buttons
+            tabUppercase.addEventListener('click', () => switchTab('uppercase', tabUppercase));
+            tabLowercase.addEventListener('click', () => switchTab('lowercase', tabLowercase));
+            tabNumbers.addEventListener('click', () => switchTab('numbers', tabNumbers));
+            tabCustom.addEventListener('click', () => switchTab('custom', tabCustom));
+
+            // Preview controls
+            previewInput.addEventListener('input', updatePreview);
+            previewScale.addEventListener('input', updatePreview);
+            letterSpacing.addEventListener('input', (e) => {
+                state.letterSpacing = parseInt(e.target.value);
+                updatePreview();
+                saveLocalStorageData();
+            });
+
+            // File Exports/Imports
+            btnExportJson.addEventListener('click', exportJson);
+            importJsonInput.addEventListener('change', importJson);
+            btnExportPng.addEventListener('click', exportPngSheet);
+            btnLoadPresetDemo.addEventListener('click', loadPresetDemo);
+        }
+
+        function switchTab(category, clickedBtn) {
+            state.charCategory = category;
+            [tabUppercase, tabLowercase, tabNumbers, tabCustom].forEach(btn => {
+                btn.className = 'tab-btn py-1 px-2.5 text-xs font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 whitespace-nowrap';
+            });
+            clickedBtn.className = 'tab-btn py-1 px-2.5 text-xs font-medium border-b-2 border-indigo-500 text-indigo-400 whitespace-nowrap';
+            
+            const currentList = charSets[category];
+            if (currentList.length > 0) {
+                switchCharacter(currentList[0]);
+            } else {
+                renderCharacterList();
+            }
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
