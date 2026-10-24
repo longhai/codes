@@ -7,30 +7,22 @@
 <meta name="mobile-web-app-capable" content="yes">
 <style>
 	:root{
-		--bar-bg:rgba(28,28,30,.92); --bg:#111318; --card:#1c1c1e; --text:#f2f2f7;
+		--bg:#111318; --card:#1c1c1e; --text:#f2f2f7;
 		--muted:#9a9aa2; --accent:#ff9f0a; --key-bg:rgba(44,44,46,.88); --key-pressed:rgba(180,180,180,.55);
 	}
 	*{box-sizing:border-box;}
 	html,body{height:100%;}
-	body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"Segoe UI",Arial,sans-serif;display:flex;flex-direction:column;height:100dvh;overflow:hidden;-webkit-user-select:none;user-select:none;}
-	/* --- Thanh trên --- */
-	.bar{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--bar-bg);border-bottom:.5px solid rgba(255,255,255,.12);z-index:20;position:relative;}
-	.bar .title{flex:1;min-width:0;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-	.bar button{border:0;border-radius:10px;background:#2c2c2e;color:var(--text);font:inherit;font-size:13px;font-weight:600;padding:9px 12px;cursor:pointer;}
-	.bar button:active{transform:scale(.95);}
-	/* --- Sân game --- */
-	#stage{flex:1 1 auto;position:relative;display:flex;align-items:center;justify-content:center;min-height:0;background:#000;}
+	body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,"Segoe UI",Arial,sans-serif;height:100dvh;overflow:hidden;-webkit-user-select:none;user-select:none;}
+	/* --- Sân game chiếm toàn màn hình --- */
+	#stage{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;}
 	#player-holder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;}
 	#player-holder > *{width:100% !important;height:100% !important;}
 	#status{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);max-width:88vw;text-align:center;color:var(--muted);font-size:15px;line-height:1.55;background:rgba(0,0,0,.55);padding:16px 18px;border-radius:16px;z-index:2;}
 	#status b{color:var(--text);}
 	#status .big-btn{display:inline-block;margin-top:12px;border:0;border-radius:999px;background:var(--accent);color:#111;font:inherit;font-size:15px;font-weight:700;padding:12px 22px;cursor:pointer;}
-	/* --- Hàng dán link --- */
-	#linkRow{flex:0 0 auto;display:none;gap:8px;padding:8px 10px;background:var(--card);border-top:.5px solid rgba(255,255,255,.1);z-index:20;position:relative;}
-	#linkRow.show{display:flex;}
-	#linkRow input{flex:1;min-width:0;border:1px solid rgba(255,255,255,.18);border-radius:10px;background:#111;color:var(--text);font:inherit;font-size:14px;padding:10px 12px;}
-	#linkRow button{border:0;border-radius:10px;background:var(--accent);color:#111;font:inherit;font-size:14px;font-weight:700;padding:10px 16px;cursor:pointer;}
-	/* --- Lớp phím ảo nổi tự do (kéo thả được trong chế độ chỉnh) --- */
+	/* --- Nút menu nổi duy nhất trên màn hình chơi --- */
+	#fabMenu{position:fixed;top:5%;left:93%;transform:translate(-50%,-50%);z-index:40;width:36px;height:36px;border:0;border-radius:50%;background:rgba(44,44,46,.6);color:var(--text);font-size:20px;line-height:1;cursor:grab;touch-action:none;}
+	/* --- Lớp phím ảo nổi --- */
 	#padOverlay{position:fixed;inset:0;z-index:10;pointer-events:none;}
 	body.editing #padOverlay{background:rgba(0,0,0,.25);}
 	body.editing #stage{filter:brightness(.75);}
@@ -39,111 +31,92 @@
 	.vkey.txt{font-size:11.5px;}
 	body.editing .vkey{outline:2px dashed rgba(255,255,255,.65);outline-offset:2px;cursor:grab;}
 	body.editing .vkey.selected{outline:3px solid #0a84ff;outline-offset:2px;}
-	/* --- Thanh công cụ chỉnh 1 phím (như bản gốc: To / Nhỏ / Đặt lại / Xóa) --- */
-	#keyTools{position:fixed;z-index:61;display:none;gap:6px;background:#fff;border-radius:12px;padding:6px;box-shadow:0 6px 24px rgba(0,0,0,.4);}
-	#keyTools.show{display:flex;}
-	#keyTools button{border:0;border-radius:9px;font:inherit;font-size:14px;font-weight:700;padding:10px 13px;cursor:pointer;color:#fff;}
-	#keyTools .t-big{background:#22c55e;}
-	#keyTools .t-small{background:#ef4444;}
-	#keyTools .t-reset{background:#6b7280;}
-	#keyTools .t-del{background:#16a34a;}
-	/* --- Thanh Lưu/Hủy + bảng phím thêm khi chỉnh --- */
-	#editBar{position:fixed;top:calc(62px + env(safe-area-inset-top,0px));right:10px;z-index:62;display:none;gap:8px;}
-	#editBar.show{display:flex;}
-	#editBar button{border:0;border-radius:10px;font:inherit;font-size:15px;font-weight:700;padding:11px 18px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.35);}
-	#btnSaveLayout{background:#f5c518;color:#111;}
-	#btnCancelEdit{background:rgba(44,44,46,.95);color:var(--text);}
-	#palette{position:fixed;left:0;right:0;bottom:calc(57px + env(safe-area-inset-bottom,0px));z-index:60;display:none;background:rgba(24,24,27,.97);border-top:.5px solid rgba(255,255,255,.15);padding:8px 10px 10px;max-height:30dvh;overflow-y:auto;}
-	#palette.show{display:block;}
-	#palette .hint{font-size:13px;color:var(--muted);margin:2px 2px 8px;line-height:1.45;}
-	#palette .hint b{color:var(--text);}
-	#paletteBar{position:fixed;left:0;right:0;bottom:0;z-index:59;display:none;align-items:center;gap:10px;background:rgba(24,24,27,.97);border-top:.5px solid rgba(255,255,255,.15);padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));}
-	#paletteBar.show{display:flex;}
-	#paletteBar .hint{flex:1;font-size:12.5px;color:var(--muted);line-height:1.4;}
-	#btnTogglePalette{border:0;border-radius:10px;background:var(--accent);color:#111;font:inherit;font-size:14px;font-weight:700;padding:11px 14px;cursor:pointer;white-space:nowrap;}
-	.pal-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;}
-	.pal-key{border:0;border-radius:9px;background:#3a3a3c;color:var(--text);font:inherit;font-size:14px;font-weight:600;min-width:38px;height:38px;padding:0 9px;cursor:pointer;}
-	.pal-key:active{transform:scale(.94);}
-	.pal-key.on{background:var(--accent);color:#111;}
-	/* --- Bảng cài đặt --- */
+	/* --- Bảng trượt dưới (dùng chung cho Menu và Chỉnh phím) --- */
 	#sheetOverlay{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:none;}
 	#sheetOverlay.show{display:block;}
-	#vkeySheet{position:fixed;left:0;right:0;bottom:0;z-index:51;background:var(--card);border-radius:20px 20px 0 0;padding:10px 18px calc(16px + env(safe-area-inset-bottom,0px));transform:translateY(105%);transition:transform .28s ease;max-height:74dvh;overflow-y:auto;visibility:hidden;}
-	#vkeySheet.show{transform:translateY(0);visibility:visible;}
-	#vkeySheet .handle{width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.25);margin:2px auto 12px;}
-	#vkeySheet h2{font-size:17px;margin:0 0 4px;}
-	.set-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:.5px solid rgba(255,255,255,.08);font-size:15px;}
+	.sheet{position:fixed;left:0;right:0;bottom:0;z-index:51;background:var(--card);border-radius:20px 20px 0 0;padding:8px 16px calc(10px + env(safe-area-inset-bottom,0px));transform:translateY(105%);transition:transform .28s ease;max-height:70dvh;overflow-y:auto;visibility:hidden;}
+	.sheet.show{transform:translateY(0);visibility:visible;}
+	.sheet .handle{width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.25);margin:2px auto 8px;}
+	.set-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:.5px solid rgba(255,255,255,.08);font-size:15px;}
 	.set-row .lbl{flex:1;}
 	.set-row input[type="checkbox"]{width:22px;height:22px;accent-color:var(--accent);}
 	.set-row input[type="range"]{flex:1;accent-color:var(--accent);}
 	.set-row .val{width:44px;text-align:right;color:var(--muted);font-size:13px;}
 	.set-btn{border:0;border-radius:10px;background:#2c2c2e;color:var(--text);font:inherit;font-size:14px;font-weight:600;padding:11px 14px;cursor:pointer;}
 	.set-btn.primary{background:var(--accent);color:#111;font-weight:700;}
-	.sheet-btns{display:flex;gap:10px;margin-top:16px;}
-	.sheet-btns .set-btn{flex:1;padding:13px;}
+	.set-btn.block{display:block;width:100%;padding:11px;margin-top:8px;font-size:14px;}
+	.set-btn.slim{padding:9px;font-size:14px;}
+	.btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+	.btn-grid .set-btn{margin-top:0;}
+	.link-row{display:flex;gap:8px;margin-top:8px;}
+	.link-row input{flex:1;min-width:0;background:#111;color:var(--text);border:1px solid rgba(255,255,255,.18);border-radius:10px;font:inherit;font-size:14px;padding:11px 12px;}
+	/* --- Bảng Chỉnh phím --- */
+	#editSheet{z-index:60;}
+	#editSheet.dragging{transform:translateY(105%);}
+	#editSheet.collapsed .tool-row,#editSheet.collapsed #chipRow{display:none;}
+	.edit-head{display:flex;align-items:center;gap:8px;}
+	.edit-head .lbl{flex:1;text-align:center;font-size:14px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+	.edit-head .lbl b{color:var(--text);}
+	.tool-row{display:flex;gap:6px;margin-top:12px;}
+	.tool-row button{flex:1;border:0;border-radius:9px;font:inherit;font-size:13px;font-weight:700;padding:11px 4px;cursor:pointer;color:#fff;}
+	.tool-row button:disabled{opacity:.35;}
+	.tool-row .t-big{background:#22c55e;}
+	.tool-row .t-small{background:#ef4444;}
+	.tool-row .t-reset{background:#6b7280;}
+	.tool-row .t-del{background:#16a34a;}
+	#chipRow{display:flex;gap:6px;overflow-x:auto;padding:10px 0 2px;-webkit-overflow-scrolling:touch;}
+	.chip-key{flex:0 0 auto;border:0;border-radius:9px;background:#3a3a3c;color:var(--text);font:inherit;font-size:14px;font-weight:600;min-width:38px;height:38px;padding:0 9px;cursor:pointer;}
+	.chip-key.on{background:var(--accent);color:#111;}
 </style>
 <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
 </head>
 <body>
-	<header class="bar">
-		<div class="title" id="gameTitle">⛏️ Đào vàng (Flash)</div>
-		<button type="button" id="btnOpen">Mở file .swf</button>
-		<button type="button" id="btnLink">Dán link</button>
-		<button type="button" id="btnKeys">⚙ Phím</button>
-		<button type="button" id="btnFs" title="Toàn màn hình">⛶</button>
-	</header>
-
 	<main id="stage">
 		<div id="player-holder"></div>
 		<div id="status">Đang nạp trình Flash (Ruffle)…</div>
 	</main>
 
-	<div id="linkRow">
-		<input id="linkInput" type="url" placeholder="Dán link file .swf rồi bấm Tải" inputmode="url">
-		<button type="button" id="btnLoadLink">Tải</button>
-	</div>
-
-	<!-- Lớp phím ảo nổi: vị trí từng phím kéo thả tự do trong chế độ chỉnh -->
+	<!-- Lớp phím ảo nổi -->
 	<div id="padOverlay" aria-label="Phím ảo"></div>
 
-	<!-- Công cụ chỉnh phím đang chọn -->
-	<div id="keyTools">
-		<button type="button" class="t-big" id="toolBig">Phóng to</button>
-		<button type="button" class="t-small" id="toolSmall">Thu nhỏ</button>
-		<button type="button" class="t-reset" id="toolReset">Đặt lại</button>
-		<button type="button" class="t-del" id="toolDel">Xóa</button>
-	</div>
+	<!-- Nút menu nổi duy nhất -->
+	<button type="button" id="fabMenu" aria-label="Menu">⋯</button>
 
-	<!-- Thanh lưu khi chỉnh -->
-	<div id="editBar">
-		<button type="button" id="btnCancelEdit">Hủy</button>
-		<button type="button" id="btnSaveLayout">Lưu</button>
-	</div>
-
-	<!-- Thanh dưới trong chế độ chỉnh: mở/đóng bảng thêm phím -->
-	<div id="paletteBar">
-		<span class="hint">Kéo phím để dời vị trí. Chạm vào 1 phím để Phóng to / Thu nhỏ / Đặt lại / Xóa.</span>
-		<button type="button" id="btnTogglePalette">＋ Thêm phím</button>
-	</div>
-
-	<!-- Bảng phím để thêm vào (mở khi cần trong chế độ chỉnh) -->
-	<div id="palette">
-		<div class="hint">Chạm 1 phím để <b>thêm</b> lên màn hình — phím mới hiện ở giữa màn hình, đóng bảng rồi kéo tới chỗ vừa tay. Phím <b>màu cam</b> là phím đang có trên màn hình.</div>
-		<div id="paletteRows"></div>
-	</div>
-
-	<!-- Bảng cài đặt -->
 	<div id="sheetOverlay"></div>
-	<section id="vkeySheet" aria-label="Cài đặt phím ảo">
+
+	<!-- Bảng Menu: mọi thao tác gói trong 1 bảng -->
+	<section class="sheet" id="menuSheet" aria-label="Menu">
 		<div class="handle"></div>
-		<h2>Cài đặt phím ảo</h2>
+		<div class="btn-grid">
+			<button type="button" class="set-btn" id="mOpen">📂 Mở file</button>
+			<button type="button" class="set-btn" id="btnFs">⛶ Toàn màn hình</button>
+		</div>
+		<div class="link-row">
+			<input id="linkInput" type="url" placeholder="Dán link file .swf" inputmode="url">
+			<button type="button" class="set-btn primary" id="btnLoadLink">Tải</button>
+		</div>
 		<div class="set-row"><span class="lbl">Hiện bàn phím ảo</span><input type="checkbox" id="setShowPad"></div>
 		<div class="set-row"><span class="lbl">Độ mờ phím</span><input type="range" id="setOpacity" min="35" max="100" step="5"><span class="val" id="opacityVal"></span></div>
-		<div class="set-row"><span class="lbl">Di chuyển vị trí, phóng to / thu nhỏ, thêm / xóa từng phím</span><button type="button" class="set-btn primary" id="btnEditLayout">Chỉnh phím</button></div>
-		<div class="sheet-btns">
-			<button type="button" class="set-btn" id="btnResetLayout">Bố cục mặc định</button>
-			<button type="button" class="set-btn primary" id="btnCloseSheet">Đóng</button>
+		<button type="button" class="set-btn primary block" id="btnEditLayout">⚙ Chỉnh phím</button>
+		<button type="button" class="set-btn block slim" id="btnCloseMenu">Đóng</button>
+	</section>
+
+	<!-- Bảng Chỉnh phím: công cụ + thêm phím trong cùng 1 bảng -->
+	<section class="sheet" id="editSheet" aria-label="Chỉnh phím">
+		<div class="handle"></div>
+		<div class="edit-head">
+			<button type="button" class="set-btn" id="btnCancelEdit">Hủy</button>
+			<span class="lbl" id="selKeyLabel">Chạm 1 phím trên màn hình để chọn</span>
+			<button type="button" class="set-btn" id="btnCollapseEdit" title="Thu gọn / mở rộng bảng">˅</button>
+			<button type="button" class="set-btn primary" id="btnSaveLayout">Lưu</button>
 		</div>
+		<div class="tool-row">
+			<button type="button" class="t-big" id="toolBig">Phóng to</button>
+			<button type="button" class="t-small" id="toolSmall">Thu nhỏ</button>
+			<button type="button" class="t-reset" id="toolReset">Đặt lại</button>
+			<button type="button" class="t-del" id="toolDel">Xóa</button>
+		</div>
+		<div id="chipRow"></div>
 	</section>
 
 	<input id="fileInput" type="file" accept=".swf" style="display:none">
@@ -151,7 +124,7 @@
 <script>
 'use strict';
 /* Trang chơi Flash bằng Ruffle (cùng công nghệ trang yikm đang dùng).
-   Nguồn game: ?swf= trên URL -> link mặc định Đào vàng (Archive.org) -> mở file / dán link tay. */
+   Nguồn game: ?swf= trên URL -> game nhúng sẵn (nếu có) -> file gold_miner.swf cùng thư mục -> mở file / dán link tay. */
 var DEFAULT_SWFS = [
 	'gold_miner.swf'
 ];
@@ -188,8 +161,7 @@ function ensurePlayer() {
 function loadByUrl(url, label) {
 	var p = ensurePlayer();
 	if (!p) { setStatus('Chưa nạp được Ruffle. Kiểm tra mạng rồi tải lại trang.'); return; }
-	if (label) document.getElementById('gameTitle').textContent = label;
-	setStatus('Đang tải game…');
+	if (label) setStatus('Đang tải game…');
 	var done = false;
 	try {
 		var pr = p.load({ url: url });
@@ -212,7 +184,6 @@ function loadByFile(file) {
 	if (!file) return;
 	var p = ensurePlayer();
 	if (!p) { setStatus('Chưa nạp được Ruffle. Kiểm tra mạng rồi tải lại trang.'); return; }
-	document.getElementById('gameTitle').textContent = '⛏️ ' + file.name.replace(/\.swf$/i, '');
 	setStatus('Đang đọc file…');
 	file.arrayBuffer().then(function (buf) {
 		return p.load({ data: new Uint8Array(buf) });
@@ -222,11 +193,10 @@ function loadByFile(file) {
 function loadByData(buf, label) {
 	var p = ensurePlayer();
 	if (!p) { setStatus('Chưa nạp được Ruffle. Kiểm tra mạng rồi tải lại trang.'); return Promise.resolve(false); }
-	if (label) document.getElementById('gameTitle').textContent = label;
 	return p.load({ data: new Uint8Array(buf) }).then(function () { setStatus(''); return true; });
 }
 /* Tự tải file game về dạng dữ liệu rồi nạp — đúng cơ chế "Mở file" đã chạy được,
-   tránh để Ruffle tự lấy link chéo máy chủ (dễ bị chặn). Thử lần lượt các máy chủ. */
+   tránh để Ruffle tự lấy link chéo máy chủ (dễ bị chặn). */
 function tryDefault(index) {
 	if (index >= DEFAULT_SWFS.length) { loadFailed(''); return; }
 	var url = DEFAULT_SWFS[index];
@@ -243,30 +213,23 @@ function tryDefault(index) {
 		if (ok === false) throw new Error('player');
 	}).catch(function () { tryDefault(index + 1); });
 }
+/* --- Game nhúng sẵn trong file trang (nếu có) --- */
+function loadEmbedded() {
+	setStatus('Đang nạp game Đào vàng…');
+	try {
+		var bin = atob(window.EMBEDDED_SWF_B64);
+		var bytes = new Uint8Array(bin.length);
+		for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+		loadByData(bytes.buffer, '⛏️ Đào vàng (Flash)')
+			.then(function (ok) { if (!ok) tryDefault(0); })
+			.catch(function () { tryDefault(0); });
+	} catch (e) { tryDefault(0); }
+}
 
-/* --- Nút trên thanh --- */
+/* --- Mở file / kéo thả file .swf (không chạy khi đang chỉnh phím) --- */
 var fileInput = document.getElementById('fileInput');
 function openFileDialog() { fileInput.click(); }
-document.getElementById('btnOpen').addEventListener('click', openFileDialog);
 fileInput.addEventListener('change', function () { loadByFile(fileInput.files[0]); fileInput.value = ''; });
-var linkRow = document.getElementById('linkRow');
-document.getElementById('btnLink').addEventListener('click', function () {
-	linkRow.classList.toggle('show');
-	if (linkRow.classList.contains('show')) document.getElementById('linkInput').focus();
-});
-document.getElementById('btnLoadLink').addEventListener('click', function () {
-	var url = document.getElementById('linkInput').value.trim();
-	if (url) { linkRow.classList.remove('show'); loadByUrl(url, '⛏️ Game Flash'); }
-});
-document.getElementById('btnFs').addEventListener('click', function () {
-	try {
-		if (document.fullscreenElement) document.exitFullscreen();
-		else if (player && player.enterFullscreen) player.enterFullscreen();
-		else document.documentElement.requestFullscreen();
-	} catch (e) {}
-});
-
-/* --- Kéo thả file .swf vào trang (không chạy khi đang chỉnh phím) --- */
 document.addEventListener('dragover', function (e) { e.preventDefault(); });
 document.addEventListener('drop', function (e) {
 	e.preventDefault();
@@ -275,50 +238,39 @@ document.addEventListener('drop', function (e) {
 });
 
 /* ============ PHÍM ẢO NỔI — KÉO THẢ TỰ DO ============ */
-/* Danh mục phím có thể đặt lên màn hình */
 var KEY_CATALOG = [
 	{ id: 'left',  label: '◀', key: 'ArrowLeft',  code: 'ArrowLeft',  keycode: 37 },
 	{ id: 'up',    label: '▲', key: 'ArrowUp',    code: 'ArrowUp',    keycode: 38 },
 	{ id: 'right', label: '▶', key: 'ArrowRight', code: 'ArrowRight', keycode: 39 },
-	{ id: 'down',  label: '▼', key: 'ArrowDown', code: 'ArrowDown', keycode: 40, main: true },
-	{ id: 'space', label: 'Space', key: ' ', code: 'Space', keycode: 32, wide: true },
-	{ id: 'enter', label: 'Enter', key: 'Enter', code: 'Enter', keycode: 13, wide: true },
-	{ id: 'pause', label: 'P', key: 'p', code: 'KeyP', keycode: 80, small: true }
+	{ id: 'down',  label: '▼', key: 'ArrowDown', code: 'ArrowDown', keycode: 40 },
+	{ id: 'space', label: 'Space', key: ' ', code: 'Space', keycode: 32 },
+	{ id: 'enter', label: 'Enter', key: 'Enter', code: 'Enter', keycode: 13 },
+	{ id: 'pause', label: 'P', key: 'p', code: 'KeyP', keycode: 80 }
 ];
 (function buildCatalog() {
 	var i, ch;
 	for (i = 0; i < 26; i++) { ch = String.fromCharCode(65 + i); KEY_CATALOG.push({ id: 'k' + ch, label: ch, key: ch.toLowerCase(), code: 'Key' + ch, keycode: 65 + i }); }
 	for (i = 0; i <= 9; i++) KEY_CATALOG.push({ id: 'd' + i, label: String(i), key: String(i), code: 'Digit' + i, keycode: 48 + i });
-	KEY_CATALOG.push({ id: 'shift', label: 'Shift', key: 'Shift', code: 'ShiftLeft', keycode: 16, wide: true });
-	KEY_CATALOG.push({ id: 'ctrl', label: 'Ctrl', key: 'Control', code: 'ControlLeft', keycode: 17, wide: true });
-	KEY_CATALOG.push({ id: 'alt', label: 'Alt', key: 'Alt', code: 'AltLeft', keycode: 18, wide: true });
-	KEY_CATALOG.push({ id: 'esc', label: 'Esc', key: 'Escape', code: 'Escape', keycode: 27, small: true });
-	KEY_CATALOG.push({ id: 'tab', label: 'Tab', key: 'Tab', code: 'Tab', keycode: 9, wide: true });
+	KEY_CATALOG.push({ id: 'shift', label: 'Shift', key: 'Shift', code: 'ShiftLeft', keycode: 16 });
+	KEY_CATALOG.push({ id: 'ctrl', label: 'Ctrl', key: 'Control', code: 'ControlLeft', keycode: 17 });
+	KEY_CATALOG.push({ id: 'alt', label: 'Alt', key: 'Alt', code: 'AltLeft', keycode: 18 });
+	KEY_CATALOG.push({ id: 'esc', label: 'Esc', key: 'Escape', code: 'Escape', keycode: 27 });
+	KEY_CATALOG.push({ id: 'tab', label: 'Tab', key: 'Tab', code: 'Tab', keycode: 9 });
 	KEY_CATALOG.push({ id: 'bsp', label: '⌫', key: 'Backspace', code: 'Backspace', keycode: 8 });
 })();
 function catalogById(id) {
 	for (var i = 0; i < KEY_CATALOG.length; i++) if (KEY_CATALOG[i].id === id) return KEY_CATALOG[i];
 	return null;
 }
-/* Vị trí mặc định (x, y tính bằng % màn hình; s = hệ số cỡ) */
 function defaultLayout() {
-	return [
-		{ id: 'up',    x: 20, y: 72, s: 1 },
-		{ id: 'left',  x: 7,  y: 84, s: 1 },
-		{ id: 'down',  x: 20, y: 84, s: 1 },
-		{ id: 'right', x: 33, y: 84, s: 1 },
-		{ id: 'pause', x: 73, y: 72, s: 1 },
-		{ id: 'enter', x: 87, y: 72, s: 1 },
-		{ id: 'space', x: 80, y: 84, s: 1 }
-	];
+	/* Mặc định KHÔNG hiện phím nào: người chơi tự vào Menu → Chỉnh phím để chọn phím mình cần */
+	return [];
 }
 function defaultFor(id) {
-	var d = defaultLayout();
-	for (var i = 0; i < d.length; i++) if (d[i].id === id) return d[i];
-	return { id: id, x: 50, y: 50, s: 1 };
+	return { id: id, x: 50, y: 40, s: 1 };
 }
 
-var LAYOUT_STORE = 'flash_vkey_layout_v4';
+var LAYOUT_STORE = 'flash_vkey_layout_v5';
 var OLD_STORE = 'flash_vkey_settings';
 var padSettings = { showPad: true, opacity: 100 };
 var padLayout = defaultLayout();
@@ -328,31 +280,25 @@ function loadPadState() {
 		var raw = localStorage.getItem(LAYOUT_STORE);
 		if (raw) {
 			var s = JSON.parse(raw);
-			if (s.layout && s.layout.length) padLayout = s.layout;
+			if (s.layout) padLayout = s.layout;
 			if (s.settings) padSettings = s.settings;
 			return;
 		}
 	} catch (e) {}
-	/* Chuyển từ bản cũ (v2): giữ độ mờ + các phím tùy chọn đã thêm */
+	/* Lên v5: mặc định không còn phím nào — chỉ mang cài đặt cũ sang (độ mờ, hiện/ẩn),
+	   KHÔNG mang bố cục/phím cũ sang */
+	padLayout = [];
 	try {
-		var old = JSON.parse(localStorage.getItem(OLD_STORE) || 'null');
-		if (old) {
-			if (typeof old.opacity === 'number') padSettings.opacity = old.opacity;
-			if (old.showPad === false) padSettings.showPad = false;
-			(old.customs || []).forEach(function (c, i) {
-				var found = null;
-				for (var j = 0; j < KEY_CATALOG.length; j++) if (KEY_CATALOG[j].code === c.code) found = KEY_CATALOG[j];
-				if (found && !padLayout.some(function (k) { return k.id === found.id; })) {
-					padLayout.push({ id: found.id, x: 38 + (i % 3) * 12, y: 62, s: 1 });
-				}
-			});
-		}
-	} catch (e) {}
-	/* Bản v4 đổi bố cục mặc định (phím nhỏ, không chồng nhau): bỏ qua bố cục đã lưu ở v3,
-	   chỉ giữ lại phần cài đặt (độ mờ, hiện/ẩn bàn phím) */
-	try {
-		var prev = JSON.parse(localStorage.getItem('flash_vkey_layout_v3') || 'null');
+		var prev = JSON.parse(localStorage.getItem('flash_vkey_layout_v4') || 'null') ||
+		           JSON.parse(localStorage.getItem('flash_vkey_layout_v3') || 'null');
 		if (prev && prev.settings) padSettings = prev.settings;
+		else {
+			var old = JSON.parse(localStorage.getItem(OLD_STORE) || 'null');
+			if (old) {
+				if (typeof old.opacity === 'number') padSettings.opacity = old.opacity;
+				if (old.showPad === false) padSettings.showPad = false;
+			}
+		}
 	} catch (e) {}
 }
 function savePadState() {
@@ -377,6 +323,7 @@ function sendKey(type, def) {
 
 /* --- Dựng phím lên lớp nổi --- */
 var padOverlay = document.getElementById('padOverlay');
+var editSheet = document.getElementById('editSheet');
 var editing = false;
 var selectedId = null;
 
@@ -387,6 +334,8 @@ function placeKeyEl(btn, item) {
 	if (item.s && item.s !== 1) t += ' scale(' + item.s + ')';
 	btn.style.transform = t;
 }
+/* Phím được kéo tới bất kỳ đâu kể cả đáy màn hình: trong lúc kéo, bảng Chỉnh phím
+   tự trượt xuống cho khỏi che, thả tay ra bảng hiện lại — nên không cần khóa trần kéo nữa */
 function renderPad() {
 	padOverlay.innerHTML = '';
 	padOverlay.style.display = padSettings.showPad ? '' : 'none';
@@ -405,7 +354,7 @@ function renderPad() {
 		attachKeyBehavior(btn, item, def);
 		padOverlay.appendChild(btn);
 	});
-	if (editing) refreshPaletteMarks();
+	if (editing) refreshChipMarks();
 }
 function attachKeyBehavior(btn, item, def) {
 	var drag = null;
@@ -413,6 +362,7 @@ function attachKeyBehavior(btn, item, def) {
 		e.preventDefault();
 		if (editing) {
 			selectKey(item.id);
+			editSheet.classList.add('dragging');
 			drag = { x0: e.clientX, y0: e.clientY, ix: item.x, iy: item.y, moved: false };
 			try { btn.setPointerCapture(e.pointerId); } catch (err) {}
 		} else {
@@ -429,12 +379,11 @@ function attachKeyBehavior(btn, item, def) {
 			item.x = Math.min(97, Math.max(3, drag.ix + dx / window.innerWidth * 100));
 			item.y = Math.min(97, Math.max(3, drag.iy + dy / window.innerHeight * 100));
 			placeKeyEl(btn, item);
-			positionTools(btn);
 		}
 	});
 	function endDrag(e) {
 		if (editing) {
-			if (drag && !drag.moved) selectKey(item.id);
+			editSheet.classList.remove('dragging');
 			drag = null;
 		} else if (btn.classList.contains('pressed')) {
 			btn.classList.remove('pressed');
@@ -446,136 +395,135 @@ function attachKeyBehavior(btn, item, def) {
 	btn.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 }
 
-/* --- Chọn phím + thanh công cụ To/Nhỏ/Đặt lại/Xóa --- */
-var keyTools = document.getElementById('keyTools');
+/* --- Chọn phím: cập nhật hàng công cụ trong bảng Chỉnh phím --- */
+var selKeyLabel = document.getElementById('selKeyLabel');
+var toolBtns = [];
+['toolBig', 'toolSmall', 'toolReset', 'toolDel'].forEach(function (id) {
+	toolBtns.push(document.getElementById(id));
+});
 function keyEl(id) { return padOverlay.querySelector('.vkey[data-id="' + id + '"]'); }
 function layoutItem(id) {
 	for (var i = 0; i < padLayout.length; i++) if (padLayout[i].id === id) return padLayout[i];
 	return null;
 }
-function positionTools(btn) {
-	if (!btn) { keyTools.classList.remove('show'); return; }
-	var r = btn.getBoundingClientRect();
-	keyTools.classList.add('show');
-	var tw = keyTools.offsetWidth, th = keyTools.offsetHeight;
-	var x = Math.min(window.innerWidth - tw - 6, Math.max(6, r.left + r.width / 2 - tw / 2));
-	var y = r.top - th - 14;
-	if (y < 56) y = r.bottom + 14;
-	keyTools.style.left = x + 'px';
-	keyTools.style.top = y + 'px';
-}
 function selectKey(id) {
 	selectedId = id;
 	var all = padOverlay.querySelectorAll('.vkey');
 	for (var i = 0; i < all.length; i++) all[i].classList.toggle('selected', all[i].getAttribute('data-id') === id);
-	positionTools(id ? keyEl(id) : null);
+	var def = id ? catalogById(id) : null;
+	selKeyLabel.innerHTML = def ? 'Đang chọn: <b>' + def.label + '</b>' : 'Chạm 1 phím trên màn hình để chọn';
+	toolBtns.forEach(function (b) { b.disabled = !id; });
 }
-document.getElementById('toolBig').addEventListener('click', function () {
+function scaleSelected(delta) {
 	var it = layoutItem(selectedId); if (!it) return;
-	it.s = Math.min(1.8, Math.round((it.s + 0.1) * 10) / 10);
-	var el = keyEl(it.id); placeKeyEl(el, it); positionTools(el);
-});
-document.getElementById('toolSmall').addEventListener('click', function () {
-	var it = layoutItem(selectedId); if (!it) return;
-	it.s = Math.max(0.6, Math.round((it.s - 0.1) * 10) / 10);
-	var el = keyEl(it.id); placeKeyEl(el, it); positionTools(el);
-});
+	it.s = Math.min(1.8, Math.max(0.6, Math.round((it.s + delta) * 10) / 10));
+	var el = keyEl(it.id); if (el) placeKeyEl(el, it);
+}
+document.getElementById('toolBig').addEventListener('click', function () { scaleSelected(0.1); });
+document.getElementById('toolSmall').addEventListener('click', function () { scaleSelected(-0.1); });
 document.getElementById('toolReset').addEventListener('click', function () {
 	var it = layoutItem(selectedId); if (!it) return;
 	var d = defaultFor(it.id);
 	it.x = d.x; it.y = d.y; it.s = d.s;
-	var el = keyEl(it.id); placeKeyEl(el, it); positionTools(el);
+	var el = keyEl(it.id); if (el) placeKeyEl(el, it);
 });
 document.getElementById('toolDel').addEventListener('click', function () {
 	if (!selectedId) return;
 	padLayout = padLayout.filter(function (k) { return k.id !== selectedId; });
-	selectedId = null;
-	keyTools.classList.remove('show');
+	selectKey(null);
 	renderPad();
 });
 
-/* --- Bảng phím thêm --- */
-var paletteRows = document.getElementById('paletteRows');
-function buildPalette() {
-	paletteRows.innerHTML = '';
-	var groups = [
-		['left', 'up', 'right', 'down', 'space', 'enter', 'pause', 'esc', 'tab', 'shift', 'ctrl', 'alt', 'bsp'],
-		KEY_CATALOG.filter(function (d) { return d.id.charAt(0) === 'd'; }).map(function (d) { return d.id; }),
-		KEY_CATALOG.filter(function (d) { return d.id.charAt(0) === 'k'; }).map(function (d) { return d.id; })
-	];
-	groups.forEach(function (g) {
-		var row = document.createElement('div');
-		row.className = 'pal-row';
-		g.forEach(function (id) {
-			var def = catalogById(id); if (!def) return;
-			var b = document.createElement('button');
-			b.type = 'button';
-			b.className = 'pal-key';
-			b.textContent = def.label;
-			b.setAttribute('data-pal', id);
-			b.addEventListener('click', function () {
-				if (layoutItem(id)) { selectKey(id); return; }
-				padLayout.push({ id: id, x: 50, y: 45, s: 1 });
-				renderPad();
-				selectKey(id);
-			});
-			row.appendChild(b);
+/* --- Hàng phím thêm (1 hàng cuộn ngang duy nhất) --- */
+var chipRow = document.getElementById('chipRow');
+function buildChips() {
+	chipRow.innerHTML = '';
+	KEY_CATALOG.forEach(function (def) {
+		var b = document.createElement('button');
+		b.type = 'button';
+		b.className = 'chip-key';
+		b.textContent = def.label;
+		b.setAttribute('data-chip', def.id);
+		b.addEventListener('click', function () {
+			if (layoutItem(def.id)) { selectKey(def.id); return; }
+			padLayout.push({ id: def.id, x: 50, y: 40, s: 1 });
+			renderPad();
+			selectKey(def.id);
 		});
-		paletteRows.appendChild(row);
+		chipRow.appendChild(b);
 	});
 }
-function refreshPaletteMarks() {
-	var marks = paletteRows.querySelectorAll('.pal-key');
+function refreshChipMarks() {
+	var marks = chipRow.querySelectorAll('.chip-key');
 	for (var i = 0; i < marks.length; i++) {
-		marks[i].classList.toggle('on', !!layoutItem(marks[i].getAttribute('data-pal')));
+		marks[i].classList.toggle('on', !!layoutItem(marks[i].getAttribute('data-chip')));
 	}
 }
 
-/* --- Vào / ra chế độ chỉnh --- */
-var editSnapshot = null;
-function enterEdit() {
-	editing = true;
-	editSnapshot = JSON.stringify(padLayout);
-	document.body.classList.add('editing');
-	document.getElementById('editBar').classList.add('show');
-	document.getElementById('paletteBar').classList.add('show');
-	document.getElementById('palette').classList.remove('show');
-	document.getElementById('btnTogglePalette').textContent = '＋ Thêm phím';
-	renderPad();
-}
-function exitEdit(save) {
-	editing = false;
-	selectedId = null;
-	keyTools.classList.remove('show');
-	document.body.classList.remove('editing');
-	document.getElementById('editBar').classList.remove('show');
-	document.getElementById('paletteBar').classList.remove('show');
-	document.getElementById('palette').classList.remove('show');
-	if (save) savePadState();
-	else if (editSnapshot) { try { padLayout = JSON.parse(editSnapshot); } catch (e) {} }
-	renderPad();
-}
-document.getElementById('btnTogglePalette').addEventListener('click', function () {
-	var pal = document.getElementById('palette');
-	var open = pal.classList.toggle('show');
-	this.textContent = open ? '－ Ẩn bảng phím' : '＋ Thêm phím';
-});
-document.getElementById('btnSaveLayout').addEventListener('click', function () { exitEdit(true); });
-document.getElementById('btnCancelEdit').addEventListener('click', function () { exitEdit(false); });
-
-/* --- Bảng cài đặt --- */
-var sheet = document.getElementById('vkeySheet');
+/* --- Bảng Menu --- */
+var menuSheet = document.getElementById('menuSheet');
 var overlay = document.getElementById('sheetOverlay');
-function openSheet() {
+var fabMenu = document.getElementById('fabMenu');
+function openMenu() {
 	document.getElementById('setShowPad').checked = !!padSettings.showPad;
 	document.getElementById('setOpacity').value = padSettings.opacity;
 	document.getElementById('opacityVal').textContent = padSettings.opacity + '%';
-	sheet.classList.add('show'); overlay.classList.add('show');
+	menuSheet.classList.add('show'); overlay.classList.add('show');
 }
-function closeSheet() { sheet.classList.remove('show'); overlay.classList.remove('show'); }
-document.getElementById('btnKeys').addEventListener('click', openSheet);
-document.getElementById('btnCloseSheet').addEventListener('click', closeSheet);
-overlay.addEventListener('click', closeSheet);
+function closeMenu() { menuSheet.classList.remove('show'); overlay.classList.remove('show'); }
+/* Nút ⋯ cũng kéo đặt tùy ý chỗ nào cũng được, vị trí được nhớ lại */
+var FAB_STORE = 'flash_fab_pos';
+var fabPos = { x: 93, y: 5 };
+try {
+	var fp = JSON.parse(localStorage.getItem(FAB_STORE) || 'null');
+	if (fp && typeof fp.x === 'number' && typeof fp.y === 'number') fabPos = fp;
+} catch (e) {}
+function applyFabPos() {
+	fabMenu.style.left = fabPos.x + '%';
+	fabMenu.style.top = fabPos.y + '%';
+}
+applyFabPos();
+var fabDrag = null, fabMoved = false;
+fabMenu.addEventListener('pointerdown', function (e) {
+	fabDrag = { x0: e.clientX, y0: e.clientY, ix: fabPos.x, iy: fabPos.y };
+	fabMoved = false;
+	try { fabMenu.setPointerCapture(e.pointerId); } catch (err) {}
+});
+fabMenu.addEventListener('pointermove', function (e) {
+	if (!fabDrag) return;
+	var dx = e.clientX - fabDrag.x0, dy = e.clientY - fabDrag.y0;
+	if (Math.abs(dx) + Math.abs(dy) > 10) fabMoved = true;
+	if (fabMoved) {
+		fabPos.x = Math.min(95, Math.max(5, fabDrag.ix + dx / window.innerWidth * 100));
+		fabPos.y = Math.min(95, Math.max(5, fabDrag.iy + dy / window.innerHeight * 100));
+		applyFabPos();
+	}
+});
+fabMenu.addEventListener('pointerup', function () {
+	if (fabDrag && fabMoved) {
+		try { localStorage.setItem(FAB_STORE, JSON.stringify(fabPos)); } catch (e) {}
+	}
+	fabDrag = null;
+});
+fabMenu.addEventListener('click', function (e) {
+	if (fabMoved) { e.preventDefault(); return; }
+	openMenu();
+});
+document.getElementById('btnCloseMenu').addEventListener('click', closeMenu);
+overlay.addEventListener('click', function () { closeMenu(); });
+document.getElementById('mOpen').addEventListener('click', function () { closeMenu(); openFileDialog(); });
+document.getElementById('btnLoadLink').addEventListener('click', function () {
+	var url = document.getElementById('linkInput').value.trim();
+	if (url) { closeMenu(); loadByUrl(url, '⛏️ Game Flash'); }
+});
+document.getElementById('btnFs').addEventListener('click', function () {
+	try {
+		if (document.fullscreenElement) document.exitFullscreen();
+		else if (player && player.enterFullscreen) player.enterFullscreen();
+		else document.documentElement.requestFullscreen();
+	} catch (e) {}
+	closeMenu();
+});
 document.getElementById('setShowPad').addEventListener('change', function () {
 	padSettings.showPad = this.checked; savePadState(); renderPad();
 });
@@ -584,28 +532,44 @@ document.getElementById('setOpacity').addEventListener('input', function () {
 	document.getElementById('opacityVal').textContent = padSettings.opacity + '%';
 	savePadState(); renderPad();
 });
-document.getElementById('btnEditLayout').addEventListener('click', function () { closeSheet(); enterEdit(); });
-document.getElementById('btnResetLayout').addEventListener('click', function () {
-	padLayout = defaultLayout(); savePadState(); renderPad();
-});
 
-/* --- Game nhúng sẵn trong file trang (không cần file .swf riêng) --- */
-function loadEmbedded() {
-	setStatus('Đang nạp game Đào vàng…');
-	try {
-		var bin = atob(window.EMBEDDED_SWF_B64);
-		var bytes = new Uint8Array(bin.length);
-		for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-		loadByData(bytes.buffer, '⛏️ Đào vàng (Flash)')
-			.then(function (ok) { if (!ok) tryDefault(0); })
-			.catch(function () { tryDefault(0); });
-	} catch (e) { tryDefault(0); }
+/* --- Vào / ra chế độ chỉnh --- */
+var editSnapshot = null;
+function enterEdit() {
+	editing = true;
+	editSnapshot = JSON.stringify(padLayout);
+	document.body.classList.add('editing');
+	fabMenu.style.display = 'none';
+	editSheet.classList.add('show');
+	selectKey(null);
+	renderPad();
 }
+function exitEdit(save) {
+	editing = false;
+	selectedId = null;
+	document.body.classList.remove('editing');
+	editSheet.classList.remove('show');
+	editSheet.classList.remove('dragging');
+	editSheet.classList.remove('collapsed');
+	document.getElementById('btnCollapseEdit').textContent = '˅';
+	fabMenu.style.display = '';
+	if (save) savePadState();
+	else if (editSnapshot) { try { padLayout = JSON.parse(editSnapshot); } catch (e) {} }
+	renderPad();
+}
+document.getElementById('btnEditLayout').addEventListener('click', function () { closeMenu(); enterEdit(); });
+document.getElementById('btnSaveLayout').addEventListener('click', function () { exitEdit(true); });
+document.getElementById('btnCancelEdit').addEventListener('click', function () { exitEdit(false); });
+document.getElementById('btnCollapseEdit').addEventListener('click', function () {
+	var collapsed = editSheet.classList.toggle('collapsed');
+	this.textContent = collapsed ? '˄' : '˅';
+});
 
 /* --- Khởi động --- */
 loadPadState();
-buildPalette();
+buildChips();
 renderPad();
+selectKey(null);
 window.addEventListener('load', function () {
 	var fromUrl = qs('swf');
 	if (fromUrl) loadByUrl(fromUrl, '⛏️ Game Flash');
