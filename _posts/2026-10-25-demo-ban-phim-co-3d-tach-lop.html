@@ -1,0 +1,2347 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Demo bàn phím cơ 3D — tách lớp</title>
+    <script>
+      // Đặt giao diện sáng/tối ngay từ đầu theo hệ điều hành, nút trong trang sẽ đổi tiếp
+      (function () {
+        var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+      })();
+    </script>
+    <style>
+      :root {
+        --bg: #f4f1ea;
+        --bg2: #ece7db;
+        --panel: #fffdf8;
+        --panel2: #f7f3ea;
+        --ink: #1e1b16;
+        --ink2: #57534a;
+        --line: #d8d2c4;
+        --accent: #c2471a;      /* đỏ switch tuyến tính */
+        --accent2: #1a5fb8;     /* xanh switch click */
+        --copper: #b87333;
+        --btn: #1e1b16;
+        --btn-ink: #fffdf8;
+        --chip: #efe9dc;
+        --ok: #1e7a46;
+        --shadow: 0 10px 30px rgba(30, 27, 22, .12);
+        --kbd-fg: #23201b;
+        --radius: 14px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #141310;
+          --bg2: #1b1a17;
+          --panel: #20201c;
+          --panel2: #26251f;
+          --ink: #f0ead9;
+          --ink2: #b3ab99;
+          --line: #3a382f;
+          --accent: #ff6b4a;
+          --accent2: #5aa3ff;
+          --copper: #d8945f;
+          --btn: #f0ead9;
+          --btn-ink: #1e1b16;
+          --chip: #2c2b25;
+          --ok: #3fae6a;
+          --shadow: 0 10px 30px rgba(0,0,0,.45);
+          --kbd-fg: #23201b;
+        }
+      }
+      /* Giao diện do nút Sáng/Tối chọn: ghi đè cả hai chiều, bất kể hệ điều hành đặt gì */
+      :root[data-theme="light"] {
+        --bg: #f4f1ea; --bg2: #ece7db; --panel: #fffdf8; --panel2: #f7f3ea;
+        --ink: #1e1b16; --ink2: #57534a; --line: #d8d2c4;
+        --accent: #c2471a; --accent2: #1a5fb8; --copper: #b87333;
+        --btn: #1e1b16; --btn-ink: #fffdf8; --chip: #efe9dc; --ok: #1e7a46;
+        --shadow: 0 10px 30px rgba(30, 27, 22, .12); --kbd-fg: #23201b;
+      }
+      :root[data-theme="dark"] {
+        --bg: #141310; --bg2: #1b1a17; --panel: #20201c; --panel2: #26251f;
+        --ink: #f0ead9; --ink2: #b3ab99; --line: #3a382f;
+        --accent: #ff6b4a; --accent2: #5aa3ff; --copper: #d8945f;
+        --btn: #f0ead9; --btn-ink: #1e1b16; --chip: #2c2b25; --ok: #3fae6a;
+        --shadow: 0 10px 30px rgba(0,0,0,.45); --kbd-fg: #23201b;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap { max-width: 1180px; margin: 0 auto; padding: 20px 16px 40px; }
+      header { margin-bottom: 14px; }
+      header h1 {
+        margin: 0 0 6px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-weight: 700;
+        font-size: clamp(26px, 4.5vw, 40px);
+        letter-spacing: -0.01em;
+        line-height: 1.1;
+      }
+      header p { margin: 0; color: var(--ink2); font-size: 15.5px; max-width: 680px; line-height: 1.5; }
+
+      .scene-card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      #stage {
+        position: relative;
+        height: min(60vh, 600px);
+        min-height: 360px;
+        background:
+          radial-gradient(120% 90% at 50% 0%, var(--panel2) 0%, var(--bg2) 100%);
+      }
+      /* Chế độ sáng: nền sân khấu sâu tông hơn hẳn nền trang, để bàn phím trắng
+         không chìm vào nền kem sáng (một phần lý do chế độ sáng bị loá khó nhìn) */
+      :root[data-theme="light"] #stage {
+        background:
+          radial-gradient(120% 90% at 50% 0%, #e7e1d0 0%, #d5ccb6 100%);
+      }
+      #stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+      #fallback {
+        display: none; padding: 40px 24px; text-align: center; color: var(--ink2); line-height: 1.6;
+      }
+      .stage-hint {
+        position: absolute; left: 12px; bottom: 10px;
+        font-size: 12.5px; color: var(--ink2);
+        background: color-mix(in srgb, var(--panel) 82%, transparent);
+        border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px;
+        pointer-events: none;
+      }
+      /* Nhãn nhỏ hiện tên hiệu ứng mỗi lần bấm phím Fn trên bàn phím */
+      .fn-toast {
+        position: absolute; left: 50%; top: 12px; z-index: 5;
+        transform: translateX(-50%) translateY(-4px);
+        font-size: 13px; font-weight: 700; color: var(--ink); white-space: nowrap;
+        background: color-mix(in srgb, var(--panel) 88%, transparent);
+        border: 1px solid var(--line); border-radius: 999px; padding: 5px 14px;
+        opacity: 0; pointer-events: none;
+        transition: opacity .25s ease, transform .25s ease;
+      }
+      .fn-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+      .stage-tag {
+        position: absolute; right: 12px; top: 10px;
+        font-size: 12.5px; font-weight: 600; color: var(--ink2);
+        background: color-mix(in srgb, var(--panel) 82%, transparent);
+        border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px;
+        pointer-events: none;
+      }
+      /* Nút menu lớp + bảng menu */
+      .menu-btn {
+        position: absolute; left: 12px; top: 10px; z-index: 6;
+        appearance: none; border: 1px solid var(--line);
+        background: color-mix(in srgb, var(--panel) 88%, transparent);
+        color: var(--ink); font: inherit; font-size: 13.5px; font-weight: 700;
+        padding: 7px 14px; border-radius: 999px; cursor: pointer;
+      }
+      .menu-btn:hover { border-color: var(--ink2); }
+      .layer-menu {
+        position: absolute; left: 12px; top: 52px; z-index: 6;
+        display: none; width: min(380px, calc(100vw - 20px));
+        /* Menu có 11 lớp, cao hơn cả màn hình điện thoại: phải tự cuộn bên trong,
+           nếu không các lớp dưới cùng không cách nào chạm tới được */
+        max-height: min(74dvh, calc(100dvh - 116px));
+        overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+        background: var(--panel); border: 1px solid var(--line);
+        border-radius: 12px; box-shadow: var(--shadow); padding: 10px 12px;
+      }
+      .layer-menu.open { display: block; }
+      .layer-menu h3 { margin: 2px 0 8px; font-size: 13px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink2); }
+      .layer-row {
+        display: flex; align-items: center; gap: 8px;
+        padding: 6px 0; border-top: 1px solid var(--line);
+      }
+      .layer-row:first-of-type { border-top: none; }
+      .layer-name { flex: 1 1 auto; min-width: 0; font-size: 14px; font-weight: 600; }
+      .layer-name small { display: block; font-weight: 400; color: var(--ink2); font-size: 12px; line-height: 1.4; margin-top: 2px; }
+      .mini-btn {
+        appearance: none; border: 1px solid var(--line);
+        background: var(--panel2); color: var(--ink);
+        font: inherit; font-size: 12.5px; font-weight: 600;
+        padding: 5px 10px; border-radius: 8px; cursor: pointer; min-width: 52px;
+        flex: none; white-space: nowrap;
+      }
+      /* Nút bật/tắt lớp giữ đủ rộng để chữ "Đang hiện / Đang ẩn" không xuống dòng,
+         nhờ vậy cột tên lớp không bị bóp hẹp tới mức xuống dòng từng từ */
+      .layer-row > button:nth-of-type(1) { min-width: 88px; }
+      .mini-btn[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+      .layer-menu .all-row { margin-top: 8px; border-top: 1px solid var(--line); padding-top: 10px; }
+
+      .controls {
+        display: flex; flex-wrap: wrap; gap: 14px 22px;
+        align-items: flex-start;
+        padding: 14px 16px;
+        border-top: 1px solid var(--line);
+        background: var(--panel2);
+      }
+      .ctl-slider { flex: 1 1 240px; min-width: 210px; }
+      .ctl-slider label, .ctl-label {
+        display: block; font-size: 12.5px; font-weight: 700; letter-spacing: .04em;
+        text-transform: uppercase; color: var(--ink2); margin-bottom: 6px;
+      }
+      input[type="range"] { width: 100%; accent-color: var(--accent); height: 28px; }
+      .slider-scale { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink2); margin-top: -2px; }
+      .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+      button.ctl {
+        appearance: none; border: 1px solid var(--line);
+        background: var(--panel); color: var(--ink);
+        font: inherit; font-size: 14px; font-weight: 600;
+        padding: 9px 14px; border-radius: 10px; cursor: pointer;
+      }
+      button.ctl:hover { border-color: var(--ink2); }
+      button.ctl.primary { background: var(--btn); color: var(--btn-ink); border-color: var(--btn); }
+      button.ctl[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+      button.chip {
+        appearance: none; border: 1px solid var(--line);
+        background: var(--chip); color: var(--ink);
+        font: inherit; font-size: 13.5px; font-weight: 600;
+        padding: 7px 12px; border-radius: 999px; cursor: pointer;
+      }
+      button.chip:hover { border-color: var(--ink2); }
+      button.chip[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+      .switch-colors { display: flex; gap: 8px; align-items: center; }
+      .dot {
+        width: 26px; height: 26px; border-radius: 50%; cursor: pointer;
+        border: 2px solid transparent; padding: 0; position: relative;
+      }
+      .dot[aria-pressed="true"] { border-color: var(--ink); }
+      .dot.red { background: #d13b2a; } .dot.brown { background: #8a5a2b; } .dot.blue { background: #2f6fce; }
+      .dot.green { background: #35d05a; } .dot.yellow { background: #f2b705; } .dot.pink { background: #ff5da2; } .dot.white { background: #f2f0ea; border-color: var(--line); }
+      .dot.white[aria-pressed="true"] { border-color: var(--ink); }
+      .dot.cap-whiteblue { background: linear-gradient(135deg, #f2f4f5 50%, #5fb9dc 50%); border-color: var(--line); }
+      .dot.cap-black { background: linear-gradient(135deg, #26282d 50%, #101114 50%); }
+      .dot.cap-gray { background: linear-gradient(135deg, #c9ccd1 50%, #565b63 50%); border-color: var(--line); }
+      .dot.cap-pink { background: linear-gradient(135deg, #f6d7e0 50%, #e78bab 50%); border-color: var(--line); }
+      .dot.cap-matcha { background: linear-gradient(135deg, #eef6f0 50%, #57b08a 50%); border-color: var(--line); }
+      .dot.cap-lavender { background: linear-gradient(135deg, #ece7f7 50%, #8b7cc4 50%); border-color: var(--line); }
+      .dot.cap-whiteblue[aria-pressed="true"], .dot.cap-gray[aria-pressed="true"],
+      .dot.cap-pink[aria-pressed="true"], .dot.cap-matcha[aria-pressed="true"],
+      .dot.cap-lavender[aria-pressed="true"] { border-color: var(--ink); }
+
+      .below { display: grid; grid-template-columns: 1fr 400px; gap: 16px; margin-top: 16px; align-items: start; }
+      @media (max-width: 880px) { .below { grid-template-columns: 1fr; } }
+
+      .info-card {
+        background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+        padding: 18px 20px; box-shadow: var(--shadow);
+      }
+      .info-card .kicker {
+        font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+        color: var(--accent); margin: 0 0 4px;
+      }
+      .info-card h2 { margin: 0 0 8px; font-size: 22px; font-family: Georgia, serif; }
+      .info-card p { margin: 0 0 10px; line-height: 1.6; color: var(--ink2); font-size: 15px; }
+      .info-card ul { margin: 0; padding-left: 18px; line-height: 1.6; color: var(--ink2); font-size: 14.5px; }
+      .parts-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+      .signal-row { display: none; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 12px;
+        border: 1px solid var(--line); border-radius: 10px; background: var(--panel2); font-size: 14px; }
+      .signal-row.on { display: flex; }
+      .led { width: 12px; height: 12px; border-radius: 50%; background: #8a8578; flex: none; transition: background .08s; }
+      .led.lit { background: #35d05a; box-shadow: 0 0 10px #35d05a; }
+
+      .type-card {
+        background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+        padding: 18px 20px; box-shadow: var(--shadow);
+      }
+      .type-card h2 { margin: 0 0 4px; font-size: 20px; font-family: Georgia, serif; }
+      .type-card .sub { margin: 0 0 14px; color: var(--ink2); font-size: 14px; line-height: 1.5; }
+      .screen {
+        background: #101418; color: #dce8d5; border-radius: 10px; padding: 12px 14px;
+        font-family: "Consolas", "Courier New", monospace; font-size: 15px;
+        min-height: 74px; line-height: 1.5; word-break: break-all; white-space: pre-wrap; margin-bottom: 14px;
+      }
+      .screen .placeholder { color: #5d6b5c; }
+      .screen .caret { display: inline-block; width: 8px; height: 15px; background: #9fd08a; vertical-align: -2px; animation: blink 1s steps(1) infinite; }
+      @keyframes blink { 50% { opacity: 0; } }
+      .test-stats { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; margin-bottom: 6px; }
+      .test-stats strong { color: var(--ink); }
+      .test-stats .num { font-variant-numeric: tabular-nums; }
+      .test-bar { height: 8px; border-radius: 99px; background: var(--chip); overflow: hidden; margin: 4px 0 14px; }
+      .test-bar i { display: block; height: 100%; width: 0%; background: var(--ok); transition: width .25s; }
+      .tmap { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+      .trow { display: flex; gap: 4px; }
+      .tcell {
+        flex-basis: 0; min-width: 0; text-align: center;
+        font-size: 10.5px; font-weight: 600; line-height: 1.25;
+        padding: 5px 1px; border: 1px solid var(--line); border-radius: 5px;
+        background: var(--panel2); color: var(--ink2);
+        overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+        cursor: pointer; user-select: none; -webkit-user-select: none;
+      }
+      .tcell.tested { background: var(--ok); border-color: var(--ok); color: #fff; }
+      .tcell.down { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .type-tools { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+      footer { margin-top: 22px; color: var(--ink2); font-size: 13.5px; line-height: 1.6; }
+      footer code { background: var(--chip); padding: 1px 6px; border-radius: 5px; font-size: 12.5px; }
+
+      /* ===== Giao diện gọn: chỉ còn bàn phím + hàng phím chức năng + thanh tách lớp =====
+         Mọi chức năng chỉnh hiệu ứng nằm trên MỘT hàng nút bấm tạo hình như keycap thật
+         (mặt phím nổi, cạnh dưới dày, bấm xuống lún xuống) ngay trên khung bàn phím;
+         ở dưới bàn phím chỉ còn đúng thanh trượt Tách lớp. */
+      :root {
+        --key-bg1: #fdfcf8; --key-bg2: #e8e3d6; --key-edge: #b3ac9c; --key-ink: #23201b;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root { --key-bg1: #3b3931; --key-bg2: #26251f; --key-edge: #0f0e0c; --key-ink: #f0ead9; }
+      }
+      :root[data-theme="light"] { --key-bg1: #fdfcf8; --key-bg2: #e8e3d6; --key-edge: #b3ac9c; --key-ink: #23201b; }
+      :root[data-theme="dark"] { --key-bg1: #3b3931; --key-bg2: #26251f; --key-edge: #0f0e0c; --key-ink: #f0ead9; }
+
+      .wrap {
+        max-width: 1240px; padding: 10px; height: 100dvh;
+        display: flex; flex-direction: column;
+      }
+      header, footer { display: none; }
+      .scene-card { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+      #stage { flex: 1 1 auto; height: auto; min-height: 0; }
+      .stage-tag { display: none; }
+
+      /* Hàng phím chức năng kiểu keycap, nằm trên cùng của khung bàn phím */
+      .fn-bar {
+        display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px;
+        padding: 10px 12px; background: var(--panel2);
+        border-bottom: 1px solid var(--line);
+      }
+      .fn-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+      .fn-group.grow { margin-left: auto; }
+      .fn-label {
+        font-size: 10.5px; font-weight: 700; letter-spacing: .05em;
+        text-transform: uppercase; color: var(--ink2); margin-right: 1px;
+      }
+      .fn-layers { position: relative; }
+      /* Nút Lớp giờ nằm trong hàng phím chức năng: phải xoá hẳn left/top của rule cũ
+         (thời nút còn nổi tuyệt đối trên sân khấu 3D). Rule keycap ở dưới chỉ đổi
+         position sang relative nên left:12px/top:10px cũ vẫn thành độ lệch tương đối,
+         làm nút lệch xuống-phải và đè dính vào nút "Bàn phím" bên cạnh */
+      .fn-layers .menu-btn { position: relative; left: auto; top: auto; }
+      .layer-menu { left: 0; top: calc(100% + 8px); z-index: 40; }
+
+      /* Nút bấm tạo hình keycap thật: mặt phím nổi, cạnh đáy dày, nhấn thì lún xuống */
+      button.ctl, .menu-btn, button.chip {
+        position: relative;
+        background: linear-gradient(180deg, var(--key-bg1) 0%, var(--key-bg2) 100%);
+        color: var(--key-ink);
+        border: 1px solid var(--key-edge); border-radius: 9px;
+        box-shadow: 0 3px 0 var(--key-edge), 0 5px 9px rgba(20, 18, 12, .18);
+        font-size: 13.5px; font-weight: 700; padding: 7px 12px;
+        transition: transform .05s ease, box-shadow .05s ease;
+      }
+      button.ctl:hover, .menu-btn:hover, button.chip:hover { border-color: var(--key-edge); filter: brightness(1.04); }
+      button.ctl:active, .menu-btn:active, button.chip:active {
+        transform: translateY(2px);
+        box-shadow: 0 1px 0 var(--key-edge), 0 2px 4px rgba(20, 18, 12, .18);
+      }
+      button.ctl.primary {
+        background: linear-gradient(180deg, #e0653f, #c2471a); color: #fff;
+        border-color: #8f3410; box-shadow: 0 3px 0 #8f3410, 0 5px 9px rgba(20, 18, 12, .22);
+      }
+      button.ctl[aria-pressed="true"], button.chip[aria-pressed="true"], .menu-btn[aria-expanded="true"] {
+        transform: translateY(2px); color: var(--accent);
+        box-shadow: 0 1px 0 var(--key-edge), 0 0 0 1px var(--accent), 0 7px 16px -4px var(--accent);
+        background: linear-gradient(180deg, var(--key-bg1) 0%, var(--key-bg2) 100%);
+        border-color: var(--key-edge);
+      }
+      button.ctl.primary[aria-pressed="true"] { color: #fff; }
+      /* Chấm màu cũng là phím tròn nhỏ có cạnh đáy */
+      .dot {
+        box-shadow: 0 3px 0 rgba(20, 18, 12, .35), 0 4px 7px rgba(20, 18, 12, .2);
+        transition: transform .05s ease, box-shadow .05s ease;
+      }
+      .dot:active { transform: translateY(2px); }
+      .dot[aria-pressed="true"] {
+        transform: translateY(2px); border-color: var(--accent);
+        box-shadow: 0 1px 0 rgba(20, 18, 12, .35), 0 0 12px var(--accent);
+      }
+      .mini-btn { border-radius: 8px; box-shadow: 0 2px 0 var(--line); }
+      .mini-btn:active { transform: translateY(1px); box-shadow: none; }
+
+      /* Dưới bàn phím CHỈ còn thanh trượt Tách lớp */
+      .controls { flex-wrap: nowrap; align-items: center; gap: 12px; padding: 10px 14px; }
+      .ctl-slider { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 12px; }
+      .ctl-slider label { margin: 0; white-space: nowrap; }
+      .ctl-slider input[type="range"] { flex: 1 1 auto; min-width: 0; }
+      .scale-end { font-size: 12px; color: var(--ink2); white-space: nowrap; }
+
+      /* Giải thích chi tiết: thẻ nổi nhỏ, chỉ hiện khi chạm vào một chi tiết / lớp */
+      .below { display: block; margin: 0; }
+      .type-card { display: none; }
+      .info-card {
+        position: fixed; left: 12px; bottom: 74px; z-index: 50;
+        width: min(360px, calc(100vw - 24px));
+        max-height: 46dvh; overflow: auto;
+        display: none;
+      }
+      .info-card.show { display: block; }
+      .info-close { position: absolute; top: 10px; right: 10px; min-width: 0; }
+      .info-card h2 { padding-right: 64px; }
+
+      @media (max-width: 640px) {
+        .wrap { padding: 6px; }
+        /* Hàng phím chức năng thu gọn lại để khung bàn phím 3D có thêm chiều cao */
+        .fn-bar { gap: 5px 8px; padding: 7px 8px; }
+        .fn-group { gap: 5px; }
+        .fn-label { font-size: 10px; }
+        button.ctl, .menu-btn, button.chip { padding: 6px 8px; font-size: 12px; }
+        .dot { width: 24px; height: 24px; }
+        .stage-hint { display: none; }
+        .scale-end { display: none; }
+        .info-card { bottom: 66px; }
+        /* Menu lớp trên điện thoại: phủ gần hết bề ngang cho dễ đọc, hàng lớp gọn lại */
+        .layer-menu { padding: 8px 10px; }
+        .layer-row { gap: 6px; padding: 7px 0; }
+        .layer-row > button:nth-of-type(1) { min-width: 82px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Bàn phím cơ full-size, mổ xẻ từng lớp</h1>
+        <p>Đúng bố cục 104 phím như bàn phím thật: hàng F, cụm điều hướng, phím mũi tên và cả numpad. Bấm nút <strong>☰ Lớp</strong> để chọn hiện/ẩn từng lớp, kéo thanh tách lớp để bung ra xem cấu trúc, đổi hiệu ứng đèn LED RGB, và test luôn bàn phím thật của bạn — nhấn phím nào, phím đó trên mô hình lún xuống và sáng đèn.</p>
+      </header>
+
+      <section class="scene-card" aria-label="Khung xem 3D">
+        <div class="fn-bar" role="group" aria-label="Hàng phím chức năng">
+          <div class="fn-group fn-layers">
+            <button class="menu-btn" id="layerMenuBtn" aria-expanded="false" aria-controls="layerMenu">☰ Lớp</button>
+            <div class="layer-menu" id="layerMenu" role="group" aria-label="Chọn lớp hiển thị">
+              <h3>Hiện / ẩn từng lớp</h3>
+              <div id="layerRows"></div>
+              <div class="all-row">
+                <button class="mini-btn" id="showAllLayers" style="min-width:0">Hiện tất cả các lớp</button>
+              </div>
+            </div>
+          </div>
+          <div class="fn-group" role="group" aria-label="Chuyển cảnh">
+            <button class="ctl" id="viewKb" aria-pressed="true">Bàn phím</button>
+            <button class="ctl" id="viewSw" aria-pressed="false">Switch phóng to</button>
+          </div>
+          <div class="fn-group" id="capColors">
+            <span class="fn-label">Keycap</span>
+            <button class="dot cap-whiteblue" data-capset="whiteblue" aria-pressed="true" aria-label="Keycap trắng và xanh"></button>
+            <button class="dot cap-black" data-capset="black" aria-pressed="false" aria-label="Keycap đen"></button>
+            <button class="dot cap-gray" data-capset="gray" aria-pressed="false" aria-label="Keycap xám khói"></button>
+            <button class="dot cap-pink" data-capset="pink" aria-pressed="false" aria-label="Keycap hồng"></button>
+            <button class="dot cap-matcha" data-capset="matcha" aria-pressed="false" aria-label="Keycap xanh matcha"></button>
+            <button class="dot cap-lavender" data-capset="lavender" aria-pressed="false" aria-label="Keycap tím oải hương"></button>
+          </div>
+          <div class="fn-group" id="swTools" style="display:none">
+            <button class="ctl primary" id="pressBtn">Nhấn phím ↓</button>
+            <button class="ctl" id="xrayBtn" aria-pressed="false">Nhìn xuyên vỏ</button>
+          </div>
+          <div class="fn-group" id="swColors" style="display:none">
+            <span class="fn-label">Stem</span>
+            <button class="dot red" data-color="#d13b2a" aria-pressed="true" aria-label="Switch đỏ — tuyến tính"></button>
+            <button class="dot brown" data-color="#8a5a2b" aria-pressed="false" aria-label="Switch nâu — có khấc"></button>
+            <button class="dot blue" data-color="#2f6fce" aria-pressed="false" aria-label="Switch xanh — có khấc và tiếng click"></button>
+          </div>
+          <div class="fn-group grow">
+            <button class="ctl" id="themeBtn" aria-pressed="false">☾ Chế độ tối</button>
+          </div>
+        </div>
+        <div id="stage">
+          <div id="fallback">
+            <p><strong>Không nạp được thư viện 3D.</strong><br/>Trang cần mạng để tải Three.js lần đầu. Bạn kiểm tra lại kết nối rồi tải lại trang nhé.</p>
+          </div>
+          <span class="stage-tag" id="stageTag">Bàn phím full-size · 104 phím</span>
+          <span class="stage-hint">Kéo để xoay · Chạm vào chi tiết để xem · Nhấn giữ keycap để bấm thử · Bấm phím Fn (hàng dưới, đúng vị trí Win phải) để đổi hiệu ứng màu đèn · Giữ Fn + ↑ / ↓ để tăng / giảm độ sáng LED</span>
+          <span class="fn-toast" id="fnToast" role="status"></span>
+        </div>
+        <div class="controls">
+          <div class="ctl-slider">
+            <label for="explodeRange">Tách lớp</label>
+            <span class="scale-end">Lắp ráp</span>
+            <input type="range" id="explodeRange" min="0" max="100" value="0" step="1" />
+            <span class="scale-end">Bung hết</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="below">
+        <section class="info-card" id="infoCard" aria-live="polite">
+          <button class="mini-btn info-close" id="infoClose" aria-label="Đóng phần giải thích">Đóng</button>
+          <p class="kicker" id="infoKicker">Chi tiết đang chọn</p>
+          <h2 id="infoTitle">Toàn cảnh bàn phím</h2>
+          <div class="parts-list" id="partsList"></div>
+          <p id="infoDesc">Một bàn phím cơ gồm nhiều lớp xếp chồng lên nhau. Kéo thanh <strong>Tách lớp</strong> lên để thấy chúng rời nhau ra, hoặc bấm vào một chi tiết bất kỳ trong khung 3D.</p>
+          <ul id="infoFacts"></ul>
+          <div class="signal-row" id="signalRow">
+            <span class="led" id="signalLed"></span>
+            <span id="signalText">Mạch hở — phím chưa nhận</span>
+          </div>
+        </section>
+
+        <section class="type-card" aria-label="Gõ thử và test phím thật">
+          <h2>Gõ thử &amp; test phím thật</h2>
+          <p class="sub">Cứ gõ trên bàn phím thật của bạn: phím tương ứng trên mô hình 3D sẽ lún xuống, sáng đèn, và được đánh dấu xanh trong sơ đồ dưới đây. Phím nào chưa xanh là phím chưa test — bấm hết cả bàn để biết phím nào còn sống, phím nào liệt. (Trên điện thoại: chạm vào ô trong sơ đồ hoặc nhấn giữ keycap 3D để bấm thử.)</p>
+          <div class="screen" id="screen"><span class="placeholder">Gõ gì đó đi…</span><span class="caret"></span></div>
+          <div class="test-stats">
+            <span>Phím vừa nhấn: <strong id="lastKey">—</strong></span>
+            <span>Đã test: <strong class="num" id="testCount">0 / 104</strong> phím</span>
+          </div>
+          <div class="test-bar"><i id="testBarFill"></i></div>
+          <div class="tmap" id="testMap" aria-label="Sơ đồ test phím"></div>
+          <div class="type-tools">
+            <button class="ctl" id="clearBtn">Xóa đoạn gõ</button>
+            <button class="ctl" id="resetTestBtn">Đặt lại test</button>
+            <button class="ctl" id="copyBtn">Sao chép đoạn gõ</button>
+          </div>
+        </section>
+      </div>
+
+      <footer>
+        Mô hình dựng bằng Three.js, bố cục và tỉ lệ theo bàn phím full-size 104 phím chuẩn ANSI (switch MX 14×14&nbsp;mm, khoảng cách phím 19,05&nbsp;mm). Nguồn sáng của mỗi phím là con LED RGB hàn sẵn trên PCB ngay dưới switch: ánh sáng từ LED đi lên xuyên qua housing switch bằng nhựa trong, rồi xuyên qua và lấp đầy toàn bộ nét chữ trên keycap — chữ phát sáng đặc ruột đúng màu đèn như keycap shine-through thật, không chỉ sáng viền — và loá ra xung quanh từng phím như bàn phím RGB thật; chỗ nào trong suốt cho LED (housing, nét chữ) thì ánh sáng đi qua đúng chỗ đó, mặt keycap nhựa đặc không phát sáng, không đổi màu theo đèn. Mỗi phím có một quầng sáng ôm sát dưới keycap hắt xuống plate và lan ra khe giữa các phím, cộng thêm vệt sáng đọng trên mặt plate quanh chân switch; quầng sáng đi theo keycap khi nhấn xuống nên bấm phím nào đèn phím đó vẫn sáng nguyên, không tắt. Hiệu ứng sóng cầu vồng / hơi thở / phản ứng gõ mô phỏng đúng các chế độ RGB phổ biến. Vỏ bàn phím có đủ khung trên (đèn báo Num/Caps/Scroll, khe cắm USB) và đế dưới (chân cao su, chân kê gập, ốc vít, tem thông số); trên PCB vẽ đủ IC điều khiển chính, IC phụ, đường mạch đồng nối từng switch về IC theo hàng–cột, diode, tụ điện, điện trở, thạch anh và cổng USB-C. Kéo thanh tách lớp ở chế độ Switch phóng to để xem cả lò xo và hai lá đồng bên trong.
+      </footer>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+    (function () {
+      "use strict";
+      var stage = document.getElementById("stage");
+      if (typeof THREE === "undefined") {
+        document.getElementById("fallback").style.display = "block";
+        return;
+      }
+
+      /* ---------- Thông tin chi tiết ---------- */
+      var INFO = {
+        overview: { kicker: "Chi tiết đang chọn", title: "Toàn cảnh bàn phím",
+          desc: "Một bàn phím cơ gồm nhiều lớp xếp chồng lên nhau như sơ đồ cấu tạo của phím thật. Kéo thanh Tách lớp lên để thấy chúng rời nhau ra, bấm nút ☰ Lớp để ẩn từng lớp, hoặc bấm vào một chi tiết bất kỳ trong khung 3D.",
+          facts: ["Mỗi phím là một công tắc cơ độc lập — hỏng phím nào thay phím đó.", "Thứ tự lớp từ trên xuống: Keycap → Vỏ trên → Switch → Tấm định vị PC → Foam PO → Tấm IXPE → Tấm PET → PCB → Foam đáy PO → Foam silicon → Vỏ đáy.", "Bố cục full-size 104 phím: thêm hàng F, cụm điều hướng, phím mũi tên và numpad so với bản rút gọn."] },
+        keycap: { kicker: "Lớp 1 · Trên cùng", title: "Keycap — nắp phím",
+          desc: "Miếng nhựa bạn chạm tay vào khi gõ. Mặt dưới có chân chữ thập (+) cắm khớp vào stem của switch. Keycap chỉ là \"nắp đậy\": tháo ra thay cái khác là đổi hẳn cảm giác và diện mạo phím, không ảnh hưởng mạch điện. Phím dài (Space, Enter, Shift) có thêm chân phụ tựa vào stabilizer để không bị nghiêng.",
+          facts: ["Chất liệu phổ biến: ABS (mịn, dễ bóng) và PBT (nhám, bền màu).", "Chân chữ thập chuẩn MX nên keycap và switch của nhiều hãng lắp lẫn được nhau.", "Keycap xuyên sáng (shine-through) có ký tự trong suốt để đèn LED chiếu qua."] },
+        stem: { kicker: "Trong switch", title: "Stem — trụ trượt",
+          desc: "Cái trụ màu nằm giữa switch, đầu trên là chân chữ thập giữ keycap. Khi bạn nhấn phím, stem trượt xuống, chân của nó ép hai lá đồng lại gần nhau. Màu stem chính là màu người ta dùng để gọi tên switch: đỏ, nâu, xanh…",
+          facts: ["Đỏ: trượt thẳng, không khấc (linear).", "Nâu: có khấc nhẹ giữa chừng (tactile).", "Xanh: có khấc + thanh click kêu tách tách (clicky)."] },
+        spring: { kicker: "Trong switch", title: "Lò xo",
+          desc: "Lò xo thép quấn quanh chân stem. Nó quyết định lực nhấn nặng hay nhẹ và đẩy phím nảy trở lại sau khi bạn buông tay. Lò xo càng cứng, gõ càng đầm tay nhưng mỏi nhanh hơn.",
+          facts: ["Lực nhấn phổ biến: 45–67g.", "Hành trình phím: tổng 4mm, điểm nhận tín hiệu ở khoảng 2mm."] },
+        leaf: { kicker: "Trong switch", title: "Lá đồng tiếp điểm",
+          desc: "Hai lá kim loại mạ vàng nằm đối diện nhau trong housing dưới. Bình thường chúng tách rời — mạch hở. Khi stem lún xuống, chân stem chen vào ép hai lá chạm nhau, mạch kín lại và chip ghi nhận một lần nhấn phím. Đây chính là khoảnh khắc \"phím ăn\".",
+          facts: ["Mạ vàng để chống oxy hóa, tiếp xúc ổn định hàng chục triệu lần nhấn.", "Tuổi thọ switch thường được hãng công bố 50–100 triệu lần nhấn."] },
+        housingTop: { kicker: "Trong switch", title: "Housing trên — nắp switch",
+          desc: "Nửa trên của vỏ switch, có lỗ tròn cho stem thò lên và 4 chốt cài giữ chặt vào housing dưới. Nhiều bản làm bằng nhựa trong để ánh đèn LED RGB xuyên qua.",
+          facts: [] },
+        housingBottom: { kicker: "Trong switch", title: "Housing dưới — đế switch",
+          desc: "Nửa dưới của vỏ switch: giữ cố định hai lá đồng, có rãnh đặt lò xo và 2 chân kim loại thò xuống cắm vào PCB. Đáy housing còn có lỗ cho đèn LED chiếu lên.",
+          facts: [] },
+        switchFull: { kicker: "Lớp 3", title: "Switch — công tắc cơ",
+          desc: "Trái tim của bàn phím cơ: mỗi phím một switch riêng gồm housing trên, stem, lò xo, hai lá đồng và housing dưới. Bấm nút \"Switch phóng to\" ở thanh điều khiển để mổ xẻ riêng một switch, hoặc kéo thanh Tách lớp khi đang ở chế độ này.",
+          facts: ["Switch có thể thay nóng (hot-swap) trên nhiều bàn phím: rút ra cắm vào, không cần hàn."] },
+        plate: { kicker: "Lớp 4", title: "Tấm định vị PC — plate",
+          desc: "Tấm định vị bằng nhựa PC (polycarbonate) khoét lỗ vuông cho từng switch gài vào. Tấm này giữ các switch thẳng hàng, không xô lệch khi gõ mạnh, và ảnh hưởng nhiều tới độ cứng và âm thanh của phím.",
+          facts: ["Plate PC/polycarbonate: gõ mềm, tiếng trầm. Plate nhôm/thép: gõ cứng, tiếng đanh hơn.", "Nhìn từ trên xuống, tấm định vị liền khối che kín PCB bên dưới — chỉ thấy plate và switch."] },
+        foamPlate: { kicker: "Lớp 5", title: "Foam tiêu âm PO — foam plate",
+          desc: "Tấm foam PO mỏng nằm giữa tấm định vị và PCB, khoét lỗ cho từng switch. Nó lấp khoảng trống giữa plate và mạch, triệt tiếng vang kim loại và làm tiếng gõ gọn, đầm hơn.",
+          facts: ["PO là foam polyethylene xốp nhẹ, gần như phím custom nào cũng có một tấm ở vị trí này."] },
+        ixpe: { kicker: "Lớp 6", title: "Tấm lót trục IXPE — switch pad",
+          desc: "Tấm IXPE siêu mỏng dán ngay trên mặt PCB, dưới chân mỗi switch. Nó đệm cho switch ngồi êm, giảm tiếng lạch cạch của housing chạm mạch và làm âm gõ trầm, \"thock\" hơn.",
+          facts: ["IXPE là mút xốp liên kết chéo, mỏng chưa tới nửa milimét nhưng đổi âm thanh thấy rõ."] },
+        pet: { kicker: "Lớp 7", title: "Tấm PET — phim cách điện",
+          desc: "Tấm phim PET trong suốt nằm giữa tấm IXPE và PCB. Nó cách điện, bảo vệ mặt mạch khỏi ẩm và mồ hôi tay, đồng thời giúp âm thanh gõ đanh và rõ hơn một chút.",
+          facts: ["PET chính là nhựa của chai nước — ở dạng phim mỏng, trong, dai và cách điện tốt."] },
+        pcb: { kicker: "Lớp 8", title: "PCB — bảng mạch",
+          desc: "Bảng mạch in, \"bộ não\" của bàn phím. Trên mặt mạch có IC điều khiển chính (MCU) quét liên tục ma trận phím, một IC phụ đệm quét / điều khiển LED, và các đường mạch đồng chạy từ từng vị trí switch theo hàng–cột về các IC. Mỗi phím có một diode chống nhận nhầm phím (ghosting) và một đèn LED RGB ngay dưới switch; quanh IC còn có thạch anh dao động, tụ điện, điện trở, và cổng USB-C ở mép sau để cấp nguồn + truyền dữ liệu về máy tính.",
+          facts: ["Quét theo ma trận hàng–cột nên IC chỉ cần vài chục chân vẫn đọc được đủ 104 phím — nhìn các đường mạch đồng chạy ngang dọc trên mặt mạch là thấy ngay.", "Diode ở từng phím giúp bấm nhiều phím cùng lúc mà không bị \"ma\" phím.", "Cổng USB-C nằm ở mép sau của PCB, ló ra đúng khe chừa sẵn trên vỏ trên."] },
+        foamBottom: { kicker: "Lớp 9", title: "Foam đáy PO — foam case",
+          desc: "Tấm foam PO dày đặt dưới PCB, sát đáy case. Nó lấp khoang rỗng trong vỏ, hấp thụ rung động và tiếng vang khi gõ, giúp âm thanh gọn và trầm hơn. Nhiều người chơi phím tự độ thêm lớp này.",
+          facts: [] },
+        foamSilicone: { kicker: "Lớp 10", title: "Foam silicon — đệm đáy",
+          desc: "Tấm foam silicon nằm dưới cùng, giữa foam đáy PO và vỏ đáy. Silicon đặc và nặng hơn foam thường nên triệt rung tốt hơn, cho cảm giác gõ chắc, đầm, ít xộc xệch.",
+          facts: ["Đệm silicon là món \"độ\" phổ biến: thay foam thường bằng silicon là tiếng gõ trầm xuống rõ rệt."] },
+        caseTop: { kicker: "Lớp 2 · Vỏ trên", title: "Vỏ trên — khung case trên",
+          desc: "Khung phía trên ôm quanh cụm phím, che các mép của plate và PCB, chừa đúng một khe cho cổng USB-C ở mép sau. Trên viền sau, phía trên numpad, có 3 đèn báo Num Lock / Caps Lock / Scroll Lock như phím thật — bật Caps hay Num trên bàn phím thật của bạn, đèn tương ứng trên mô hình cũng sáng theo.",
+          facts: ["Vỏ trên và vỏ dưới bắt vít với nhau, kẹp chặt cả cụm phím ở giữa.", "Case cao cấp thường đúc nhôm CNC nguyên khối thay cho nhựa, nặng và đầm hơn hẳn."] },
+        caseBottom: { kicker: "Lớp 11 · Vỏ đáy", title: "Vỏ dưới — đế case",
+          desc: "Đế phía dưới đỡ toàn bộ bàn phím. Lật mặt dưới lên sẽ thấy đúng những chi tiết của phím thật: 4 chân cao su chống trượt, 2 chân kê gập để nâng nghiêng mặt phím khi gõ, các đầu ốc vít bắt hai nửa vỏ, và tem thông số của nhà sản xuất (model, điện áp, cổng kết nối).",
+          facts: ["Lật bàn phím thật của bạn lên đối chiếu thử: chân cao su, chân kê, ốc vít và tem model đều nằm ở mặt dưới như vậy.", "Case càng nặng và chắc, tiếng gõ càng đầm, ít rung."] },
+        stabilizer: { kicker: "Phím dài", title: "Stabilizer — thanh cân bằng",
+          desc: "Phím dài (Space, Enter, Shift, Backspace…) mà chỉ đỡ ở giữa thì bấm lệch mép sẽ nghiêng và kẹt. Stabilizer là một dây thép chạy ngang ngay dưới plate, hai đầu có ngàm giữ hai mép phím: bấm ở đâu phím cũng xuống đều, thẳng.",
+          facts: ["Tiếng lạch cạch khó chịu ở phím Space thường do stabilizer khô dầu hoặc lỏng ngàm."] },
+        led: { kicker: "Trên PCB", title: "Đèn LED RGB",
+          desc: "Nguồn sáng của mỗi phím chính là con LED RGB hàn sẵn trên PCB, ngay dưới switch — mô hình cấp sáng cho đúng con LED đó chứ không vẽ quầng sáng rời quanh phím. Từ LED, ánh sáng đi lên xuyên qua housing switch bằng nhựa trong, rồi xuyên qua nét chữ trong của keycap shine-through và lọt ra khe giữa các phím. Chỗ nào trong suốt (housing, nét chữ) thì ánh sáng đi qua đúng chỗ đó; mặt keycap nhựa đặc thì không sáng, không đổi màu theo đèn. Mọi hiệu ứng và màu đèn đều nằm trong phím Fn ngay trên bàn phím — phím ở hàng dưới cùng, đúng vị trí phím Win phải: cứ bấm Fn là chuyển tiếp, bước qua từng màu đèn trong cùng một hiệu ứng rồi sang hiệu ứng kế tiếp (tĩnh, sóng cầu vồng, hơi thở, phản ứng gõ, tắt) như phím cơ thật. Độ sáng đèn cũng chỉnh bằng Fn: giữ Fn rồi bấm mũi tên lên/xuống (Fn + ↑ / Fn + ↓) để tăng/giảm sáng theo 5 nấc.",
+          facts: ["LED quay về phía bắc (north-facing) hay phía nam (south-facing) ảnh hưởng độ sáng và độ tương thích keycap.", "Chế độ \"Phản ứng gõ\": phím nào được nhấn, đèn phím đó mới sáng rồi tắt dần.", "Kéo tách lớp ra sẽ thấy từng con LED trên mặt PCB phát sáng đúng vị trí hàn dưới mỗi switch.", "Chỉnh cả hiệu ứng lẫn màu đèn bằng phím Fn ở hàng dưới cùng — đúng vị trí phím Win phải như trên bàn phím cơ thật: bấm Fn là chuyển tiếp qua từng màu đèn, rồi sang hiệu ứng kế tiếp.", "Độ sáng đèn cũng nằm trong phím Fn: giữ Fn rồi bấm mũi tên lên (Fn + ↑) để tăng sáng, mũi tên xuống (Fn + ↓) để giảm sáng, theo 5 nấc 0–25–50–75–100%."] }
+      };
+
+      /* ---------- Khởi tạo 3D ---------- */
+      var renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      stage.appendChild(renderer.domElement);
+
+      var scene = new THREE.Scene();
+      var camera = new THREE.PerspectiveCamera(42, 1, 0.1, 300);
+      camera.position.set(13.5, 12, 16.5);
+
+      var controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.08;
+      controls.maxPolarAngle = Math.PI * 0.55;
+      controls.minDistance = 4;
+      controls.maxDistance = 70;
+
+      var dark = document.documentElement.dataset.theme === "dark";
+      var ambLight = new THREE.AmbientLight(0xffffff, 0.65);
+      scene.add(ambLight);
+      var hemiLight = new THREE.HemisphereLight(0xffffff, 0x8f887c, 0.5);
+      scene.add(hemiLight);
+      var key = new THREE.DirectionalLight(0xffffff, 0.55);
+      key.position.set(6, 12, 7);
+      key.castShadow = true;
+      key.shadow.mapSize.set(2048, 2048);
+      key.shadow.camera.left = -17; key.shadow.camera.right = 17;
+      key.shadow.camera.top = 17; key.shadow.camera.bottom = -17;
+      key.shadow.camera.near = 2; key.shadow.camera.far = 45;
+      key.shadow.bias = -0.0004;
+      scene.add(key);
+      var fill = new THREE.DirectionalLight(0xbfd4ff, 0.3);
+      fill.position.set(-8, 5, -6);
+      scene.add(fill);
+      // Mặt đất vô hình chỉ hứng bóng đổ mềm dưới bàn phím
+      var ground = new THREE.Mesh(new THREE.PlaneGeometry(160, 160), new THREE.ShadowMaterial({ opacity: 0.16 }));
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.y = -0.56;
+      ground.receiveShadow = true;
+      scene.add(ground);
+
+      // Giao diện tối: hạ sáng khung cảnh để đèn LED nổi bật hẳn lên. (Hệ số khuếch
+      // đại màu ledBoost cũ đã bỏ: nhân màu lên 1.5–2.8 lần làm kênh màu chạm trần
+      // lệch tông, màu nào cũng phai nhạt — nay updateLeds chuẩn hoá giữ tông.)
+      var ledBoost = dark ? 2.8 : 1.5;
+      function applySceneTheme() {
+        // Trước đây chế độ tối chỉ hạ nhẹ mấy đèn chiếu sáng nên mắt thường gần như
+        // không thấy bàn phím khác đi, tưởng chỉ có nền trang đổi. Nay hạ sáng mạnh
+        // hơn hẳn VÀ đổi luôn màu vật liệu của chính bàn phím (vỏ, plate, foam…)
+        // sang tông tối — bàn phím thật sự thành bàn phím tối, đèn LED nổi bật lên.
+        // Chế độ SÁNG thì ngược lại từng bị loá trắng khó nhìn: tổng 4 đèn chiếu
+        // (0.65 + 0.5 + 0.55 + 0.3) dội lên vật liệu vốn gần trắng (keycap
+        // 0xf2f4f5, vỏ 0xeef0f2) làm mọi mặt phím chạm trần trắng, mất hết khối,
+        // mép phím và bóng đổ, keycap trắng lại chìm vào nền sân khấu kem sáng.
+        // Nay ở chế độ sáng: hạ mạnh hai đèn LẤP PHẲNG (ambient, hemisphere —
+        // hai đèn này mới là thủ phạm xoá khối), giữ đèn chính để mặt nghiêng và
+        // bóng đổ còn rõ; vật liệu sáng cũng sâu tông xuống một bậc và bóng đổ
+        // mặt đất đậm hơn, để bàn phím trắng tách hẳn khỏi nền sáng mà nhìn.
+        ambLight.intensity = dark ? 0.32 : 0.38;
+        hemiLight.intensity = dark ? 0.18 : 0.26;
+        key.intensity = dark ? 0.5 : 0.62;
+        fill.intensity = dark ? 0.12 : 0.18;
+        ground.material.opacity = dark ? 0.34 : 0.27;
+        if (typeof M !== "undefined") {
+          M.caseTop.color.set(dark ? 0x33363b : 0xdde2e6);
+          M.caseBottom.color.set(dark ? 0x26282c : 0xc9d0d6);
+          M.plate.color.set(dark ? 0x707b89 : 0xaebbc7);
+          M.foamSheet.color.set(dark ? 0x595e64 : 0x767c83);
+          M.silicone.color.set(dark ? 0x7490a5 : 0x87a3b7);
+          M.housingSolid.color.set(dark ? 0xb99f72 : 0xd3ba8a);
+        }
+      }
+      applySceneTheme();
+      window.__kbSetDark = function (d) {
+        dark = d;
+        ledBoost = d ? 2.8 : 1.5;
+        applySceneTheme();
+      };
+
+      // Ánh đèn hắt ra từ dưới keycap gồm 2 phần, đều là mặt phẳng nằm ngang (KHÔNG dùng
+      // sprite chĩa theo camera — sprite lơ lửng giữa không trung, nhìn từ trên xuống là
+      // thấy 104 quầng chồng nhau thành lớp mờ phủ cả bàn, sai hẳn với đèn thật):
+      // 1) Đĩa sáng đọng trên mặt plate quanh chân switch: chỉ nhỉnh hơn dấu chân
+      //    keycap một chút, đủ để ánh đèn lọt ra khe giữa các phím như đèn nền thật
+      //    — KHÔNG nở rộng sang đất của phím bên cạnh (xem ghi chú ở glowTex).
+      // 2) Quầng sáng ôm sát NGAY DƯỚI keycap, gắn vào nhóm keycap nên đi theo phím khi
+      //    nhấn: trước đây chỉ có đĩa plate nằm chết dưới thân phím, hễ nhấn xuống là
+      //    vành dưới keycap (phần loe rộng nhất) hạ xuống che khuất mọi đường nhìn tới
+      //    đĩa → trông như đèn phím tắt hẳn. Quầng đi theo phím thì nhấn cỡ nào ánh sáng
+      //    dưới nắp vẫn còn nguyên, và vành quầng nhô ra khỏi thân phím nên nhìn từ trên
+      //    xuống vẫn thấy đèn hắt ra quanh chân phím.
+      var glowTex = (function () {
+        var c = document.createElement("canvas"); c.width = c.height = 128;
+        var g = c.getContext("2d");
+        var gr = g.createRadialGradient(64, 64, 2, 64, 64, 64);
+        // Đường cong alpha theo đúng ánh sáng phím THẬT: LED là một điểm sáng nhỏ,
+        // thân keycap và housing che gần hết — ánh sáng chỉ tạo một vũng sáng GỌN
+        // quanh chân phím, lọt qua khe hẹp giữa hai keycap rồi tắt nhanh, chứ
+        // không toả thành quầng mây rộng như đèn sân khấu. Bản trước giữ alpha
+        // cao ra tận vành (0.78 ở r=0.35, 0.40 ở r=0.65) trên mặt phẳng rộng
+        // 2.0 — gấp đôi khoảng cách phím 1.06 — nên quầng của phím này chồng
+        // sang tận phím bên cạnh; khi hiệu ứng sóng đổi màu, các quầng khác màu
+        // cộng dồn vào nhau thành một mảng sáng loá, màu trộn bẩn, nhìn không
+        // đẹp và không giống phím thật. Nay: tâm vẫn đặc sáng (phần này bị thân
+        // phím che, chỉ "tiếp sáng" cho vùng khe), rơi nhanh qua vùng khe phím
+        // (r ≈ 0.55–0.8 của bán kính đã thu hẹp) và về ~0 trước mép ngoài, để
+        // mỗi phím giữ một vũng sáng riêng, màu nào ra màu đó.
+        gr.addColorStop(0, "rgba(255,255,255,1)");
+        gr.addColorStop(0.3, "rgba(255,255,255,0.82)");
+        gr.addColorStop(0.55, "rgba(255,255,255,0.34)");
+        gr.addColorStop(0.8, "rgba(255,255,255,0.07)");
+        gr.addColorStop(1, "rgba(255,255,255,0)");
+        g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+        return new THREE.CanvasTexture(c);
+      })();
+      // Đĩa sáng rộng 1.5 (bán kính 0.75) so với khoảng cách phím 1.06 và thân
+      // keycap rộng ~0.92: vũng sáng nhô qua khe phím (~0.14) một đoạn ngắn rồi
+      // tắt — hai đĩa kề nhau chỉ chạm nhau ở vùng alpha gần 0 ngay giữa khe,
+      // không còn chồng lấn sâu như bản 2.0 (bán kính 1.0, lấn 0.47 sang mỗi
+      // phía) làm cả mặt plate bệt thành một mảng sáng khi chuyển màu.
+      var glowGeo = new THREE.PlaneGeometry(1.5, 1.5);
+
+      function mat(color, rough, metal) {
+        return new THREE.MeshStandardMaterial({ color: color, roughness: rough == null ? 0.55 : rough, metalness: metal == null ? 0.05 : metal });
+      }
+      function box(w, h, d, material) {
+        return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
+      }
+      function cyl(rt, rb, h, material, seg) {
+        return new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg || 24), material);
+      }
+      function tag(obj, partId) {
+        obj.traverse(function (o) { if (!o.userData.partId) o.userData.partId = partId; });
+        return obj;
+      }
+
+      /* ---------- Vật liệu dùng chung ----------
+         Mỗi lớp trong một tông màu RIÊNG (housing kem sữa ấm, plate xám xanh,
+         foam PO xám vừa, IXPE vàng kem, PET xanh trong, silicone xám xanh) để
+         khi tách lớp nhìn phân biệt được ngay lớp nào với lớp nào — trước đây
+         tất cả đều trắng/xám nhạt như keycap nên chồng lên nhau rất khó nhìn. */
+      var M = {
+        keycap: mat(0xf2f4f5, 0.5),
+        keycapAlt: mat(0x5fb9dc, 0.5),
+        keycapAcc: mat(0x5fb9dc, 0.5),
+        housing: new THREE.MeshStandardMaterial({ color: 0xe6d9be, roughness: 0.35, metalness: 0.02, transparent: true, opacity: 0.55 }),
+        housingSolid: mat(0xdcc7a0, 0.45),
+        // Housing switch TRONG mờ cho bàn phím full-size: để đèn LED hàn sẵn trên PCB
+        // chiếu xuyên qua như switch LED thật — nhựa đặc sẽ bịt mất đường sáng của LED
+        housingClear: new THREE.MeshStandardMaterial({ color: 0xf5ecd7, roughness: 0.28, metalness: 0.02, transparent: true, opacity: 0.48, depthWrite: false }),
+        stem: mat(0xd13b2a, 0.4),
+        copper: mat(0xd9a441, 0.3, 0.85),
+        steel: mat(0xb9bec6, 0.35, 0.8),
+        plate: mat(0xc3ced8, 0.4, 0.08),
+        foamSheet: mat(0x878d94, 0.95),
+        ixpe: mat(0xf0df9e, 0.9),
+        pet: new THREE.MeshStandardMaterial({ color: 0xbfd9e8, roughness: 0.25, metalness: 0.05, transparent: true, opacity: 0.45 }),
+        silicone: mat(0x9fb6c6, 0.95),
+        pcb: mat(0x1e7a46, 0.6),
+        chip: mat(0x22252a, 0.5),
+        foam: mat(0x35322c, 0.95),
+        caseTop: mat(0xeef0f2, 0.5),
+        caseBottom: mat(0xe1e4e7, 0.55),
+        diode: mat(0x8a2f23, 0.5)
+      };
+      // M bây giờ mới tồn tại: áp lại giao diện để màu vật liệu bàn phím theo đúng
+      // chế độ sáng/tối ngay từ lần mở trang đầu tiên (lần gọi trước ở phần đèn
+      // chiếu sáng chưa chạm được vào vật liệu).
+      applySceneTheme();
+
+      function hexToRgbArr(h) {
+        h = h.replace("#", "");
+        return [parseInt(h.substr(0, 2), 16), parseInt(h.substr(2, 2), 16), parseInt(h.substr(4, 2), 16)];
+      }
+      // Chữ trên keycap xuyên sáng (shine-through) thật: nét chữ là nhựa trong hơi đục,
+      // ban ngày trông lặng (xám nhạt trên phím tối, xám đậm trên phím sáng) chứ không tương phản gắt,
+      // để khi LED bật thì ánh đèn nhuộm đúng màu lên nét chữ chứ không bị màu chữ gốc át mất
+      function legendBaseColor(fg, bg) {
+        var f = hexToRgbArr(fg), b = hexToRgbArr(bg);
+        var lumB = (0.299 * b[0] + 0.587 * b[1] + 0.114 * b[2]) / 255;
+        var mix = lumB < 0.4 ? 0.34 : 0.10;
+        var r = Math.round(f[0] + (b[0] - f[0]) * mix);
+        var gg = Math.round(f[1] + (b[1] - f[1]) * mix);
+        var bb = Math.round(f[2] + (b[2] - f[2]) * mix);
+        return "rgb(" + r + "," + gg + "," + bb + ")";
+      }
+      // Texture chữ GỐC: chỉ chứa nét chữ trên nền TRONG SUỐT (không lấp nền mặt phím
+      // như trước). Nhờ vậy lớp chữ này là một lớp riêng, updateLeds hạ được độ sáng
+      // của nó khi đèn bật — xem ghi chú ở keycapMesh.
+      var glyphCache = {};
+      function glyphTexture(ch, fg, bg) {
+        var cacheKey = ch + "|" + fg + "|" + bg;
+        if (glyphCache[cacheKey]) return glyphCache[cacheKey];
+        var c = document.createElement("canvas"); c.width = c.height = 256;
+        var g = c.getContext("2d");
+        g.clearRect(0, 0, 256, 256);
+        g.fillStyle = legendBaseColor(fg, bg);
+        var size = ch.length <= 1 ? 118 : ch.length === 2 ? 88 : ch.length <= 4 ? 64 : 48;
+        g.font = "800 " + size + "px 'Segoe UI', Arial, sans-serif";
+        g.textAlign = "center"; g.textBaseline = "middle";
+        g.fillText(ch, 128, 134);
+        var t = new THREE.CanvasTexture(c);
+        glyphCache[cacheKey] = t;
+        return t;
+      }
+      // Texture chỉ chứa nét chữ (nền trong suốt): dùng cho lớp phát sáng cộng màu đặt trên mặt phím,
+      // để LED chỉ xuyên qua đúng ký tự như keycap shine-through thật — mặt phím xung quanh không đổi màu
+      var legendTexCache = {};
+      function legendGlowTexture(ch) {
+        if (legendTexCache[ch]) return legendTexCache[ch];
+        var c = document.createElement("canvas"); c.width = c.height = 256;
+        var g = c.getContext("2d");
+        g.clearRect(0, 0, 256, 256);
+        var size = ch.length <= 1 ? 118 : ch.length === 2 ? 88 : ch.length <= 4 ? 64 : 48;
+        g.font = "800 " + size + "px 'Segoe UI', Arial, sans-serif";
+        g.textAlign = "center"; g.textBaseline = "middle";
+        // CHỈ tô đặc (fill) đúng hình ký tự, KHÔNG viền nét (stroke): bản trước vẽ
+        // thêm stroke dày hơn nét chữ gốc nên phần LED hiện ra thành một vòng viền
+        // bao quanh lõi chữ trắng — nhìn như chữ rỗng ruột chỉ sáng viền. Tô đặc
+        // thuần thì toàn bộ ký tự đặc ruột một màu đèn như keycap shine-through thật.
+        g.fillStyle = "#ffffff";
+        g.fillText(ch, 128, 134);
+        var t = new THREE.CanvasTexture(c);
+        legendTexCache[ch] = t;
+        return t;
+      }
+      var CAP_STYLE = {
+        a:   { body: "keycap",    bg: "#f7f9fa", fg: "#101216" },
+        m:   { body: "keycapAlt", bg: "#5fb9dc", fg: "#0a2432" },
+        acc: { body: "keycapAcc", bg: "#5fb9dc", fg: "#0a2432" }
+      };
+      /* Bộ màu keycap: mỗi bộ gồm thân + nền mặt chữ + màu chữ cho 3 nhóm phím */
+      var CAP_SETS = {
+        whiteblue: {
+          a:   { body: 0xf2f4f5, bg: "#f7f9fa", fg: "#101216" },
+          m:   { body: 0x5fb9dc, bg: "#5fb9dc", fg: "#0a2432" },
+          acc: { body: 0x5fb9dc, bg: "#5fb9dc", fg: "#0a2432" }
+        },
+        black: {
+          a:   { body: 0x26282d, bg: "#26282d", fg: "#f2f3f5" },
+          m:   { body: 0x17191d, bg: "#17191d", fg: "#e8eaed" },
+          acc: { body: 0x0e0f12, bg: "#0e0f12", fg: "#ffffff" }
+        },
+        gray: {
+          a:   { body: 0xc9ccd1, bg: "#ced1d6", fg: "#14161a" },
+          m:   { body: 0x565b63, bg: "#5a5f67", fg: "#f4f5f6" },
+          acc: { body: 0x3a3e45, bg: "#3e4249", fg: "#ffffff" }
+        },
+        pink: {
+          a:   { body: 0xf6d7e0, bg: "#f8dde6", fg: "#4a2432" },
+          m:   { body: 0xe78bab, bg: "#ea93b2", fg: "#3d1220" },
+          acc: { body: 0xdd6f97, bg: "#e0759c", fg: "#2e0a16" }
+        },
+        matcha: {
+          a:   { body: 0xeef6f0, bg: "#eef6f0", fg: "#17352a" },
+          m:   { body: 0x57b08a, bg: "#5db491", fg: "#0c2b1e" },
+          acc: { body: 0x2f8f6b, bg: "#33936f", fg: "#06231a" }
+        },
+        lavender: {
+          a:   { body: 0xece7f7, bg: "#eee9f8", fg: "#2c2145" },
+          m:   { body: 0x8b7cc4, bg: "#927fca", fg: "#1d1440" },
+          acc: { body: 0x6f5bb0, bg: "#7561b5", fg: "#150d33" }
+        }
+      };
+      function keycapMesh(ch, cls, wU, hU) {
+        var st = CAP_STYLE[cls] || CAP_STYLE.a;
+        var bodyMat = M[st.body];
+        var w = wU * PITCH - 0.14, d = hU * PITCH - 0.14;
+        var grp = new THREE.Group();
+        var H = 0.37, DISH = wU >= 4 ? -0.012 : 0.04; // phím dài (Space) hơi cong lên, phím thường lõm giữa
+        // Thân phím điêu khắc: 3 vòng (đáy → giữa → miệng) thu dần vào, mặt trên lõm ở tâm
+        function ring(scale, y) {
+          var hx = w / 2 * scale, hz = d / 2 * scale;
+          return [[hx, y, hz], [-hx, y, hz], [-hx, y, -hz], [hx, y, -hz]];
+        }
+        var r0 = ring(1, 0), r1 = ring(0.9, H * 0.55), r2 = ring(0.76, H);
+        var capCenter = [0, H - DISH, 0];
+        var pos = [];
+        function tri(a, b, c) { pos.push(a[0], a[1], a[2], b[0], b[1], b[2], c[0], c[1], c[2]); }
+        function band(lo, hi) {
+          for (var i = 0; i < 4; i++) {
+            var j = (i + 1) % 4;
+            tri(lo[i], hi[i], lo[j]);
+            tri(lo[j], hi[i], hi[j]);
+          }
+        }
+        band(r0, r1); band(r1, r2);
+        for (var i2 = 0; i2 < 4; i2++) { var j2 = (i2 + 1) % 4; tri(r2[i2], capCenter, r2[j2]); }
+        tri(r0[0], r0[1], r0[2]); tri(r0[0], r0[2], r0[3]);
+        var bodyGeo = new THREE.BufferGeometry();
+        bodyGeo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+        bodyGeo.computeVertexNormals();
+        var body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.castShadow = true;
+        grp.add(body);
+        // Mặt phím: lưới uốn theo đúng độ lõm, màu TRƠN như thân phím. Nền mặt phím
+        // không vẽ chung vào texture chữ nữa, để chữ gốc thành lớp riêng ngay dưới đây.
+        var topGeo = new THREE.PlaneGeometry(w * 0.76 * 0.98, d * 0.76 * 0.98, 6, 6);
+        topGeo.rotateX(-Math.PI / 2);
+        var tp = topGeo.attributes.position;
+        for (var vi = 0; vi < tp.count; vi++) {
+          var f = Math.max(Math.abs(tp.getX(vi)) / (w * 0.38), Math.abs(tp.getZ(vi)) / (d * 0.38));
+          tp.setY(vi, H - DISH * (1 - Math.min(1, f)) + 0.002);
+        }
+        topGeo.computeVertexNormals();
+        var topMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(st.bg), roughness: 0.55, emissive: 0x000000 });
+        var top = new THREE.Mesh(topGeo, topMat);
+        grp.add(top);
+        grp.userData.topMat = topMat;
+        // Lớp CHỮ GỐC (nhựa đặc, không phát sáng): chỉ nét chữ trên nền trong suốt.
+        // Đèn tắt → đây là chữ đọc được ban ngày. Đèn bật → updateLeds hạ độ sáng lớp
+        // này theo độ sáng đèn, để lõi chữ không còn là màu chữ gốc nữa. Bản trước chữ
+        // gốc (gần trắng trên phím đen) vẽ chết trong texture mặt phím, lớp LED cộng
+        // màu chồng lên: lõi chữ = trắng + màu đèn → vẫn trắng bệch, chỉ phần viền nét
+        // chữ lòi ra ngoài mới hiện màu đèn → trông như chữ chỉ sáng VIỀN, rỗng ruột.
+        var baseGeo = new THREE.PlaneGeometry(w * 0.76 * 0.98, d * 0.76 * 0.98, 6, 6);
+        baseGeo.rotateX(-Math.PI / 2);
+        var bp = baseGeo.attributes.position;
+        for (var bi = 0; bi < bp.count; bi++) {
+          var bf = Math.max(Math.abs(bp.getX(bi)) / (w * 0.38), Math.abs(bp.getZ(bi)) / (d * 0.38));
+          bp.setY(bi, H - DISH * (1 - Math.min(1, bf)) + 0.006);
+        }
+        baseGeo.computeVertexNormals();
+        var baseGlyphMat = new THREE.MeshBasicMaterial({ map: glyphTexture(ch, st.fg, st.bg), transparent: true, depthWrite: false });
+        var baseGlyph = new THREE.Mesh(baseGeo, baseGlyphMat);
+        baseGlyph.renderOrder = 1;
+        grp.add(baseGlyph);
+        grp.userData.baseGlyphMat = baseGlyphMat;
+        // Lớp nét chữ xuyên sáng: lưới cùng độ cong, nhô hơn mặt chữ một chút, tô đúng
+        // màu đèn theo kiểu pha trộn THƯỜNG (không cộng màu): cộng màu chồng lên mặt
+        // phím sáng sẽ cộng thêm cả màu nền phím vào nét chữ, đỏ đậm hoá hồng nhạt,
+        // vàng hoá trắng. Pha trộn thường + độ mờ theo độ sáng đèn thì nét chữ hiện
+        // đúng màu đã chọn; đèn tắt thì độ mờ = 0, lớp này vô hình.
+        var legendGeo = new THREE.PlaneGeometry(w * 0.76 * 0.98, d * 0.76 * 0.98, 6, 6);
+        legendGeo.rotateX(-Math.PI / 2);
+        var lp = legendGeo.attributes.position;
+        for (var li = 0; li < lp.count; li++) {
+          var lf = Math.max(Math.abs(lp.getX(li)) / (w * 0.38), Math.abs(lp.getZ(li)) / (d * 0.38));
+          lp.setY(li, H - DISH * (1 - Math.min(1, lf)) + 0.011);
+        }
+        legendGeo.computeVertexNormals();
+        var legendMat = new THREE.MeshBasicMaterial({ map: legendGlowTexture(ch), transparent: true, opacity: 0, depthWrite: false, color: 0x000000 });
+        var legend = new THREE.Mesh(legendGeo, legendMat);
+        legend.renderOrder = 2;
+        grp.add(legend);
+        grp.userData.legendMat = legendMat;
+        // Lớp "bloom" ôm nét chữ: cùng texture chữ nhưng phóng to ~1.3 lần và cộng
+        // màu — phần nét chữ phình ra ngoài lõi chữ đặc tạo thành quầng hào quang
+        // mỏng quanh ký tự, đúng kiểu ánh đèn LED thật loé ra quanh nét chữ trong.
+        // Chỉ riêng lớp chữ đặc (pha thường) thì ký tự chỉ ĐỔI MÀU chứ không toả
+        // sáng, nhìn từ xa/xiên rất khó nhận ra đèn đang xuyên qua phím; lớp bloom
+        // này mới là thứ mắt thấy là "chữ đang phát sáng". Cộng màu ở độ mờ thấp
+        // nên không phá tông màu đã chuẩn hoá (lõi chữ vẫn do lớp pha thường giữ).
+        var bloomGeo = new THREE.PlaneGeometry(w * 0.76 * 0.98 * 1.3, d * 0.76 * 0.98 * 1.3, 6, 6);
+        bloomGeo.rotateX(-Math.PI / 2);
+        var pp = bloomGeo.attributes.position;
+        for (var pi = 0; pi < pp.count; pi++) {
+          var pf = Math.max(Math.abs(pp.getX(pi)) / (w * 0.38 * 1.3), Math.abs(pp.getZ(pi)) / (d * 0.38 * 1.3));
+          pp.setY(pi, H - DISH * (1 - Math.min(1, pf)) + 0.014);
+        }
+        bloomGeo.computeVertexNormals();
+        var legendBloomMat = new THREE.MeshBasicMaterial({ map: legendGlowTexture(ch), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, color: 0x000000 });
+        var bloom = new THREE.Mesh(bloomGeo, legendBloomMat);
+        bloom.renderOrder = 3;
+        grp.add(bloom);
+        grp.userData.legendBloomMat = legendBloomMat;
+        // chân chữ thập dưới keycap: 1 ở giữa + 2 chân phụ cho phím dài
+        var post1 = box(0.3, 0.12, 0.09, bodyMat); post1.position.y = -0.04;
+        var post2 = box(0.09, 0.12, 0.3, bodyMat); post2.position.y = -0.04;
+        grp.add(post1, post2);
+        if (wU >= 2) {
+          [-1, 1].forEach(function (s) {
+            var p1 = box(0.24, 0.1, 0.08, bodyMat); p1.position.set(s * wU * PITCH * 0.3, -0.04, 0);
+            var p2 = box(0.08, 0.1, 0.24, bodyMat); p2.position.set(s * wU * PITCH * 0.3, -0.04, 0);
+            grp.add(p1, p2);
+          });
+        }
+        return grp;
+      }
+
+      /* ---------- Bố cục full-size 104 phím (chuẩn ANSI) ----------
+         Mỗi mục: [nhãn, mã phím (KeyboardEvent.code), bề rộng (đơn vị phím), kiểu nắp, chiều cao]
+         Số đứng một mình = khoảng trống. Kiểu nắp: a = chữ/số, m = phím chức năng, acc = điểm nhấn */
+      var LAYOUT = [
+        [["Esc", "Escape", 1, "acc"], 1,
+         ["F1", "F1", 1, "m"], ["F2", "F2", 1, "m"], ["F3", "F3", 1, "m"], ["F4", "F4", 1, "m"], 0.5,
+         ["F5", "F5", 1, "m"], ["F6", "F6", 1, "m"], ["F7", "F7", 1, "m"], ["F8", "F8", 1, "m"], 0.5,
+         ["F9", "F9", 1, "m"], ["F10", "F10", 1, "m"], ["F11", "F11", 1, "m"], ["F12", "F12", 1, "m"], 0.25,
+         ["PrtSc", "PrintScreen", 1, "m"], ["ScrLk", "ScrollLock", 1, "m"], ["Pause", "Pause", 1, "m"]],
+        [["`", "Backquote", 1, "a"], ["1", "Digit1", 1, "a"], ["2", "Digit2", 1, "a"], ["3", "Digit3", 1, "a"],
+         ["4", "Digit4", 1, "a"], ["5", "Digit5", 1, "a"], ["6", "Digit6", 1, "a"], ["7", "Digit7", 1, "a"],
+         ["8", "Digit8", 1, "a"], ["9", "Digit9", 1, "a"], ["0", "Digit0", 1, "a"], ["-", "Minus", 1, "a"],
+         ["=", "Equal", 1, "a"], ["Backspace", "Backspace", 2, "m"], 0.25,
+         ["Ins", "Insert", 1, "m"], ["Home", "Home", 1, "m"], ["PgUp", "PageUp", 1, "m"], 0.25,
+         ["Num", "NumLock", 1, "m"], ["/", "NumpadDivide", 1, "a"], ["*", "NumpadMultiply", 1, "a"], ["-", "NumpadSubtract", 1, "a"]],
+        [["Tab", "Tab", 1.5, "m"],
+         ["Q", "KeyQ", 1, "a"], ["W", "KeyW", 1, "a"], ["E", "KeyE", 1, "a"], ["R", "KeyR", 1, "a"],
+         ["T", "KeyT", 1, "a"], ["Y", "KeyY", 1, "a"], ["U", "KeyU", 1, "a"], ["I", "KeyI", 1, "a"],
+         ["O", "KeyO", 1, "a"], ["P", "KeyP", 1, "a"], ["[", "BracketLeft", 1, "a"], ["]", "BracketRight", 1, "a"],
+         ["\\", "Backslash", 1.5, "a"], 0.25,
+         ["Del", "Delete", 1, "m"], ["End", "End", 1, "m"], ["PgDn", "PageDown", 1, "m"], 0.25,
+         ["7", "Numpad7", 1, "a"], ["8", "Numpad8", 1, "a"], ["9", "Numpad9", 1, "a"], ["+", "NumpadAdd", 1, "a", 2]],
+        [["Caps", "CapsLock", 1.75, "m"],
+         ["A", "KeyA", 1, "a"], ["S", "KeyS", 1, "a"], ["D", "KeyD", 1, "a"], ["F", "KeyF", 1, "a"],
+         ["G", "KeyG", 1, "a"], ["H", "KeyH", 1, "a"], ["J", "KeyJ", 1, "a"], ["K", "KeyK", 1, "a"],
+         ["L", "KeyL", 1, "a"], [";", "Semicolon", 1, "a"], ["'", "Quote", 1, "a"], ["Enter", "Enter", 2.25, "acc"], 3.5,
+         ["4", "Numpad4", 1, "a"], ["5", "Numpad5", 1, "a"], ["6", "Numpad6", 1, "a"]],
+        [["Shift", "ShiftLeft", 2.25, "m"],
+         ["Z", "KeyZ", 1, "a"], ["X", "KeyX", 1, "a"], ["C", "KeyC", 1, "a"], ["V", "KeyV", 1, "a"],
+         ["B", "KeyB", 1, "a"], ["N", "KeyN", 1, "a"], ["M", "KeyM", 1, "a"],
+         [",", "Comma", 1, "a"], [".", "Period", 1, "a"], ["/", "Slash", 1, "a"], ["Shift", "ShiftRight", 2.75, "m"], 1.25,
+         ["↑", "ArrowUp", 1, "m"], 1.25,
+         ["1", "Numpad1", 1, "a"], ["2", "Numpad2", 1, "a"], ["3", "Numpad3", 1, "a"], ["Enter", "NumpadEnter", 1, "m", 2]],
+        [["Ctrl", "ControlLeft", 1.25, "m"], ["Win", "MetaLeft", 1.25, "m"], ["Alt", "AltLeft", 1.25, "m"],
+         ["", "Space", 6.25, "a"], ["Alt", "AltRight", 1.25, "m"], ["Fn", "FnKey", 1.25, "m"],
+         ["Menu", "ContextMenu", 1.25, "m"], ["Ctrl", "ControlRight", 1.25, "m"], 0.25,
+         ["←", "ArrowLeft", 1, "m"], ["↓", "ArrowDown", 1, "m"], ["→", "ArrowRight", 1, "m"], 0.25,
+         ["0", "Numpad0", 2, "a"], [".", "NumpadDecimal", 1, "a"]]
+      ];
+      var PITCH = 1.06, TOTAL_U = 22.5, N_ROWS = 6;
+      var W = TOTAL_U * PITCH + 0.55, D = N_ROWS * PITCH + 0.55;
+
+      var kbGroup = new THREE.Group();
+      scene.add(kbGroup);
+      var kbParts = {};   // partId -> {group, explodeY}
+      function kbRegister(id, group, explodeY) {
+        group.userData.baseY = group.position.y;
+        kbParts[id] = { group: group, explodeY: explodeY };
+        kbGroup.add(tag(group, id));
+      }
+
+      // Vỏ trên (case top): khung viền 2 bậc ôm mặt bàn phím, chừa khe cổng USB-C ở mép sau
+      var indMats = {
+        num: new THREE.MeshStandardMaterial({ color: 0x20301f, roughness: 0.4, emissive: 0x2bd95f }),
+        caps: new THREE.MeshStandardMaterial({ color: 0x2b2118, roughness: 0.4, emissive: 0x000000 }),
+        scroll: new THREE.MeshStandardMaterial({ color: 0x20301f, roughness: 0.4, emissive: 0x000000 })
+      };
+      var caseTopG = new THREE.Group();
+      (function buildCaseTop() {
+        var usbGapL = -6.05, usbGapR = -4.95;
+        function bandSeg(x0, x1, zc, thick, y, h) {
+          var s = box(x1 - x0, h, thick, M.caseTop);
+          s.position.set((x0 + x1) / 2, y, zc);
+          caseTopG.add(s);
+        }
+        // Bậc dưới: dày, cao 0.02–0.28 — mép sau tách 2 đoạn chừa khe USB
+        bandSeg(-W / 2, usbGapL, -D / 2 + 0.17, 0.34, 0.15, 0.26);
+        bandSeg(usbGapR, W / 2, -D / 2 + 0.17, 0.34, 0.15, 0.26);
+        bandSeg(-W / 2, W / 2, D / 2 - 0.17, 0.34, 0.15, 0.26);
+        var bl = box(0.34, 0.26, D - 0.68, M.caseTop); bl.position.set(-W / 2 + 0.17, 0.15, 0);
+        var br = bl.clone(); br.position.x = W / 2 - 0.17;
+        caseTopG.add(bl, br);
+        // Bậc trên (gờ mép): mỏng hơn, cao 0.26–0.43
+        bandSeg(-W / 2, usbGapL, -D / 2 + 0.09, 0.18, 0.345, 0.17);
+        bandSeg(usbGapR, W / 2, -D / 2 + 0.09, 0.18, 0.345, 0.17);
+        bandSeg(-W / 2, W / 2, D / 2 - 0.09, 0.18, 0.345, 0.17);
+        var tl = box(0.18, 0.17, D - 0.36, M.caseTop); tl.position.set(-W / 2 + 0.09, 0.345, 0);
+        var tr = tl.clone(); tr.position.x = W / 2 - 0.09;
+        caseTopG.add(tl, tr);
+        // 3 đèn báo Num / Caps / Scroll trên viền sau, phía trên numpad
+        [["num", 8.35], ["caps", 9.05], ["scroll", 9.75]].forEach(function (cfg) {
+          var dotLed = box(0.16, 0.03, 0.1, indMats[cfg[0]]);
+          dotLed.position.set(cfg[1], 0.44, -D / 2 + 0.09);
+          caseTopG.add(dotLed);
+        });
+      })();
+      // Phím Fn — phím chỉnh đèn như trên bàn phím cơ thật: KHÔNG phải một nút
+      // riêng gắn trên viền case, mà là một phím thật nằm ở hàng dưới cùng,
+      // đúng vị trí phím Win phải (xem mục "Fn" trong LAYOUT). TOÀN BỘ hiệu
+      // ứng và màu LED đều nằm trong phím Fn này — không còn nút hiệu ứng /
+      // chấm màu đèn riêng lẻ ngoài khung nữa: bấm Fn (chạm 3D, ô sơ đồ, hoặc
+      // phím vật lý ở đúng vị trí đó) là chuyển tiếp: trong một hiệu ứng có
+      // màu, Fn bước qua từng màu đèn; hết màu thì sang hiệu ứng kế tiếp, vào
+      // hiệu ứng có màu lại bắt đầu từ màu đầu tiên. Riêng ĐỘ SÁNG đèn thì giữ
+      // Fn rồi bấm mũi tên lên/xuống (Fn + ↑ tăng, Fn + ↓ giảm, 5 nấc) — xem
+      // phần độ sáng ngay dưới đây. Vì Fn là một phím trong
+      // ma trận như mọi phím khác nên nó lún xuống, sáng đèn và được test như
+      // phím thường; phần nhận diện cú bấm nằm ở các trình xử lý chạm/phím thật.
+      var FN_CODE = "FnKey";   // mã của phím Fn trong LAYOUT (vị trí Win phải, hàng dưới)
+      var FN_MODE_ORDER = ["rainbow", "static", "breathing", "reactive", "off"];
+      var FN_MODE_NAMES = { off: "Tắt đèn", static: "Tĩnh", rainbow: "Sóng cầu vồng", breathing: "Hơi thở", reactive: "Phản ứng gõ" };
+      var FN_COLORS = [
+        ["#e0342b", "đỏ"], ["#35d05a", "xanh lá"], ["#2f6fce", "xanh dương"],
+        ["#f2b705", "vàng"], ["#ff5da2", "hồng"], ["#f5f2ea", "trắng"]
+      ];
+      function fnIsColorMode(m) { return m === "static" || m === "breathing" || m === "reactive"; }
+      function fnColorIndex() {
+        var hex = "#" + rgbColor.getHexString();
+        for (var i = 0; i < FN_COLORS.length; i++) if (FN_COLORS[i][0] === hex) return i;
+        return -1;
+      }
+      var fnToastTimer = null;
+      function showFnToastMsg(msg) {
+        var toast = document.getElementById("fnToast");
+        if (!toast) return;
+        toast.textContent = msg;
+        toast.classList.add("show");
+        if (fnToastTimer) clearTimeout(fnToastTimer);
+        fnToastTimer = setTimeout(function () { toast.classList.remove("show"); }, 1500);
+      }
+      function showFnToast() {
+        var label = FN_MODE_NAMES[rgbMode];
+        if (fnIsColorMode(rgbMode)) {
+          var ci = fnColorIndex();
+          if (ci >= 0) label += " · đèn " + FN_COLORS[ci][1];
+        }
+        showFnToastMsg("Fn · " + label);
+      }
+      /* ---------- Độ sáng LED: CHỈ chỉnh bằng tổ hợp Fn + ↑ / Fn + ↓ ----------
+         Thang 5 nấc 0 / 25 / 50 / 75 / 100%, mặc định 100% (nấc cao nhất). Độ
+         sáng là một HỆ SỐ NHÂN RIÊNG áp trong updateLeds lên mọi kênh đèn (LED,
+         nét chữ, quầng, cột sáng, keycap switch phóng to) — không đụng vào màu
+         hay hiệu ứng đang chạy, và KHÔNG có nút / thanh trượt độ sáng nào ngoài
+         khung: đúng như phím cơ thật, muốn chỉnh sáng phải giữ Fn rồi bấm mũi
+         tên. Nấc 0 = đèn tắt hẳn dù hiệu ứng vẫn đang chạy. */
+      var LED_BRIGHTNESS_LEVELS = [0, 0.25, 0.5, 0.75, 1];
+      var ledBrightnessIdx = LED_BRIGHTNESS_LEVELS.length - 1;
+      function ledBrightness() { return LED_BRIGHTNESS_LEVELS[ledBrightnessIdx]; }
+      function showBrightnessToast() {
+        showFnToastMsg("Fn · Độ sáng LED: " + Math.round(ledBrightness() * 100) + "%");
+      }
+      function adjustLedBrightness(delta) {
+        var ni = ledBrightnessIdx + delta;
+        if (ni < 0) ni = 0;
+        if (ni > LED_BRIGHTNESS_LEVELS.length - 1) ni = LED_BRIGHTNESS_LEVELS.length - 1;
+        ledBrightnessIdx = ni;
+        fnTapPending = false;   // đã dùng Fn làm tổ hợp: nhả Fn ra KHÔNG chuyển hiệu ứng/màu nữa
+        showBrightnessToast();
+      }
+      /* Trạng thái GIỮ phím Fn, dùng chung cho mọi đường bấm (chạm keycap 3D,
+         ô Fn trong sơ đồ, phím vật lý ở vị trí Win phải / Fn laptop):
+         - Chạm Fn một mình rồi nhả (tap) = chuyển vòng hiệu ứng/màu như trước:
+           việc chuyển vòng dời xuống lúc NHẢ phím và chỉ khi trong lúc giữ
+           chưa bấm mũi tên nào.
+         - GIỮ Fn rồi bấm ↑ / ↓ = tăng / giảm một nấc độ sáng (xem
+           handleFnArrow), và cú Fn đó không còn chuyển hiệu ứng/màu nữa. */
+      var fnHoldActive = false;
+      var fnTapPending = false;
+      function handleFnDown() {
+        if (fnHoldActive) return;
+        fnHoldActive = true;
+        fnTapPending = true;
+      }
+      function handleFnUp() {
+        if (!fnHoldActive) return;
+        fnHoldActive = false;
+        if (fnTapPending) {
+          fnTapPending = false;
+          cycleFnMode();
+        }
+      }
+      function cancelFnHold() {
+        fnHoldActive = false;
+        fnTapPending = false;
+      }
+      // Trả về true nếu code là mũi tên lên/xuống bấm TRONG LÚC đang giữ Fn:
+      // cú bấm đó đã dùng để chỉnh độ sáng, nơi gọi phải nuốt luôn, không cho
+      // chạy tiếp hành vi mũi tên thường (lún phím test / gõ ký tự mũi tên).
+      function handleFnArrow(code) {
+        if (!fnHoldActive) return false;
+        if (code === "ArrowUp") { adjustLedBrightness(1); return true; }
+        if (code === "ArrowDown") { adjustLedBrightness(-1); return true; }
+        return false;
+      }
+      function cycleFnMode() {
+        var ci = fnColorIndex();
+        if (fnIsColorMode(rgbMode) && ci >= 0 && ci < FN_COLORS.length - 1) {
+          setRgbColor(FN_COLORS[ci + 1][0]);   // còn màu kế tiếp: Fn đổi màu đèn trước
+        } else {
+          var mi = FN_MODE_ORDER.indexOf(rgbMode);
+          var next = FN_MODE_ORDER[(mi + 1) % FN_MODE_ORDER.length];
+          setRgbMode(next);                    // hết màu / hiệu ứng không màu: Fn sang hiệu ứng kế tiếp
+          if (fnIsColorMode(next)) setRgbColor(FN_COLORS[0][0]);
+        }
+        showFnToast();
+      }
+
+      kbRegister("caseTop", caseTopG, 0.32);
+
+      // Vỏ dưới (case bottom): đế 2 bậc, chân cao su, chân kê nghiêng, ốc vít, tem thông số
+      var caseBottomG = new THREE.Group();
+      (function buildCaseBottom() {
+        var pan = box(W, 0.32, D, M.caseBottom); pan.position.y = -0.16; caseBottomG.add(pan);
+        var skirt = box(W - 0.6, 0.14, D - 0.6, M.caseBottom); skirt.position.y = -0.39; caseBottomG.add(skirt);
+        var footMat = mat(0x141519, 0.95);
+        [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(function (s) {
+          var f = cyl(0.17, 0.19, 0.07, footMat, 20);
+          f.position.set(s[0] * (W / 2 - 0.75), -0.495, s[1] * (D / 2 - 0.75));
+          caseBottomG.add(f);
+        });
+        [-1, 1].forEach(function (s) {
+          var kick = box(0.85, 0.07, 0.36, M.caseBottom);
+          kick.position.set(s * (W / 2 - 1.7), -0.47, -(D / 2 - 0.6));
+          kick.rotation.x = -0.35;
+          caseBottomG.add(kick);
+        });
+        [-W / 2 + 1.3, 0, W / 2 - 1.3].forEach(function (sx, i) {
+          [-1, 1].forEach(function (sz) {
+            var sc = cyl(0.075, 0.075, 0.035, M.steel, 16);
+            sc.position.set(sx, -0.472, sz * (D / 2 - 1.05));
+            caseBottomG.add(sc);
+            var slot = box(0.1, 0.012, 0.022, M.chip);
+            slot.position.set(sx, -0.492, sz * (D / 2 - 1.05));
+            slot.rotation.y = i * 0.7 + (sz > 0 ? 0.4 : 0);
+            caseBottomG.add(slot);
+          });
+        });
+        // Tem thông số dán dưới đáy, như tem nhà sản xuất trên phím thật
+        var c = document.createElement("canvas"); c.width = 512; c.height = 288;
+        var g = c.getContext("2d");
+        g.fillStyle = "#e9e6dc"; g.fillRect(0, 0, 512, 288);
+        g.strokeStyle = "#8a8578"; g.lineWidth = 4; g.strokeRect(8, 8, 496, 272);
+        g.fillStyle = "#26241f"; g.textAlign = "center";
+        g.font = "700 40px 'Segoe UI', Arial, sans-serif";
+        g.fillText("BÀN PHÍM CƠ MK-104", 256, 62);
+        g.font = "26px 'Segoe UI', Arial, sans-serif";
+        g.fillText("Layout: Full-size 104 phím · Switch MX hot-swap", 256, 112);
+        g.fillText("Nguồn: DC 5V ⎓ 500mA · Cổng: USB-C", 256, 152);
+        g.fillText("Model: MK-104 · SN: 2026-DEMO-0104", 256, 192);
+        var bx = 156;
+        while (bx < 356) { var bw = 2 + Math.random() * 6; g.fillRect(bx, 216, bw, 44); bx += bw + 2 + Math.random() * 4; }
+        var sticker = new THREE.Mesh(new THREE.PlaneGeometry(2.9, 1.63),
+          new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(c), roughness: 0.7 }));
+        sticker.rotation.x = Math.PI / 2;
+        sticker.position.set(0, -0.464, 0.35);
+        caseBottomG.add(sticker);
+      })();
+      kbRegister("caseBottom", caseBottomG, -1.9);
+      caseTopG.traverse(function (o) { if (o.isMesh) o.castShadow = true; });
+      caseBottomG.traverse(function (o) { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+
+      // Foam đáy PO (trên) + foam silicon (dưới cùng): hai tấm lót sát đáy case, tổng dày đúng bằng khe cũ
+      var foamBottomG = new THREE.Group();
+      var foamBottom = box(W - 0.3, 0.05, D - 0.3, M.foam); foamBottom.position.y = 0.065; foamBottomG.add(foamBottom);
+      kbRegister("foamBottom", foamBottomG, -0.6);
+      var foamSiliconeG = new THREE.Group();
+      var foamSilicone = box(W - 0.34, 0.04, D - 0.34, M.silicone); foamSilicone.position.y = 0.02; foamSiliconeG.add(foamSilicone);
+      kbRegister("foamSilicone", foamSiliconeG, -0.85);
+
+      // PCB + chip (diode và LED thêm theo từng phím ở vòng lặp dưới)
+      var pcbG = new THREE.Group();
+      var pcbY = 0.135;
+      var pcb = box(W - 0.24, 0.09, D - 0.24, M.pcb); pcb.position.y = pcbY; pcbG.add(pcb);
+      // Linh kiện trên mặt PCB: IC, đường mạch đồng, tụ, điện trở, thạch anh, cổng USB-C
+      var pcbTop = pcbY + 0.045;
+      var traceMat = new THREE.MeshStandardMaterial({ color: 0xcfa14f, roughness: 0.45, metalness: 0.5 });
+      var silkMat = mat(0xf2efe6, 0.8);
+      var compG = new THREE.Group();
+      (function buildPcbParts() {
+        function silkRect(cx, cz, w, d) {
+          var t = 0.03, y = pcbTop + 0.002;
+          var a = box(w, 0.004, t, silkMat); a.position.set(cx, y, cz - d / 2);
+          var b = box(w, 0.004, t, silkMat); b.position.set(cx, y, cz + d / 2);
+          var cc = box(t, 0.004, d, silkMat); cc.position.set(cx - w / 2, y, cz);
+          var e = box(t, 0.004, d, silkMat); e.position.set(cx + w / 2, y, cz);
+          compG.add(a, b, cc, e);
+        }
+        // IC điều khiển chính (MCU): thân QFP, 36 chân 4 phía, chấm đánh dấu chân số 1
+        var mcuX = -2, mcuZ = 2.5;
+        var mcuBody = box(0.92, 0.11, 0.92, M.chip); mcuBody.position.set(mcuX, pcbTop + 0.055, mcuZ); compG.add(mcuBody);
+        for (var pi = 0; pi < 9; pi++) {
+          var off = -0.36 + pi * 0.09;
+          var pl = box(0.13, 0.03, 0.05, M.steel); pl.position.set(mcuX - 0.51, pcbTop + 0.03, mcuZ + off);
+          var pr = pl.clone(); pr.position.x = mcuX + 0.51;
+          var pt = box(0.05, 0.03, 0.13, M.steel); pt.position.set(mcuX + off, pcbTop + 0.03, mcuZ - 0.51);
+          var pb = pt.clone(); pb.position.z = mcuZ + 0.51;
+          compG.add(pl, pr, pt, pb);
+        }
+        var mcuDot = cyl(0.05, 0.05, 0.014, silkMat, 12); mcuDot.position.set(mcuX - 0.3, pcbTop + 0.115, mcuZ - 0.3); compG.add(mcuDot);
+        silkRect(mcuX, mcuZ, 1.34, 1.34);
+        // IC phụ (đệm quét phím / driver LED): thân SOIC, 12 chân 2 phía
+        var ic2X = 5.3, ic2Z = -2.8;
+        var ic2Body = box(0.72, 0.08, 0.46, M.chip); ic2Body.position.set(ic2X, pcbTop + 0.04, ic2Z); compG.add(ic2Body);
+        for (var qi = 0; qi < 6; qi++) {
+          var qoff = -0.175 + qi * 0.07;
+          var ql = box(0.13, 0.025, 0.05, M.steel); ql.position.set(ic2X - 0.41, pcbTop + 0.022, ic2Z + qoff);
+          var qr = ql.clone(); qr.position.x = ic2X + 0.41;
+          compG.add(ql, qr);
+        }
+        silkRect(ic2X, ic2Z, 1.02, 0.76);
+        // Thạch anh dao động cạnh MCU + 2 tụ gốm đi kèm
+        var xtal = box(0.36, 0.07, 0.26, M.steel); xtal.position.set(-3.35, pcbTop + 0.035, 2.5); compG.add(xtal);
+        [-3.72, -2.98].forEach(function (cx) {
+          var cc2 = box(0.1, 0.05, 0.1, mat(0xc8a165, 0.6)); cc2.position.set(cx, pcbTop + 0.025, 2.5); compG.add(cc2);
+        });
+        // Tụ hóa gần cổng USB (thân trụ + nắp bạc) và tụ gốm rải rác trên mạch
+        [[-4.85, -2.8], [-6.5, -2.7]].forEach(function (cp) {
+          var capBody = cyl(0.095, 0.095, 0.24, mat(0x1d2733, 0.4), 18); capBody.position.set(cp[0], pcbTop + 0.12, cp[1]);
+          var capTopD = cyl(0.095, 0.095, 0.02, M.steel, 18); capTopD.position.set(cp[0], pcbTop + 0.25, cp[1]);
+          compG.add(capBody, capTopD);
+        });
+        [[8.5, -2.8], [4.3, -2.5], [-8.8, -2.85]].forEach(function (cp) {
+          var cer = box(0.11, 0.05, 0.07, mat(0xc8a165, 0.6)); cer.position.set(cp[0], pcbTop + 0.025, cp[1]); compG.add(cer);
+        });
+        // Cụm điện trở dán cạnh IC phụ
+        for (var ri = 0; ri < 6; ri++) {
+          var res = box(0.1, 0.045, 0.06, M.chip); res.position.set(4.6 + ri * 0.26, pcbTop + 0.022, -2.18); compG.add(res);
+        }
+        // Cổng USB-C ở mép sau: vỏ kim loại, lưỡi nhựa trong, miệng cổng hướng ra sau
+        var usbMetal = mat(0xd7dbe0, 0.25, 0.95);
+        var usbShell = box(0.78, 0.26, 0.62, usbMetal); usbShell.position.set(-5.5, pcbTop + 0.13, -3.16); compG.add(usbShell);
+        var usbTongue = box(0.6, 0.09, 0.5, M.chip); usbTongue.position.set(-5.5, pcbTop + 0.13, -3.18); compG.add(usbTongue);
+        var usbHole = box(0.66, 0.15, 0.05, mat(0x0c0d10, 0.6)); usbHole.position.set(-5.5, pcbTop + 0.13, -3.46); compG.add(usbHole);
+        // Đường mạch đồng: lưới hàng–cột của ma trận phím nối các switch về IC + đường nguồn từ USB
+        function trace(w, d, x, z) {
+          var t = box(w, 0.008, d, traceMat); t.position.set(x, pcbTop + 0.006, z); compG.add(t);
+        }
+        var r;
+        for (r = 0; r < N_ROWS; r++) trace(23, 0.035, 0, (r - (N_ROWS - 1) / 2) * PITCH - 0.44);
+        for (var cxu = 1; cxu < 22; cxu += 2) trace(0.035, 5.3, (cxu + 0.5 - TOTAL_U / 2) * PITCH, -0.44);
+        trace(16.6, 0.07, 3.2, -3.22); trace(16.6, 0.07, 3.2, -3.12);
+        trace(0.07, 6.2, -11.8, -0.1); trace(9.3, 0.07, -7.15, 3.06);
+        // Chữ in lụa trên mặt PCB như mạch thật
+        var sc = document.createElement("canvas"); sc.width = 512; sc.height = 128;
+        var sg = sc.getContext("2d");
+        sg.fillStyle = "#f2efe6"; sg.font = "700 64px 'Segoe UI', Arial, sans-serif"; sg.textAlign = "center";
+        sg.fillText("MK-104 · REV 1.0", 256, 82);
+        var silkText = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 0.42),
+          new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(sc), transparent: true, roughness: 0.8 }));
+        silkText.rotation.x = -Math.PI / 2;
+        silkText.position.set(9.7, pcbTop + 0.004, 2.5);
+        compG.add(silkText);
+      })();
+      pcbG.add(tag(compG, "pcb"));
+      kbRegister("pcb", pcbG, -0.3);
+
+      // Plate: tấm định vị PC LIỀN khoét lỗ vuông cho từng switch, như plate thật —
+      // nhìn từ trên xuống chỉ thấy plate và switch, PCB được che kín hoàn toàn,
+      // không còn lộ mạch xanh ở khe giữa các phím nữa
+      var plateG = new THREE.Group();
+      var plateY = 0.42;
+      (function buildPlate() {
+        var innerW = W - 0.3, innerD = D - 0.3;
+        var shape = new THREE.Shape();
+        shape.moveTo(-innerW / 2, -innerD / 2);
+        shape.lineTo(innerW / 2, -innerD / 2);
+        shape.lineTo(innerW / 2, innerD / 2);
+        shape.lineTo(-innerW / 2, innerD / 2);
+        shape.closePath();
+        var HOLE = 0.84; // lỗ vuông ~14mm cho housing switch lọt qua, như plate thật
+        LAYOUT.forEach(function (rowDef, r) {
+          var cursor = 0;
+          rowDef.forEach(function (item) {
+            if (typeof item === "number") { cursor += item; return; }
+            var wU = item[2] || 1, hU = item[4] || 1;
+            var xU = cursor + wU / 2;
+            cursor += wU;
+            var cx = (xU - TOTAL_U / 2) * PITCH;
+            var cz = (r - (N_ROWS - 1) / 2) * PITCH + (hU - 1) * PITCH / 2;
+            var hx = HOLE / 2, hz = HOLE / 2;
+            var hole = new THREE.Path();
+            // Trục Y của shape thành -Z sau khi xoay nằm ngang, nên tâm lỗ dùng (cx, -cz)
+            hole.moveTo(cx - hx, -cz - hz);
+            hole.lineTo(cx + hx, -cz - hz);
+            hole.lineTo(cx + hx, -cz + hz);
+            hole.lineTo(cx - hx, -cz + hz);
+            hole.closePath();
+            shape.holes.push(hole);
+          });
+        });
+        var geo = new THREE.ExtrudeGeometry(shape, { depth: 0.07, bevelEnabled: false });
+        geo.rotateX(-Math.PI / 2);
+        var sheet = new THREE.Mesh(geo, M.plate);
+        sheet.position.y = plateY - 0.035;
+        sheet.castShadow = true;
+        sheet.receiveShadow = true;
+        plateG.add(sheet);
+      })();
+      kbRegister("plate", plateG, 0.55);
+
+      // Ba tấm mỏng khoét lỗ switch nằm giữa plate và PCB, đúng thứ tự sơ đồ cấu tạo:
+      // foam tiêu âm PO (dưới plate) → tấm lót trục IXPE → tấm PET (sát mặt PCB).
+      // Thân switch xuyên qua lỗ của cả ba tấm nên ở mức tách lớp 0 mọi thứ vẫn khít như cũ.
+      function piercedSheet(holeSize, thick, material, yCenter) {
+        var innerW = W - 0.3, innerD = D - 0.3;
+        var shape = new THREE.Shape();
+        shape.moveTo(-innerW / 2, -innerD / 2);
+        shape.lineTo(innerW / 2, -innerD / 2);
+        shape.lineTo(innerW / 2, innerD / 2);
+        shape.lineTo(-innerW / 2, innerD / 2);
+        shape.closePath();
+        LAYOUT.forEach(function (rowDef, r) {
+          var cursor = 0;
+          rowDef.forEach(function (item) {
+            if (typeof item === "number") { cursor += item; return; }
+            var wU = item[2] || 1, hU = item[4] || 1;
+            var xU = cursor + wU / 2;
+            cursor += wU;
+            var cx = (xU - TOTAL_U / 2) * PITCH;
+            var cz = (r - (N_ROWS - 1) / 2) * PITCH + (hU - 1) * PITCH / 2;
+            var hx = holeSize / 2, hz = holeSize / 2;
+            var hole = new THREE.Path();
+            hole.moveTo(cx - hx, -cz - hz);
+            hole.lineTo(cx + hx, -cz - hz);
+            hole.lineTo(cx + hx, -cz + hz);
+            hole.lineTo(cx - hx, -cz + hz);
+            hole.closePath();
+            shape.holes.push(hole);
+          });
+        });
+        var geo = new THREE.ExtrudeGeometry(shape, { depth: thick, bevelEnabled: false });
+        geo.rotateX(-Math.PI / 2);
+        var mesh = new THREE.Mesh(geo, material);
+        mesh.position.y = yCenter - thick / 2;
+        mesh.receiveShadow = true;
+        var grp = new THREE.Group();
+        grp.add(mesh);
+        return grp;
+      }
+      kbRegister("foamPlate", piercedSheet(0.88, 0.05, M.foamSheet, 0.325), 0.3);
+      kbRegister("ixpe", piercedSheet(0.88, 0.03, M.ixpe, 0.26), 0.08);
+      kbRegister("pet", piercedSheet(0.88, 0.02, M.pet, 0.2), -0.1);
+
+      // Switch rút gọn + keycap + LED + diode cho từng phím theo LAYOUT
+      var switchG = new THREE.Group();
+      var capG = new THREE.Group();
+      var ALL_KEYS = [];            // mọi phím: {code,label,cap,stem,capBaseY,stemBaseY,cur,target,glow,ledMat,topMat,xU,row}
+      var KEY_BY_CODE = {};
+      LAYOUT.forEach(function (rowDef, r) {
+        var cursor = 0;
+        rowDef.forEach(function (item) {
+          if (typeof item === "number") { cursor += item; return; }
+          var label = item[0], code = item[1], wU = item[2] || 1, cls = item[3] || "a", hU = item[4] || 1;
+          var xU = cursor + wU / 2;
+          var x = (xU - TOTAL_U / 2) * PITCH;
+          var z = (r - (N_ROWS - 1) / 2) * PITCH + (hU - 1) * PITCH / 2;
+          cursor += wU;
+
+          var sw = new THREE.Group();
+          var hb = box(0.8, 0.42, 0.8, M.housingClear); hb.position.y = 0.39; sw.add(tag(hb, "switchFull"));
+          var stemM = box(0.3, 0.3, 0.3, M.stem); stemM.position.y = 0.75; sw.add(tag(stemM, "stem"));
+          sw.position.set(x, 0, z);
+          sw.userData.code = code;
+          switchG.add(sw);
+
+          var cap = keycapMesh(label, cls, wU, hU);
+          cap.position.set(x, 0.92, z);
+          cap.userData.code = code;
+          capG.add(tag(cap, "keycap"));
+
+          var diode = box(0.16, 0.05, 0.08, M.diode);
+          diode.position.set(x + 0.48, pcbY + 0.07, z + 0.32);
+          pcbG.add(diode);
+          // Đèn LED RGB hàn sẵn trên PCB ngay dưới switch (phía bắc của switch) —
+          // ĐÂY là nguồn sáng thật của cả phím: updateLeds chỉ cấp màu/độ sáng cho
+          // đúng con LED này, mọi hiệu ứng sáng khác đều suy ra từ trạng thái của nó.
+          var ledMat = new THREE.MeshStandardMaterial({ color: 0x2a2d33, roughness: 0.35, metalness: 0.1, emissive: 0x000000 });
+          var led = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.06, 0.2), ledMat);
+          led.position.set(x, pcbY + 0.065, z - 0.3);
+          pcbG.add(tag(led, "led"));
+          // Cột sáng đi lên từ chính con LED này, xuyên qua housing trong tới mặt
+          // dưới keycap: 2 mặt phẳng chéo nhau, cộng màu, dùng chung màu/độ sáng
+          // với LED. Ánh sáng thấy trong switch vì vậy là sáng TỪ LED trong mạch
+          // đi lên qua phần nhựa trong, đúng như mạch thật — không phải quầng sáng
+          // vẽ rời đặt quanh phím.
+          var colMat = new THREE.MeshBasicMaterial({ map: glowTex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+          var colGeo = new THREE.PlaneGeometry(0.42, 0.72);
+          var col1 = new THREE.Mesh(colGeo, colMat);
+          col1.position.set(x, 0.56, z - 0.2);
+          col1.renderOrder = 3;
+          var col2 = new THREE.Mesh(colGeo, colMat);
+          col2.rotation.y = Math.PI / 2;
+          col2.position.copy(col1.position);
+          col2.renderOrder = 3;
+          pcbG.add(tag(col1, "led"), tag(col2, "led"));
+          var glowMat = new THREE.MeshBasicMaterial({ map: glowTex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+          var glowDisc = new THREE.Mesh(glowGeo, glowMat);
+          glowDisc.rotation.x = -Math.PI / 2;
+          // Nằm trên mặt plate (plate chiếm y 0.385–0.455), tâm lệch về phía LED như vệt sáng thật
+          glowDisc.position.set(x, 0.459, z - 0.15);
+          glowDisc.renderOrder = 2;
+          pcbG.add(tag(glowDisc, "led"));
+          // PHÍM DÀI (Space 6.25u là rõ nhất): 1 con LED + 1 đĩa sáng ở giữa như
+          // phím thường KHÔNG phủ nổi cả phím — đĩa chỉ rộng ~2 đơn vị trong khi
+          // Space dài ~6.6 đơn vị nên hai đầu phím tối hẳn; mà Space lại không có
+          // nét chữ xuyên sáng như phím chữ để mà nhìn, thành ra cả phím trông
+          // như không có đèn. Bàn phím thật xử lý bằng nhiều LED dọc thân phím
+          // dài: ở đây hàn thêm LED phụ trên PCB tại các vị trí dọc theo phím
+          // (chỉ tại vị trí còn nằm gọn trong thân phím), mỗi LED phụ có đĩa
+          // sáng riêng trên plate, và dùng CHUNG vật liệu ledMat/glowMat của
+          // phím nên sáng/tắt/đổi màu/chạy hiệu ứng theo đúng LED chính — ánh
+          // sáng chạy đều suốt chiều dài phím, hai đầu cũng có khoảng hiển thị
+          // LED rõ ràng như đoạn giữa và như các phím khác.
+          if (wU >= 2) {
+            [-2, -1, 1, 2].forEach(function (kk) {
+              var ao = kk * 1.7;
+              if (Math.abs(ao) > wU * PITCH / 2 - 0.9) return;
+              var auxLed = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.06, 0.2), ledMat);
+              auxLed.position.set(x + ao, pcbY + 0.065, z - 0.3);
+              pcbG.add(tag(auxLed, "led"));
+              var auxDisc = new THREE.Mesh(glowGeo, glowMat);
+              auxDisc.rotation.x = -Math.PI / 2;
+              auxDisc.position.set(x + ao, 0.459, z - 0.15);
+              auxDisc.renderOrder = 2;
+              pcbG.add(tag(auxDisc, "led"));
+            });
+          }
+          // Quầng sáng ôm sát dưới keycap: chỉ rộng hơn thân phím ~0.13 đơn vị mỗi
+          // phía — đúng mức ánh sáng thật hắt ra khỏi chân keycap: vành sáng nhô qua
+          // khe phím vừa đủ nhìn thấy, rồi tắt trước khi chạm vùng của phím bên,
+          // nên khi sóng màu chạy qua, mỗi phím giữ màu riêng chứ không nhuộm lẫn
+          // sang nhau. (Bản +0.55 mỗi chiều nở quầng ra ~1.6 đơn vị, chồng sâu
+          // vào quầng phím kề và trộn màu thành mảng loá.) Gắn vào nhóm keycap
+          // nên đi theo phím khi nhấn xuống — đèn không bị vành phím che tắt.
+          var haloMat = new THREE.MeshBasicMaterial({ map: glowTex, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+          // Phím dài phải CHIA quầng thành nhiều đoạn ngắn ~2u dùng chung 1 vật
+          // liệu: texture tỏa tròn vẽ trên MỘT mặt phẳng dài ~7 đơn vị bị kéo
+          // giãn theo trục dài, khoảng cách tỏa tròn tính cả trục đó nên alpha
+          // ở hai đầu phím và dọc mép trước tụt xuống gần 0 — vành sáng nhô ra
+          // khe phím (khoảng hiển thị LED duy nhất của Space vì nó không có chữ)
+          // vì thế gần như không có. Các đoạn ngắn giữ đúng biên dạng tỏa tròn
+          // như phím 1u và chạy dọc suốt thân phím; phím thường vẫn là 1 đoạn
+          // như cũ (tâm đoạn trùng tâm phím, không đổi hành vi).
+          var nSeg = Math.max(1, Math.round(wU / 2));
+          var segW = wU * PITCH / nSeg;
+          for (var si = 0; si < nSeg; si++) {
+            var halo = new THREE.Mesh(new THREE.PlaneGeometry(segW + 0.26, hU * PITCH + 0.26), haloMat);
+            halo.rotation.x = -Math.PI / 2;
+            halo.position.set(-wU * PITCH / 2 + segW * (si + 0.5), -0.03, 0);
+            halo.renderOrder = 2;
+            halo.userData.partId = "keycap";
+            cap.add(halo);
+          }
+          // Lỗ via mạ đồng cạnh mỗi switch: nơi đường mạch chìm xuống mặt dưới PCB
+          var via = cyl(0.035, 0.035, 0.012, M.copper, 10);
+          via.position.set(x - 0.44, pcbTop + 0.006, z + 0.02);
+          pcbG.add(tag(via, "pcb"));
+
+          var rec = {
+            code: code, label: label || "Space", glyph: label, cls: cls, cap: cap, stem: stemM,
+            capBaseY: 0.92, stemBaseY: 0.75, cur: 0, target: 0, glow: 0,
+            ledMat: ledMat, colMat: colMat, topMat: cap.userData.topMat, baseGlyphMat: cap.userData.baseGlyphMat, legendMat: cap.userData.legendMat, legendBloomMat: cap.userData.legendBloomMat, glowMat: glowMat, haloMat: haloMat, xU: xU, row: r
+          };
+          ALL_KEYS.push(rec);
+          KEY_BY_CODE[code] = rec;
+
+          // Stabilizer cho phím dài: dây thép + 2 ngàm, gắn cùng lớp plate
+          if (wU >= 2) {
+            var wireLen = (wU - 0.85) * PITCH;
+            var wire = cyl(0.028, 0.028, wireLen, M.steel); wire.rotation.z = Math.PI / 2;
+            wire.position.set(x, 0.3, z + 0.08);
+            tag(wire, "stabilizer");
+            plateG.add(wire);
+            [-1, 1].forEach(function (s) {
+              var clip = box(0.18, 0.16, 0.24, M.chip);
+              clip.position.set(x + s * (wireLen / 2 - 0.08), 0.33, z + 0.08);
+              tag(clip, "stabilizer");
+              plateG.add(clip);
+            });
+          }
+        });
+      });
+      kbRegister("switchFull", switchG, 1.35);
+      kbRegister("keycap", capG, 2.35);
+
+      /* ---------- SWITCH PHÓNG TO ---------- */
+      var swGroup = new THREE.Group();
+      swGroup.visible = false;
+      scene.add(swGroup);
+      var S = 2.6; // hệ số phóng to
+      var swParts = {};
+      function swRegister(id, group, explodeY) {
+        group.userData.baseY = group.position.y;
+        swParts[id] = { group: group, explodeY: explodeY };
+        swGroup.add(tag(group, id));
+      }
+
+      // Housing dưới
+      var hbG = new THREE.Group();
+      var hbBase = box(1.4 * S * 0.38, 0.16, 1.4 * S * 0.38, M.housingSolid); hbBase.position.y = 0.08;
+      hbG.add(hbBase);
+      [[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]].forEach(function (xy) {
+        var wall = box(0.1, 0.5, 0.62, M.housingSolid);
+        wall.position.set(xy[0] * 0.98, 0.35, xy[1] * 0.98);
+        hbG.add(wall);
+      });
+      [-0.28, 0.28].forEach(function (x) {
+        var pin = box(0.06, 0.35, 0.02, M.copper);
+        pin.position.set(x, -0.14, 0.18);
+        hbG.add(pin);
+      });
+      swRegister("housingBottom", hbG, -1.7);
+
+      // Lá đồng
+      var leafG = new THREE.Group();
+      var leafFixed = box(0.05, 0.62, 0.16, M.copper); leafFixed.position.set(-0.34, 0.55, 0);
+      var leafMovePivot = new THREE.Group(); leafMovePivot.position.set(0.34, 0.24, 0);
+      var leafMove = box(0.05, 0.62, 0.16, M.copper); leafMove.position.y = 0.31;
+      leafMovePivot.add(leafMove);
+      leafG.add(leafFixed, leafMovePivot);
+      swRegister("leaf", leafG, -0.75);
+      var contactGlow = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 16),
+        new THREE.MeshBasicMaterial({ color: 0xffe066, transparent: true, opacity: 0 }));
+      contactGlow.position.set(0, 0.62, 0);
+      leafG.add(contactGlow);
+
+      // Lò xo
+      function makeSpring(radius, height, turns) {
+        var pts = [];
+        var n = turns * 16;
+        for (var i = 0; i <= n; i++) {
+          var a = (i / 16) * Math.PI * 2;
+          pts.push(new THREE.Vector3(Math.cos(a) * radius, (i / n) * height, Math.sin(a) * radius));
+        }
+        var curve = new THREE.CatmullRomCurve3(pts);
+        return new THREE.Mesh(new THREE.TubeGeometry(curve, n, 0.035, 8), M.steel);
+      }
+      var springG = new THREE.Group();
+      springG.add(makeSpring(0.3, 0.95, 6));
+      springG.position.y = 0.55;
+      swRegister("spring", springG, 0.1);
+
+      // Stem
+      var stemG = new THREE.Group();
+      var stemBody = box(0.52, 0.72, 0.52, M.stem); stemBody.position.y = 0;
+      var cross1 = box(0.42, 0.3, 0.13, M.stem); cross1.position.y = 0.5;
+      var cross2 = box(0.13, 0.3, 0.42, M.stem); cross2.position.y = 0.5;
+      var legL = box(0.1, 0.42, 0.2, M.stem); legL.position.set(-0.26, -0.5, 0);
+      var legR = box(0.1, 0.42, 0.2, M.stem); legR.position.set(0.26, -0.5, 0);
+      stemG.add(stemBody, cross1, cross2, legL, legR);
+      stemG.position.y = 1.75;
+      swRegister("stem", stemG, 1.05);
+
+      // Housing trên
+      var htG = new THREE.Group();
+      [[-0.62, -0.62], [0.62, -0.62], [-0.62, 0.62], [0.62, 0.62]].forEach(function (xy) {
+        var post = box(0.16, 0.55, 0.16, M.housing);
+        post.position.set(xy[0], 0, xy[1]);
+        htG.add(post);
+      });
+      var rim1 = box(1.4, 0.14, 0.18, M.housing); rim1.position.set(0, 0.3, -0.62);
+      var rim2 = rim1.clone(); rim2.position.z = 0.62;
+      var rim3 = box(0.18, 0.14, 1.4, M.housing); rim3.position.set(-0.62, 0.3, 0);
+      var rim4 = rim3.clone(); rim4.position.x = 0.62;
+      htG.add(rim1, rim2, rim3, rim4);
+      htG.position.y = 2.15;
+      swRegister("housingTop", htG, 2.0);
+
+      // Keycap trên switch phóng to
+      var bigCapG = new THREE.Group();
+      var bigCap = keycapMesh("A", "a", 1, 1);
+      bigCap.scale.setScalar(1.6);
+      bigCapG.add(bigCap);
+      bigCapG.position.y = 2.44;
+      swRegister("keycap", bigCapG, 3.1);
+
+      var xray = false;
+      function applyXray() {
+        M.housing.opacity = xray ? 0.12 : 0.55;
+        M.housing.needsUpdate = true;
+      }
+
+      /* ---------- Trạng thái ---------- */
+      var mode = "kb";           // "kb" | "sw"
+      var explode = 0, explodeTarget = 0;
+      var pressT = 0, pressAnim = null;
+      var selectedId = "overview";
+      var rangeEl = document.getElementById("explodeRange");
+      rangeEl.addEventListener("input", function () { explodeTarget = rangeEl.value / 100; });
+
+      function applyExplode() {
+        var set = mode === "kb" ? kbParts : swParts;
+        Object.keys(set).forEach(function (id) {
+          var p = set[id];
+          p.group.position.y = p.group.userData.baseY + p.explodeY * explode;
+        });
+        // Mặt đất hứng bóng hạ theo đế case khi tách lớp, để vỏ dưới không xuyên qua đất
+        ground.position.y = mode === "kb" ? -0.56 - 1.9 * explode : -0.56;
+      }
+
+      /* ---------- Menu chọn lớp hiển thị ---------- */
+      var LAYERS = [
+        ["keycap", "Keycap PBT", "Nắp phím trên cùng"],
+        ["caseTop", "Vỏ trên", "Khung viền ôm mặt trên, đèn báo Num/Caps/Scroll"],
+        ["switchFull", "Switch", "Công tắc cơ dưới mỗi phím"],
+        ["plate", "Tấm định vị PC", "Plate polycarbonate giữ switch thẳng hàng"],
+        ["foamPlate", "Foam tiêu âm PO", "Tấm foam giữa plate và PCB"],
+        ["ixpe", "Tấm lót trục IXPE", "Đệm mỏng dưới chân switch"],
+        ["pet", "Tấm PET", "Phim trong cách điện trên mặt PCB"],
+        ["pcb", "PCB + LED", "Bảng mạch, diode, chip, đèn LED"],
+        ["foamBottom", "Foam đáy PO", "Tấm foam lót dưới PCB"],
+        ["foamSilicone", "Foam silicon", "Đệm silicon sát đáy case"],
+        ["caseBottom", "Vỏ đáy", "Đế case, chân cao su, chân kê, ốc vít"]
+      ];
+      var layerRowsEl = document.getElementById("layerRows");
+      var layerBtns = {};
+      function setLayerVisible(id, vis) {
+        if (kbParts[id]) kbParts[id].group.visible = vis;
+        if (layerBtns[id]) {
+          layerBtns[id].setAttribute("aria-pressed", vis ? "true" : "false");
+          layerBtns[id].textContent = vis ? "Đang hiện" : "Đang ẩn";
+        }
+      }
+      LAYERS.forEach(function (L) {
+        var row = document.createElement("div"); row.className = "layer-row";
+        var name = document.createElement("span"); name.className = "layer-name";
+        name.textContent = L[1];
+        var small = document.createElement("small"); small.textContent = L[2];
+        name.appendChild(small);
+        var tgl = document.createElement("button");
+        tgl.className = "mini-btn"; tgl.textContent = "Đang hiện"; tgl.setAttribute("aria-pressed", "true");
+        tgl.addEventListener("click", function () {
+          setLayerVisible(L[0], !(kbParts[L[0]] && kbParts[L[0]].group.visible));
+        });
+        var solo = document.createElement("button");
+        solo.className = "mini-btn"; solo.textContent = "Chỉ lớp này"; solo.style.minWidth = "0";
+        solo.addEventListener("click", function () {
+          LAYERS.forEach(function (o) { setLayerVisible(o[0], o[0] === L[0]); });
+        });
+        row.appendChild(name); row.appendChild(tgl); row.appendChild(solo);
+        layerRowsEl.appendChild(row);
+        layerBtns[L[0]] = tgl;
+      });
+      document.getElementById("showAllLayers").addEventListener("click", function () {
+        LAYERS.forEach(function (L) { setLayerVisible(L[0], true); });
+      });
+      var layerMenu = document.getElementById("layerMenu");
+      var layerMenuBtn = document.getElementById("layerMenuBtn");
+      layerMenuBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var open = layerMenu.classList.toggle("open");
+        layerMenuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+      document.addEventListener("click", function (e) {
+        if (layerMenu.classList.contains("open") && !layerMenu.contains(e.target)) {
+          layerMenu.classList.remove("open");
+          layerMenuBtn.setAttribute("aria-expanded", "false");
+        }
+      });
+
+      /* ---------- Chọn chi tiết ---------- */
+      var infoKicker = document.getElementById("infoKicker"),
+          infoTitle = document.getElementById("infoTitle"),
+          infoDesc = document.getElementById("infoDesc"),
+          infoFacts = document.getElementById("infoFacts"),
+          partsList = document.getElementById("partsList"),
+          signalRow = document.getElementById("signalRow");
+
+      var PART_BUTTONS = [
+        ["overview", "Toàn cảnh"], ["keycap", "Keycap"], ["switchFull", "Switch"],
+        ["stem", "Stem"], ["spring", "Lò xo"], ["leaf", "Lá đồng"],
+        ["plate", "Tấm định vị PC"], ["foamPlate", "Foam PO"], ["ixpe", "Tấm IXPE"], ["pet", "Tấm PET"],
+        ["pcb", "PCB"], ["foamBottom", "Foam đáy PO"], ["foamSilicone", "Foam silicon"],
+        ["caseTop", "Vỏ trên"], ["caseBottom", "Vỏ đáy"], ["stabilizer", "Stabilizer"], ["led", "Đèn LED"]
+      ];
+      PART_BUTTONS.forEach(function (pb) {
+        var b = document.createElement("button");
+        b.className = "chip"; b.textContent = pb[1]; b.dataset.part = pb[0];
+        b.setAttribute("aria-pressed", pb[0] === "overview" ? "true" : "false");
+        b.addEventListener("click", function () { selectPart(pb[0], true); });
+        partsList.appendChild(b);
+      });
+
+      var highlightMats = [];
+      function clearHighlight() {
+        highlightMats.forEach(function (m) { if (m.emissive) m.emissive.setHex(m.userData._e || 0x000000); });
+        highlightMats = [];
+      }
+      function highlight(group) {
+        group.traverse(function (o) {
+          if (o.isMesh && o.material && o.material.emissive) {
+            if (o.material.userData._e === undefined) o.material.userData._e = o.material.emissive.getHex();
+            o.material.emissive.setHex(0x664411);
+            if (highlightMats.indexOf(o.material) < 0) highlightMats.push(o.material);
+          }
+        });
+      }
+      function selectPart(id, fromButton) {
+        selectedId = id;
+        // Thẻ giải thích dạng nổi: chỉ bật lên khi người dùng thật sự chọn một chi tiết
+        // (bỏ qua các lần gọi khởi tạo lúc nạp trang, nhờ cờ __kbBooted đặt cuối script)
+        var icEl = document.getElementById("infoCard");
+        if (icEl && window.__kbBooted) icEl.classList.add("show");
+        var info = INFO[id] || INFO.overview;
+        infoKicker.textContent = info.kicker;
+        infoTitle.textContent = info.title;
+        infoDesc.textContent = info.desc;
+        infoFacts.innerHTML = "";
+        (info.facts || []).forEach(function (f) {
+          var li = document.createElement("li"); li.textContent = f; infoFacts.appendChild(li);
+        });
+        Array.prototype.forEach.call(partsList.children, function (b) {
+          b.setAttribute("aria-pressed", b.dataset.part === id ? "true" : "false");
+        });
+        signalRow.classList.toggle("on", id === "leaf" || mode === "sw");
+        clearHighlight();
+        var set = mode === "kb" ? kbParts : swParts;
+        if (set[id]) highlight(set[id].group);
+      }
+
+      // Raycast: chạm chọn chi tiết + nhấn giữ keycap để bấm thử
+      var ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+      var downPos = null, heldCode = null, comboHeldCode = null;
+      function castAt(e) {
+        var rect = renderer.domElement.getBoundingClientRect();
+        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        ray.setFromCamera(mouse, camera);
+        var root = mode === "kb" ? kbGroup : swGroup;
+        return ray.intersectObjects(root.children, true);
+      }
+      function findCode(obj) {
+        var o = obj;
+        while (o) { if (o.userData && o.userData.code) return o.userData.code; o = o.parent; }
+        return null;
+      }
+      renderer.domElement.addEventListener("pointerdown", function (e) {
+        downPos = [e.clientX, e.clientY];
+        if (mode === "kb") {
+          var hits = castAt(e);
+          // Quét các điểm chạm theo thứ tự gần → xa: trúng keycap thì nhấn phím.
+          // Trúng phím Fn (vị trí Win phải, hàng dưới): GIỮ Fn lại — nhả ra mà
+          // chưa bấm mũi tên nào mới chuyển vòng hiệu ứng màu (xem handleFnUp);
+          // còn đang giữ Fn mà ngón khác chạm mũi tên lên/xuống là Fn + ↑/↓
+          // chỉnh độ sáng, mũi tên đó chỉ lún xuống cho có cảm giác bấm chứ
+          // không chạy hành vi mũi tên thường.
+          for (var hi = 0; hi < hits.length; hi++) {
+            var code = findCode(hits[hi].object);
+            if (code) {
+              if ((code === "ArrowUp" || code === "ArrowDown") && handleFnArrow(code)) {
+                comboHeldCode = code; setKeyDown(code, true);
+              } else if (code === FN_CODE) {
+                heldCode = code; setKeyDown(code, true); handleFnDown();
+              } else {
+                heldCode = code; setKeyDown(code, true);
+              }
+              break;
+            }
+          }
+        }
+      });
+      renderer.domElement.addEventListener("pointerup", function (e) {
+        // Cử chỉ vừa rồi đã nhấn trúng một phím (heldCode) thì đó là BẤM PHÍM,
+        // không phải chạm chọn chi tiết: bỏ qua chọn/highlight, kẻo highlight
+        // theo nhóm sẽ nhuộm màu cả 104 keycap chỉ vì người dùng bấm 1 phím.
+        var wasPress = !!heldCode || !!comboHeldCode;
+        var dp = downPos;
+        releaseHeld3D(false);
+        if (!dp) return;
+        var dx = e.clientX - dp[0], dy = e.clientY - dp[1];
+        if (dx * dx + dy * dy > 36) return; // là kéo xoay, không phải chạm chọn
+        if (wasPress) return; // vừa bấm phím (kể cả phím Fn): không chọn chi tiết nữa
+        var hits = castAt(e);
+        for (var i = 0; i < hits.length; i++) {
+          var pid = hits[i].object.userData.partId;
+          if (pid && INFO[pid]) { selectPart(pid, false); break; }
+        }
+      });
+      renderer.domElement.addEventListener("pointercancel", function () {
+        releaseHeld3D(true);
+        downPos = null;
+      });
+      // Chống phím DÍNH: thả tay/trượt ngón ra NGOÀI khung 3D (lên hàng nút, ra
+      // khỏi trang…) thì pointerup không tới canvas nữa — bản trước chỉ nghe trên
+      // canvas nên phím giữ nguyên trạng thái đang nhấn mãi. Nghe thêm ở cấp cửa
+      // sổ: bất kỳ lần nhả/chuột huỷ nào cũng nhả phím đang giữ bằng chạm 3D.
+      // Nhả phím Fn ở đây cũng là lúc chốt cú chạm Fn: tap một mình thì chuyển
+      // vòng hiệu ứng/màu; đã dùng làm tổ hợp chỉnh sáng thì thôi. Riêng
+      // pointercancel là cú chạm bị huỷ giữa chừng: nhả phím nhưng KHÔNG chốt
+      // gì cả (cancelFnHold), kẻo chạm lỗi lại đổi mất hiệu ứng.
+      function releaseHeld3D(cancelled) {
+        if (comboHeldCode) { setKeyDown(comboHeldCode, false); comboHeldCode = null; }
+        if (heldCode) {
+          var wasFn = heldCode === FN_CODE;
+          setKeyDown(heldCode, false); heldCode = null;
+          if (wasFn) { if (cancelled) cancelFnHold(); else handleFnUp(); }
+        }
+        downPos = null;
+      }
+      window.addEventListener("pointerup", function () { releaseHeld3D(false); });
+      window.addEventListener("pointercancel", function () { releaseHeld3D(true); });
+
+      /* ---------- Chuyển cảnh ---------- */
+      var stageTag = document.getElementById("stageTag");
+      var swTools = document.getElementById("swTools"), swColors = document.getElementById("swColors");
+      var capColors = document.getElementById("capColors");
+      var viewKb = document.getElementById("viewKb"), viewSw = document.getElementById("viewSw");
+      function setMode(m) {
+        // Đổi cảnh giữa lúc đang giữ phím (chạm 3D / phím thật / ô sơ đồ) thì nhả
+        // sạch trước, kẻo phím ở cảnh cũ kẹt trạng thái đang nhấn khi quay lại.
+        ALL_KEYS.forEach(function (k) { setKeyDown(k.code, false); });
+        heldCode = null;
+        comboHeldCode = null;
+        cancelFnHold();   // đang giữ Fn mà đổi cảnh: huỷ trạng thái giữ, không chốt chuyển hiệu ứng
+        mode = m;
+        kbGroup.visible = m === "kb";
+        swGroup.visible = m === "sw";
+        viewKb.setAttribute("aria-pressed", m === "kb" ? "true" : "false");
+        viewSw.setAttribute("aria-pressed", m === "sw" ? "true" : "false");
+        swTools.style.display = m === "sw" ? "" : "none";
+        swColors.style.display = m === "sw" ? "" : "none";
+        capColors.style.display = m === "kb" ? "" : "none";
+        layerMenuBtn.style.display = m === "kb" ? "" : "none";
+        if (m === "sw") { layerMenu.classList.remove("open"); layerMenuBtn.setAttribute("aria-expanded", "false"); }
+        stageTag.textContent = m === "kb" ? "Bàn phím full-size · 104 phím" : "Một switch MX phóng to";
+        controls.target.set(0, m === "kb" ? 0.65 : 1.2, 0);
+        camera.position.set(m === "kb" ? 13.5 : 5.2, m === "kb" ? 12 : 4.2, m === "kb" ? 16.5 : 6.4);
+        signalRow.classList.toggle("on", m === "sw" || selectedId === "leaf");
+        selectPart(selectedId, false);
+      }
+      viewKb.addEventListener("click", function () { setMode("kb"); });
+      viewSw.addEventListener("click", function () { setMode("sw"); selectPart("switchFull", false); });
+
+      document.getElementById("xrayBtn").addEventListener("click", function () {
+        xray = !xray;
+        this.setAttribute("aria-pressed", xray ? "true" : "false");
+        applyXray();
+      });
+      Array.prototype.forEach.call(document.querySelectorAll("#swColors .dot"), function (d) {
+        d.addEventListener("click", function () {
+          Array.prototype.forEach.call(document.querySelectorAll("#swColors .dot"), function (x) { x.setAttribute("aria-pressed", "false"); });
+          d.setAttribute("aria-pressed", "true");
+          M.stem.color.set(d.dataset.color);
+        });
+      });
+
+      /* ---------- Hiệu ứng đèn LED RGB ---------- */
+      var rgbMode = "rainbow";
+      var rgbColor = new THREE.Color("#e0342b");
+      // Hiệu ứng + màu đèn CHỈ chỉnh bằng phím Fn ngay trên bàn phím 3D (xem
+      // cycleFnMode ở phần phím Fn): hai hàm đặt trạng thái này là đường duy
+      // nhất đổi đèn, không còn nút hiệu ứng / chấm màu đèn ngoài khung nữa.
+      function setRgbMode(m) { rgbMode = m; }
+      function setRgbColor(hex) { rgbColor.set(hex); }
+      /* ---------- Đổi bộ màu keycap ---------- */
+      function applyCapSet(name) {
+        var set = CAP_SETS[name];
+        if (!set) return;
+        ["a", "m", "acc"].forEach(function (cls) {
+          CAP_STYLE[cls].bg = set[cls].bg;
+          CAP_STYLE[cls].fg = set[cls].fg;
+          M[CAP_STYLE[cls].body].color.setHex(set[cls].body);
+        });
+        for (var i = 0; i < ALL_KEYS.length; i++) {
+          var k = ALL_KEYS[i], st = set[k.cls] || set.a;
+          k.topMat.color.set(st.bg);
+          k.baseGlyphMat.map = glyphTexture(k.glyph, st.fg, st.bg);
+        }
+        if (typeof bigCap !== "undefined" && bigCap) {
+          bigCap.userData.topMat.color.set(set.a.bg);
+          bigCap.userData.baseGlyphMat.map = glyphTexture("A", set.a.fg, set.a.bg);
+        }
+      }
+      Array.prototype.forEach.call(document.querySelectorAll("[data-capset]"), function (d) {
+        d.addEventListener("click", function () {
+          Array.prototype.forEach.call(document.querySelectorAll("[data-capset]"), function (x) { x.setAttribute("aria-pressed", "false"); });
+          d.setAttribute("aria-pressed", "true");
+          applyCapSet(d.dataset.capset);
+        });
+      });
+
+      var _c = new THREE.Color(), _w = new THREE.Color(), _hue = new THREE.Color();
+      function updateLeds(now) {
+        var t = now / 1000;
+        for (var i = 0; i < ALL_KEYS.length; i++) {
+          var k = ALL_KEYS[i];
+          k.glow *= 0.92;
+          if (k.target > 0) k.glow = 1;
+          if (rgbMode === "rainbow") {
+            _c.setHSL((t * 0.06 + k.xU * 0.028 + k.row * 0.015) % 1, 0.9, 0.55);
+          } else if (rgbMode === "static") {
+            _c.copy(rgbColor);
+          } else if (rgbMode === "breathing") {
+            _c.copy(rgbColor).multiplyScalar(0.12 + 0.88 * (0.5 + 0.5 * Math.sin(t * 1.6)));
+          } else if (rgbMode === "reactive") {
+            _c.copy(rgbColor).multiplyScalar(k.glow);
+          } else {
+            _c.setRGB(0, 0, 0);
+          }
+          // phím đang được nhấn sáng trắng hơn một chút — để nhìn thấy khi test phím
+          // (cộng ít thôi: cộng nhiều sẽ pha trắng làm phai màu đèn đang chọn)
+          if (k.cur > 0.02) {
+            _w.setRGB(1, 1, 1).multiplyScalar(k.cur * 0.45);
+            _c.add(_w);
+          }
+          // CHUẨN HOÁ GIỮ TÔNG MÀU — gốc của lỗi "chọn đỏ ra hồng nhạt": trước đây màu
+          // được nhân hệ số khuếch đại 1.5–2.8 lần rồi nhân tiếp 1.1–1.45 cho nét chữ,
+          // kênh màu nào chạm trần 1 trước thì bị kẹp lại trong khi các kênh còn lại
+          // vẫn tăng → tỉ lệ kênh lệch hẳn → đỏ đậm thành hồng nhạt, xanh dương
+          // thành xanh lơ, vàng thành trắng. Nay tách màu thành TÔNG (kênh mạnh nhất
+          // luôn = 1, tỉ lệ kênh giữ nguyên đúng màu đã chọn / đúng sắc cầu vồng) và
+          // ĐỘ SÁNG lum (0..1) truyền qua độ mờ — không kênh nào bị kẹp lệch nữa.
+          var mx = Math.max(_c.r, _c.g, _c.b);
+          var lum = Math.min(1, mx);
+          _hue.copy(_c);
+          if (mx > 0.0001) _hue.multiplyScalar(1 / mx);
+          // Độ sáng LED do Fn + ↑/↓ đặt: nhân vào ĐỘ SÁNG (lum) sau khi tông màu
+          // đã tách riêng ở trên — mọi kênh đèn phía dưới đều dùng lum này nên
+          // giảm sáng là tối đều cả LED, nét chữ, quầng và cột sáng, màu không
+          // lệch tông; nấc 0 thì lum = 0, đèn tắt hẳn dù hiệu ứng vẫn chạy, và
+          // hiệu ứng hơi thở / phản ứng gõ cũng chỉ dao động trong trần này.
+          lum = lum * ledBrightness();
+          // Con LED trên PCB: phát sáng đúng tông màu; cường độ chỉ nhỉnh hơn 1 một
+          // chút để kênh mạnh nhất không bị kẹp lệch tông như mức 2.2–3.2 trước đây.
+          k.ledMat.emissive.copy(_hue).multiplyScalar(lum * (dark ? 1.12 : 1.0));
+          k.ledMat.emissiveIntensity = 1;
+          // LED thật chỉ xuyên qua nét chữ trong của keycap shine-through và lọt qua khe
+          // giữa các phím (vệt sáng dưới chân switch). Mặt keycap nhựa đặc KHÔNG phát sáng,
+          // KHÔNG đổi màu theo đèn — nên mặt chữ chỉ nhận màu qua lớp nét chữ riêng:
+          // lớp này pha trộn thường, tô đúng tông màu, độ mờ = độ sáng đèn.
+          if (k.legendMat) {
+            k.legendMat.color.copy(_hue);
+            k.legendMat.opacity = lum;
+          }
+          // Quầng bloom quanh nét chữ: cộng màu cùng tông, độ mờ tỉ lệ theo độ
+          // sáng đèn — ký tự không chỉ đổi màu mà TOẢ sáng ra xung quanh, nhìn
+          // từ xa hay từ góc xiên vẫn thấy rõ đèn xuyên qua phím.
+          if (k.legendBloomMat) {
+            k.legendBloomMat.color.copy(_hue);
+            k.legendBloomMat.opacity = lum * 0.3;
+          }
+          // Chữ gốc mờ dần theo độ sáng đèn: đèn càng sáng, chữ gốc càng lùi xuống để
+          // lớp phát sáng tô đặc toàn bộ ký tự đúng màu đèn như ảnh mẫu — hết cảnh lõi
+          // chữ trắng bệch chỉ có viền màu. Đèn tắt (lum = 0) thì chữ gốc hiện nguyên
+          // vẹn cho dễ đọc ban ngày.
+          if (k.baseGlyphMat) {
+            var bs = (dark ? 0.85 : 1) * (1 - 0.88 * lum);
+            k.baseGlyphMat.color.setRGB(bs, bs, bs);
+          }
+          // Các lớp quầng/cột sáng cộng màu: màu = tông × độ sáng (= đúng màu gốc
+          // trước chuẩn hoá) — quầng sáng rõ mà không lệch tông. Độ mờ hạ xuống
+          // mức của ánh sáng thật (đĩa 0.66, quầng 0.6, cột 0.6 ở chế độ tối):
+          // cùng với mặt phẳng đã thu hẹp và đường cong texture tắt nhanh ở
+          // vành (xem glowTex), vũng sáng của mỗi phím đứng riêng quanh chân
+          // phím đó; mức cũ (0.88 / 0.82 / 0.68 trên đĩa rộng 2.0) làm các
+          // quầng cộng dồn thành mảng sáng liền khối, nhất là khi sóng cầu
+          // vồng chuyển màu — hai màu kề nhau trộn bẩn vào nhau rất xấu.
+          _c.copy(_hue).multiplyScalar(lum);
+          k.glowMat.opacity = lum * (dark ? 0.66 : 0.52);
+          k.glowMat.color.copy(_c);
+          // Quầng dưới keycap nhận cùng màu đèn (kể cả phần trắng cộng thêm khi đang
+          // nhấn) và đi theo phím, nên hào quang quanh phím giữ nguyên khi nhấn xuống
+          if (k.haloMat) {
+            k.haloMat.opacity = lum * (dark ? 0.6 : 0.48);
+            k.haloMat.color.copy(_c);
+          }
+          // Cột sáng xuyên housing trong: nhận đúng màu/độ sáng của con LED ngay
+          // dưới nó — LED trong mạch sáng màu gì, cột sáng đi lên qua housing sáng
+          // màu đó; LED tắt thì cột sáng tắt theo, không tự phát sáng riêng.
+          if (k.colMat) {
+            k.colMat.opacity = lum * (dark ? 0.6 : 0.46);
+            k.colMat.color.copy(_c);
+          }
+        }
+        // (Phím Fn không cần vòng sáng riêng: nó là một phím trong ma trận nên
+        // nét chữ "Fn" và quầng đèn dưới keycap của nó chạy theo đúng hiệu ứng
+        // hiện tại như mọi phím khác, ngay trong vòng lặp phía trên.)
+        // Keycap của switch phóng to cũng xuyên sáng qua chữ như phím trên bàn,
+        // cùng chuẩn hoá giữ tông như 104 phím: tông vào màu, độ sáng vào độ mờ
+        if (bigCap && bigCap.userData.legendMat) {
+          var bc = _c;
+          if (rgbMode === "rainbow") {
+            bc.setHSL((t * 0.06) % 1, 0.9, 0.55);
+          } else if (rgbMode === "off") {
+            bc.setRGB(0, 0, 0);
+          } else {
+            bc.copy(rgbColor);
+            if (rgbMode === "breathing") bc.multiplyScalar(0.12 + 0.88 * (0.5 + 0.5 * Math.sin(t * 1.6)));
+            if (rgbMode === "reactive") bc.multiplyScalar(pressT >= 0.5 ? 1 : 0.1);
+          }
+          var bmx = Math.max(bc.r, bc.g, bc.b);
+          var bl = Math.min(1, bmx) * ledBrightness();
+          bigCap.userData.legendMat.opacity = bl;
+          if (bmx > 0.0001) bc.multiplyScalar(1 / bmx);
+          bigCap.userData.legendMat.color.copy(bc);
+          // Quầng bloom quanh nét chữ của keycap phóng to, đồng bộ với 104 phím
+          if (bigCap.userData.legendBloomMat) {
+            bigCap.userData.legendBloomMat.color.copy(bc);
+            bigCap.userData.legendBloomMat.opacity = bl * 0.3;
+          }
+          // Chữ gốc của keycap phóng to cũng mờ theo đèn như 104 phím trên bàn
+          if (bigCap.userData.baseGlyphMat) {
+            var bbs = (dark ? 0.85 : 1) * (1 - 0.88 * bl);
+            bigCap.userData.baseGlyphMat.color.setRGB(bbs, bbs, bbs);
+          }
+        }
+      }
+
+      /* ---------- Nhấn switch phóng to ---------- */
+      var signalLed = document.getElementById("signalLed"), signalText = document.getElementById("signalText");
+      function setSwitchPress(t) {
+        pressT = t;
+        var travel = 0.34 * t;
+        stemG.position.y = stemG.userData.baseY + swParts.stem.explodeY * explode - travel;
+        bigCapG.position.y = bigCapG.userData.baseY + swParts.keycap.explodeY * explode - travel;
+        springG.scale.y = 1 - 0.38 * t;
+        var prog = Math.max(0, (t - 0.45) / 0.55);
+        leafMovePivot.rotation.z = 0.1 * prog;
+        leafMovePivot.position.x = 0.34 - 0.52 * prog;
+        var contact = t >= 0.5;
+        contactGlow.material.opacity = contact ? 0.95 : 0;
+        if (mode === "sw" || selectedId === "leaf") {
+          signalLed.classList.toggle("lit", contact);
+          signalText.textContent = contact ? "Hai lá đồng đã chạm — mạch kín, phím ĐÃ NHẬN tín hiệu" : "Mạch hở — phím chưa nhận";
+        }
+      }
+      document.getElementById("pressBtn").addEventListener("click", function () {
+        pressAnim = { from: pressT, to: pressT > 0.5 ? 0 : 1, start: performance.now(), dur: 260 };
+      });
+
+      /* ---------- Gõ thử & test bàn phím thật ---------- */
+      var screen = document.getElementById("screen");
+      var typed = "";
+      function renderScreen() {
+        screen.innerHTML = "";
+        if (!typed) {
+          var ph = document.createElement("span"); ph.className = "placeholder"; ph.textContent = "Gõ gì đó đi…";
+          screen.appendChild(ph);
+        } else {
+          screen.appendChild(document.createTextNode(typed));
+        }
+        var caret = document.createElement("span"); caret.className = "caret";
+        screen.appendChild(caret);
+      }
+      function typeChar(ch) { typed += ch; renderScreen(); }
+      function backspace() { typed = typed.slice(0, -1); renderScreen(); }
+
+      // Sơ đồ test phím: dựng từ chính LAYOUT của mô hình 3D
+      var testMap = document.getElementById("testMap");
+      var cellByCode = {};
+      var suppressCellClickCode = null;   // ô mũi tên vừa dùng cho Fn + ↑/↓: click theo sau không gõ ký tự mũi tên
+      LAYOUT.forEach(function (rowDef) {
+        var rowEl = document.createElement("div"); rowEl.className = "trow";
+        rowDef.forEach(function (item) {
+          if (typeof item === "number") {
+            var sp = document.createElement("div");
+            sp.style.flexGrow = String(item); sp.style.flexBasis = "0";
+            rowEl.appendChild(sp);
+            return;
+          }
+          var cell = document.createElement("div");
+          cell.className = "tcell";
+          cell.style.flexGrow = String(item[2] || 1);
+          cell.textContent = item[0] || "Space";
+          cell.title = item[1];
+          cell.dataset.code = item[1];
+          (function (code) {
+            cell.addEventListener("pointerdown", function (e) {
+              e.preventDefault();
+              // Giữ capture cho ô này: thả tay ở BẤT KỲ đâu (kể cả ngoài ô) thì
+              // pointerup vẫn về đúng ô để nhả phím — thiếu nó là nguồn phím dính
+              // khi chạm ô sơ đồ rồi trượt ngón ra ngoài mới thả.
+              try { cell.setPointerCapture(e.pointerId); } catch (err) {}
+              // Đang giữ Fn (ô Fn / keycap 3D / phím thật) mà chạm ô mũi tên
+              // lên/xuống = tổ hợp Fn + ↑/↓ chỉnh độ sáng: ô mũi tên chỉ lún
+              // xuống, không gõ ký tự mũi tên (xem suppressCellClickCode).
+              if ((code === "ArrowUp" || code === "ArrowDown") && handleFnArrow(code)) {
+                suppressCellClickCode = code;
+                setKeyDown(code, true);
+                return;
+              }
+              setKeyDown(code, true);
+              // Ô Fn trong sơ đồ cũng là phím Fn như phím Fn 3D: giữ lại, nhả
+              // ra mới chốt — tap một mình thì chuyển hiệu ứng màu, giữ rồi
+              // bấm mũi tên thì chỉnh độ sáng.
+              if (code === FN_CODE) handleFnDown();
+            });
+            cell.addEventListener("pointerup", function () {
+              setKeyDown(code, false);
+              if (code === FN_CODE) handleFnUp();
+            });
+            cell.addEventListener("pointercancel", function () {
+              setKeyDown(code, false);
+              if (code === FN_CODE) cancelFnHold();
+            });
+            cell.addEventListener("pointerleave", function () {
+              setKeyDown(code, false);
+              if (code === FN_CODE) handleFnUp();
+            });
+            cell.addEventListener("click", function () {
+              if (suppressCellClickCode === code) { suppressCellClickCode = null; return; }
+              var rec = KEY_BY_CODE[code];
+              if (rec && rec.label && rec.label.length === 1) typeChar(rec.label);
+              else if (code === "Space") typeChar(" ");
+            });
+          })(item[1]);
+          rowEl.appendChild(cell);
+          cellByCode[item[1]] = cell;
+        });
+        testMap.appendChild(rowEl);
+      });
+
+      var TOTAL_KEYS = ALL_KEYS.length;
+      var testedSet = {};
+      var testedCount = 0;
+      var lastKeyEl = document.getElementById("lastKey");
+      var testCountEl = document.getElementById("testCount");
+      var testBarFill = document.getElementById("testBarFill");
+      testCountEl.textContent = "0 / " + TOTAL_KEYS;
+      function markTested(rec) {
+        lastKeyEl.textContent = rec.label + "  (" + rec.code + ")";
+        if (!testedSet[rec.code]) {
+          testedSet[rec.code] = true;
+          testedCount++;
+          var cell = cellByCode[rec.code];
+          if (cell) cell.classList.add("tested");
+          testCountEl.textContent = testedCount + " / " + TOTAL_KEYS;
+          testBarFill.style.width = (testedCount / TOTAL_KEYS * 100) + "%";
+        }
+      }
+      function setKeyDown(code, down) {
+        var rec = KEY_BY_CODE[code];
+        if (!rec) return;
+        rec.target = down ? 1 : 0;
+        if (down) rec.glow = 1;
+        var cell = cellByCode[code];
+        if (cell) cell.classList.toggle("down", down);
+      }
+
+      // Đèn báo Num/Caps/Scroll trên vỏ trên: sáng theo trạng thái khóa của bàn phím thật
+      function updateIndicators(e) {
+        if (!e.getModifierState) return;
+        indMats.num.emissive.setHex(e.getModifierState("NumLock") ? 0x2bd95f : 0x000000);
+        indMats.caps.emissive.setHex(e.getModifierState("CapsLock") ? 0xffb020 : 0x000000);
+        indMats.scroll.emissive.setHex(e.getModifierState("ScrollLock") ? 0x2bd95f : 0x000000);
+      }
+
+      // Bàn phím vật lý: nhấn → phím 3D lún + sáng + đánh dấu đã test; nhả → trở lại
+      document.addEventListener("keydown", function (e) {
+        updateIndicators(e);
+        // Vị trí Win phải trên mô hình là phím Fn: bấm phím vật lý ở đúng vị trí
+        // đó (Win phải trên phím thường, Fn trên laptop) = GIỮ Fn của mô hình —
+        // phím Fn trên mô hình lún xuống; nhả ra mà chưa bấm mũi tên nào mới
+        // chuyển vòng hiệu ứng màu (xem handleFnUp ở sự kiện keyup). Lưu ý: Fn
+        // trên nhiều laptop do phần cứng xử lý, trình duyệt không nhận được —
+        // khi đó dùng phím Fn ngay trên mô hình / trong sơ đồ thay thế.
+        if (e.code === "MetaRight" || e.code === "Fn") {
+          e.preventDefault();
+          setKeyDown(FN_CODE, true);
+          if (!e.repeat) {
+            handleFnDown();
+            var fnRec = KEY_BY_CODE[FN_CODE];
+            if (fnRec) markTested(fnRec);
+          }
+          return;
+        }
+        // Đang giữ Fn mà bấm mũi tên lên/xuống = Fn + ↑/↓ chỉnh độ sáng LED:
+        // nuốt luôn cú bấm này — không lún phím mũi tên trên mô hình, không
+        // đánh dấu đã test mũi tên, không gõ ký tự gì cả. Mỗi lần bấm (không
+        // tính tự lặp khi giữ lì) đổi đúng một nấc sáng.
+        if ((e.code === "ArrowUp" || e.code === "ArrowDown") && fnHoldActive) {
+          e.preventDefault();
+          if (!e.repeat) handleFnArrow(e.code);
+          return;
+        }
+        var rec = KEY_BY_CODE[e.code];
+        if (rec) {
+          e.preventDefault();
+          setKeyDown(e.code, true);
+          if (!e.repeat) markTested(rec);
+        }
+        if (e.metaKey || e.ctrlKey || e.altKey) return;
+        if (e.key === "Backspace") { backspace(); return; }
+        if (e.key === "Enter") { typeChar("\n"); return; }
+        if (e.key && e.key.length === 1) typeChar(e.key);
+      });
+      document.addEventListener("keyup", function (e) {
+        updateIndicators(e);
+        if (e.code === "MetaRight" || e.code === "Fn") {
+          setKeyDown(FN_CODE, false);
+          handleFnUp();   // nhả Fn: tap một mình → chuyển hiệu ứng/màu; đã chỉnh sáng → thôi
+          return;
+        }
+        if (KEY_BY_CODE[e.code]) setKeyDown(e.code, false);
+      });
+      function releaseAllKeys() {
+        ALL_KEYS.forEach(function (k) { setKeyDown(k.code, false); });
+        comboHeldCode = null;
+        cancelFnHold();   // mất focus / ẩn trang giữa lúc giữ Fn: huỷ trạng thái giữ, không chốt gì cả
+      }
+      window.addEventListener("blur", releaseAllKeys);
+      // Ẩn trang / khoá màn hình / chuyển tab giữa lúc đang giữ phím: sự kiện nhả
+      // phím (keyup/pointerup) có thể không bao giờ tới → phím dính ở trạng thái
+      // nhấn. Trang vừa bị ẩn là nhả sạch mọi phím ngay.
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) releaseAllKeys();
+      });
+
+      document.getElementById("clearBtn").addEventListener("click", function () { typed = ""; renderScreen(); });
+      document.getElementById("resetTestBtn").addEventListener("click", function () {
+        testedSet = {}; testedCount = 0;
+        testCountEl.textContent = "0 / " + TOTAL_KEYS;
+        testBarFill.style.width = "0%";
+        lastKeyEl.textContent = "—";
+        Object.keys(cellByCode).forEach(function (c) { cellByCode[c].classList.remove("tested"); });
+      });
+      document.getElementById("copyBtn").addEventListener("click", function () {
+        var btn = this;
+        function done() { btn.textContent = "Đã chép ✓"; setTimeout(function () { btn.textContent = "Sao chép đoạn gõ"; }, 1600); }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(typed).then(done, done);
+        } else { done(); }
+      });
+      renderScreen();
+
+      /* ---------- Kích thước & vòng lặp ---------- */
+      function resize() {
+        var w = stage.clientWidth, h = stage.clientHeight;
+        renderer.setSize(w, h);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      }
+      window.addEventListener("resize", resize);
+      resize();
+      setMode("kb");
+      selectPart("overview", false);
+      window.__kbBooted = true;
+
+      function animate(now) {
+        requestAnimationFrame(animate);
+        explode += (explodeTarget - explode) * 0.12;
+        if (Math.abs(explodeTarget - explode) < 0.001) explode = explodeTarget;
+        applyExplode();
+        if (pressAnim) {
+          var k = Math.min(1, (now - pressAnim.start) / pressAnim.dur);
+          var e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+          pressT = pressAnim.from + (pressAnim.to - pressAnim.from) * e;
+          if (k >= 1) pressAnim = null;
+        }
+        setSwitchPress(pressT);
+        if (mode === "kb") {
+          // phím lún theo trạng thái nhấn (phím thật / chạm 3D / ô sơ đồ)
+          for (var i = 0; i < ALL_KEYS.length; i++) {
+            var rec = ALL_KEYS[i];
+            rec.cur += (rec.target - rec.cur) * 0.4;
+            if (Math.abs(rec.target - rec.cur) < 0.002) rec.cur = rec.target;
+            var off = -0.16 * rec.cur;
+            rec.cap.position.y = rec.capBaseY + off;
+            rec.stem.position.y = rec.stemBaseY + off;
+          }
+          updateLeds(now || 0);
+        }
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      requestAnimationFrame(animate);
+    })();
+    </script>
+    <script>
+      // Nút chuyển giao diện sáng/tối: đổi cả trang (biến CSS) lẫn khung 3D (qua hook của mô hình)
+      (function () {
+        var btn = document.getElementById("themeBtn");
+        if (!btn) return;
+        function sync() {
+          var dark = document.documentElement.dataset.theme === "dark";
+          btn.setAttribute("aria-pressed", dark ? "true" : "false");
+          btn.textContent = dark ? "☀ Chế độ sáng" : "☾ Chế độ tối";
+        }
+        btn.addEventListener("click", function () {
+          var dark = document.documentElement.dataset.theme !== "dark";
+          document.documentElement.dataset.theme = dark ? "dark" : "light";
+          if (window.__kbSetDark) window.__kbSetDark(dark);
+          sync();
+        });
+        // Nút Đóng trên thẻ giải thích nổi
+        var closeBtn = document.getElementById("infoClose");
+        var infoCard = document.getElementById("infoCard");
+        if (closeBtn && infoCard) {
+          closeBtn.addEventListener("click", function () { infoCard.classList.remove("show"); });
+        }
+        sync();
+      })();
+    </script>
+  </body>
+</html>
