@@ -25,6 +25,12 @@
   #appWrap{position:relative;overflow:hidden;margin:0 auto;height:0;width:275px}
   #app{position:relative;width:275px;margin:0 auto;height:0;transform-origin:top center}
   #webamp{transform-origin:top left}
+  /* Ten bai trong Playlist: font goc Webamp chi 11px, lai bi co Double Size
+     xuong 0,7 lan con ~8px nen gan nhu khong doc duoc nhu anh ban gui.
+     Tang len 20px de sau khi co Double Size con ~14px, doc duoc nhu app,
+     va tang chieu cao hang theo de chu khong de len nhau. */
+  #playlist-window .playlist-track-titles, #playlist-window .playlist-track-durations{font-size:20px !important; line-height:28px !important}
+  #playlist-window .track-cell{font-size:20px !important; line-height:28px !important; height:28px !important}
 </style>
 <script src="webamp.bundle.min.js"></script>
 </head>
@@ -72,6 +78,21 @@ async function loadSongsJson(url, base){
 // khong scale, khong full. Chi khi bat Double Size (cua so 550px) moi co
 // ve vua man hinh va sat canh trai, de Double Size tren dien thoai khong
 // tran ra ngoai ma thanh full vua man hinh nhu ban thay truoc day.
+// Bu font Playlist theo ti le co: che do thuong scale=1 thi font 20px,
+// che do Double Size scale ~0,7 thi font phai len 20/0,7 ~ 28px de chu
+// tren man hinh van to ngang che do thuong, khong bi nho lai nhu truoc.
+// Chu trong Playlist la text HTML nen bu duoc, chu khac cua skin la anh
+// bitmap thi khong bu duoc, van se nho theo ti le co.
+function setPlaylistFont(effectivePx){
+  let st = document.getElementById('plFontDynamic');
+  if(!st){ st = document.createElement('style'); st.id = 'plFontDynamic'; document.head.appendChild(st); }
+  const scaleNow = parseFloat((document.getElementById('webamp')?.style.transform.match(/scale\(([^)]+)\)/) || [0, 1])[1]) || 1;
+  const fontPx = (effectivePx / scaleNow);
+  if(window.__lastPlFont && Math.abs(window.__lastPlFont - fontPx) < 0.5) return;
+  window.__lastPlFont = fontPx;
+  const linePx = Math.round(fontPx * 1.4);
+  st.textContent = '#playlist-window .playlist-track-titles, #playlist-window .playlist-track-durations{font-size:' + fontPx.toFixed(1) + 'px !important; line-height:' + linePx + 'px !important} #playlist-window .track-cell{font-size:' + fontPx.toFixed(1) + 'px !important; line-height:' + linePx + 'px !important; height:' + linePx + 'px !important}';
+}
 function fitWebamp(){
   const w = document.getElementById('webamp');
   if(!w) return;
@@ -89,47 +110,62 @@ function fitWebamp(){
     }
   });
   if(!isFinite(minTop) || maxW === 0) return;
-  // Che do thuong: tra ve co goc, de Webamp tu canh giua nhu mac dinh,
-  // va tra Playlist ve size goc neu truoc do da keo full vi Double Size.
-  if(maxW < 400){
-    if(window.__playlistFull && typeof webamp !== 'undefined' && webamp && webamp.store){
-      try { webamp.store.dispatch({type:'WINDOW_SIZE_CHANGED', windowId:'playlist', size:[0, 16]}); } catch(e){}
-      window.__playlistFull = false;
-    }
-    if(cur !== 1 || w.style.left){
-      w.style.transform = 'scale(1)';
-      w.style.position = ''; w.style.left = '';
-      document.body.style.height = ''; document.body.style.overflow = '';
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const contentH = (maxBottom - minTop) / cur;
+  // Khi nguoi dung chon Double Size, Webamp phong to cua so len 550px.
+  // Neu co 550px ve vua man hinh 390px thi ti le chi 0,7, khung bi BOP
+  // 30%, moi chi tiet deu nho lai - dung nhu ban noi. Cach dung tren
+  // dien thoai khong phai la bop Double Size xuong, ma la TAT Double Size
+  // goc di, roi KEO DAN co thuong (275px) LEN vua man hinh (ti le ~1,42).
+  // Nhu vay khung duoc DAN RA, khong bi bop, chu va nut deu to hon.
+  // Double Size luc nay chi dong vai tro cong tac bat/tat che do full.
+  if(maxW >= 400){
+    if(window.__toggling) return;
+    if(typeof webamp !== 'undefined' && webamp && webamp.store){
+      try {
+        window.__toggling = true;
+        window.__fullMode = !window.__fullMode;
+        webamp.store.dispatch({type:'TOGGLE_DOUBLESIZE_MODE'});
+        if(!window.__fullMode){
+          webamp.store.dispatch({type:'WINDOW_SIZE_CHANGED', windowId:'playlist', size:[0, 16]});
+          window.__lastEhFull = null;
+        }
+      } catch(e){ window.__toggling = false; }
     }
     return;
   }
-  // Che do Double Size: Webamp chi phong to cua so chinh va EQ len 550px,
-  // Playlist thi KHONG tu phong to (canDouble chi co o main/EQ) nen no
-  // van 275px, thanh ra chi bang nua rong cua so chinh - dung hien tuong
-  // ban chup anh. Phai keo Playlist ra bang tay qua store:
-  // extraWidth 11 = (550-275)/25, de Playlist rong 550px nhu cua so chinh,
-  // va extraHeight tinh theo chieu cao man hinh de Playlist lap day chieu doc.
-  const contentH = (maxBottom - minTop) / cur;
-  const vw = window.innerWidth, vh = window.innerHeight;
-  const scale = (vw / maxW) * 0.99;
-  if(!window.__playlistFull && typeof webamp !== 'undefined' && webamp && webamp.store){
-    try {
-      const totalNeeded = vh / scale;
-      const ehDouble = Math.max(0, Math.floor((totalNeeded - 464 - 116) / 29));
-      webamp.store.dispatch({type:'WINDOW_SIZE_CHANGED', windowId:'playlist', size:[11, ehDouble]});
-      window.__playlistFull = true;
-    } catch(e){}
+  // Da ve co thuong (275px): xoa co toggling de lan chon Double Size sau
+  // lai bat duoc.
+  window.__toggling = false;
+  if(window.__fullMode){
+    // Che do full (keo dan): scale theo rong, sat canh trai, Playlist
+    // keo dai theo chieu cao man hinh de lap day chieu doc, khong bop.
+    const scale = (vw / 275) * 0.99;
+    const totalNeeded = vh / scale;
+    const ehFull = Math.max(0, Math.floor((totalNeeded - 232 - 116) / 29));
+    if(window.__lastEhFull !== ehFull && typeof webamp !== 'undefined' && webamp && webamp.store){
+      try { webamp.store.dispatch({type:'WINDOW_SIZE_CHANGED', windowId:'playlist', size:[0, ehFull]}); window.__lastEhFull = ehFull; } catch(e){}
+    }
+    const wLeft = w.getBoundingClientRect().left;
+    const translateUnscaled = (mainLeft - wLeft) / cur;
+    const shift = -translateUnscaled * scale;
+    if(Math.abs(scale - cur) < 0.005 && Math.abs(parseFloat(w.style.left || 0) - shift) < 1) { setPlaylistFont(20); return; }
+    w.style.position = 'relative';
+    w.style.left = shift + 'px';
+    w.style.transformOrigin = 'top left';
+    w.style.transform = 'scale(' + scale + ')';
+    setPlaylistFont(20);
+    document.body.style.height = Math.ceil(contentH * scale) + 'px';
+    document.body.style.overflow = 'auto';
+    return;
   }
-  const wLeft = w.getBoundingClientRect().left;
-  const translateUnscaled = (mainLeft - wLeft) / cur;
-  const shift = -translateUnscaled * scale;
-  if(Math.abs(scale - cur) < 0.005 && Math.abs(parseFloat(w.style.left || 0) - shift) < 1) return;
-  w.style.position = 'relative';
-  w.style.left = shift + 'px';
-  w.style.transformOrigin = 'top left';
-  w.style.transform = 'scale(' + scale + ')';
-  document.body.style.height = Math.ceil(contentH * scale) + 'px';
-  document.body.style.overflow = 'auto';
+  // Che do thuong: tra ve co goc, nho, canh giua nhu app goc.
+  if(cur !== 1 || w.style.left){
+    w.style.transform = 'scale(1)';
+    w.style.position = ''; w.style.left = '';
+    document.body.style.height = ''; document.body.style.overflow = '';
+  }
+  setPlaylistFont(20);
 }
 window.addEventListener('resize', fitWebamp);
 window.addEventListener('orientationchange', () => setTimeout(fitWebamp, 300));
