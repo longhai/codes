@@ -137,6 +137,21 @@ function fitWebamp(){
   // Da ve co thuong (275px): xoa co toggling de lan chon Double Size sau
   // lai bat duoc.
   window.__toggling = false;
+  // Cac cua so phai DINH SAT NHAU nhu truoc: Main cao 116, EQ o 116,
+  // Playlist o 232. Neu EQ/Playlist bi keo lech hoac bi de lai o vi tri
+  // Double Size cu (EQ 232, Playlist 464) thi se ho khe den giua cac
+  // cua so - dung nhu anh ban gui. Phat hien khe >5px thi keo lai ve
+  // dung vi tri, dung action UPDATE_WINDOW_POSITIONS da kiem chung.
+  try {
+    const mEl = document.getElementById('main-window'), eEl = document.getElementById('equalizer-window'), pEl = document.getElementById('playlist-window');
+    if(mEl && eEl && pEl && typeof webamp !== 'undefined' && webamp && webamp.store){
+      const mR = mEl.getBoundingClientRect(), eR = eEl.getBoundingClientRect(), pR = pEl.getBoundingClientRect();
+      const eqGap = (eR.top - mR.bottom) / cur, plGap = (pR.top - eR.bottom) / cur;
+      if(Math.abs(eqGap) > 5 || Math.abs(plGap) > 5){
+        webamp.store.dispatch({type:'UPDATE_WINDOW_POSITIONS', positions:{main:{x:0,y:0}, equalizer:{x:0,y:116}, playlist:{x:0,y:232}}, absolute:true});
+      }
+    }
+  } catch(e){}
   if(window.__fullMode){
     // Che do full (keo dan): scale theo rong, sat canh trai, Playlist
     // keo dai theo chieu cao man hinh de lap day chieu doc, khong bop.
