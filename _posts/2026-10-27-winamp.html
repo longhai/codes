@@ -19,14 +19,11 @@
   #menu input[type=url]{width:100%;padding:10px;border-radius:6px;border:1px solid #4b5563;background:#111827;color:#fff}
   #skinInput,#musicInput,#folderInput{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
   #msg{font-size:13px;color:#fbbf24;min-height:18px;padding:0 10px}
-  /* QUAN TRONG: #app phai sat canh trai (margin:0, khong auto) vi Webamp lay
-     vi tri cua #app lam goc toa do cho cac cua so. Truoc day #app margin:auto
-     dat no giua man hinh (left=57.5 o 390px), nen cua so chinh lech sang phai
-     toi 81px, thua mot khoang den ben trai du da scale vua chieu rong. */
-  #appWrap{position:relative;overflow:hidden;margin:0;height:0;width:275px}
-  #app{position:relative;width:275px;margin:0;height:0;transform-origin:top center}
-  /* Khung Webamp phai sat canh trai ngay tu luc moi xuat hien, khong cho
-     trinh duyet dat no giua man hinh trong luc cho JS do kich thuoc. */
+  /* Thiet ke dung cua app: binh thuong #app canh giua, cua so 275px nho
+     canh giua nhu Winamp goc. Chi khi bat Double Size (550px) moi can
+     co ve vua man hinh va sat canh trai, chu khong phai luc nao cung full. */
+  #appWrap{position:relative;overflow:hidden;margin:0 auto;height:0;width:275px}
+  #app{position:relative;width:275px;margin:0 auto;height:0;transform-origin:top center}
   #webamp{transform-origin:top left}
 </style>
 <script src="webamp.bundle.min.js"></script>
@@ -71,44 +68,54 @@ async function loadSongsJson(url, base){
   return items.map(s => toTrack(s, base));
 }
 
-// VUA KHIT NHU APP: Webamp khong render vao #app ma render ra div #webamp
-// rieng o cuoi body, nen scale #app truoc day khong co tac dung gi.
-// Gio scale truc tiep #webamp, do kich thuoc that cua 3 cua so
-// (275px binh thuong, 550px khi bat Double Size) roi co ve vua man hinh.
+// DUNG THIET KE CUA APP: binh thuong GIU NGUYEN 275px, nho, canh giua,
+// khong scale, khong full. Chi khi bat Double Size (cua so 550px) moi co
+// ve vua man hinh va sat canh trai, de Double Size tren dien thoai khong
+// tran ra ngoai ma thanh full vua man hinh nhu ban thay truoc day.
 function fitWebamp(){
   const w = document.getElementById('webamp');
   if(!w) return;
-  // Do kich thuoc that tu rect hien tai chia cho ti le hien tai,
-  // khong can reset transform (reset gay chop va gay vong lap observer).
   const cur = parseFloat((w.style.transform.match(/scale\(([^)]+)\)/) || [0, 1])[1]) || 1;
   const ids = ['main-window','equalizer-window','playlist-window'];
-  let minTop = Infinity, maxBottom = -Infinity, maxW = 0;
+  let minTop = Infinity, maxBottom = -Infinity, maxW = 0, mainLeft = 0;
   ids.forEach(id => {
     const el = document.getElementById(id);
     if(!el) return;
     const r = el.getBoundingClientRect();
-    if(r.width > 0){ minTop = Math.min(minTop, r.top); maxBottom = Math.max(maxBottom, r.bottom); maxW = Math.max(maxW, r.width / cur); }
+    if(r.width > 0){
+      minTop = Math.min(minTop, r.top); maxBottom = Math.max(maxBottom, r.bottom);
+      maxW = Math.max(maxW, r.width / cur);
+      if(id === 'main-window') mainLeft = r.left;
+    }
   });
-  if(!isFinite(minTop) || maxW === 0){
-    // Chua do duoc cua so (Webamp moi bat dau render): dung ngay ti le
-    // du phong theo chieu rong, de khi cua so vua xuat hien da o co full
-    // chu khong phai hien nho canh giua roi moi nhay to len sau 2 giay.
-    // Day la ly do ban truoc load len van nho: fit chi chay khi do duoc cua so.
-    const scale0 = (window.innerWidth / 275) * 0.99;
-    if(Math.abs(scale0 - cur) >= 0.005){
-      w.style.transformOrigin = 'top left';
-      w.style.transform = 'scale(' + scale0 + ')';
+  if(!isFinite(minTop) || maxW === 0) return;
+  // Che do thuong: tra ve co goc, de Webamp tu canh giua nhu mac dinh.
+  if(maxW < 400){
+    if(cur !== 1 || w.style.left){
+      w.style.transform = 'scale(1)';
+      w.style.position = ''; w.style.left = '';
+      document.body.style.height = ''; document.body.style.overflow = '';
     }
     return;
   }
+  // Che do Double Size: uu tien vua chieu rong (full) va sat canh trai,
+  // dong thoi dich khung sang trai de bu lech do #app canh giua.
+  // Chieu cao Double Size (1624 voi extraHeight 16) vuot chieu cao dien
+  // thoai, nen khong the vua ca rong lan cao cung luc - cho cuon xuong
+  // de thay chan Playlist, dung nhu cua so lon tren desktop.
   const contentH = (maxBottom - minTop) / cur;
-  const vw = window.innerWidth, vh = window.innerHeight;
-  const scale = Math.min(vw / maxW, vh / contentH) * 0.99;
-  if(Math.abs(scale - cur) < 0.005) return;
+  const vw = window.innerWidth;
+  const scale = (vw / maxW) * 0.99;
+  const wLeft = w.getBoundingClientRect().left;
+  const translateUnscaled = (mainLeft - wLeft) / cur;
+  const shift = -translateUnscaled * scale;
+  if(Math.abs(scale - cur) < 0.005 && Math.abs(parseFloat(w.style.left || 0) - shift) < 1) return;
+  w.style.position = 'relative';
+  w.style.left = shift + 'px';
   w.style.transformOrigin = 'top left';
   w.style.transform = 'scale(' + scale + ')';
   document.body.style.height = Math.ceil(contentH * scale) + 'px';
-  document.body.style.overflow = 'hidden';
+  document.body.style.overflow = 'auto';
 }
 window.addEventListener('resize', fitWebamp);
 window.addEventListener('orientationchange', () => setTimeout(fitWebamp, 300));
@@ -124,24 +131,15 @@ async function start(){
     try { tracks = await loadSongsJson('songs.json', ''); say('Đã nạp ' + tracks.length + ' bài từ songs.json cùng thư mục.'); }
     catch(e){ say('Chưa thấy songs.json cùng thư mục — mở menu ⋯ để chọn nhạc trên máy.'); }
   }
-  // Cai dat ben trong cua Webamp: xep 3 cua so sat nhau theo chieu doc.
-  // Playlist phai KEO DAI vua chieu cao man hinh, chu khong de co dinh:
-  // do thuc te playlist cao 116 + 29px moi extraHeight, tong = 348 + 29*eh.
-  // extraHeight 16 co dinh truoc day lam tong len 812, nen scale phai theo
-  // chieu cao, thua toi 104px hai ben - do la ly do chua chon Double Size
-  // ma trinh nghe da "vua" (vua chieu cao) nhung khong sat canh trai/phai.
-  // Gio tinh eh tu chieu cao man hinh hien tai, lay floor de uu tien
-  // sat canh trai/phai: scale theo rong se vua khit, chi thua chut it o duoi.
-  const _vw = window.innerWidth, _vh = window.innerHeight;
-  const _scaleW = _vw / 275;
-  const _totalNeeded = _vh / _scaleW;
-  const _eh = Math.max(0, Math.floor((_totalNeeded - 232 - 116) / 29));
+  // Cai dat ben trong cua Webamp: xep 3 cua so sat nhau theo chieu doc,
+  // playlist keo dai nhu ban truoc (extraHeight 16, tong cao 812) de che do
+  // thuong van cao, chi co rong la nho 275px canh giua nhu app goc.
   webamp = new Webamp({
     initialTracks: tracks,
     windowLayout: {
       main: { position: { left: 0, top: 0 } },
       equalizer: { position: { left: 0, top: 116 } },
-      playlist: { position: { left: 0, top: 232 }, size: { extraHeight: _eh, extraWidth: 0 } }
+      playlist: { position: { left: 0, top: 232 }, size: { extraHeight: 16, extraWidth: 0 } }
     }
   });
   webamp.renderWhenReady(document.getElementById('app')).then(() => {
