@@ -49,9 +49,10 @@
             // Chon Playlist cao sao cho ti le cao gan ti le rong nhat,
             // de khi keo dan theo chieu cao thi hinh khong bi meo nhieu.
             // Tong cao chua keo: Main 232 + EQ 232 + Playlist (116+eh*29)
+            const _mainH = (typeof __mainShaded !== 'undefined' && __mainShaded) ? 14 : 116;
             let bestEh = 0, bestDiff = 1e9;
             for(let eh=0; eh<=40; eh++){
-                const total = 232 + 116 + eh * 29;
+                const total = _mainH + 116 + 116 + eh * 29;
                 const sy = vh / total;
                 const diff = Math.abs(sy - scaleX);
                 if(diff < bestDiff){ bestDiff = diff; bestEh = eh; }
@@ -62,9 +63,9 @@
             // so se chong len nhau va de ho tren/duoi/trai/phai nhu ban truoc.
             try {
                 const plH = 116 + bestEh * 29;
-                webamp.store.dispatch({type:'UPDATE_WINDOW_POSITIONS', positions:{main:{x:0,y:0}, equalizer:{x:0,y:116}, playlist:{x:0,y:232}, milkdrop:{x:0,y:232+plH}}, absolute:true});
+                webamp.store.dispatch({type:'UPDATE_WINDOW_POSITIONS', positions:{main:{x:0,y:0}, equalizer:{x:0,y:_mainH}, playlist:{x:0,y:_mainH+116}, milkdrop:{x:0,y:_mainH+116+plH}}, absolute:true});
             } catch(e){}
-            const totalH = 232 + 116 + bestEh * 29;
+            const totalH = ((typeof __mainShaded !== 'undefined' && __mainShaded) ? 14 : 116) + 116 + 116 + bestEh * 29;
             const scaleY = vh / totalH;
             // Lap day man hinh hoan toan: trai 0, phai = vw, tren 0, duoi = vh,
             // khong con ho tren/duoi/trai/phai. scaleY gan scaleX nen meo <5%.
@@ -101,13 +102,73 @@
         setTimeout(applyZoom, 300);
         setTimeout(applyZoom, 1000);
     }
+    // NUT THU GON CUA SO (Shade, giua thu nho va X): tra ve chuc nang goc
+    // la thu Main xuong chi con thanh tieu de, khong phai phong to nua.
+    // Phong to chuyen sang nut D (Toggle Doublesize) o duoi.
+    let __mainShaded = false;
     document.addEventListener('click', (e) => {
         const sh = e.target && e.target.closest ? e.target.closest('#shade') : null;
-        if(sh){ toggleZoom(e); }
+        if(!sh) return;
+        // Thu gon duoc ca khi dang full: khong thoat full nua, ma thu gon
+        // Main xuong thanh tieu de trong khi van giu full, Playlist se dai
+        // ra lap day phan trong do Main thu lai.
+        e.preventDefault(); e.stopPropagation();
+        try { webamp.store.dispatch({type:'TOGGLE_WINDOW_SHADE_MODE', windowId:'main'}); } catch(err){}
+        __mainShaded = !__mainShaded;
+        setTimeout(() => {
+            try {
+                if(__zoomed){
+                    // Dang full: chay lai applyZoom de tinh lai Playlist dai ra
+                    // lap day phan Main thu lai, van giu full khong thoat.
+                    applyZoom();
+                    return;
+                }
+                const xC = Math.round((window.innerWidth - 275) / 2);
+                const orig = window.__origPlSize || [0, 0];
+                const plH = 116 + (orig[1] || 0) * 29;
+                if(__mainShaded){
+                    webamp.store.dispatch({type:'UPDATE_WINDOW_POSITIONS', positions:{main:{x:xC,y:0}, equalizer:{x:xC,y:14}, playlist:{x:xC,y:130}, milkdrop:{x:xC,y:130+plH}}, absolute:true});
+                } else {
+                    webamp.store.dispatch({type:'UPDATE_WINDOW_POSITIONS', positions:{main:{x:xC,y:0}, equalizer:{x:xC,y:116}, playlist:{x:xC,y:232}, milkdrop:{x:xC,y:232+plH}}, absolute:true});
+                }
+            } catch(err2){}
+        }, 200);
+    }, true);
+    // NUT PHONG TO THAT: nut D (Toggle Doublesize) o hang nut duoi Main,
+    // bam la full, bam lai la ve thuong (dung ham toggleZoom cu, nhung gio gan vao nut D)
+    document.addEventListener('click', (e) => {
+        const d = e.target && e.target.closest ? e.target.closest('#button-d') : null;
+        if(d){ toggleZoom(e); }
+    }, true);
+    // Nut Full tren dien thoai: them touchend de bam cham la nhan ngay,
+    // khong phai cho click sau khi keo, vi nut D goc chi 8x8px rat kho bam.
+    document.addEventListener('touchend', (e) => {
+        const d = e.target && e.target.closest ? e.target.closest('#button-d') : null;
+        if(d){ toggleZoom(e); }
+    }, true);
+    // NUT FULL GIONG UNG DUNG MAY TINH: nut ke ben nut thu gon cua so la
+    // nut thu nho (-), hien tai nut nay o ban web khong hoat dong (khong co
+    // cua so he dieu hanh de thu xuong), nen dung nut nay cho chuc nang Full,
+    // giong nut Maximize tren ung dung may tinh: bam la full man hinh,
+    // bam lai la ve co thuong. Nut thu gon (Shade) van giu chuc nang thu gon,
+    // nut X van tat, nut D van full duoc.
+    document.addEventListener('click', (e) => {
+        const mn = e.target && e.target.closest ? e.target.closest('#minimize') : null;
+        if(mn){ toggleZoom(e); }
+    }, true);
+    document.addEventListener('touchend', (e) => {
+        const mn = e.target && e.target.closest ? e.target.closest('#minimize') : null;
+        if(mn){ toggleZoom(e); }
+    }, true);
+    // VO HIEU HOA NUT X: bam X khong dong player nua, tranh bam nham
+    // khi bam nut thu gon ke ben (nut X, thu nho, shade nam sat nhau, rat nho tren dien thoai).
+    document.addEventListener('click', (e) => {
+        const cl = e.target && e.target.closest ? e.target.closest('#close, #equalizer-close, #playlist-close, .gen-close') : null;
+        if(cl){ e.preventDefault(); e.stopPropagation(); }
     }, true);
     // Tang vung bam cua nut shade va nut doublesize cho de bam tren dien thoai
     const _style = document.createElement('style');
-    _style.textContent = '#shade, #button-d{position:relative} #shade::after, #button-d::after{content:"";position:absolute;left:-9px;top:-7px;width:32px;height:28px}';
+    _style.textContent = '#shade, #minimize{position:relative} #shade::after, #minimize::after{content:"";position:absolute;left:-9px;top:-7px;width:32px;height:28px} #button-d{position:relative} #button-d::after{content:"";position:absolute;left:-20px;top:-18px;width:48px;height:44px}';
     document.head.appendChild(_style);
     webamp.renderWhenReady(app).then(() => {
         // Mac dinh chi hien 3 cua so (Main, Equalizer, Playlist), an
