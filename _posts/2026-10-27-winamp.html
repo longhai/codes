@@ -89,8 +89,13 @@ function fitWebamp(){
     }
   });
   if(!isFinite(minTop) || maxW === 0) return;
-  // Che do thuong: tra ve co goc, de Webamp tu canh giua nhu mac dinh.
+  // Che do thuong: tra ve co goc, de Webamp tu canh giua nhu mac dinh,
+  // va tra Playlist ve size goc neu truoc do da keo full vi Double Size.
   if(maxW < 400){
+    if(window.__playlistFull && typeof webamp !== 'undefined' && webamp && webamp.store){
+      try { webamp.store.dispatch({type:'WINDOW_SIZE_CHANGED', windowId:'playlist', size:[0, 16]}); } catch(e){}
+      window.__playlistFull = false;
+    }
     if(cur !== 1 || w.style.left){
       w.style.transform = 'scale(1)';
       w.style.position = ''; w.style.left = '';
@@ -98,14 +103,23 @@ function fitWebamp(){
     }
     return;
   }
-  // Che do Double Size: uu tien vua chieu rong (full) va sat canh trai,
-  // dong thoi dich khung sang trai de bu lech do #app canh giua.
-  // Chieu cao Double Size (1624 voi extraHeight 16) vuot chieu cao dien
-  // thoai, nen khong the vua ca rong lan cao cung luc - cho cuon xuong
-  // de thay chan Playlist, dung nhu cua so lon tren desktop.
+  // Che do Double Size: Webamp chi phong to cua so chinh va EQ len 550px,
+  // Playlist thi KHONG tu phong to (canDouble chi co o main/EQ) nen no
+  // van 275px, thanh ra chi bang nua rong cua so chinh - dung hien tuong
+  // ban chup anh. Phai keo Playlist ra bang tay qua store:
+  // extraWidth 11 = (550-275)/25, de Playlist rong 550px nhu cua so chinh,
+  // va extraHeight tinh theo chieu cao man hinh de Playlist lap day chieu doc.
   const contentH = (maxBottom - minTop) / cur;
-  const vw = window.innerWidth;
+  const vw = window.innerWidth, vh = window.innerHeight;
   const scale = (vw / maxW) * 0.99;
+  if(!window.__playlistFull && typeof webamp !== 'undefined' && webamp && webamp.store){
+    try {
+      const totalNeeded = vh / scale;
+      const ehDouble = Math.max(0, Math.floor((totalNeeded - 464 - 116) / 29));
+      webamp.store.dispatch({type:'WINDOW_SIZE_CHANGED', windowId:'playlist', size:[11, ehDouble]});
+      window.__playlistFull = true;
+    } catch(e){}
+  }
   const wLeft = w.getBoundingClientRect().left;
   const translateUnscaled = (mainLeft - wLeft) / cur;
   const shift = -translateUnscaled * scale;
