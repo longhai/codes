@@ -204,7 +204,34 @@
             if(txt === '<Base Skin>'){ localStorage.removeItem('webamp-saved-skin-url'); }
         } catch(err){}
     }, true);
+    // GIU EQ KHI LOAD LAI TRANG: EQ cung chi giu trong bo nho trang,
+    // load lai la ve mac dinh (tat ca can ve giua, EQ bat). Ban nay luu
+    // EQ vao localStorage moi khi chinh, khi mo trang lai se tu dat lai.
     webamp.renderWhenReady(app).then(() => {
+        try {
+            const savedEq = localStorage.getItem('webamp-saved-eq');
+            if(savedEq){
+                const eq = JSON.parse(savedEq);
+                if(eq.sliders){
+                    for(const band in eq.sliders){
+                        try { webamp.store.dispatch({type:'SET_BAND_VALUE', band: band, value: eq.sliders[band]}); } catch(e){}
+                    }
+                }
+                if(eq.on === false){ try { webamp.store.dispatch({type:'SET_EQ_OFF'}); } catch(e){} }
+                if(eq.on === true){ try { webamp.store.dispatch({type:'SET_EQ_ON'}); } catch(e){} }
+                if(typeof eq.auto !== 'undefined'){ try { webamp.store.dispatch({type:'SET_EQ_AUTO', value: eq.auto}); } catch(e){} }
+            }
+        } catch(e){}
+        let _lastEqJson = '';
+        try {
+            webamp.store.subscribe(() => {
+                try {
+                    const eq = webamp.store.getState().equalizer;
+                    const j = JSON.stringify(eq);
+                    if(j !== _lastEqJson){ _lastEqJson = j; localStorage.setItem('webamp-saved-eq', j); }
+                } catch(e){}
+            });
+        } catch(e){}
         // Mac dinh chi hien 3 cua so (Main, Equalizer, Playlist), an
         // Milkdrop di, nhung van bat chuc nang Milkdrop len de trong
         // cai dat (menu logo tia set) co du 4 muc lua chon, bam vao
