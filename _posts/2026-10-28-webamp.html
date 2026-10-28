@@ -207,7 +207,32 @@
     // GIU EQ KHI LOAD LAI TRANG: EQ cung chi giu trong bo nho trang,
     // load lai la ve mac dinh (tat ca can ve giua, EQ bat). Ban nay luu
     // EQ vao localStorage moi khi chinh, khi mo trang lai se tu dat lai.
+    // NHO FILE NHAC: file nhac chon bang file picker trong may thi trinh
+    // duyet khong cho nho duong dan, load lai la mat. Cach nho duoc la
+    // up file nhac len cung thu muc voi webamp.html, roi liet ke trong
+    // songs.json cung thu muc, trang se tu nap songs.json moi lan mo,
+    // khoi phai chon lai. Khi up nhac moi thi sua songs.json moi, trang
+    // se nho danh sach moi. Neu khong co songs.json thi dung danh sach
+    // nhac URL da luu trong localStorage truoc do.
     webamp.renderWhenReady(app).then(() => {
+        try {
+            fetch('songs.json').then(r => r.ok ? r.json() : null).then(list => {
+                if(list && list.length){
+                    try { localStorage.setItem('webamp-saved-tracks', JSON.stringify(list)); } catch(e){}
+                    try { webamp.appendTracks(list); } catch(e){}
+                } else {
+                    try {
+                        const saved = localStorage.getItem('webamp-saved-tracks');
+                        if(saved){ const sl = JSON.parse(saved); if(sl && sl.length) webamp.appendTracks(sl); }
+                    } catch(e){}
+                }
+            }).catch(() => {
+                try {
+                    const saved = localStorage.getItem('webamp-saved-tracks');
+                    if(saved){ const sl = JSON.parse(saved); if(sl && sl.length) webamp.appendTracks(sl); }
+                } catch(e){}
+            });
+        } catch(e){}
         try {
             const savedEq = localStorage.getItem('webamp-saved-eq');
             if(savedEq){
