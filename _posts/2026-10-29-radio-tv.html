@@ -7,13 +7,13 @@
 <style>
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
-body{background:#050505;color:#e2e8f0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;overflow:hidden}
+body{background:#050505;color:#e2e8f0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;overflow:hidden;display:flex;flex-direction:column;height:100vh;height:100dvh}
 button{font-family:inherit;cursor:pointer;border:0;background:none;color:inherit}
 input{font-family:inherit}
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:10px}
 /* header */
-header{height:64px;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.8);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.05);position:sticky;top:0;z-index:70}
+header{height:64px;flex-shrink:0;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.8);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.05);z-index:70}
 .logo{display:flex;align-items:center;gap:10px}
 .logo-box{width:32px;height:32px;background:linear-gradient(135deg,#4f46e5,#8b5cf6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 8px 20px rgba(79,70,229,.3)}
 .logo h1{font-size:17px;letter-spacing:-.5px;text-transform:uppercase;line-height:1;margin:0;font-weight:900}
@@ -37,7 +37,7 @@ header{height:64px;padding:12px 20px;display:flex;align-items:center;justify-con
 .menu button.danger{color:#f87171}
 .menu hr{height:1px;background:rgba(255,255,255,.05);border:0;margin:4px 8px}
 /* player */
-#playerWrap{position:sticky;top:64px;z-index:50;background:#000;box-shadow:0 20px 40px rgba(0,0,0,.5);overflow:hidden;transition:all .5s;height:0;opacity:0}
+#playerWrap{flex-shrink:0;z-index:50;background:#000;box-shadow:0 20px 40px rgba(0,0,0,.5);overflow:hidden;transition:all .5s;height:0;opacity:0}
 #playerWrap.show{opacity:1}
 #playerWrap.audio{height:176px}
 #playerWrap.video{aspect-ratio:16/9;height:auto}
@@ -57,14 +57,17 @@ header{height:64px;padding:12px 20px;display:flex;align-items:center;justify-con
 .bar{flex:1;height:6px;background:rgba(255,255,255,.05);border-radius:999px;overflow:hidden}
 .bar div{height:100%;background:linear-gradient(90deg,#6366f1,#8b5cf6);transition:all 1s;width:0;opacity:0}
 .bar div.on{width:100%;opacity:1}
+.vol-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.vol-wrap span{font-size:14px}
+.vol-wrap input{width:70px;accent-color:#818cf8;cursor:pointer}
 #loading{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:20;pointer-events:none}
 #loading.show{display:flex}
 .spinner{width:36px;height:36px;border-radius:50%;border:3px solid rgba(255,255,255,.18);border-top-color:#818cf8;animation:spin .8s linear infinite}
+#playError{position:absolute;left:12px;right:12px;bottom:12px;z-index:30;display:none;background:rgba(127,29,29,.92);color:#fecaca;font-size:12px;font-weight:600;text-align:center;padding:10px 12px;border-radius:12px}
+#playError.show{display:block}
 @keyframes spin{to{transform:rotate(360deg)}}
 /* list */
-main{height:calc(100vh - 64px);overflow-y:auto;padding-bottom:96px}
-main.player-on{height:calc(100vh - 64px - 176px)}
-main.player-on.video-on{height:auto}
+main{flex:1;min-height:0;overflow-y:auto;padding-bottom:96px}
 .empty{padding:48px;text-align:center;opacity:.4}
 .empty div{font-size:48px;margin-bottom:16px}
 .group-head{width:100%;display:flex;align-items:center;padding:12px 16px;border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02);position:sticky;top:0;z-index:30;backdrop-filter:blur(10px);text-align:left}
@@ -141,6 +144,8 @@ main.player-on.video-on{height:auto}
       <button class="icon-btn" id="menuBtn">⋮</button>
       <div class="menu" id="menu">
         <button onclick="openUrlImport()"><i>🌐</i> Nhập từ Link (URL)</button>
+        <button onclick="refreshSources()"><i>⟳</i> Làm mới nguồn</button>
+        <button onclick="openSources()"><i>📡</i> Nguồn đã lưu</button>
         <label><i>⬆️</i> Nhập từ File (.m3u)<input type="file" accept=".m3u,.m3u8" class="hidden" onchange="importFile(this)"></label>
         <button onclick="exportM3U()"><i>⬇️</i> Xuất file M3U</button>
         <hr>
@@ -168,8 +173,10 @@ main.player-on.video-on{height:auto}
       <div class="controls">
         <button class="play-btn" id="playBtn" onclick="togglePlay()">▶</button>
         <div class="bar"><div id="barFill"></div></div>
+        <div class="vol-wrap"><span id="volIcon">🔊</span><input id="volRange" type="range" min="0" max="100" value="100" title="Âm lượng"></div>
       </div>
     </div>
+    <div id="playError">Không phát được kênh này. Thử kênh khác hoặc kiểm tra lại link.</div>
     <div id="loading"><div class="spinner"></div></div>
   </div>
 </div>
@@ -205,8 +212,17 @@ main.player-on.video-on{height:auto}
 <div class="modal" id="urlModal">
   <div class="box">
     <div class="box-head"><span>🌐 Nhập Link M3U</span><button onclick="closeModal('urlModal')">✕</button></div>
-    <div class="box-body"><input id="importUrl" placeholder="https://..."></div>
+    <div class="box-body"><input id="importUrl" placeholder="https://..."><p style="font-size:12px;color:#64748b;margin:0">Link này sẽ được lưu làm nguồn. Mỗi lần mở trang, danh sách sẽ tải lại từ nguồn này nên nguồn sửa là trang tự cập nhật theo.</p></div>
     <div class="box-foot"><button class="btn-ghost" onclick="closeModal('urlModal')">Hủy</button><button class="btn-indigo" onclick="doImportUrl()">Tải dữ liệu</button></div>
+  </div>
+</div>
+
+<!-- Nguồn đã lưu -->
+<div class="modal" id="sourceModal">
+  <div class="box">
+    <div class="box-head"><span>📡 Nguồn đã lưu</span><button onclick="closeModal('sourceModal')">✕</button></div>
+    <div class="box-body" id="sourceList"></div>
+    <div class="box-foot"><button class="btn-ghost" onclick="closeModal('sourceModal')">Đóng</button><button class="btn-indigo" onclick="refreshSources()">Làm mới nguồn</button></div>
   </div>
 </div>
 
@@ -239,14 +255,99 @@ main.player-on.video-on{height:auto}
 </div>
 
 <script>
-var KEY='radio-tv-channels-v1';
-var channels=[];
-try{ channels=JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(e){ channels=[]; }
+/* Mô hình mới: chỉ nhớ NGUỒN, không nhớ kênh từ nguồn.
+   - sources: các link .m3u đã nhập qua Link, tải lại mỗi lần mở trang.
+   - localChannels: kênh thêm tay + kênh nhập từ File (file không có link để tải lại).
+   - overrides: kênh nguồn mà bạn sửa tay, ghi đè theo URL gốc của nguồn.
+   - hidden: kênh nguồn mà bạn xóa tay, để nguồn tải lại cũng không hiện lại.
+   Danh sách cũ (radio-tv-channels-v1) được chuyển 1 lần thành localChannels để không mất kênh. */
+var LOCAL_KEY='radio-tv-local-v1', SRC_KEY='radio-tv-sources-v1', HIDDEN_KEY='radio-tv-hidden-v1', OVER_KEY='radio-tv-overrides-v1', SORT_KEY='radio-tv-sort-az';
+function loadJSON(key, fallback){ try{ var v=JSON.parse(localStorage.getItem(key)||''); return (v===null||v===undefined)?fallback:v; }catch(e){ return fallback; } }
+function saveJSON(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+var localChannels=loadJSON(LOCAL_KEY, []);
+if(!localChannels.length){
+  var oldList=loadJSON('radio-tv-channels-v1', []);
+  if(oldList.length){ localChannels=oldList; saveJSON(LOCAL_KEY, localChannels); try{ localStorage.removeItem('radio-tv-channels-v1'); }catch(e){} }
+}
+var sources=loadJSON(SRC_KEY, []);
+var hidden=loadJSON(HIDDEN_KEY, []);
+var overrides=loadJSON(OVER_KEY, {});
+var sortAz=loadJSON(SORT_KEY, false);
+var sourceRaw=[]; // [{channel, sourceUrl}]
+var sourceErrors=[]; // [{url}]
+var sourcesLoading=sources.length>0;
+var channels=[]; // danh sách hiển thị, dựng lại từ nguồn + local, không lưu trực tiếp
 var search='', isSearching=false, currentUrl='', isVideoMode=false, isPlaying=false;
-var expanded={}, isEditMode=false, editingIndex=null, renameOld='';
+var expanded={};
+try{ expanded=JSON.parse(localStorage.getItem('radio-tv-expanded-v1')||'{}')||{}; }catch(e){ expanded={}; }
+function saveExpanded(){ try{ localStorage.setItem('radio-tv-expanded-v1', JSON.stringify(expanded)); }catch(e){} }
+var isEditMode=false, editingIndex=null, renameOld='';
 var video=document.getElementById('playerVideo'), hls=null, loadingEl=document.getElementById('loading');
 
-function save(){ localStorage.setItem(KEY, JSON.stringify(channels)); render(); }
+function cleanChannel(c){ return {name:c.name||'', url:c.url||'', group:c.group||'', logo:c.logo||''}; }
+function rebuild(){
+  var seen={}, list=[];
+  sourceRaw.forEach(function(item){
+    var orig=item.channel.url;
+    if(hidden.indexOf(orig)!==-1) return;
+    var base=overrides[orig] ? Object.assign({}, overrides[orig]) : Object.assign({}, item.channel);
+    var ch=cleanChannel(base); ch._isSource=true; ch._origUrl=orig; ch._sourceUrl=item.sourceUrl;
+    if(seen[ch.url]) return; seen[ch.url]=1; list.push(ch);
+  });
+  localChannels.forEach(function(c){
+    var ch=cleanChannel(c); ch._isSource=false; ch._origUrl=c.url;
+    if(seen[ch.url]) return; seen[ch.url]=1; list.push(ch);
+  });
+  if(sortAz) list.sort(function(a,b){ return a.name.localeCompare(b.name,'vi'); });
+  channels=list; render();
+}
+async function fetchOneSource(url){
+  try{
+    var r=await fetch(url); var t=await r.text(); var p=parseM3U(t);
+    sourceRaw=sourceRaw.filter(function(it){ return it.sourceUrl!==url; });
+    p.forEach(function(ch){ sourceRaw.push({channel:ch, sourceUrl:url}); });
+    // Nguồn đã nhận quyền sở hữu các URL này: gỡ bản local trùng để nguồn gỡ kênh thì kênh không sống lại từ bản cũ.
+    var urls={}; p.forEach(function(ch){ urls[ch.url]=1; });
+    var before=localChannels.length;
+    localChannels=localChannels.filter(function(c){ return !urls[c.url]; });
+    if(localChannels.length!==before) saveJSON(LOCAL_KEY, localChannels);
+    sourceErrors=sourceErrors.filter(function(e){ return e.url!==url; });
+    return p.length;
+  }catch(e){
+    if(!sourceErrors.some(function(e){ return e.url===url; })) sourceErrors.push({url:url});
+    return -1;
+  }
+}
+async function fetchSources(urls){
+  var list=urls || sources;
+  if(!list.length){ sourcesLoading=false; rebuild(); return; }
+  sourcesLoading=true; render();
+  for(var i=0;i<list.length;i++){ await fetchOneSource(list[i]); }
+  sourcesLoading=false; rebuild();
+}
+async function refreshSources(){ closeMenu(); if(!sources.length){ alert('Chưa có nguồn nào được lưu. Nhập 1 link .m3u qua "Nhập từ Link" trước.'); return; } await fetchSources(); renderSources(); }
+function openSources(){ closeMenu(); renderSources(); openModal('sourceModal'); }
+function renderSources(){
+  var el=document.getElementById('sourceList');
+  if(!sources.length){ el.innerHTML='<p style="font-size:12px;color:#64748b;margin:0">Chưa có nguồn nào. Nhập link .m3u qua menu ⋮ &gt; Nhập từ Link, link đó sẽ được lưu ở đây và tự tải lại mỗi lần mở trang.</p>'; return; }
+  var html='';
+  sources.forEach(function(u){
+    var n=sourceRaw.filter(function(it){ return it.sourceUrl===u; }).length;
+    var err=sourceErrors.some(function(e){ return e.url===u; });
+    html+='<div style="display:flex;gap:8px;align-items:flex-start"><div style="flex:1;min-width:0"><p style="font-size:12px;color:#e2e8f0;word-break:break-all;margin:0">'+esc(u)+'</p><p style="font-size:11px;color:'+(err?'#f87171':'#64748b')+';margin:4px 0 0">'+(err?'Không tải được lần gần nhất (CORS/mạng)':(n+' kênh'))+'</p></div><button class="btn-red" style="padding:10px 14px;border-radius:12px;font-size:11px;font-weight:700;flex-shrink:0" onclick="deleteSource(\''+esc(u).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')">Xóa</button></div>';
+  });
+  el.innerHTML=html;
+}
+function deleteSource(url){
+  var origUrls=[];
+  sourceRaw.forEach(function(it){ if(it.sourceUrl===url) origUrls.push(it.channel.url); });
+  sources=sources.filter(function(u){ return u!==url; }); saveJSON(SRC_KEY, sources);
+  sourceRaw=sourceRaw.filter(function(it){ return it.sourceUrl!==url; });
+  origUrls.forEach(function(u){ delete overrides[u]; });
+  hidden=hidden.filter(function(u){ return origUrls.indexOf(u)===-1; });
+  saveJSON(OVER_KEY, overrides); saveJSON(HIDDEN_KEY, hidden);
+  rebuild(); renderSources();
+}
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
 
 function parseM3U(text){
@@ -277,10 +378,24 @@ function exportM3U(){
 function importFile(input){
   var f=input.files[0]; if(!f) return;
   var r=new FileReader();
-  r.onload=function(e){ var p=parseM3U(e.target.result); if(p.length) saveList(channels.concat(p)); closeMenu(); };
+  r.onload=function(e){
+    var p=parseM3U(e.target.result);
+    if(p.length===0){ alert('File này không đọc được kênh nào. Kiểm tra lại file .m3u (cần có dòng #EXTINF rồi tới link).'); return; }
+    var res=addLocalChannels(p);
+    if(res.added===0) alert('Các kênh trong file này đã có sẵn trong danh sách, không thêm trùng.');
+    closeMenu();
+  };
   r.readAsText(f); input.value='';
 }
-function saveList(list){ channels=list; save(); }
+function addLocalChannels(list){
+  var added=0, skipped=0;
+  list.forEach(function(nc){
+    if(channels.some(function(c){ return c.url===nc.url; })) skipped++;
+    else { localChannels.push(cleanChannel(nc)); added++; }
+  });
+  if(added>0){ saveJSON(LOCAL_KEY, localChannels); rebuild(); }
+  return {added:added, skipped:skipped};
+}
 function closeMenu(){ document.getElementById('menu').classList.remove('open'); }
 function openModal(id){ document.getElementById(id).classList.add('open'); }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
@@ -291,7 +406,7 @@ function toggleEdit(){
   document.getElementById('editLabel').textContent=isEditMode?'Tắt chế độ sửa':'Bật chế độ sửa';
   render();
 }
-function sortAZ(){ channels=[].concat(channels).sort(function(a,b){ return a.name.localeCompare(b.name,'vi'); }); save(); closeMenu(); }
+function sortAZ(){ sortAz=true; saveJSON(SORT_KEY, true); rebuild(); closeMenu(); }
 function openAdd(){
   editingIndex=null;
   document.getElementById('chanModalTitle').textContent='Thêm kênh mới';
@@ -300,7 +415,7 @@ function openAdd(){
 }
 function openEdit(i){
   editingIndex=i; var c=channels[i];
-  document.getElementById('chanModalTitle').textContent='Cập nhật kênh';
+  document.getElementById('chanModalTitle').textContent=c._isSource?'Cập nhật kênh (từ nguồn)':'Cập nhật kênh';
   document.getElementById('fName').value=c.name||'';
   document.getElementById('fUrl').value=c.url||'';
   document.getElementById('fGroup').value=c.group||'';
@@ -310,37 +425,92 @@ function openEdit(i){
 function saveChannel(){
   var d={name:document.getElementById('fName').value.trim(),url:document.getElementById('fUrl').value.trim(),group:document.getElementById('fGroup').value.trim(),logo:document.getElementById('fLogo').value.trim()};
   if(!d.name||!d.url) return;
-  if(editingIndex!==null) channels[editingIndex]=d; else channels.unshift(d);
-  save(); closeModal('chanModal');
+  if(editingIndex!==null && channels[editingIndex]){
+    var old=channels[editingIndex];
+    if(old._isSource){ overrides[old._origUrl]=d; saveJSON(OVER_KEY, overrides); }
+    else{
+      var li=-1;
+      localChannels.forEach(function(c,idx){ if(c.url===old._origUrl) li=idx; });
+      if(li!==-1) localChannels[li]=d;
+      saveJSON(LOCAL_KEY, localChannels);
+    }
+  } else { localChannels.unshift(d); saveJSON(LOCAL_KEY, localChannels); }
+  rebuild(); closeModal('chanModal');
 }
-function deleteChannel(i){ channels=channels.filter(function(_,x){ return x!==i; }); save(); }
+function deleteChannel(i){
+  var ch=channels[i]; if(!ch) return;
+  if(ch._isSource){
+    if(hidden.indexOf(ch._origUrl)===-1) hidden.push(ch._origUrl);
+    saveJSON(HIDDEN_KEY, hidden);
+  } else {
+    localChannels=localChannels.filter(function(c){ return c.url!==ch._origUrl; });
+    saveJSON(LOCAL_KEY, localChannels);
+  }
+  rebuild();
+}
 function openRename(g){ renameOld=g; document.getElementById('oldNameText').textContent=g; document.getElementById('newNameInput').value=g; openModal('renameModal'); }
 function doRename(){
   var n=document.getElementById('newNameInput').value.trim();
   if(!n||n===renameOld) return;
-  channels=channels.map(function(c){ return (c.group||'Khác')===renameOld?{name:c.name,url:c.url,group:n,logo:c.logo}:c; });
-  save(); closeModal('renameModal');
+  channels.slice().forEach(function(c){
+    if((c.group||'Khác')!==renameOld) return;
+    if(c._isSource){ var d=cleanChannel(c); d.group=n; overrides[c._origUrl]=d; }
+    else{
+      localChannels.forEach(function(lc){ if(lc.url===c._origUrl) lc.group=n; });
+    }
+  });
+  saveJSON(LOCAL_KEY, localChannels); saveJSON(OVER_KEY, overrides);
+  if(expanded[renameOld]!==undefined){ expanded[n]=expanded[renameOld]; delete expanded[renameOld]; saveExpanded(); }
+  rebuild(); closeModal('renameModal');
 }
 function openDeleteGroup(g){ document.getElementById('deleteGroupName').textContent=g; window._delGroup=g; openModal('deleteGroupModal'); }
-function doDeleteGroup(){ channels=channels.filter(function(c){ return (c.group||'Khác')!==window._delGroup; }); save(); closeModal('deleteGroupModal'); }
+function doDeleteGroup(){
+  channels.slice().forEach(function(c){
+    if((c.group||'Khác')!==window._delGroup) return;
+    if(c._isSource){ if(hidden.indexOf(c._origUrl)===-1) hidden.push(c._origUrl); }
+  });
+  localChannels=localChannels.filter(function(c){ return (c.group||'Khác')!==window._delGroup; });
+  delete expanded[window._delGroup]; saveExpanded();
+  saveJSON(LOCAL_KEY, localChannels); saveJSON(HIDDEN_KEY, hidden);
+  rebuild(); closeModal('deleteGroupModal');
+}
 function openClear(){ closeMenu(); openModal('clearModal'); }
-function doClear(){ channels=[]; currentUrl=''; stopMedia(); save(); closeModal('clearModal'); }
+function doClear(){
+  sources=[]; localChannels=[]; hidden=[]; overrides={}; sourceRaw=[]; sourceErrors=[]; sortAz=false;
+  saveJSON(SRC_KEY, sources); saveJSON(LOCAL_KEY, localChannels); saveJSON(HIDDEN_KEY, hidden); saveJSON(OVER_KEY, overrides); saveJSON(SORT_KEY, false);
+  currentUrl=''; stopMedia(); rebuild(); closeModal('clearModal');
+}
 function openUrlImport(){ closeMenu(); openModal('urlModal'); }
 async function doImportUrl(){
   var u=document.getElementById('importUrl').value.trim(); if(!u) return;
-  setLoading(true);
-  try{
-    var r=await fetch(u); var t=await r.text(); var p=parseM3U(t);
-    if(p.length) saveList(channels.concat(p));
-    closeModal('urlModal'); document.getElementById('importUrl').value='';
-  }catch(e){ alert('Không tải được link này. Nhiều máy chủ chặn đọc từ trang khác (CORS) — thử tải file .m3u về rồi dùng "Nhập từ File" thay cho "Nhập từ Link".'); }
+  var already=sources.indexOf(u)!==-1;
+  if(!already){ sources.push(u); saveJSON(SRC_KEY, sources); }
+  closeModal('urlModal'); document.getElementById('importUrl').value='';
+  var n=await fetchOneSource(u);
+  if(n===-1){ alert('Không tải được link này. Nhiều máy chủ chặn đọc từ trang khác (CORS) — thử tải file .m3u về rồi dùng "Nhập từ File" thay cho "Nhập từ Link". Link vẫn được lưu làm nguồn, mở lại trang sau vẫn thử tải lại.'); }
+  else if(n===0){ alert('Link này không đọc được kênh nào. Kiểm tra lại link .m3u.'); }
+  else if(already){ alert('Nguồn này đã có, đã tải lại ' + n + ' kênh từ nguồn.'); }
+  rebuild();
+}
+var loadingTimer=null, errorEl=document.getElementById('playError');
+function hideError(){ if(errorEl) errorEl.classList.remove('show'); }
+function showError(msg){
+  if(errorEl){ if(msg) errorEl.textContent=msg; errorEl.classList.add('show'); }
   setLoading(false);
 }
-function setLoading(v){ loadingEl.classList.toggle('show',v); }
+function setLoading(v){
+  loadingEl.classList.toggle('show',v);
+  if(loadingTimer){ clearTimeout(loadingTimer); loadingTimer=null; }
+  if(v){
+    loadingTimer=setTimeout(function(){
+      if(loadingEl.classList.contains('show')) showError('Kênh tải quá lâu (30 giây) mà chưa phát được. Thử kênh khác hoặc kiểm tra lại link.');
+    }, 30000);
+  }
+}
 function stopMedia(){
   if(hls){ hls.destroy(); hls=null; }
   video.pause(); video.removeAttribute('src'); video.load();
-  isPlaying=false; updatePlayerUI();
+  isPlaying=false; setLoading(false); updatePlayerUI();
 }
 function togglePlay(){
   if(!video) return;
@@ -354,6 +524,7 @@ function playChannel(ch){
   if(!ch||!video) return;
   var url=ch.url;
   if(currentUrl===url){ togglePlay(); return; }
+  hideError();
   setLoading(true); currentUrl=url;
   var hint=((ch.group||'').toLowerCase().indexOf('tv')!==-1 || (ch.group||'').toLowerCase().indexOf('truyền hình')!==-1) || url.toLowerCase().indexOf('.mp4')!==-1;
   isVideoMode=hint;
@@ -367,6 +538,12 @@ function playChannel(ch){
         if(hls.levels && hls.levels.some(function(l){ return l.videoCodec || l.width>0; })) isVideoMode=true;
         setLoading(false); renderPlayer();
       });
+      hls.on(window.Hls.Events.ERROR,function(ev,data){
+        if(data && data.fatal){
+          if(hls){ hls.destroy(); hls=null; }
+          showError();
+        }
+      });
     } else if(video.canPlayType('application/vnd.apple.mpegurl')){
       video.src=u; video.play().then(function(){setLoading(false);}).catch(function(){setLoading(false);}); renderPlayer();
     } else { setLoading(false); }
@@ -375,7 +552,7 @@ function playChannel(ch){
     if(!window.Hls){
       var s=document.createElement('script');
       s.src='https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js';
-      s.onload=function(){ startHls(url); }; s.onerror=function(){ setLoading(false); };
+      s.onload=function(){ startHls(url); }; s.onerror=function(){ showError(); };
       document.head.appendChild(s);
     } else startHls(url);
   } else {
@@ -385,6 +562,13 @@ function playChannel(ch){
 }
 video.addEventListener('play',function(){ isPlaying=true; updatePlayerUI(); });
 video.addEventListener('pause',function(){ isPlaying=false; updatePlayerUI(); });
+video.addEventListener('playing',function(){ hideError(); setLoading(false); });
+video.addEventListener('waiting',function(){ if(currentUrl && !video.paused) setLoading(true); });
+video.addEventListener('error',function(){
+  if(!currentUrl) return;
+  if(!video.currentSrc) return;
+  showError();
+});
 
 function updatePlayerUI(){
   var cur=channels.find(function(c){ return c.url===currentUrl; });
@@ -398,13 +582,12 @@ function updatePlayerUI(){
 }
 function renderPlayer(){
   var wrap=document.getElementById('playerWrap');
-  if(!currentUrl){ wrap.classList.remove('show','audio','video'); document.getElementById('list').classList.remove('player-on'); return; }
+  if(!currentUrl){ wrap.classList.remove('show','audio','video'); return; }
   wrap.classList.add('show');
   wrap.classList.toggle('audio',!isVideoMode);
   wrap.classList.toggle('video',isVideoMode);
   document.getElementById('playerVideo').classList.toggle('show',isVideoMode);
   document.getElementById('audioUI').classList.toggle('hidden',isVideoMode);
-  document.getElementById('list').classList.toggle('player-on',!isVideoMode);
   updatePlayerUI();
 }
 function render(){
@@ -417,7 +600,10 @@ function render(){
   var html='';
   var keys=Object.keys(groups);
   if(!keys.length){
-    html='<div class="empty"><div>📻</div><p style="font-size:14px;font-weight:500">Danh sách trống.</p><p style="font-size:12px">Bấm ⋮ rồi chọn Nhập từ File (.m3u) hoặc Nhập từ Link.</p></div>';
+    var extra='';
+    if(sourcesLoading) extra+='<p style="font-size:12px">Đang tải nguồn, chờ chút...</p>';
+    if(sourceErrors.length) extra+='<p style="font-size:12px;color:#f87171">Không tải được nguồn: '+sourceErrors.map(function(e){ return esc(e.url); }).join(', ')+' — có thể do CORS/mạng. Bấm ⋮ &gt; Làm mới nguồn thử lại.</p>';
+    html='<div class="empty"><div>📻</div><p style="font-size:14px;font-weight:500">Danh sách trống.</p><p style="font-size:12px">Bấm ⋮ rồi chọn Nhập từ File (.m3u) hoặc Nhập từ Link.</p>'+extra+'</div>';
   }
   keys.forEach(function(g){
     var list=groups[g], open=!!expanded[g];
@@ -440,7 +626,7 @@ function render(){
   document.getElementById('list').innerHTML=html;
   renderPlayer();
 }
-function toggleGroup(g){ expanded[g]=!expanded[g]; render(); }
+function toggleGroup(g){ expanded[g]=!expanded[g]; saveExpanded(); render(); }
 
 document.getElementById('menuBtn').onclick=function(e){ e.stopPropagation(); document.getElementById('menu').classList.toggle('open'); };
 document.addEventListener('mousedown',function(e){
@@ -463,7 +649,24 @@ document.getElementById('clearSearch').onclick=function(){ document.getElementBy
 document.getElementById('searchInput').addEventListener('input',function(e){ search=e.target.value; render(); });
 document.getElementById('doneEdit').onclick=function(){ toggleEdit(); };
 
-render();
+(function(){
+  var range=document.getElementById('volRange'), icon=document.getElementById('volIcon');
+  var saved=100;
+  try{ var v=parseInt(localStorage.getItem('radio-tv-volume'),10); if(!isNaN(v)) saved=Math.max(0,Math.min(100,v)); }catch(e){}
+  video.volume=saved/100; range.value=saved; icon.textContent=saved===0?'🔇':'🔊';
+  range.addEventListener('input',function(){
+    var val=parseInt(range.value,10)||0;
+    video.volume=val/100; icon.textContent=val===0?'🔇':'🔊';
+    try{ localStorage.setItem('radio-tv-volume', String(val)); }catch(e){}
+  });
+  video.addEventListener('volumechange',function(){
+    var val=Math.round(video.volume*100);
+    if(parseInt(range.value,10)!==val){ range.value=val; icon.textContent=val===0?'🔇':'🔊'; }
+  });
+})();
+
+rebuild();
+fetchSources();
 </script>
 </body>
 </html>
