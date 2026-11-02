@@ -527,7 +527,10 @@ function playChannel(ch){
   if(currentUrl===url){ togglePlay(); return; }
   hideError();
   setLoading(true); currentUrl=url;
-  var hint=((ch.group||'').toLowerCase().indexOf('tv')!==-1 || (ch.group||'').toLowerCase().indexOf('truyền hình')!==-1) || url.toLowerCase().indexOf('.mp4')!==-1;
+  /* SỬA 02/11 (Lâm Đồng 2 id=45): nhóm "KÊNH ĐỊA PHƯƠNG" không chứa "tv",
+     link vmttv cũng không có .mp4/.m3u8 nên hint cũ = false, trang hiện
+     giao diện nhạc dù luồng là video. Thêm vmttv/tv360 vào hint. */
+  var hint=((ch.group||'').toLowerCase().indexOf('tv')!==-1 || (ch.group||'').toLowerCase().indexOf('truyền hình')!==-1) || url.toLowerCase().indexOf('.mp4')!==-1 || url.toLowerCase().indexOf('vmttv')!==-1 || url.toLowerCase().indexOf('tv360')!==-1;
   isVideoMode=hint;
   stopMedia(); setLoading(true);
   function startHls(u){
@@ -564,6 +567,16 @@ function playChannel(ch){
 video.addEventListener('play',function(){ isPlaying=true; updatePlayerUI(); });
 video.addEventListener('pause',function(){ isPlaying=false; updatePlayerUI(); });
 video.addEventListener('playing',function(){ hideError(); setLoading(false); });
+/* Nhận diện video theo luồng thật, không theo tên nhóm/link: khi thẻ video
+   có kích thước hình thật (videoWidth > 0) thì chắc chắn là video, bật
+   chế độ video ngay — cứu các kênh bị đoán nhầm thành nhạc (nhóm/địa
+   phương, link không đuôi, v.v.). Kênh chỉ có tiếng thì videoWidth = 0
+   nên không bị nhận nhầm. */
+function checkVideoTrack(){
+  if(!isVideoMode && video.videoWidth>0){ isVideoMode=true; renderPlayer(); }
+}
+video.addEventListener('loadedmetadata',checkVideoTrack);
+video.addEventListener('resize',checkVideoTrack);
 video.addEventListener('waiting',function(){ if(currentUrl && !video.paused) setLoading(true); });
 video.addEventListener('error',function(){
   if(!currentUrl) return;
