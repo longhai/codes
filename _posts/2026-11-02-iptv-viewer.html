@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<!-- FIX 1 (quan trọng nhất trên điện thoại): bản gốc không có viewport nên
+     trình duyệt mobile tự thu nhỏ trang như trang desktop. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>IPTV Viewer</title>
+<!-- Thư viện LAZY (02/11, bạn chốt): mở trang chỉ tải file HTML này,
+     thư viện nào dùng tới mới tải link đó — 1 hàm load() chung bên dưới. -->
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow: hidden; background: #000; color: #111; }
+  /* Dùng dvh để không bị thanh địa chỉ mobile làm lệch chiều cao 100%. */
+  #video-container { position: fixed; inset: 0; height: 100dvh; background: #000; z-index: 0; display: flex; justify-content: center; align-items: center; }
+  video, .video-js, #clappr-player, #videojs-player { width: 100%; height: 100%; object-fit: contain; }
+  #video { display: block; background: #000; }
+
+  #leftMenu, #rightMenu {
+    position: fixed; top: 0; bottom: 0; width: min(320px, 88vw); background: #fff;
+    overflow-y: auto; -webkit-overflow-scrolling: touch; z-index: 20;
+    /* FIX: bản gốc translate -100%/100% nhưng không có will-change, menu
+       trên máy yếu giật; thêm padding-top tránh nút tròn đè lên tiêu đề. */
+    padding: calc(10px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom));
+    box-shadow: 2px 0 12px rgba(0,0,0,.25);
+    transition: transform .28s ease; overscroll-behavior: contain;
+  }
+  #leftMenu { left: 0; transform: translateX(-105%); }
+  #rightMenu { right: 0; left: auto; transform: translateX(105%); }
+  #leftMenu.show, #rightMenu.show { transform: translateX(0); }
+  #overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 10; display: none; }
+  #overlay.show { display: block; }
+
+  .menu-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; position: sticky; top: 0; background: #fff; padding: 4px 0 8px; z-index: 1; }
+  .menu-head h3 { margin: 0; font-size: 18px; }
+  .close-btn { flex: 0 0 auto; width: 40px; height: 40px; border: 1px solid #ddd; background: #f5f5f5; border-radius: 50%; font-size: 18px; cursor: pointer; }
+
+  .group {
+    width: 100%; text-align: left; font-weight: 700; font-size: 15px; cursor: pointer;
+    margin-top: 8px; padding: 10px 10px; background: #f0f0f0; border: 0; border-radius: 8px;
+    display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 44px;
+  }
+  .group:hover { background: #e2e2e2; }
+  .group .arrow { font-size: 12px; transition: transform .2s ease; flex: 0 0 auto; }
+  .group[aria-expanded="true"] .arrow { transform: rotate(90deg); }
+  .channel-list { display: none; margin: 4px 0 8px; }
+  .channel-list.open { display: block; }
+  .channel {
+    cursor: pointer; display: flex; align-items: center; gap: 10px; margin: 4px 0;
+    padding: 8px; border-radius: 8px; background: #fafafa; min-height: 52px; border: 1px solid transparent;
+  }
+  .channel:hover { background: #eee; }
+  .channel.active { background: #e3f0ff; border-color: #7fb3ff; }
+  .channel img { width: 44px; height: 44px; object-fit: contain; border-radius: 6px; background: #fff; flex: 0 0 auto; }
+  .channel-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .channel-name { font-size: 15px; font-weight: 700; color: #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .epg { font-size: 12px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* FIX: nút menu bản gốc chữ trắng mờ 0.3 trên nền video đen, gần như
+     không thấy và vùng chạm quá nhỏ. Đổi sang nút tròn nền tối, 44px. */
+  button.menu-btn {
+    position: fixed; top: calc(10px + env(safe-area-inset-top)); z-index: 30;
+    width: 44px; height: 44px; font-size: 22px; line-height: 1;
+    background: rgba(0,0,0,.55); color: #fff; border: 1px solid rgba(255,255,255,.35);
+    border-radius: 50%; cursor: pointer; backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+  }
+  #leftBtn { left: 10px; }
+  #rightBtn { right: 10px; }
+
+  #loading {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    background: rgba(0,0,0,.8); color: #fff; padding: 12px 20px; border-radius: 8px;
+    z-index: 40; display: none; font-size: 15px; max-width: 86vw; text-align: center;
+  }
+  #toast {
+    position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    background: rgba(0,0,0,.85); color: #fff; padding: 10px 16px; border-radius: 8px; z-index: 50;
+    display: none; font-size: 14px; max-width: 88vw; text-align: center;
+  }
+  /* Nút phát lớn khi trình duyệt chặn tự phát (rất hay gặp trên mobile). */
+  #tapToPlay {
+    position: absolute; inset: 0; z-index: 5; display: none;
+    align-items: center; justify-content: center; flex-direction: column; gap: 12px;
+    background: rgba(0,0,0,.45); color: #fff; border: 0; cursor: pointer; font-size: 16px;
+  }
+  #tapToPlay .big { font-size: 64px; line-height: 1; }
+  /* ĐÃ BỎ thanh trạng thái dưới (09/11/02 theo ảnh bạn gửi): nó đè lên
+     nút điều khiển của trình phát. Mở danh sách bằng nút ☰ góc trên trái;
+     toàn màn hình dùng nút sẵn có của trình phát. */
+  input, select { width: 100%; margin: 6px 0; padding: 11px 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; background: #fff; }
+  /* font-size 16px cho input: tránh iOS tự zoom khi chạm vào ô nhập. */
+  .btn-primary { width: 100%; padding: 12px; margin: 6px 0; border: 0; border-radius: 8px; background: #1565d8; color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; min-height: 46px; }
+  .hint { font-size: 13px; color: #666; margin: 4px 0 10px; line-height: 1.5; }
+  .count { font-size: 13px; color: #666; margin: 6px 0; }
+</style>
+</head>
+<body>
+
+<div id="leftMenu" aria-label="Danh sách kênh">
+  <div class="menu-head"><h3>Danh sách kênh</h3><button type="button" class="close-btn" onclick="setMenu(false)" aria-label="Đóng danh sách">✕</button></div>
+  <div id="playlistBody"><p class="hint">Chưa có danh sách. Mở menu ⚙️ bên phải để nhập link .m3u hoặc chọn file.</p></div>
+</div>
+
+<div id="rightMenu" aria-label="Cài đặt">
+  <div class="menu-head"><h3>Nhập danh sách</h3><button type="button" class="close-btn" onclick="setMenu(false)" aria-label="Đóng cài đặt">✕</button></div>
+  <input type="text" id="urlInput" placeholder="Link .m3u / .txt hoặc link kênh" inputmode="url" autocomplete="off">
+  <button type="button" class="btn-primary" id="loadUrlBtn">Tải danh sách / Phát kênh</button>
+  <p class="hint">Nhập link rồi bấm nút (hoặc Enter). Bản cũ tải lại sau mỗi ký tự gõ nên hay bị chạy lung tung.</p>
+  <input type="file" id="fileInput" accept=".m3u,.m3u8,.txt,text/plain">
+  <h3>Chọn trình phát</h3>
+  <select id="playerSelect">
+    <option value="html5">HTML5 (khuyên dùng)</option>
+    <option value="hlsjs">HLS</option>
+    <option value="videojs">Videojs</option>
+    <option value="clappr">Clappr</option>
+  </select>
+  <p class="hint">HTML5 đã tự dùng HLS khi cần: iPhone/Safari dùng HLS gốc, Android/Chrome dùng HLS.js dự phòng. Chỉ đổi trình phát khi kênh lỗi. Video.js ở bản này là v10.2.0 (giao diện mới, preset live cho kênh trực tiếp).</p>
+</div>
+
+<div id="overlay" onclick="setMenu(false)"></div>
+<div id="loading">📥 Đang tải…</div>
+<div id="toast" role="status"></div>
+
+<div id="video-container">
+  <video id="video" controls autoplay playsinline preload="metadata"></video>
+  <button type="button" id="tapToPlay"><span class="big">▶</span><span>Chạm để phát</span></button>
+</div>
+
+<button type="button" id="leftBtn" class="menu-btn" onclick="toggleMenu('left')" aria-label="Mở danh sách kênh">☰</button>
+<button type="button" id="rightBtn" class="menu-btn" onclick="toggleMenu('right')" aria-label="Mở cài đặt">⚙️</button>
+
+<script>
+'use strict';
+const state = { playlist: {}, currentPlayer: 'html5', currentChannel: '', currentName: '', playerInstance: null, hls: null, epgUrl: '', epgData: {}, currentTime: 0, epgTimer: null, vjsMedia: null, vjsPlayerEl: null, vjsToken: 0, loaded: {} };
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const loadingEl = $('#loading'), toastEl = $('#toast'), video = $('#video'), container = $('#video-container'), tapBtn = $('#tapToPlay');
+
+let toastTimer = null;
+function toast(msg, ms = 4000) {
+  toastEl.textContent = msg;
+  toastEl.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toastEl.style.display = 'none'; }, ms);
+}
+function showLoading(t) { loadingEl.textContent = t || '📥 Đang tải…'; loadingEl.style.display = 'block'; }
+function hideLoading() { loadingEl.style.display = 'none'; }
+function showTapToPlay() { tapBtn.style.display = 'flex'; }
+function hideTapToPlay() { tapBtn.style.display = 'none'; }
+
+tapBtn.addEventListener('click', () => {
+  hideTapToPlay();
+  /* Khi đang dùng Video.js 10 thì media thật nằm trong <video-player>,
+     không phải thẻ #video chính — phải phát đúng media đó. */
+  const target = state.vjsMedia || video;
+  const p = target.play();
+  if (p && p.catch) p.catch(e => { showTapToPlay(); toast('Không phát được: ' + (e && e.message ? e.message : 'trình duyệt chặn')); });
+});
+video.addEventListener('playing', () => { hideLoading(); hideTapToPlay(); });
+video.addEventListener('waiting', () => { if (state.currentChannel) showLoading('⏳ Đang tải kênh…'); });
+video.addEventListener('canplay', hideLoading);
+video.addEventListener('error', () => {
+  if (!state.currentChannel) return;
+  hideLoading();
+  const err = video.error;
+  toast('Không phát được kênh này' + (err ? ' (mã lỗi ' + err.code + ')' : '') + '. Thử đổi trình phát sang HLS.js.');
+  showTapToPlay();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') setMenu(false); });
+
+$('#fileInput').addEventListener('change', e => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { parsePlaylist(String(r.result || ''), true); };
+  r.onerror = () => toast('Không đọc được file.');
+  r.readAsText(f);
+  e.target.value = ''; /* cho phép chọn lại cùng 1 file */
+});
+
+/* FIX: bản gốc dùng 'input' -> gõ tới đâu tải/phát tới đó.
+   Bản fix chỉ tải khi bấm nút hoặc Enter. */
+function submitUrl() {
+  const url = $('#urlInput').value.trim();
+  if (!url) { toast('Nhập link .m3u hoặc link kênh trước.'); return; }
+  if (/^https?:\/\//i.test(url)) localStorage.setItem('iptvURL', url);
+  loadFromURL(url);
+}
+$('#loadUrlBtn').addEventListener('click', submitUrl);
+$('#urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); submitUrl(); } });
+
+function toggleMenu(side) {
+  const menu = $('#' + side + 'Menu');
+  setMenu(!menu.classList.contains('show'), side);
+}
+function setMenu(show, side) {
+  $('#overlay').classList.toggle('show', !!show);
+  ['left', 'right'].forEach(s => {
+    $('#' + s + 'Menu').classList.toggle('show', !!show && s === side);
+  });
+}
+/* Nhận biết playlist: bỏ phần ?query trước khi xét đuôi file.
+   Bản gốc /\.(m3u|txt)$/ trượt với link dạng .m3u?token=... */
+function isPlaylistUrl(url) { return /\.(m3u|txt)$/i.test(url.split('?')[0].split('#')[0]); }
+
+function loadFromURL(url) {
+  if (isPlaylistUrl(url)) {
+    showLoading('📥 Đang tải danh sách…');
+    fetch(url).then(r => {
+      /* FIX: bản gốc không kiểm tra r.ok nên lỗi 404/CORS vẫn parse
+         trang lỗi thành danh sách rỗng. */
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.text();
+    }).then(t => parsePlaylist(t, true))
+    .catch(e => {
+      hideLoading();
+      console.error(e);
+      toast('Không tải được danh sách. Link có thể sai, hết hạn hoặc bị chặn CORS (máy chủ không cho trang web khác đọc).');
+    });
+  } else {
+    playChannel(url, url);
+  }
+}
+
+function getAttr(line, key) {
+  const m = line.match(new RegExp(key + '\\s*=\\s*["\']([^"\']*)["\']', 'i'));
+  return m ? m[1] : '';
+}
+
+function parsePlaylist(text, autoplayFirst) {
+  state.playlist = {}; state.epgUrl = ''; state.epgData = {};
+  const lines = String(text || '').split(/\r?\n/);
+  const first = (lines[0] || '').trim();
+  if (/url-tvg|x-tvg-url/i.test(first)) {
+    state.epgUrl = (getAttr(first, 'url-tvg') || getAttr(first, 'x-tvg-url') || '').replace(/^http:/i, 'https:');
+  }
+  let tmp = null, currentGroup = '';
+  lines.forEach(raw => {
+    const l = raw.trim();
+    if (!l) return;
+    if (l.startsWith('#EXTGRP:')) { currentGroup = l.slice(8).trim(); return; }
+    if (l.startsWith('#EXTINF')) {
+      const comma = l.indexOf(',');
+      tmp = {
+        name: comma >= 0 ? l.slice(comma + 1).trim() : 'Không tên',
+        /* FIX: bản gốc chỉ đọc group-title="...", trượt với dấu nháy đơn. */
+        group: getAttr(l, 'group-title') || currentGroup || 'Khác',
+        logo: getAttr(l, 'tvg-logo'),
+        tvgId: getAttr(l, 'tvg-id')
+      };
+    } else if (!l.startsWith('#')) {
+      /* FIX: bản gốc giữ tmp cũ nên 1 link không có #EXTINF sẽ nhân bản
+         kênh trước đó. Link mồ côi thì bỏ, dùng xong thì xóa tmp. */
+      if (!tmp) return;
+      if (!state.playlist[tmp.group]) state.playlist[tmp.group] = [];
+      state.playlist[tmp.group].push({ ...tmp, url: l });
+      tmp = null;
+    }
+  });
+  renderPlaylist();
+  hideLoading();
+  if (state.epgUrl) loadEPG(state.epgUrl);
+  const groups = Object.keys(state.playlist);
+  const total = groups.reduce((n, g) => n + state.playlist[g].length, 0);
+  if (!total) { toast('Danh sách rỗng hoặc không đọc được định dạng .m3u.'); return; }
+  toast('Đã tải ' + total + ' kênh, ' + groups.length + ' nhóm.', 2500);
+  if (autoplayFirst) {
+    const g0 = groups[0], ch0 = state.playlist[g0][0];
+    if (ch0) playChannel(ch0.url, ch0.name);
+  }
+}
+
+function loadEPG(url) {
+  fetch(url).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+  .then(txt => {
+    const xml = new DOMParser().parseFromString(txt, 'application/xml');
+    if (xml.querySelector('parsererror')) throw new Error('EPG không phải XML');
+    xml.querySelectorAll('programme').forEach(p => {
+      const c = p.getAttribute('channel');
+      if (!c) return;
+      if (!state.epgData[c]) state.epgData[c] = [];
+      state.epgData[c].push({ start: p.getAttribute('start') || '', stop: p.getAttribute('stop') || '', title: (p.querySelector('title') || {}).textContent || '' });
+    });
+    updateEPGUI();
+    clearInterval(state.epgTimer);
+    state.epgTimer = setInterval(updateEPGUI, 60000); /* EPG cũ sẽ tự cập nhật theo giờ */
+  }).catch(e => console.error('EPG:', e));
+}
+
+function renderPlaylist() {
+  const body = $('#playlistBody');
+  body.innerHTML = '';
+  const search = document.createElement('input');
+  search.type = 'search'; search.id = 'searchInput'; search.placeholder = '🔍 Tìm kênh...';
+  search.setAttribute('aria-label', 'Tìm kênh');
+  search.addEventListener('input', searchChannels);
+  body.appendChild(search);
+  const groups = Object.keys(state.playlist);
+  const count = document.createElement('div');
+  count.className = 'count';
+  count.textContent = groups.reduce((n, g) => n + state.playlist[g].length, 0) + ' kênh · ' + groups.length + ' nhóm';
+  body.appendChild(count);
+
+  groups.forEach((g, gi) => {
+    const grpEl = document.createElement('button');
+    grpEl.type = 'button'; grpEl.className = 'group';
+    grpEl.setAttribute('aria-expanded', gi === 0 ? 'true' : 'false');
+    const label = document.createElement('span'); label.textContent = g + ' (' + state.playlist[g].length + ')';
+    const arrow = document.createElement('span'); arrow.className = 'arrow'; arrow.textContent = '►';
+    grpEl.append(label, arrow);
+    const list = document.createElement('div');
+    list.className = 'channel-list' + (gi === 0 ? ' open' : '');
+    grpEl.addEventListener('click', () => {
+      const open = list.classList.toggle('open');
+      grpEl.setAttribute('aria-expanded', String(open));
+    });
+    state.playlist[g].forEach(ch => {
+      const c = document.createElement('div');
+      c.className = 'channel'; c.dataset.name = ch.name.toLowerCase(); c.dataset.url = ch.url;
+      c.addEventListener('click', () => playChannel(ch.url, ch.name));
+      if (ch.logo) {
+        const img = document.createElement('img');
+        img.src = ch.logo; img.alt = ''; img.loading = 'lazy';
+        img.onerror = () => img.remove(); /* logo hỏng thì ẩn, không để ô vỡ */
+        c.appendChild(img);
+      }
+      const info = document.createElement('div'); info.className = 'channel-info';
+      const nm = document.createElement('div'); nm.className = 'channel-name'; nm.textContent = ch.name;
+      const ep = document.createElement('div'); ep.className = 'epg'; ep.dataset.tvgid = ch.tvgId || ''; ep.textContent = '🎬 Không có EPG';
+      info.append(nm, ep); c.appendChild(info); list.appendChild(c);
+    });
+    body.append(grpEl, list);
+  });
+}
+
+function updateEPGUI() {
+  $$('.epg').forEach(div => { div.textContent = renderEPG(div.dataset.tvgid || ''); });
+}
+function renderEPG(id) {
+  const d = state.epgData[id];
+  if (!id || !d || !d.length) return '🎬 Không có EPG';
+  const now = Date.now();
+  const cur = d.find(e => parseEPGTime(e.start) <= now && parseEPGTime(e.stop) > now);
+  return cur ? '🎬 ' + cur.title : '🎬 Không có chương trình đang phát';
+}
+/* FIX EPG: bản gốc bỏ múi giờ (+0700...) nên giờ chương trình lệch
+   đúng bằng múi giờ. Có offset thì tính theo UTC, không có thì giờ địa phương. */
+function parseEPGTime(s) {
+  if (!s) return 0;
+  const m = String(s).match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})?\s*([+-]\d{2})(\d{2})?/);
+  if (!m) return 0;
+  const y = +m[1], mo = +m[2] - 1, d = +m[3], h = +m[4], mi = +m[5], se = +(m[6] || 0);
+  if (m[7]) {
+    const offMin = (+m[7]) * 60 + (+(m[8] || '0')) * (m[7].startsWith('-') ? -1 : 1);
+    return Date.UTC(y, mo, d, h, mi, se) - offMin * 60000;
+  }
+  return new Date(y, mo, d, h, mi, se).getTime();
+}
+
+function getCurrentTime() {
+  try {
+    /* Video.js 10: media là một media element thật nên currentTime là
+       THUỘC TÍNH số, không phải hàm như API v8. Đọc trực tiếp từ media.
+       Lưu ý: với kênh live, đây là vị trí trên timeline live (gần mép
+       live), không phải "phút thứ mấy của video" — tua lại chỉ là
+       best-effort trong cửa sổ DVR của luồng (nếu có). */
+    if (state.vjsMedia && isFinite(state.vjsMedia.currentTime)) return state.vjsMedia.currentTime;
+    if (state.playerInstance) {
+      if (typeof state.playerInstance.currentTime === 'function') { const t = state.playerInstance.currentTime(); if (isFinite(t)) return t; }
+      if (typeof state.playerInstance.getCurrentTime === 'function') { const t = state.playerInstance.getCurrentTime(); if (isFinite(t)) return t; }
+    }
+  } catch (e) {}
+  return isFinite(video.currentTime) ? video.currentTime : 0;
+}
+
+function playChannel(url, name, startTime) {
+  /* Link http:// mở trên trang https:// sẽ bị trình duyệt chặn ngay
+     (mixed content) — nhiều link trong channels-clean.m3u là http://
+     kiểu watchtivo, đó là 1 nhóm kênh không xem được trên GitHub Pages. */
+  if (location.protocol === 'https:' && /^http:\/\//i.test(url)) {
+    toast('Kênh này dùng link http://, trang https:// sẽ chặn (mixed content). Thử mở trang bằng http:// hoặc đổi nguồn kênh khác.');
+  }
+  state.currentChannel = url; state.currentName = name || url;
+  state.currentTime = startTime || 0;
+  setMenu(false);
+  hideTapToPlay();
+  showLoading('⏳ Đang tải kênh…');
+  document.title = '▶ ' + state.currentName + ' — IPTV Viewer';
+  $$('.channel').forEach(c => c.classList.toggle('active', c.dataset.url === url));
+  destroyPlayers();
+
+  const seek = () => {
+    if (state.currentTime > 0) {
+      try { video.currentTime = state.currentTime; } catch (e) {}
+    }
+  };
+  const tryPlay = () => {
+    const p = video.play();
+    if (p && p.catch) p.catch(() => { hideLoading(); showTapToPlay(); });
+  };
+
+  if (state.currentPlayer === 'hlsjs') {
+    playWithHls(url, seek, tryPlay);
+  } else if (state.currentPlayer === 'videojs') {
+    initVideoJs(url, state.currentTime); /* v10 tự quản seek/play/error, không dùng seek/tryPlay của thẻ #video */
+  } else if (state.currentPlayer === 'clappr') {
+    initClappr(url);
+  } else {
+    /* HTML5 — SỬA 02/11: bản trước chỉ nhận HLS khi link có đuôi .m3u8.
+       Nhưng hầu hết kênh của bạn KHÔNG có đuôi đó: VTVGo/TV360 qua vmttv
+       dạng .../VTVGo/?sctv1, .../tv360/?id=2 (24/24 link vtvgo.m3u,
+       177/177 link tv360.m3u, 100/423 link channels-clean.m3u) — thực
+       chất vẫn là HLS, chỉ giấu sau redirect. Gán thẳng vào video.src
+       thì Android/Chrome (không có HLS native) đen màn hình.
+       Cách mới: chỉ file thường (.mp4/.webm/.mp3...) mới phát native,
+       còn lại coi như HLS và dùng HLS.js; iPhone/Safari (HLS.js không
+       hỗ trợ) thì playWithHls tự rơi về HLS native. */
+    const isProgressive = /\.(mp4|m4v|webm|mov|mp3|m4a|ogg|wav)(\?|#|$)/i.test(url);
+    const canNativeHls = video.canPlayType('application/vnd.apple.mpegurl') !== '' || video.canPlayType('application/x-mpegURL') !== '';
+    if (!isProgressive && canNativeHls && /iPhone|iPad|iPod|Safari/i.test(navigator.userAgent) && !/Chrome|CriOS/i.test(navigator.userAgent)) {
+      video.src = url; /* iOS Safari: HLS native, kể cả link không đuôi */
+      video.addEventListener('loadedmetadata', seek, { once: true });
+      tryPlay();
+    } else if (!isProgressive) {
+      playWithHls(url, seek, tryPlay);
+    } else {
+      video.src = url;
+      video.addEventListener('loadedmetadata', seek, { once: true });
+      tryPlay();
+    }
+  }
+}
+
+/* 1 hàm nạp chung cho mọi thư viện (script thường / module ESM / CSS):
+   gọi lần 2 cùng URL thì trả lại promise cũ, không tải lại. */
+const VJS10 = 'https://cdn.jsdelivr.net/npm/@videojs/cdn@10.2.0';
+function load(url, kind) {
+  if (state.loaded[url]) return state.loaded[url];
+  state.loaded[url] = new Promise((res, rej) => {
+    let el;
+    if (kind === 'css') { el = document.createElement('link'); el.rel = 'stylesheet'; el.href = url; }
+    else { el = document.createElement('script'); if (kind === 'module') el.type = 'module'; el.src = url; }
+    el.onload = res; el.onerror = () => { delete state.loaded[url]; rej(new Error('Failed to load ' + url)); };
+    document.head.appendChild(el);
+  });
+  return state.loaded[url];
+}
+
+function playWithHls(url, seek, tryPlay) {
+  load('https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js', 'script').then(() => {
+  if (window.Hls && Hls.isSupported()) {
+      const hls = new Hls({ maxBufferLength: 30 });
+      state.hls = hls; state.playerInstance = hls;
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => { seek(); tryPlay(); });
+      hls.on(Hls.Events.ERROR, (ev, data) => {
+        if (!data || !data.fatal) return;
+        if (data.type === Hls.ErrorTypes.NETWORK_ERROR) { hideLoading(); toast('Lỗi mạng khi tải kênh. Kiểm tra mạng hoặc link kênh.'); showTapToPlay(); }
+        else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) { try { hls.recoverMediaError(); } catch (e) {} }
+        else { hideLoading(); toast('Kênh lỗi, không phát được bằng HLS.js. Thử đổi trình phát.'); showTapToPlay(); }
+      });
+      hls.loadSource(url);
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      /* iOS Safari: HLS.js không hỗ trợ, phát native. */
+      video.src = url;
+      video.addEventListener('loadedmetadata', seek, { once: true });
+      tryPlay();
+    } else {
+      hideLoading(); toast('Trình duyệt này không hỗ trợ HLS.');
+    }
+  }).catch(() => { hideLoading(); toast('Không tải được thư viện HLS.js. Kiểm tra mạng.'); showTapToPlay(); });
+}
+
+/* Video.js 10.2.0 (thiết kế lại 02/11): không còn hàm global videojs(),
+   player là custom element, nạp lazy bằng load() khi chọn trình phát này.
+   HLS: <hlsjs-video>, khai rõ type vì link vmttv không đuôi .m3u8.
+   Hủy player: gỡ element khỏi DOM (v10 không có dispose()).
+   Giới hạn: tua kênh live chỉ best-effort; TV360 qua vmttv vẫn thiếu CORS. */
+function whenDefinedOrTimeout(tag, ms) {
+  return Promise.race([
+    customElements.whenDefined(tag),
+    new Promise((_, rej) => setTimeout(() => rej(new Error('Timeout chờ <' + tag + '> đăng ký')), ms || 15000))
+  ]);
+}
+
+function initVideoJs(url, startTime) {
+  video.style.display = 'none';
+  const token = ++state.vjsToken; /* đổi kênh/đổi trình phát giữa chừng thì lần init cũ này phải dừng lại */
+  const isProgressive = /\.(mp4|m4v|webm|mov)(\?|#|$)/i.test(url);
+  const preset = isProgressive ? 'video' : 'live-video'; /* HLS live -> preset live-video; file thường -> preset video */
+  const playerTag = isProgressive ? 'video-player' : 'live-video-player';
+  const skinTag = isProgressive ? 'video-skin' : 'live-video-skin';
+
+  /* Nạp lazy khi chọn trình phát này: CSS + module preset + media HLS. */
+  Promise.all([
+    load(VJS10 + '/global.css', 'css'), load(VJS10 + '/' + preset + '.css', 'css'),
+    load(VJS10 + '/' + preset + '.js', 'module')
+  ].concat(isProgressive ? [] : [load(VJS10 + '/media/hlsjs-video.js', 'module')]))
+    .then(() => Promise.all([whenDefinedOrTimeout(playerTag)].concat(isProgressive ? [] : [whenDefinedOrTimeout('hlsjs-video')])))
+    .then(() => {
+      if (token !== state.vjsToken) return; /* đã bị destroyPlayers() vô hiệu trong lúc chờ tải */
+      const playerEl = document.createElement(playerTag);
+      playerEl.id = 'videojs-player';
+      playerEl.setAttribute('content-title', state.currentName || ''); /* tên kênh hiện trên skin (nếu skin có <media-title>) */
+      const skinEl = document.createElement(skinTag);
+      skinEl.style.display = 'block'; skinEl.style.width = '100%'; skinEl.style.height = '100%';
+      let media;
+      if (isProgressive) {
+        media = document.createElement('video');
+        media.setAttribute('src', url);
+      } else {
+        media = document.createElement('hlsjs-video');
+        /* Khai rõ type HLS: link vmttv (.../VTVGo/?sctv1, .../tv360/?id=2)
+           không có đuôi .m3u8 nên không được để engine tự đoán. */
+        media.setAttribute('stream-type', 'live');
+        media.source = { src: url, type: 'application/vnd.apple.mpegurl' };
+      }
+      media.setAttribute('autoplay', '');
+      media.setAttribute('playsinline', '');
+      media.setAttribute('preload', 'auto');
+      media.addEventListener('playing', () => { hideLoading(); hideTapToPlay(); });
+      media.addEventListener('waiting', () => { if (state.currentChannel) showLoading('⏳ Đang tải kênh…'); });
+      media.addEventListener('loadedmetadata', () => {
+        if (startTime > 0) { try { media.currentTime = startTime; } catch (e) {} } /* live: best-effort */
+      });
+      media.addEventListener('error', () => {
+        hideLoading();
+        toast('Video.js 10 báo lỗi kênh. Thử đổi trình phát sang HTML5/HLS.js.');
+        showTapToPlay();
+      });
+      const doPlay = () => {
+        let p;
+        try { p = media.play(); } catch (e) { hideLoading(); showTapToPlay(); return; }
+        if (p && p.catch) p.catch(() => { hideLoading(); showTapToPlay(); });
+      };
+      media.addEventListener('canplay', doPlay, { once: true });
+      skinEl.appendChild(media);
+      playerEl.appendChild(skinEl);
+      container.appendChild(playerEl);
+      state.vjsPlayerEl = playerEl;
+      state.vjsMedia = media;
+      state.playerInstance = media; /* media là media element thật: getCurrentTime() đọc .currentTime trực tiếp */
+      doPlay();
+    })
+    .catch((e) => {
+      if (token !== state.vjsToken) return;
+      hideLoading(); video.style.display = 'block';
+      console.error('Video.js 10:', e);
+      toast('Không tải được Video.js 10. Kiểm tra mạng rồi thử lại, hoặc đổi trình phát sang HTML5/HLS.js.');
+    });
+}
+
+function initClappr(url) {
+  video.style.display = 'none';
+  load('https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js', 'script').then(() => {
+    const el = document.createElement('div');
+    el.id = 'clappr-player';
+    container.appendChild(el);
+    const player = new Clappr.Player({ source: url, parentId: '#clappr-player', autoPlay: true, width: '100%', height: '100%', mute: false });
+    state.playerInstance = player;
+    hideLoading();
+    if (state.currentTime > 0) { try { player.seek(state.currentTime); } catch (e) {} }
+    player.on(Clappr.Events.PLAYER_ERROR, () => { toast('Clappr báo lỗi kênh. Thử đổi trình phát.'); });
+  }).catch(() => { hideLoading(); video.style.display = 'block'; toast('Không tải được Clappr. Kiểm tra mạng.'); });
+}
+
+function changePlayer() {
+  state.currentTime = getCurrentTime(); /* FIX: bản gốc chỉ đọc video.currentTime, vốn đã rỗng khi đang dùng Video.js/Clappr */
+  state.currentPlayer = $('#playerSelect').value;
+  localStorage.setItem('iptvPlayer', state.currentPlayer);
+  if (state.currentChannel) playChannel(state.currentChannel, state.currentName, state.currentTime);
+}
+$('#playerSelect').addEventListener('change', changePlayer);
+
+function destroyPlayers() {
+  /* Video.js 10: vô hiệu mọi lần init đang chờ tải module (token), gỡ
+     <video-player>/<live-video-player> khỏi DOM — migrate guide: v10
+     không có dispose(), "remove the element". */
+  state.vjsToken++;
+  if (state.vjsMedia) {
+    try { const eng = state.vjsMedia.engine; if (eng && eng.destroy) eng.destroy(); } catch (e) {} /* hls.js engine bên trong <hlsjs-video> (thuộc tính engine, có trong docs) */
+    try { state.vjsMedia.pause(); } catch (e) {}
+  }
+  state.vjsMedia = null;
+  if (state.vjsPlayerEl) { try { state.vjsPlayerEl.remove(); } catch (e) {} state.vjsPlayerEl = null; }
+  if (state.hls) { try { state.hls.destroy(); } catch (e) {} state.hls = null; }
+  if (state.playerInstance && state.playerInstance !== state.hls) {
+    try { if (state.playerInstance.destroy) state.playerInstance.destroy(); } catch (e) {}
+    try { if (state.playerInstance.dispose) state.playerInstance.dispose(); } catch (e) {}
+  }
+  state.playerInstance = null;
+  const vjs = $('#videojs-player'); if (vjs) vjs.remove(); /* dự phòng: gỡ nốt nếu ref đã mất */
+  const cl = $('#clappr-player'); if (cl) cl.remove();
+  try { video.pause(); } catch (e) {}
+  video.removeAttribute('src');
+  try { video.load(); } catch (e) {}
+  video.style.display = 'block';
+}
+
+function searchChannels() {
+  const q = ($('#searchInput').value || '').trim().toLowerCase();
+  $$('.group').forEach(grp => {
+    const list = grp.nextElementSibling;
+    if (!list) return;
+    let match = false;
+    list.querySelectorAll('.channel').forEach(c => {
+      const ok = !q || (c.dataset.name || '').includes(q);
+      c.style.display = ok ? '' : 'none';
+      if (ok) match = true;
+    });
+    grp.style.display = (match || q === '') ? '' : 'none';
+    /* Có từ khóa: mở nhóm có kết quả, đóng nhóm không có. Không từ khóa: trả về trạng thái mặc định. */
+    if (q) { list.classList.toggle('open', match); grp.setAttribute('aria-expanded', String(match)); }
+    else { list.classList.toggle('open', grp === document.querySelector('.group')); grp.setAttribute('aria-expanded', String(grp === document.querySelector('.group'))); }
+  });
+}
+
+/* Khởi động: chỉ tải lại danh sách đã lưu, KHÔNG tự phát kênh đầu
+   (trên mobile tự phát hay bị chặn + tốn data). Mở sẵn menu danh sách. */
+(function init() {
+  const savedPlayer = localStorage.getItem('iptvPlayer');
+  if (savedPlayer) { state.currentPlayer = savedPlayer; $('#playerSelect').value = savedPlayer; }
+  const savedURL = localStorage.getItem('iptvURL');
+  if (savedURL) {
+    $('#urlInput').value = savedURL;
+    if (isPlaylistUrl(savedURL)) {
+      showLoading('📥 Đang tải danh sách…');
+      fetch(savedURL).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+      .then(t => { parsePlaylist(t, false); setMenu(true, 'left'); })
+      .catch(() => { hideLoading(); toast('Không tải lại được danh sách đã lưu.'); });
+    }
+  }
+})();
+</script>
+</body>
+</html>
