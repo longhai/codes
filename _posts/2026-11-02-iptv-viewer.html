@@ -6,16 +6,20 @@
      trình duyệt mobile tự thu nhỏ trang như trang desktop. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
+<!-- Thêm 02/11 theo ý bạn: thẻ meta referrer — trước đây kênh Đà Nẵng kẹt
+     00:00 vì máy chủ trả 403 khi thấy header Referer, thêm đúng 1 dòng này
+     vào head thì xem được (đã xác nhận trên Webamp fork 30/10 và đã có sẵn
+     trong radio-tv.html). Không có nó, trình duyệt gửi kèm Referer của
+     trang khi tải luồng, vài máy chủ sẽ chặn. -->
+<meta name="referrer" content="no-referrer">
 <title>IPTV Viewer</title>
-<!-- Thư viện LAZY (02/11, bạn chốt): mở trang chỉ tải file HTML này,
-     thư viện nào dùng tới mới tải link đó — 1 hàm load() chung bên dưới. -->
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
   body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow: hidden; background: #000; color: #111; }
   /* Dùng dvh để không bị thanh địa chỉ mobile làm lệch chiều cao 100%. */
   #video-container { position: fixed; inset: 0; height: 100dvh; background: #000; z-index: 0; display: flex; justify-content: center; align-items: center; }
-  video, .video-js, #clappr-player, #videojs-player { width: 100%; height: 100%; object-fit: contain; }
+  video, .video-js, #clappr-player { width: 100%; height: 100%; object-fit: contain; }
   #video { display: block; background: #000; }
 
   #leftMenu, #rightMenu {
@@ -113,11 +117,11 @@
   <h3>Chọn trình phát</h3>
   <select id="playerSelect">
     <option value="html5">HTML5 (khuyên dùng)</option>
-    <option value="hlsjs">HLS</option>
-    <option value="videojs">Videojs</option>
+    <option value="hlsjs">HLS.js</option>
+    <option value="videojs">Video.js</option>
     <option value="clappr">Clappr</option>
   </select>
-  <p class="hint">HTML5 đã tự dùng HLS khi cần: iPhone/Safari dùng HLS gốc, Android/Chrome dùng HLS.js dự phòng. Chỉ đổi trình phát khi kênh lỗi. Video.js ở bản này là v10.2.0 (giao diện mới, preset live cho kênh trực tiếp).</p>
+  <p class="hint">HTML5 đã tự dùng HLS khi cần: iPhone/Safari dùng HLS gốc, Android/Chrome dùng HLS.js dự phòng. Chỉ đổi trình phát khi kênh lỗi.</p>
 </div>
 
 <div id="overlay" onclick="setMenu(false)"></div>
@@ -134,7 +138,7 @@
 
 <script>
 'use strict';
-const state = { playlist: {}, currentPlayer: 'html5', currentChannel: '', currentName: '', playerInstance: null, hls: null, epgUrl: '', epgData: {}, currentTime: 0, epgTimer: null, vjsMedia: null, vjsPlayerEl: null, vjsToken: 0, loaded: {} };
+const state = { playlist: {}, currentPlayer: 'html5', currentChannel: '', currentName: '', playerInstance: null, hls: null, epgUrl: '', epgData: {}, loadedLibs: {}, loadedCss: {}, currentTime: 0, epgTimer: null , nativeTimer: null, nativeTrying: false };
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 const loadingEl = $('#loading'), toastEl = $('#toast'), video = $('#video'), container = $('#video-container'), tapBtn = $('#tapToPlay');
@@ -153,17 +157,14 @@ function hideTapToPlay() { tapBtn.style.display = 'none'; }
 
 tapBtn.addEventListener('click', () => {
   hideTapToPlay();
-  /* Khi đang dùng Video.js 10 thì media thật nằm trong <video-player>,
-     không phải thẻ #video chính — phải phát đúng media đó. */
-  const target = state.vjsMedia || video;
-  const p = target.play();
+  const p = video.play();
   if (p && p.catch) p.catch(e => { showTapToPlay(); toast('Không phát được: ' + (e && e.message ? e.message : 'trình duyệt chặn')); });
 });
 video.addEventListener('playing', () => { hideLoading(); hideTapToPlay(); });
 video.addEventListener('waiting', () => { if (state.currentChannel) showLoading('⏳ Đang tải kênh…'); });
 video.addEventListener('canplay', hideLoading);
 video.addEventListener('error', () => {
-  if (!state.currentChannel) return;
+  if (!state.currentChannel || state.nativeTrying) return;
   hideLoading();
   const err = video.error;
   toast('Không phát được kênh này' + (err ? ' (mã lỗi ' + err.code + ')' : '') + '. Thử đổi trình phát sang HLS.js.');
@@ -362,12 +363,6 @@ function parseEPGTime(s) {
 
 function getCurrentTime() {
   try {
-    /* Video.js 10: media là một media element thật nên currentTime là
-       THUỘC TÍNH số, không phải hàm như API v8. Đọc trực tiếp từ media.
-       Lưu ý: với kênh live, đây là vị trí trên timeline live (gần mép
-       live), không phải "phút thứ mấy của video" — tua lại chỉ là
-       best-effort trong cửa sổ DVR của luồng (nếu có). */
-    if (state.vjsMedia && isFinite(state.vjsMedia.currentTime)) return state.vjsMedia.currentTime;
     if (state.playerInstance) {
       if (typeof state.playerInstance.currentTime === 'function') { const t = state.playerInstance.currentTime(); if (isFinite(t)) return t; }
       if (typeof state.playerInstance.getCurrentTime === 'function') { const t = state.playerInstance.getCurrentTime(); if (isFinite(t)) return t; }
@@ -405,53 +400,50 @@ function playChannel(url, name, startTime) {
   if (state.currentPlayer === 'hlsjs') {
     playWithHls(url, seek, tryPlay);
   } else if (state.currentPlayer === 'videojs') {
-    initVideoJs(url, state.currentTime); /* v10 tự quản seek/play/error, không dùng seek/tryPlay của thẻ #video */
+    initVideoJs(url, seek, tryPlay);
   } else if (state.currentPlayer === 'clappr') {
     initClappr(url);
   } else {
-    /* HTML5 — SỬA 02/11: bản trước chỉ nhận HLS khi link có đuôi .m3u8.
-       Nhưng hầu hết kênh của bạn KHÔNG có đuôi đó: VTVGo/TV360 qua vmttv
-       dạng .../VTVGo/?sctv1, .../tv360/?id=2 (24/24 link vtvgo.m3u,
-       177/177 link tv360.m3u, 100/423 link channels-clean.m3u) — thực
-       chất vẫn là HLS, chỉ giấu sau redirect. Gán thẳng vào video.src
-       thì Android/Chrome (không có HLS native) đen màn hình.
-       Cách mới: chỉ file thường (.mp4/.webm/.mp3...) mới phát native,
-       còn lại coi như HLS và dùng HLS.js; iPhone/Safari (HLS.js không
-       hỗ trợ) thì playWithHls tự rơi về HLS native. */
-    const isProgressive = /\.(mp4|m4v|webm|mov|mp3|m4a|ogg|wav)(\?|#|$)/i.test(url);
-    const canNativeHls = video.canPlayType('application/vnd.apple.mpegurl') !== '' || video.canPlayType('application/x-mpegURL') !== '';
-    if (!isProgressive && canNativeHls && /iPhone|iPad|iPod|Safari/i.test(navigator.userAgent) && !/Chrome|CriOS/i.test(navigator.userAgent)) {
-      video.src = url; /* iOS Safari: HLS native, kể cả link không đuôi */
-      video.addEventListener('loadedmetadata', seek, { once: true });
-      tryPlay();
-    } else if (!isProgressive) {
+    /* HTML5 — NATIVE TRƯỚC, như Radio TV (09/11/02: ảnh của bạn cho thấy
+       VTV3 tv360 id=4 phát được hình trên Radio TV). Radio TV với link
+       không đuôi .m3u8 thì gán thẳng video.src, không qua HLS.js, không
+       có crossOrigin — nên redirect vmttv thiếu CORS không chặn được nó,
+       và Chrome trên điện thoại bạn phát HLS native được. Bản này trước
+       đây đưa link không đuôi vào HLS.js ngay nên TV360 chết ở redirect.
+       Giờ thử native trước, chỉ khi native lỗi hoặc 6 giây vẫn chưa phát
+       thì mới rơi về HLS.js. */
+    state.nativeTrying = true;
+    let fellBack = false;
+    const fallbackToHls = () => {
+      if (fellBack || state.currentChannel !== url) return;
+      fellBack = true; state.nativeTrying = false;
+      if (state.nativeTimer) { clearTimeout(state.nativeTimer); state.nativeTimer = null; }
+      try { video.pause(); } catch (e) {}
+      video.removeAttribute('src');
+      try { video.load(); } catch (e) {}
       playWithHls(url, seek, tryPlay);
-    } else {
-      video.src = url;
-      video.addEventListener('loadedmetadata', seek, { once: true });
-      tryPlay();
-    }
+    };
+    video.addEventListener('error', fallbackToHls, { once: true });
+    video.addEventListener('playing', () => {
+      state.nativeTrying = false;
+      if (state.nativeTimer) { clearTimeout(state.nativeTimer); state.nativeTimer = null; }
+    }, { once: true });
+    video.addEventListener('loadedmetadata', seek, { once: true });
+    video.src = url;
+    tryPlay();
+    state.nativeTimer = setTimeout(() => {
+      if (state.currentChannel !== url || fellBack) return;
+      if (!video.paused && video.readyState >= 2) { state.nativeTrying = false; return; }
+      fallbackToHls();
+    }, 6000);
   }
 }
 
-/* 1 hàm nạp chung cho mọi thư viện (script thường / module ESM / CSS):
-   gọi lần 2 cùng URL thì trả lại promise cũ, không tải lại. */
-const VJS10 = 'https://cdn.jsdelivr.net/npm/@videojs/cdn@10.2.0';
-function load(url, kind) {
-  if (state.loaded[url]) return state.loaded[url];
-  state.loaded[url] = new Promise((res, rej) => {
-    let el;
-    if (kind === 'css') { el = document.createElement('link'); el.rel = 'stylesheet'; el.href = url; }
-    else { el = document.createElement('script'); if (kind === 'module') el.type = 'module'; el.src = url; }
-    el.onload = res; el.onerror = () => { delete state.loaded[url]; rej(new Error('Failed to load ' + url)); };
-    document.head.appendChild(el);
-  });
-  return state.loaded[url];
-}
-
 function playWithHls(url, seek, tryPlay) {
-  load('https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js', 'script').then(() => {
-  if (window.Hls && Hls.isSupported()) {
+  /* Thư viện tự lấy bản mới nhất (theo yêu cầu 02/11): HLS.js dùng @latest,
+     hiện là 1.7.4 — đã kiểm tra file thật 623KB, chạy được. */
+  loadLib('hls.js', 'https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js').then(() => {
+    if (window.Hls && Hls.isSupported()) {
       const hls = new Hls({ maxBufferLength: 30 });
       state.hls = hls; state.playerInstance = hls;
       hls.attachMedia(video);
@@ -474,88 +466,33 @@ function playWithHls(url, seek, tryPlay) {
   }).catch(() => { hideLoading(); toast('Không tải được thư viện HLS.js. Kiểm tra mạng.'); showTapToPlay(); });
 }
 
-/* Video.js 10.2.0 (thiết kế lại 02/11): không còn hàm global videojs(),
-   player là custom element, nạp lazy bằng load() khi chọn trình phát này.
-   HLS: <hlsjs-video>, khai rõ type vì link vmttv không đuôi .m3u8.
-   Hủy player: gỡ element khỏi DOM (v10 không có dispose()).
-   Giới hạn: tua kênh live chỉ best-effort; TV360 qua vmttv vẫn thiếu CORS. */
-function whenDefinedOrTimeout(tag, ms) {
-  return Promise.race([
-    customElements.whenDefined(tag),
-    new Promise((_, rej) => setTimeout(() => rej(new Error('Timeout chờ <' + tag + '> đăng ký')), ms || 15000))
-  ]);
-}
-
-function initVideoJs(url, startTime) {
+function initVideoJs(url, seek, tryPlay) {
   video.style.display = 'none';
-  const token = ++state.vjsToken; /* đổi kênh/đổi trình phát giữa chừng thì lần init cũ này phải dừng lại */
-  const isProgressive = /\.(mp4|m4v|webm|mov)(\?|#|$)/i.test(url);
-  const preset = isProgressive ? 'video' : 'live-video'; /* HLS live -> preset live-video; file thường -> preset video */
-  const playerTag = isProgressive ? 'video-player' : 'live-video-player';
-  const skinTag = isProgressive ? 'video-skin' : 'live-video-skin';
-
-  /* Nạp lazy khi chọn trình phát này: CSS + module preset + media HLS. */
-  Promise.all([
-    load(VJS10 + '/global.css', 'css'), load(VJS10 + '/' + preset + '.css', 'css'),
-    load(VJS10 + '/' + preset + '.js', 'module')
-  ].concat(isProgressive ? [] : [load(VJS10 + '/media/hlsjs-video.js', 'module')]))
-    .then(() => Promise.all([whenDefinedOrTimeout(playerTag)].concat(isProgressive ? [] : [whenDefinedOrTimeout('hlsjs-video')])))
-    .then(() => {
-      if (token !== state.vjsToken) return; /* đã bị destroyPlayers() vô hiệu trong lúc chờ tải */
-      const playerEl = document.createElement(playerTag);
-      playerEl.id = 'videojs-player';
-      playerEl.setAttribute('content-title', state.currentName || ''); /* tên kênh hiện trên skin (nếu skin có <media-title>) */
-      const skinEl = document.createElement(skinTag);
-      skinEl.style.display = 'block'; skinEl.style.width = '100%'; skinEl.style.height = '100%';
-      let media;
-      if (isProgressive) {
-        media = document.createElement('video');
-        media.setAttribute('src', url);
-      } else {
-        media = document.createElement('hlsjs-video');
-        /* Khai rõ type HLS: link vmttv (.../VTVGo/?sctv1, .../tv360/?id=2)
-           không có đuôi .m3u8 nên không được để engine tự đoán. */
-        media.setAttribute('stream-type', 'live');
-        media.source = { src: url, type: 'application/vnd.apple.mpegurl' };
-      }
-      media.setAttribute('autoplay', '');
-      media.setAttribute('playsinline', '');
-      media.setAttribute('preload', 'auto');
-      media.addEventListener('playing', () => { hideLoading(); hideTapToPlay(); });
-      media.addEventListener('waiting', () => { if (state.currentChannel) showLoading('⏳ Đang tải kênh…'); });
-      media.addEventListener('loadedmetadata', () => {
-        if (startTime > 0) { try { media.currentTime = startTime; } catch (e) {} } /* live: best-effort */
-      });
-      media.addEventListener('error', () => {
-        hideLoading();
-        toast('Video.js 10 báo lỗi kênh. Thử đổi trình phát sang HTML5/HLS.js.');
-        showTapToPlay();
-      });
-      const doPlay = () => {
-        let p;
-        try { p = media.play(); } catch (e) { hideLoading(); showTapToPlay(); return; }
-        if (p && p.catch) p.catch(() => { hideLoading(); showTapToPlay(); });
-      };
-      media.addEventListener('canplay', doPlay, { once: true });
-      skinEl.appendChild(media);
-      playerEl.appendChild(skinEl);
-      container.appendChild(playerEl);
-      state.vjsPlayerEl = playerEl;
-      state.vjsMedia = media;
-      state.playerInstance = media; /* media là media element thật: getCurrentTime() đọc .currentTime trực tiếp */
-      doPlay();
-    })
-    .catch((e) => {
-      if (token !== state.vjsToken) return;
-      hideLoading(); video.style.display = 'block';
-      console.error('Video.js 10:', e);
-      toast('Không tải được Video.js 10. Kiểm tra mạng rồi thử lại, hoặc đổi trình phát sang HTML5/HLS.js.');
-    });
+  /* Video.js KHÔNG dùng @latest: bản mới nhất là 10.2.0 nhưng trên jsdelivr
+     nó không còn file dist/video.min.js (404) và video-js.css chỉ còn 1 byte
+     rỗng — đổi sang đó là hỏng luôn trình phát Video.js. Dùng @8 để tự lấy
+     bản 8.x mới nhất (hiện 8.24.2, JS 691KB + CSS 48KB thật, đã kiểm tra). */
+  loadCss('videojs', 'https://cdn.jsdelivr.net/npm/video.js@8/dist/video-js.min.css');
+  loadLib('videojs', 'https://cdn.jsdelivr.net/npm/video.js@8/dist/video.min.js').then(() => {
+    const el = document.createElement('video');
+    el.id = 'videojs-player'; el.className = 'video-js vjs-default-skin';
+    el.setAttribute('controls', ''); el.setAttribute('autoplay', ''); el.setAttribute('playsinline', '');
+    container.appendChild(el);
+    const player = videojs(el, { fluid: false, autoplay: true, controls: true, preload: 'auto' });
+    state.playerInstance = player;
+    /* Cùng lỗi đuôi file như HTML5: link vmttv không đuôi vẫn là HLS,
+       chỉ file .mp4/.webm... mới khai là video/mp4. */
+    player.src({ src: url, type: /\.(mp4|m4v|webm|mov)(\?|#|$)/i.test(url) ? 'video/mp4' : 'application/x-mpegURL' });
+    player.ready(() => { hideLoading(); seekVideoJs(player); try { const p = player.play(); if (p && p.catch) p.catch(() => showTapToPlay()); } catch (e) { showTapToPlay(); } });
+    player.on('error', () => { hideLoading(); toast('Video.js báo lỗi kênh. Thử đổi trình phát sang HTML5/HLS.js.'); showTapToPlay(); });
+    function seekVideoJs(pl) { if (state.currentTime > 0) { try { pl.currentTime(state.currentTime); } catch (e) {} } }
+  }).catch(() => { hideLoading(); video.style.display = 'block'; toast('Không tải được Video.js. Kiểm tra mạng.'); });
 }
 
 function initClappr(url) {
   video.style.display = 'none';
-  load('https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js', 'script').then(() => {
+  /* Clappr dùng @latest — hiện vẫn là 0.3.13, đúng bản đã ghim trước đó. */
+  loadLib('clappr', 'https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js').then(() => {
     const el = document.createElement('div');
     el.id = 'clappr-player';
     container.appendChild(el);
@@ -576,28 +513,41 @@ function changePlayer() {
 $('#playerSelect').addEventListener('change', changePlayer);
 
 function destroyPlayers() {
-  /* Video.js 10: vô hiệu mọi lần init đang chờ tải module (token), gỡ
-     <video-player>/<live-video-player> khỏi DOM — migrate guide: v10
-     không có dispose(), "remove the element". */
-  state.vjsToken++;
-  if (state.vjsMedia) {
-    try { const eng = state.vjsMedia.engine; if (eng && eng.destroy) eng.destroy(); } catch (e) {} /* hls.js engine bên trong <hlsjs-video> (thuộc tính engine, có trong docs) */
-    try { state.vjsMedia.pause(); } catch (e) {}
-  }
-  state.vjsMedia = null;
-  if (state.vjsPlayerEl) { try { state.vjsPlayerEl.remove(); } catch (e) {} state.vjsPlayerEl = null; }
+  if (state.nativeTimer) { clearTimeout(state.nativeTimer); state.nativeTimer = null; }
+  state.nativeTrying = false;
   if (state.hls) { try { state.hls.destroy(); } catch (e) {} state.hls = null; }
   if (state.playerInstance && state.playerInstance !== state.hls) {
     try { if (state.playerInstance.destroy) state.playerInstance.destroy(); } catch (e) {}
     try { if (state.playerInstance.dispose) state.playerInstance.dispose(); } catch (e) {}
   }
   state.playerInstance = null;
-  const vjs = $('#videojs-player'); if (vjs) vjs.remove(); /* dự phòng: gỡ nốt nếu ref đã mất */
+  const vjs = $('#videojs-player'); if (vjs) vjs.remove();
   const cl = $('#clappr-player'); if (cl) cl.remove();
   try { video.pause(); } catch (e) {}
   video.removeAttribute('src');
   try { video.load(); } catch (e) {}
   video.style.display = 'block';
+}
+
+function loadCss(name, href) {
+  if (state.loadedCss[name]) return;
+  state.loadedCss[name] = true;
+  const l = document.createElement('link');
+  l.rel = 'stylesheet'; l.href = href;
+  document.head.appendChild(l);
+}
+function loadLib(name, url) {
+  return new Promise((res, rej) => {
+    if (state.loadedLibs[name]) return res();
+    /* FIX: bản gốc dùng https://unpkg.com/hls.js (không phải file JS, server
+       trả 302 về trang HTML) nên HLS.js không bao giờ chạy. Dùng link file
+       thật, đã ghim phiên bản. */
+    const s = document.createElement('script');
+    s.src = url; s.async = true;
+    s.onload = () => { state.loadedLibs[name] = true; res(); };
+    s.onerror = () => rej(new Error('Failed to load ' + name));
+    document.head.appendChild(s);
+  });
 }
 
 function searchChannels() {
