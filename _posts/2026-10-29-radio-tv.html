@@ -299,7 +299,9 @@ function rebuild(){
     var ch=cleanChannel(c); ch._isSource=false; ch._origUrl=c.url;
     if(seen[ch.url]) return; seen[ch.url]=1; list.push(ch);
   });
-  if(sortAz) list.sort(function(a,b){ return a.name.localeCompare(b.name,'vi'); });
+  /* SỬA 02/11: sắp xếp theo số tự nhiên — "VTVcab 3" phải đứng trước
+     "VTVcab 16", chứ không phải sau "VTVcab 23" như so chuỗi thường. */
+  if(sortAz) list.sort(function(a,b){ return a.name.localeCompare(b.name,'vi',{numeric:true}); });
   channels=list; render();
 }
 async function fetchOneSource(url){
@@ -610,6 +612,13 @@ function render(){
     if(search && c.name.toLowerCase().indexOf(search.toLowerCase())===-1) return;
     var g=c.group||'Khác'; if(!groups[g]) groups[g]=[];
     groups[g].push({c:c,idx:idx});
+  });
+  /* SỬA 02/11: danh sách lộn xộn vì kênh trong nhóm giữ nguyên thứ tự
+     của file nguồn (vd VTVcab 16, 3, 18, 23). Xếp lại trong từng nhóm theo
+     tên, số theo thứ tự tự nhiên — luôn áp dụng, không cần bấm nút sắp
+     xếp. Thứ tự các nhóm giữ nguyên như trong nguồn. */
+  Object.keys(groups).forEach(function(g){
+    groups[g].sort(function(a,b){ return a.c.name.localeCompare(b.c.name,'vi',{numeric:true}); });
   });
   var html='';
   var keys=Object.keys(groups);
