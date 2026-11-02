@@ -42,7 +42,13 @@ header{height:64px;flex-shrink:0;padding:12px 20px;display:flex;align-items:cent
 #playerWrap{flex-shrink:0;z-index:50;background:#000;box-shadow:0 20px 40px rgba(0,0,0,.5);overflow:hidden;transition:all .5s;height:0;opacity:0}
 #playerWrap.show{opacity:1}
 #playerWrap.audio{height:176px}
-#playerWrap.video{aspect-ratio:16/9;height:auto}
+#playerWrap.video{aspect-ratio:16/9;height:auto;max-width:960px;width:100%;margin-left:auto;margin-right:auto;max-height:calc(100dvh - 64px - 200px)}
+/* SỬA 02/11: trên PC khung video 16/9 rộng bằng cả màn hình (vd 1920px
+   → cao 1080px) nuốt hết chiều cao trang, danh sách kênh bên dưới bị
+   mất. Giới hạn rộng tối đa 960px (cao ~540px) và cao tối đa bằng màn
+   hình trừ header (64px) trừ 200px chừa cho danh sách — video vẫn giữ
+   tỉ lệ, phần thừa thành viền đen 2 bên (object-fit:contain). Trên điện
+   thoại dọc (rộng ~390px, cao ~219px) 2 giới hạn này không chạm tới. */
 #playerInner{position:relative;height:100%;display:flex;flex-direction:column;justify-content:center;padding:16px 24px;gap:12px}
 #playerVideo{width:100%;height:100%;object-fit:contain;display:none}
 #playerVideo.show{display:block}
