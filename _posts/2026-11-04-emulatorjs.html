@@ -31,20 +31,29 @@
 #guestTop span{flex:1;font-weight:700;font-size:14px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #guestTop button{background:rgba(34,44,63,.9);color:#fff;border:1px solid #556;border-radius:8px;padding:8px 12px}
 #guestVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
-/* Bộ nút cho KHÁCH (không có máy giả lập, nút là HTML thường, gửi phím về chủ phòng) */
-#guestPad{position:absolute;left:0;right:0;bottom:0;height:190px;touch-action:none;user-select:none;-webkit-user-select:none;z-index:5}
-#guestPad .dpad{position:absolute;left:6px;top:10px;width:150px;height:150px}
-#guestPad .dpad button{position:absolute;width:44px;height:44px;border-radius:10px;background:#8b95a7;color:#fff;border:1px solid rgba(255,255,255,.5);font-size:18px}
-#guestPad .dpad .u{left:53px;top:2px}#guestPad .dpad .d{left:53px;bottom:2px}
-#guestPad .dpad .l{left:2px;top:53px}#guestPad .dpad .r{right:2px;top:53px}
-#guestPad .ab{position:absolute;right:6px;top:0;width:190px;height:150px}
-#guestPad .ab button{position:absolute;width:58px;height:58px;border-radius:50%;border:1px solid rgba(255,255,255,.6);background:rgba(58,63,74,.85);color:#fff;font-weight:800;font-size:22px}
-#guestPad .ab .y{left:66px;top:0}
-#guestPad .ab .x{left:0;top:44px}
-#guestPad .ab .b{left:132px;top:44px}
-#guestPad .ab .a{left:66px;top:88px}
+/* Bộ nút cho KHÁCH kiểu arcade COIN-OPX (không có máy giả lập, nút là HTML
+   thường, gửi phím về chủ phòng). Chủ phòng/host vẫn dùng gamepad mặc định EJS. */
+#guestPad{position:absolute;left:0;right:0;bottom:0;height:220px;touch-action:none;user-select:none;-webkit-user-select:none;z-index:5}
+#guestPad .dpad{position:absolute;left:6px;top:20px;width:150px;height:150px;background:rgba(8,13,30,.88);border:2px solid rgba(255,255,255,.3);border-radius:50%}
+#guestPad .dpad .knob{position:absolute;left:49px;top:49px;width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);pointer-events:none}
+#guestPad .dpad button{position:absolute;width:42px;height:42px;border-radius:10px;background:#8b95a7;color:#fff;border:1px solid rgba(255,255,255,.5);font-size:18px}
+#guestPad .dpad .u{left:54px;top:4px}#guestPad .dpad .d{left:54px;bottom:4px}
+#guestPad .dpad .l{left:4px;top:54px}#guestPad .dpad .r{right:4px;top:54px}
+#guestPad .combo{position:absolute;right:6px;top:0;display:flex;gap:6px}
+#guestPad .combo button{padding:6px 10px;border-radius:14px;font-weight:700;font-size:12px;white-space:nowrap;border:1px solid rgba(255,255,255,.4);background:rgba(58,63,74,.9);color:#fff}
+#guestPad .ab{position:absolute;right:6px;top:36px;width:190px;height:150px}
+#guestPad .ab button{position:absolute;width:58px;height:58px;border-radius:50%;border:1px solid rgba(255,255,255,.6);color:#fff;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
+#guestPad .ab button .lt{font-size:22px}
+#guestPad .ab button .lb{font-size:8px;font-weight:700;white-space:nowrap;letter-spacing:-.2px}
+#guestPad .ab .c{left:66px;top:0;background:#2e9e5b;border-color:#a5d6a7}
+#guestPad .ab .d{left:0;top:44px;background:#1e88e5;border-color:#90caf9}
+#guestPad .ab .b{left:132px;top:44px;background:#f9a825;border-color:#ffe082;color:#3e2723}
+#guestPad .ab .a{left:66px;top:88px;background:#d32f2f;border-color:#ef9a9a}
 #guestPad .coinrow{position:absolute;right:6px;bottom:0;display:flex;gap:8px}
-#guestPad .coinrow button{padding:9px 14px;border-radius:20px;font-weight:700;border:1px solid #888;background:rgba(58,63,74,.85);color:#fff}
+#guestPad .coinrow button{padding:9px 14px;border-radius:20px;font-weight:700;white-space:nowrap;border:1px solid #888}
+#guestPad .coinrow .coin{background:#f59e0b;border-color:#fcd34d;color:#3a2503}
+#guestPad .coinrow .xustart{background:#22c55e;border-color:#86efac;color:#fff}
+#guestPad .coinrow .start{background:rgba(58,63,74,.85);border-color:#888;color:#fff}
 #guestPad button.on{filter:brightness(.6)}
 </style></head><body><div id="box"><input type="file" id="input"><span id="drop-label"></span></div><div id="toolbar"><input type="text" id="url-input"><button id="settings" title="Cài đặt"><svg viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg></button></div><div id="onlinePanel">
 <div id="modeRow">
@@ -88,16 +97,23 @@
 <video id="guestVideo" autoplay playsinline muted></video>
 <div id="guestPad">
 <div class="dpad">
+<div class="knob"></div>
 <button class="u" data-k="up">▲</button><button class="d" data-k="down">▼</button>
 <button class="l" data-k="left">◀</button><button class="r" data-k="right">▶</button>
 </div>
-<div class="ab">
-<button class="y" data-k="y">Y</button>
-<button class="x" data-k="x">X</button>
-<button class="b" data-k="b">B</button>
-<button class="a" data-k="a">A</button>
+<div class="combo">
+<button data-combo="a,b">AB Mạnh</button>
+<button data-combo="c,d">CD Vật/Né</button>
+<button data-combo="a,b,c">ABC Nổ nộ</button>
+<button data-combo="b,c,d">BCD Nhặt</button>
 </div>
-<div class="coinrow"><button class="coin" data-k="coin">Select</button><button class="start" data-k="start">Start</button></div>
+<div class="ab">
+<button class="c" data-k="c"><span class="lt">C</span><span class="lb">Chém mạnh</span></button>
+<button class="d" data-k="d"><span class="lt">D</span><span class="lb">Đá - Né</span></button>
+<button class="b" data-k="b"><span class="lt">B</span><span class="lb">Chém vừa</span></button>
+<button class="a" data-k="a"><span class="lt">A</span><span class="lb">Chém nhẹ</span></button>
+</div>
+<div class="coinrow"><button class="coin" data-k="coin">Nhét Xu</button><button class="xustart" data-xustart="1">⚡ Xu + Start</button><button class="start" data-k="start">Start</button></div>
 </div>
 </div>
 <script>
@@ -124,11 +140,20 @@ const PEER_CDN=["https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js","
 const QR_CDN=["https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js","https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"];
 const JSQR_CDN=["https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js","https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"];
 /* Nút mặc định của EmulatorJS cho arcade (RetroPad, đã xác minh): A=0, B=8, X=1, Y=9, Select(Xu)=2, Start=3, hướng=4-7 */
-const PAD={a:0,b:8,x:1,y:9,coin:2,start:3,up:4,down:5,left:6,right:7};
+/* Nút khách hiển thị kiểu arcade A/B/C/D (C gửi index 1, D gửi index 9 — đúng RetroPad X/Y cũ) */
+const PAD={a:0,b:8,c:1,d:9,coin:2,start:3,up:4,down:5,left:6,right:7};
+/* STUN dự phòng cho WebRTC (chỉ STUN công khai, không TURN có mật khẩu).
+   PeerJS mặc định đã có STUN Google, thêm dự phòng để mạng chập chờn vẫn có
+   cơ hội nối được. window.__PEER_OPTS chỉ là móc test (server PeerJS local). */
+const PEER_ICE={config:{iceServers:[
+    {urls:"stun:stun.l.google.com:19302"},
+    {urls:"stun:stun1.l.google.com:19302"},
+    {urls:"stun:stun.cloudflare.com:3478"}]}};
+function peerOpts(){return Object.assign({},PEER_ICE,window.__PEER_OPTS||{});}
 let peer=null,dataConn=null,gameStream=null,pendingCall=null;
 let gameStarted=false,roomCode="",mySlot=0,lastGuestState={},lastRtt=null;
 let scanStream=null,scanRAF=0,pendingSrc=null;
-const guestInput={up:0,down:0,left:0,right:0,a:0,b:0,x:0,y:0,coin:0,start:0};
+const guestInput={up:0,down:0,left:0,right:0,a:0,b:0,c:0,d:0,coin:0,start:0};
 
 function loadScriptOnce(srcs){
     return new Promise(res=>{
@@ -152,14 +177,19 @@ function openDrawer(){
 }
 function closeDrawer(){const d=$("roomDrawer");if(d)d.style.display="none";}
 function makeRoomCode(){return "KOF-"+String(Math.floor(1000+Math.random()*9000));}
+function isRoomCode(c){return /^[A-Z]{3}-\d{4}$/.test((c||"").trim());}
 function roomLink(code){
-    const base=(location.protocol.indexOf("http")===0)?(location.origin+location.pathname):location.href.split("?")[0].split("#")[0];
-    return base+"?room="+encodeURIComponent(code);
+    /* Chỉ trả link http(s) thật. Mở qua blob:/file: thì KHÔNG bao giờ trả link blob:/
+       (link blob chỉ sống trong trình duyệt của người mở, gửi cho người khác là chết). */
+    if(!isRoomCode(code))return null;
+    if(location.protocol!=="http:"&&location.protocol!=="https:")return null;
+    return location.origin+location.pathname+"?room="+encodeURIComponent(code.trim());
 }
 /* Tạo QR link vào phòng (qrcodejs qua CDN, fallback ảnh qrserver nếu CDN lỗi) */
 async function renderQR(text){
     const box=$("qrBox");if(!box)return;
     box.innerHTML="";
+    if(!text){$("qrNote").textContent="Link/QR phòng chỉ dùng được khi up file lên host HTTPS — bạn đang mở file xem trước (blob/file), link này gửi cho người khác không vào được. Hãy up file lên host rồi mở lại (mã phòng vẫn nhập tay được).";return;}
     if(!window.QRCode)await loadScriptOnce(QR_CDN);
     if(window.QRCode){
         try{
@@ -278,13 +308,19 @@ function createRoom(src){
     setDrawerStatus("Đang tạo phòng...");
     launch(src);
     loadPeerJS().then(()=>{
-        let tries=0;
+        let tries=0;      /* số lần sinh mã mới vì trùng ID */
+        let netTries=0;   /* số lần thử nối lại vì rớt mạng, giữ nguyên mã phòng */
+        let announced=false;
         const tryPeer=()=>{
-            peer=new Peer("coinopx-play-"+roomCode.toLowerCase());
+            if(window.onlineMode!=="host"||!isRoomCode(roomCode))return;
+            peer=new Peer("coinopx-play-"+roomCode.toLowerCase(),peerOpts());
             peer.on("open",()=>{
+                netTries=0;
                 setDrawerStatus("Phòng đã mở — chờ khách quét QR / nhập mã");
-                chatAdd("Hệ thống","Phòng "+roomCode+" đã mở. Gửi mã hoặc QR cho bạn để vào.","sys");
+                if(!announced){announced=true;chatAdd("Hệ thống","Phòng "+roomCode+" đã mở. Gửi mã hoặc QR cho bạn để vào.","sys");}
             });
+            /* WebSocket rớt mà peer chưa chết: PeerJS tự nối lại. */
+            peer.on("disconnected",()=>{try{peer.reconnect();}catch(e){}});
             peer.on("connection",c=>{setupDataConn(c);$("p2state").textContent="P2: đã vào phòng";});
             peer.on("call",c=>{if(gameStream)c.answer(gameStream);else pendingCall=c;});
             peer.on("error",err=>{
@@ -293,9 +329,18 @@ function createRoom(src){
                     $("roomCodeText").textContent=roomCode;
                     renderQR(roomLink(roomCode));
                     tryPeer();
+                }else if(err&&(err.type==="network"||err.type==="server-error"||err.type==="socket-error")&&netTries<5){
+                    /* Mạng chập chờn (điện thoại Hải chỉ 1–3 KB/s): tự thử lại với
+                       CÙNG mã phòng để link/QR khách đang cầm vẫn đúng. */
+                    netTries++;
+                    const delay=Math.min(2000*Math.pow(2,netTries-1),16000);
+                    setDrawerStatus("Mất nối với máy chủ — đang thử nối lại (lần "+netTries+"/5)...");
+                    chatAdd("Hệ thống","Mất nối với máy chủ — đang thử nối lại (lần "+netTries+"/5)...","sys");
+                    try{peer.destroy();}catch(e){}
+                    setTimeout(()=>{if(window.onlineMode==="host"&&isRoomCode(roomCode))tryPeer();},delay);
                 }else{
                     setDrawerStatus("Lỗi tạo phòng");
-                    chatAdd("Hệ thống","Không tạo được phòng: "+(err&&err.type||err),"sys");
+                    chatAdd("Hệ thống","Không tạo được phòng: "+(err&&err.type||err)+" — kiểm tra mạng rồi bấm Tạo phòng lại.","sys");
                 }
             });
         };tryPeer();
@@ -316,25 +361,65 @@ function joinRoom(code){
     $("guestTitle").textContent="Khách (P2) — phòng "+code+" — đang xem stream";
     setDrawerStatus("Đang vào phòng...");
     loadPeerJS().then(()=>{
-        peer=new Peer();
-        peer.on("open",()=>{
+        let guestPeerTries=0,guestOpened=false,guestAttempt=0,guestDone=false,guestTimer=0;
+        /* Tự thử nối lại tối đa 3 lần nếu 10s vẫn chưa nối được với chủ phòng
+           (chủ phòng có thể đang rớt mạng và nối lại cùng lúc) — thay vì im lặng. */
+        const attemptConnect=()=>{
+            guestAttempt++;
             const conn=peer.connect("coinopx-play-"+code.toLowerCase(),{reliable:true});
             setupDataConn(conn);
             /* PeerJS media call bắt buộc phải có 1 stream gửi đi — khách gửi 1 khung đen 2x2 vô hại. */
             const dummy=document.createElement("canvas");dummy.width=2;dummy.height=2;
             const call=peer.call("coinopx-play-"+code.toLowerCase(),dummy.captureStream());
             call.on("stream",s=>{
+                guestDone=true;
                 $("guestVideo").srcObject=s;
                 $("streamState").textContent="Hình game: đang xem stream từ chủ phòng.";
                 setDrawerStatus("Đã kết nối");
             });
             call.on("error",()=>{setDrawerStatus("Lỗi nhận hình");});
-            setTimeout(()=>{if(!$("guestVideo").srcObject)$("streamState").textContent="Hình game: chưa nhận được stream — có thể chủ phòng chưa chạy game xong, chờ thêm chút nữa.";},8000);
-        });
-        peer.on("error",err=>{
-            setDrawerStatus("Không vào được phòng");
-            chatAdd("Hệ thống","Không vào được phòng: "+(err&&err.type||err)+". Kiểm tra mã phòng và mạng.","sys");
-        });
+            clearTimeout(guestTimer);
+            guestTimer=setTimeout(()=>{
+                if(guestDone||(dataConn&&dataConn.open)||$("guestVideo").srcObject)return;
+                if(guestAttempt<3){
+                    setDrawerStatus("Chưa nối được với chủ phòng — đang thử lại (lần "+guestAttempt+"/3)...");
+                    chatAdd("Hệ thống","Chưa nối được với chủ phòng — đang thử lại (lần "+guestAttempt+"/3)...","sys");
+                    try{conn.close();}catch(e){} try{call.close();}catch(e){}
+                    attemptConnect();
+                }else{
+                    setDrawerStatus("Không nối được với chủ phòng");
+                    chatAdd("Hệ thống","Không nối được với chủ phòng — có thể chủ phòng đã thoát hoặc đang rớt mạng, thử lại sau.","sys");
+                    $("streamState").textContent="Hình game: chưa nhận được stream — có thể chủ phòng đã thoát hoặc đang rớt mạng, thử lại sau.";
+                }
+            },10000);
+        };
+        const tryGuestPeer=()=>{
+            if(window.onlineMode!=="guest")return;
+            peer=new Peer(undefined,peerOpts());
+            peer.on("open",()=>{
+                guestOpened=true;
+                attemptConnect();
+                setTimeout(()=>{if(!$("guestVideo").srcObject)$("streamState").textContent="Hình game: chưa nhận được stream — có thể chủ phòng chưa chạy game xong, chờ thêm chút nữa.";},8000);
+            });
+            peer.on("disconnected",()=>{try{peer.reconnect();}catch(e){}});
+            peer.on("error",err=>{
+                /* peer-unavailable: để vòng thử lại ở trên xử lý, đừng kết luận vội. */
+                if(err&&err.type==="peer-unavailable"&&guestAttempt<3&&!guestDone)return;
+                /* Máy chủ PeerJS chưa tới được (server-error/network) mà peer còn
+                   chưa mở: tạo peer mới thử lại, tối đa 3 lần. */
+                if(err&&(err.type==="server-error"||err.type==="network"||err.type==="socket-error")&&!guestOpened&&guestPeerTries<3){
+                    guestPeerTries++;
+                    setDrawerStatus("Chưa nối được máy chủ — đang thử lại (lần "+guestPeerTries+"/3)...");
+                    chatAdd("Hệ thống","Chưa nối được máy chủ — đang thử lại (lần "+guestPeerTries+"/3)...","sys");
+                    try{peer.destroy();}catch(e){}
+                    setTimeout(tryGuestPeer,2000*guestPeerTries);
+                    return;
+                }
+                setDrawerStatus("Không vào được phòng");
+                chatAdd("Hệ thống","Không vào được phòng: "+(err&&err.type||err)+". Kiểm tra mã phòng và mạng.","sys");
+            });
+        };
+        tryGuestPeer();
     }).catch(e=>{
         setDrawerStatus("Lỗi PeerJS");
         $("streamState").textContent="Không tải được thư viện PeerJS — kiểm tra mạng rồi tải lại trang.";
@@ -344,9 +429,36 @@ function joinRoom(code){
 function sendGuestInput(){
     if(dataConn&&dataConn.open){try{dataConn.send(JSON.stringify({t:"input",s:guestInput}));}catch(e){}}
 }
-/* Bộ nút khách #guestPad — CHỈ hiện cho khách (không có máy giả lập).
-   Solo/host dùng gamepad của EmulatorJS, không dùng pad này. Đa chạm được. */
+/* Bộ nút khách #guestPad kiểu arcade COIN-OPX — CHỈ hiện cho khách (không có máy
+   giả lập). Solo/host dùng gamepad của EmulatorJS, không dùng pad này. Đa chạm được.
+   Combo: 1 nút gửi 2-3 phím cùng lúc; Xu+Start: gửi Xu rồi Start cách nhau 120ms. */
 function bindGuestPad(){
+    const mark=(keys,on)=>{keys.forEach(k=>{const el=document.querySelector('#guestPad [data-k="'+k+'"]');if(el)el.classList.toggle("on",on);});};
+    document.querySelectorAll("#guestPad [data-combo]").forEach(b=>{
+        const keys=b.dataset.combo.split(",");
+        const down=e=>{e.preventDefault();b.classList.add("on");mark(keys,true);keys.forEach(k=>{guestInput[k]=1;});sendGuestInput();};
+        const up=e=>{e.preventDefault();b.classList.remove("on");mark(keys,false);keys.forEach(k=>{guestInput[k]=0;});sendGuestInput();};
+        b.addEventListener("pointerdown",down);
+        b.addEventListener("pointerup",up);
+        b.addEventListener("pointercancel",up);
+        b.addEventListener("pointerleave",up);
+        b.addEventListener("contextmenu",e=>e.preventDefault());
+    });
+    document.querySelectorAll("#guestPad [data-xustart]").forEach(b=>{
+        let timers=[];
+        const down=e=>{
+            e.preventDefault();b.classList.add("on");
+            guestInput.coin=1;sendGuestInput();
+            timers.push(setTimeout(()=>{guestInput.coin=0;guestInput.start=1;sendGuestInput();if(dataConn&&dataConn.open){try{dataConn.send(JSON.stringify({t:"start"}));}catch(e){}}},120));
+            timers.push(setTimeout(()=>{guestInput.start=0;sendGuestInput();},270));
+        };
+        const up=e=>{e.preventDefault();b.classList.remove("on");timers.forEach(clearTimeout);timers=[];guestInput.coin=0;guestInput.start=0;sendGuestInput();};
+        b.addEventListener("pointerdown",down);
+        b.addEventListener("pointerup",up);
+        b.addEventListener("pointercancel",up);
+        b.addEventListener("pointerleave",up);
+        b.addEventListener("contextmenu",e=>e.preventDefault());
+    });
     document.querySelectorAll("#guestPad [data-k]").forEach(b=>{
         const k=b.dataset.k;
         const down=e=>{
@@ -362,7 +474,7 @@ function bindGuestPad(){
         b.addEventListener("contextmenu",e=>e.preventDefault());
     });
     /* Bàn phím chỉ xử lý cho khách (solo/host dùng phím mặc định của EmulatorJS). */
-    const keyMap={ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right",z:"a",Z:"a",x:"b",X:"b",c:"x",C:"x",v:"y",V:"y"," ":"coin",Enter:"start"};
+    const keyMap={ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right",z:"a",Z:"a",x:"b",X:"b",c:"c",C:"c",v:"d",V:"d"," ":"coin",Enter:"start"};
     document.addEventListener("keydown",e=>{
         if(window.onlineMode!=="guest")return;
         if(e.target&&(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA"))return;
@@ -732,12 +844,15 @@ $("drawerClose").onclick=()=>closeDrawer();
 $("guestChatBtn").onclick=()=>openDrawer();
 $("exitBtn2").onclick=()=>location.reload();
 $("guestExitBtn").onclick=()=>location.reload();
-$("copyCodeBtn").onclick=()=>{if(navigator.clipboard)navigator.clipboard.writeText($("roomCodeText").textContent);};
-$("copyLinkBtn").onclick=()=>{if(navigator.clipboard)navigator.clipboard.writeText(roomLink($("roomCodeText").textContent));};
+$("copyCodeBtn").onclick=()=>{const c=$("roomCodeText").textContent.trim();if(!isRoomCode(c)){alert("Chưa có mã phòng — bấm Tạo phòng (P1) và chọn file game trước đã.");return;}if(navigator.clipboard)navigator.clipboard.writeText(c);};
+$("copyLinkBtn").onclick=()=>{const c=$("roomCodeText").textContent.trim();const l=roomLink(c);if(!l){if(!isRoomCode(c))alert("Chưa có mã phòng — bấm Tạo phòng (P1) và chọn file game trước đã.");else alert("Link phòng chỉ dùng được khi up file lên host HTTPS — bạn đang mở file xem trước (blob/file), link này gửi cho người khác không vào được. Hãy up file lên host rồi mở lại.");return;}if(navigator.clipboard)navigator.clipboard.writeText(l);};
 bindGuestPad();
 /* Mở link ?room=XXXX là vào thẳng chế độ khách */
 const qRoom=new URLSearchParams(location.search).get("room");
-if(qRoom){setMode("guest");$("roomInput").value=qRoom.toUpperCase();setTimeout(()=>joinRoom(qRoom),600);}
+if(qRoom!==null&&qRoom!==""){
+    if(!/^[A-Za-z]{3}-\d{4}$/.test(qRoom.trim())){setMode("guest");setTimeout(()=>alert("Link phòng không có mã — kiểm tra lại link chủ phòng gửi (mã có dạng KOF-1234)."),300);}
+    else{setMode("guest");$("roomInput").value=qRoom.toUpperCase();setTimeout(()=>joinRoom(qRoom),600);}
+}
 
 
 // Tự động kích hoạt game nếu nhận tham số từ URL
