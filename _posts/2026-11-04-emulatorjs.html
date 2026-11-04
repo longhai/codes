@@ -1,0 +1,746 @@
+<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EmulatorJS</title><link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><path fill='%231AAFFF' d='M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768zM768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256zM554.667 661.547c0-59.093 47.68-106.88 106.88-106.88h212.907c59.093 0 106.88 47.68 106.88 106.88v212.907c0 59.093-47.68 106.88-106.88 106.88h-212.907A106.731 106.731 0 0 1 554.667 874.453v-212.906zm85.333 0v212.906c0 12.032 9.536 21.547 21.547 21.547h212.907c12.032 0 21.547-9.536 21.547-21.547v-212.906c0-12.032-9.536-21.547-21.547-21.547h-212.907c-12.032 0-21.547 9.536-21.547 21.547zM183.829 109.888c36.118-61.163 108.246-61.248 144.427 0l126.208 213.653c35.733 60.523 3.52 124.437-66.816 124.437H124.437c-70.613 0-102.635-63.765-66.816-124.437L183.829 109.91zM133.653 362.667h244.8l-122.41-207.232-122.39 207.232z'/></svg>"><style>
+:root{--primary:#1AAFFF;--bg-color:#0d0e12;--card-bg:#333;--card-border:#555;--text-color:#f0f0f0;--text-sub:#a0a5b5;--modal-shadow:rgba(0,0,0,.5);--overlay-bg:rgba(0,0,0,.6)}@media(prefers-color-scheme:light){:root{--primary:#0088cc;--bg-color:#f4f6f9;--card-bg:#fff;--card-border:#d0d5dd;--text-color:#1a1d20;--text-sub:#667085;--modal-shadow:rgba(0,0,0,.15);--overlay-bg:rgba(0,0,0,.3)}}
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}body{background:var(--bg-color);color:var(--text-color);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:.3s}#box{position:relative;width:90%;max-width:500px;height:240px;border:2px solid var(--card-border);border-radius:12px;background:var(--card-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;cursor:pointer}#box:hover{border-color:var(--primary)}#box input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}#drop-label{font-size:1rem;color:var(--text-sub);pointer-events:none;line-height:1.5}#display{position:fixed;inset:0;background:#000;z-index:100}#game{width:100%;height:100%}#toolbar{margin-top:20px;display:flex;gap:10px;width:90%;max-width:500px}#url-input{flex:1;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:10px 14px;color:var(--text-color);outline:0;font-size:.9rem}#url-input:focus{border-color:var(--primary)}#settings{background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer}#settings svg{width:20px;height:20px;fill:var(--text-color)}button,select{background:var(--card-bg);border:1px solid var(--card-border);color:var(--text-color);padding:8px 14px;border-radius:6px;font-size:.9rem;cursor:pointer;outline:0}button:hover:not(:disabled){background:var(--primary);border-color:var(--primary);color:#fff}button:disabled{opacity:.5;cursor:not-allowed}.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;width:90%;max-width:420px;z-index:1000;opacity:0;visibility:hidden;transition:.3s;box-shadow:0 10px 25px var(--modal-shadow)}.popup.show{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}.popup-overlay{position:fixed;inset:0;background:var(--overlay-bg);backdrop-filter:blur(4px);z-index:999;opacity:0;visibility:hidden;transition:.3s}.popup.show+.popup-overlay{opacity:1;visibility:visible}.popup .content{padding:24px}.popup h1{font-size:1.25rem;margin-bottom:20px;border-bottom:1px solid var(--card-border);padding-bottom:10px}.buttonbox{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:.95rem}.buttonbox input[type="text"]{background:var(--bg-color);border:1px solid var(--card-border);color:var(--text-color);padding:6px 10px;border-radius:6px;width:55%;outline:0}#pwa-status-msg{font-size:12px;color:#f44336;margin-top:4px;text-align:right}.switch{position:relative;display:inline-block;width:44px;height:24px}.switch input{opacity:0;width:0;height:0}.slider{position:absolute;cursor:pointer;inset:0;background:var(--card-border);transition:.3s;border-radius:24px}.slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#fff;transition:.3s;border-radius:50%}input:checked+.slider{background:var(--primary)}input:checked+.slider:before{transform:translateX(20px)}
+/* ===== CHƠI ONLINE (PeerJS) + QR ===== */
+#onlinePanel{width:90%;max-width:500px;margin-top:14px}
+#modeRow{display:flex;gap:8px}
+.modeBtn{flex:1;padding:10px 6px;font-size:.85rem;font-weight:700}
+.modeBtn.active{background:var(--primary);border-color:var(--primary);color:#fff}
+#modeHint{font-size:.85rem;color:var(--text-sub);margin-top:8px;line-height:1.5}
+#joinRow{display:flex;gap:8px;margin-top:10px}
+#joinRow input{flex:1;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:10px;color:var(--text-color);font-size:1rem;text-transform:uppercase;outline:0;min-width:0}
+#joinRow button{white-space:nowrap}
+#scanArea{margin-top:10px}
+#scanVideo{width:100%;border-radius:10px;background:#000}
+#scanMsg{font-size:.85rem;color:var(--text-sub);margin:6px 0;line-height:1.5}
+#onlineNote{font-size:12px;color:var(--text-sub);margin-top:10px;line-height:1.5}
+#hostToggle{position:fixed;top:10px;right:10px;z-index:301;background:#2e9e5b;border:none;color:#fff;font-weight:700;padding:10px 14px;border-radius:20px;display:none}
+#roomDrawer{position:fixed;left:0;right:0;bottom:0;z-index:300;background:var(--card-bg);border-top:2px solid var(--primary);border-radius:14px 14px 0 0;padding:14px;max-height:74vh;overflow-y:auto;box-shadow:0 -8px 30px rgba(0,0,0,.5);display:none}
+#roomDrawer .code{font-size:26px;font-weight:800;letter-spacing:2px;color:#f9a825;text-align:center}
+#roomDrawer .line{margin:6px 0;font-size:13px;color:var(--text-sub)}
+#roomDrawer .line b{color:var(--text-color)}
+#qrBox{display:flex;justify-content:center;margin:10px 0;min-height:40px}
+#qrBox img,#qrBox canvas,#qrBox table{border:8px solid #fff;border-radius:8px;background:#fff}
+#qrNote{font-size:12px;color:var(--text-sub);text-align:center}
+#chatLog{height:110px;overflow-y:auto;background:var(--bg-color);border:1px solid var(--card-border);border-radius:8px;padding:8px;margin-top:8px;font-size:13px;line-height:1.6}
+#chatLog .p1 b{color:#7dd3fc}#chatLog .p2 b{color:#f9a825}#chatLog .sys{color:var(--text-sub);font-style:italic}
+#chatRow{display:flex;gap:8px;margin-top:8px}
+#chatRow input{flex:1;background:var(--bg-color);border:1px solid var(--card-border);border-radius:8px;padding:9px 10px;color:var(--text-color);outline:0;min-width:0}
+#guestArea{position:fixed;inset:0;background:#000;z-index:100;display:none}
+#guestTop{position:absolute;top:0;left:0;right:0;z-index:6;display:flex;gap:8px;align-items:center;padding:10px;background:linear-gradient(rgba(0,0,0,.75),transparent)}
+#guestTop span{flex:1;font-weight:700;font-size:14px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#guestTop button{background:rgba(34,44,63,.9);color:#fff;border:1px solid #556;border-radius:8px;padding:8px 12px}
+#guestVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+/* Bộ nút cho KHÁCH (không có máy giả lập, nút là HTML thường, gửi phím về chủ phòng) */
+#guestPad{position:absolute;left:0;right:0;bottom:0;height:190px;touch-action:none;user-select:none;-webkit-user-select:none;z-index:5}
+#guestPad .dpad{position:absolute;left:6px;top:10px;width:150px;height:150px}
+#guestPad .dpad button{position:absolute;width:44px;height:44px;border-radius:10px;background:#8b95a7;color:#fff;border:1px solid rgba(255,255,255,.5);font-size:18px}
+#guestPad .dpad .u{left:53px;top:2px}#guestPad .dpad .d{left:53px;bottom:2px}
+#guestPad .dpad .l{left:2px;top:53px}#guestPad .dpad .r{right:2px;top:53px}
+#guestPad .ab{position:absolute;right:6px;top:0;width:190px;height:150px}
+#guestPad .ab button{position:absolute;width:58px;height:58px;border-radius:50%;border:1px solid rgba(255,255,255,.6);background:rgba(58,63,74,.85);color:#fff;font-weight:800;font-size:22px}
+#guestPad .ab .y{left:66px;top:0}
+#guestPad .ab .x{left:0;top:44px}
+#guestPad .ab .b{left:132px;top:44px}
+#guestPad .ab .a{left:66px;top:88px}
+#guestPad .coinrow{position:absolute;right:6px;bottom:0;display:flex;gap:8px}
+#guestPad .coinrow button{padding:9px 14px;border-radius:20px;font-weight:700;border:1px solid #888;background:rgba(58,63,74,.85);color:#fff}
+#guestPad button.on{filter:brightness(.6)}
+</style></head><body><div id="box"><input type="file" id="input"><span id="drop-label"></span></div><div id="toolbar"><input type="text" id="url-input"><button id="settings" title="Cài đặt"><svg viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg></button></div><div id="onlinePanel">
+<div id="modeRow">
+<button id="modeSolo" class="modeBtn active">▶ Chơi 1 mình</button>
+<button id="modeHost" class="modeBtn">＋ Tạo phòng (P1)</button>
+<button id="modeGuest" class="modeBtn">➜ Vào phòng (P2)</button>
+</div>
+<div id="modeHint">Chọn file game ở trên rồi chơi như bình thường.</div>
+<div id="joinRow" style="display:none">
+<input id="roomInput" placeholder="Mã phòng, vd KOF-4821" maxlength="9">
+<button id="joinBtn">Vào phòng</button>
+<button id="scanBtn">📷 Quét mã QR</button>
+</div>
+<div id="scanArea" style="display:none">
+<video id="scanVideo" playsinline muted></video>
+<canvas id="scanCanvas" style="display:none"></canvas>
+<div id="scanMsg">Đưa mã QR của chủ phòng vào khung hình...</div>
+<button id="scanClose">✕ Đóng camera</button>
+</div>
+<div id="onlineNote">⚠️ Chơi online cần mở trang qua <b>HTTPS</b> (up file lên host như mọi file HTML khác). Mở file trực tiếp (file://) chỉ chơi 1 mình được; camera quét QR cũng cần HTTPS + cho phép quyền camera.</div>
+</div>
+<div id="popup-settings" class="popup"><div class="content"><h1 id="settings-title-h1"></h1><div class="buttonbox"><span id="label-debug"></span><label class="switch"><input type="checkbox" id="debug"/><span class="slider"></span></label></div><div class="buttonbox"><span id="label-cache"></span><button id="cache"></button></div><div class="buttonbox"><span id="label-lang"></span><select id="language"></select></div><div class="buttonbox"><span id="label-cdn"></span><input type="text" id="customPath" placeholder="https://cdn.emulatorjs.org/stable/data/"/></div><div id="customPathValid" style="font-size:11px;text-align:right"></div><div class="buttonbox"><span id="label-pwa"></span><button id="install"></button></div><div id="pwa-status-msg"></div><div style="display:flex;justify-content:flex-end;margin-top:1.2em"><button id="settings-close" style="background:var(--primary);border:none;color:#fff"></button></div></div></div><div class="popup-overlay"></div><button id="hostToggle">👥 Phòng</button>
+<div id="roomDrawer">
+<div id="roomInfo">
+<div style="text-align:center;font-size:13px;color:var(--text-sub)">Mã phòng — gửi cho bạn quét hoặc nhập:</div>
+<div class="code" id="roomCodeText">—</div>
+<div id="qrBox"></div>
+<div id="qrNote"></div>
+<div style="text-align:center;margin-top:6px"><button id="copyCodeBtn">📋 Copy mã</button> <button id="copyLinkBtn">🔗 Copy link vào phòng</button></div>
+<div class="line" style="text-align:center">Game: <b id="roomGame">—</b></div>
+</div>
+<div class="line" id="drawerStatus">—</div>
+<div class="line">Ping: <b id="pingVal">—</b> · <span id="p2state">P2: —</span></div>
+<div class="line" id="streamState">Hình game: —</div>
+<div id="chatLog"><div class="sys">Chat trong phòng sẽ hiện ở đây.</div></div>
+<div id="chatRow"><input id="chatInput" placeholder="Nhắn cho người chơi kia..." maxlength="200"><button id="chatSend">Gửi</button></div>
+<div style="display:flex;gap:8px;margin-top:10px"><button id="drawerClose" style="flex:1">Đóng</button><button id="exitBtn2" style="flex:1;background:#7f1d1d;border-color:#7f1d1d;color:#fff">✕ Thoát phòng</button></div>
+</div>
+<div id="guestArea">
+<div id="guestTop"><span id="guestTitle">Khách (P2) — đang xem stream</span><button id="guestChatBtn">💬 Chat</button><button id="guestExitBtn">✕ Thoát</button></div>
+<video id="guestVideo" autoplay playsinline muted></video>
+<div id="guestPad">
+<div class="dpad">
+<button class="u" data-k="up">▲</button><button class="d" data-k="down">▼</button>
+<button class="l" data-k="left">◀</button><button class="r" data-k="right">▶</button>
+</div>
+<div class="ab">
+<button class="y" data-k="y">Y</button>
+<button class="x" data-k="x">X</button>
+<button class="b" data-k="b">B</button>
+<button class="a" data-k="a">A</button>
+</div>
+<div class="coinrow"><button class="coin" data-k="coin">Select</button><button class="start" data-k="start">Start</button></div>
+</div>
+</div>
+<script>
+const $=i=>document.getElementById(i),
+ejsLangMap={auto:"",en:"en-US",vi:"vi-VN",pt:"pt-BR",es:"es-ES",ja:"ja-JP",zh:"zh-CN",de:"de-DE",fr:"fr-FR",ru:"ru-RU"},
+langs={auto:"Tự động",en:"English",vi:"Tiếng Việt",pt:"Português",es:"Español",ja:"日本語",zh:"中文",de:"Deutsch",fr:"Français",ru:"Русский"},
+i18n={
+    vi:{drop:"Kéo thả file ROM vào đây hoặc click để chọn",url:"Dán URL ROM & nhấn Enter...",title:"Cài đặt",debug:"Chế độ Debug:",cache:"Xóa Cache:",clear:"Dọn sạch",lang:"Ngôn ngữ:",cdn:"CDN tùy chỉnh:",pwa:"Cài đặt PWA:",inst:"Cài đặt",installed:"Đã cài đặt",close:"Đóng"},
+    en:{drop:"Drag & drop ROM file here or click to select",url:"Paste ROM URL & press Enter...",title:"Settings",debug:"Debug Mode:",cache:"Clear Cache:",clear:"Clear",lang:"Language:",cdn:"Custom CDN:",pwa:"PWA Setup:",inst:"Install",installed:"Installed",close:"Close"}
+},
+// Nhóm các extension chung hệ máy lại với nhau
+extGroups={nes:"fds nes unif unf",snes:"smc fig sfc gd3 gd7 dx2 bsx swc",n64:"z64 n64",pce:"pce",ngp:"ngp ngc",ws:"ws wsc",coleco:"col cv",vice_x64:"d64",psx:"chd iso cue",nds:"nds",gba:"gba",gb:"gb gbc"},
+extMap=Object.entries(extGroups).reduce((a,[c,e])=>(e.split(' ').forEach(x=>a[x]=c),a),{}),
+coreNames={"Arcade":"arcade","Mame 2003":"mame2003_plus","Nintendo 64":"n64","Game Boy":"gb","Game Boy Advance":"gba","Nintendo DS":"nds","NES":"nes","SNES":"snes","PlayStation":"psx","Sega Mega Drive":"segaMD","PSP":"psp"};
+
+let installPrompt=null;
+
+/* ================= CHƠI ONLINE (PeerJS, theo mẫu coin-opx-play.html) =================
+   Host-stream: chủ phòng chạy game thật, stream canvas qua PeerJS media call;
+   khách xem video, không cần ROM, gửi phím về host qua DataChannel, host chèn P2
+   bằng EJS_emulator.gameManager.simulateInput(1, idx, 1/0) (P2 mặc định không có phím). */
+window.onlineMode="solo";
+const PEER_CDN=["https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js","https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"];
+const QR_CDN=["https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js","https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"];
+const JSQR_CDN=["https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js","https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"];
+/* Nút mặc định của EmulatorJS cho arcade (RetroPad, đã xác minh): A=0, B=8, X=1, Y=9, Select(Xu)=2, Start=3, hướng=4-7 */
+const PAD={a:0,b:8,x:1,y:9,coin:2,start:3,up:4,down:5,left:6,right:7};
+let peer=null,dataConn=null,gameStream=null,pendingCall=null;
+let gameStarted=false,roomCode="",mySlot=0,lastGuestState={},lastRtt=null;
+let scanStream=null,scanRAF=0,pendingSrc=null;
+const guestInput={up:0,down:0,left:0,right:0,a:0,b:0,x:0,y:0,coin:0,start:0};
+
+function loadScriptOnce(srcs){
+    return new Promise(res=>{
+        let i=0;
+        const next=()=>{
+            if(i>=srcs.length)return res(false);
+            const sc=document.createElement("script");sc.src=srcs[i++];
+            sc.onload=()=>res(true);sc.onerror=next;document.head.appendChild(sc);
+        };next();
+    });
+}
+function loadPeerJS(){
+    if(window.Peer)return Promise.resolve(true);
+    return loadScriptOnce(PEER_CDN).then(ok=>{if(!ok)throw new Error("Không tải được PeerJS");return true;});
+}
+function setDrawerStatus(t){const el=$("drawerStatus");if(el)el.textContent=t;}
+function openDrawer(){
+    const d=$("roomDrawer");if(!d)return;
+    d.style.display="block";
+    const ri=$("roomInfo");if(ri)ri.style.display=(window.onlineMode==="host")?"block":"none";
+}
+function closeDrawer(){const d=$("roomDrawer");if(d)d.style.display="none";}
+function makeRoomCode(){return "KOF-"+String(Math.floor(1000+Math.random()*9000));}
+function roomLink(code){
+    const base=(location.protocol.indexOf("http")===0)?(location.origin+location.pathname):location.href.split("?")[0].split("#")[0];
+    return base+"?room="+encodeURIComponent(code);
+}
+/* Tạo QR link vào phòng (qrcodejs qua CDN, fallback ảnh qrserver nếu CDN lỗi) */
+async function renderQR(text){
+    const box=$("qrBox");if(!box)return;
+    box.innerHTML="";
+    if(!window.QRCode)await loadScriptOnce(QR_CDN);
+    if(window.QRCode){
+        try{
+            new QRCode(box,{text:text,width:200,height:200,colorDark:"#000000",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
+            $("qrNote").textContent="Mở camera điện thoại quét mã này là vào thẳng phòng, khỏi gõ mã.";
+            return;
+        }catch(e){}
+    }
+    const img=document.createElement("img");
+    img.alt="QR vào phòng";img.width=200;img.height=200;
+    img.src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data="+encodeURIComponent(text);
+    box.appendChild(img);
+    $("qrNote").textContent="Mở camera điện thoại quét mã này là vào thẳng phòng, khỏi gõ mã.";
+}
+function setMode(m){
+    window.onlineMode=m;
+    $("modeSolo").classList.toggle("active",m==="solo");
+    $("modeHost").classList.toggle("active",m==="host");
+    $("modeGuest").classList.toggle("active",m==="guest");
+    $("joinRow").style.display=(m==="guest")?"flex":"none";
+    if(m!=="guest")stopScan();
+    $("modeHint").textContent=m==="solo"?"Chọn file game ở trên rồi chơi như bình thường."
+        :m==="host"?"Chọn file game ở trên — phòng sẽ tự mở, gửi mã / QR cho bạn vào."
+        :"Không cần chọn file game — nhập mã phòng (hoặc quét QR) rồi bấm Vào phòng.";
+}
+function pickFile(f){
+    if(!f)return;
+    pendingSrc=f;
+    if(window.onlineMode==="host"){createRoom(f);return;}
+    if(window.onlineMode==="guest"){$("modeHint").textContent="Bạn đang ở chế độ khách — không cần file game. Nhập mã phòng rồi bấm Vào phòng.";return;}
+    launch(f);
+}
+function pickUrl(u){
+    if(!u)return;
+    pendingSrc=u;
+    if(window.onlineMode==="host"){createRoom(u);return;}
+    if(window.onlineMode==="guest")return;
+    launch(u);
+}
+function chatAdd(who,text,cls){
+    const log=$("chatLog");if(!log)return;
+    const d=document.createElement("div");if(cls)d.className=cls;
+    d.innerHTML="<b>"+who+":</b> ";d.appendChild(document.createTextNode(text));
+    log.appendChild(d);log.scrollTop=1e6;
+}
+function sendChat(){
+    const t=$("chatInput").value.trim();if(!t)return;
+    $("chatInput").value="";
+    chatAdd(mySlot===2?"P2 (bạn)":"P1 (bạn)",t,mySlot===2?"p2":"p1");
+    if(dataConn&&dataConn.open)try{dataConn.send(JSON.stringify({t:"chat",from:mySlot===2?"P2":"P1",text:t}));}catch(e){}
+}
+function checkP2Ready(){
+    try{return !!(window.EJS_emulator&&window.EJS_emulator.gameManager&&typeof window.EJS_emulator.gameManager.simulateInput==="function");}
+    catch(e){return false;}
+}
+function injectP2(key,val){
+    if(!checkP2Ready())return false;
+    try{window.EJS_emulator.gameManager.simulateInput(1,PAD[key],val?1:0);return true;}
+    catch(e){return false;}
+}
+function handleData(msg){
+    let m;try{m=JSON.parse(msg);}catch(e){return;}
+    if(m.t==="chat"){chatAdd(m.from,m.text,m.from==="P1"?"p1":"p2");}
+    else if(m.t==="input"&&window.onlineMode==="host"){
+        for(const k in PAD){
+            const v=m.s&&m.s[k]?1:0;
+            if(lastGuestState[k]!==v){lastGuestState[k]=v;injectP2(k,v);}
+        }
+        const on=Object.keys(lastGuestState).filter(k=>lastGuestState[k]);
+        $("p2state").textContent="P2: đã vào phòng"+(on.length?" — đang bấm: "+on.join(", "):"");
+    }
+    else if(m.t==="ping"&&window.onlineMode==="host"){if(dataConn&&dataConn.open)try{dataConn.send(JSON.stringify({t:"pong",ts:m.ts}));}catch(e){}}
+    else if(m.t==="pong"&&window.onlineMode==="guest"){lastRtt=Date.now()-m.ts;$("pingVal").textContent=lastRtt+" ms";}
+    else if(m.t==="start"&&window.onlineMode==="host"){
+        if(window.EJS_emulator&&window.EJS_emulator.gameManager)
+            try{window.EJS_emulator.gameManager.simulateInput(0,3,1);setTimeout(()=>window.EJS_emulator.gameManager.simulateInput(0,3,0),120);}catch(e){}
+    }
+}
+function setupDataConn(conn){
+    dataConn=conn;
+    conn.on("data",handleData);
+    conn.on("open",()=>{
+        setDrawerStatus("Đã kết nối");
+        chatAdd("Hệ thống","Đã nối với người chơi kia.","sys");
+        if(window.onlineMode==="guest"){setInterval(()=>{if(dataConn&&dataConn.open)try{dataConn.send(JSON.stringify({t:"ping",ts:Date.now()}));}catch(e){}},2000);}
+    });
+    conn.on("close",()=>{setDrawerStatus("Mất kết nối");chatAdd("Hệ thống","Đã mất kết nối với người chơi kia.","sys");});
+}
+function tryStartStream(){
+    if(window.onlineMode!=="host"||!gameStarted)return;
+    const cv=document.querySelector("#game canvas.ejs_canvas")||document.querySelector("#game canvas");
+    if(!cv||typeof cv.captureStream!=="function"){
+        $("streamState").textContent="Hình game: chưa lấy được canvas game — đang thử lại...";
+        setTimeout(tryStartStream,1000);return;
+    }
+    try{
+        gameStream=cv.captureStream(30);
+        if(!gameStream.getVideoTracks().length)throw new Error("no video track");
+        $("streamState").textContent="Hình game: đang stream cho khách (canvas.captureStream, 30fps).";
+        if(pendingCall){const c=pendingCall;pendingCall=null;c.answer(gameStream);}
+    }catch(e){
+        $("streamState").textContent="Hình game: không lấy được stream từ canvas ("+e.message+") — khách vẫn chat được nhưng chưa xem được hình.";
+        setTimeout(tryStartStream,2000);
+    }
+}
+function createRoom(src){
+    if(!src){alert("Chọn file game trước đã.");return;}
+    window.onlineMode="host";mySlot=1;
+    const nm=typeof src==="string"?decodeURIComponent(src.split("/").pop()):src.name;
+    const gn=nm.replace(/\.[^.]+$/,"")||nm;
+    roomCode=makeRoomCode();
+    $("roomCodeText").textContent=roomCode;
+    $("roomGame").textContent=gn;
+    renderQR(roomLink(roomCode)); /* hiện mã + QR ngay, trước cả khi PeerJS mở */
+    openDrawer();
+    setDrawerStatus("Đang tạo phòng...");
+    launch(src);
+    loadPeerJS().then(()=>{
+        let tries=0;
+        const tryPeer=()=>{
+            peer=new Peer("coinopx-play-"+roomCode.toLowerCase());
+            peer.on("open",()=>{
+                setDrawerStatus("Phòng đã mở — chờ khách quét QR / nhập mã");
+                chatAdd("Hệ thống","Phòng "+roomCode+" đã mở. Gửi mã hoặc QR cho bạn để vào.","sys");
+            });
+            peer.on("connection",c=>{setupDataConn(c);$("p2state").textContent="P2: đã vào phòng";});
+            peer.on("call",c=>{if(gameStream)c.answer(gameStream);else pendingCall=c;});
+            peer.on("error",err=>{
+                if(err&&err.type==="unavailable-id"&&tries++<5){
+                    roomCode=makeRoomCode();
+                    $("roomCodeText").textContent=roomCode;
+                    renderQR(roomLink(roomCode));
+                    tryPeer();
+                }else{
+                    setDrawerStatus("Lỗi tạo phòng");
+                    chatAdd("Hệ thống","Không tạo được phòng: "+(err&&err.type||err),"sys");
+                }
+            });
+        };tryPeer();
+    }).catch(e=>{
+        setDrawerStatus("Lỗi PeerJS");
+        $("streamState").textContent="Không tải được thư viện PeerJS — vẫn chơi 1 mình được, nhưng không tạo phòng được. Kiểm tra mạng rồi tải lại trang.";
+    });
+}
+function joinRoom(code){
+    code=(code||"").trim().toUpperCase();
+    if(!/^[A-Z]{3}-\d{4}$/.test(code)){alert("Mã phòng có dạng KOF-1234. Kiểm tra lại mã chủ phòng gửi.");return;}
+    window.onlineMode="guest";mySlot=2;roomCode=code;
+    $("box").style.display="none";
+    if($("onlinePanel"))$("onlinePanel").style.display="none";
+    if($("toolbar"))$("toolbar").style.display="none";
+    $("onlinePanel").style.display="none";
+    $("guestArea").style.display="block";
+    $("guestTitle").textContent="Khách (P2) — phòng "+code+" — đang xem stream";
+    setDrawerStatus("Đang vào phòng...");
+    loadPeerJS().then(()=>{
+        peer=new Peer();
+        peer.on("open",()=>{
+            const conn=peer.connect("coinopx-play-"+code.toLowerCase(),{reliable:true});
+            setupDataConn(conn);
+            /* PeerJS media call bắt buộc phải có 1 stream gửi đi — khách gửi 1 khung đen 2x2 vô hại. */
+            const dummy=document.createElement("canvas");dummy.width=2;dummy.height=2;
+            const call=peer.call("coinopx-play-"+code.toLowerCase(),dummy.captureStream());
+            call.on("stream",s=>{
+                $("guestVideo").srcObject=s;
+                $("streamState").textContent="Hình game: đang xem stream từ chủ phòng.";
+                setDrawerStatus("Đã kết nối");
+            });
+            call.on("error",()=>{setDrawerStatus("Lỗi nhận hình");});
+            setTimeout(()=>{if(!$("guestVideo").srcObject)$("streamState").textContent="Hình game: chưa nhận được stream — có thể chủ phòng chưa chạy game xong, chờ thêm chút nữa.";},8000);
+        });
+        peer.on("error",err=>{
+            setDrawerStatus("Không vào được phòng");
+            chatAdd("Hệ thống","Không vào được phòng: "+(err&&err.type||err)+". Kiểm tra mã phòng và mạng.","sys");
+        });
+    }).catch(e=>{
+        setDrawerStatus("Lỗi PeerJS");
+        $("streamState").textContent="Không tải được thư viện PeerJS — kiểm tra mạng rồi tải lại trang.";
+    });
+}
+/* Gửi trạng thái phím của khách về chủ phòng (chủ phòng chèn vào P2 qua injectP2). */
+function sendGuestInput(){
+    if(dataConn&&dataConn.open){try{dataConn.send(JSON.stringify({t:"input",s:guestInput}));}catch(e){}}
+}
+/* Bộ nút khách #guestPad — CHỈ hiện cho khách (không có máy giả lập).
+   Solo/host dùng gamepad của EmulatorJS, không dùng pad này. Đa chạm được. */
+function bindGuestPad(){
+    document.querySelectorAll("#guestPad [data-k]").forEach(b=>{
+        const k=b.dataset.k;
+        const down=e=>{
+            e.preventDefault();b.classList.add("on");
+            guestInput[k]=1;sendGuestInput();
+            if(k==="start"&&dataConn&&dataConn.open){try{dataConn.send(JSON.stringify({t:"start"}));}catch(e){}}
+        };
+        const up=e=>{e.preventDefault();b.classList.remove("on");guestInput[k]=0;sendGuestInput();};
+        b.addEventListener("pointerdown",down);
+        b.addEventListener("pointerup",up);
+        b.addEventListener("pointercancel",up);
+        b.addEventListener("pointerleave",up);
+        b.addEventListener("contextmenu",e=>e.preventDefault());
+    });
+    /* Bàn phím chỉ xử lý cho khách (solo/host dùng phím mặc định của EmulatorJS). */
+    const keyMap={ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right",z:"a",Z:"a",x:"b",X:"b",c:"x",C:"x",v:"y",V:"y"," ":"coin",Enter:"start"};
+    document.addEventListener("keydown",e=>{
+        if(window.onlineMode!=="guest")return;
+        if(e.target&&(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA"))return;
+        const k=keyMap[e.key];if(!k)return;e.preventDefault();
+        if(guestInput[k])return;guestInput[k]=1;sendGuestInput();
+        if(k==="start"&&dataConn&&dataConn.open){try{dataConn.send(JSON.stringify({t:"start"}));}catch(e){}}
+        const b=document.querySelector('#guestPad [data-k="'+k+'"]');if(b)b.classList.add("on");
+    });
+    document.addEventListener("keyup",e=>{
+        if(window.onlineMode!=="guest")return;
+        if(e.target&&(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA"))return;
+        const k=keyMap[e.key];if(!k)return;
+        guestInput[k]=0;sendGuestInput();
+        const b=document.querySelector('#guestPad [data-k="'+k+'"]');if(b)b.classList.remove("on");
+    });
+}
+/* ================= QUÉT MÃ QR (khách, jsQR qua CDN) ================= */
+function stopScan(){
+    if(scanRAF)cancelAnimationFrame(scanRAF);scanRAF=0;
+    if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}
+    const v=$("scanVideo");if(v)v.srcObject=null;
+    const a=$("scanArea");if(a)a.style.display="none";
+}
+async function startScan(){
+    const area=$("scanArea");area.style.display="block";
+    $("scanMsg").textContent="Đang mở camera...";
+    if(!window.jsQR){
+        const ok=await loadScriptOnce(JSQR_CDN);
+        if(!ok){$("scanMsg").textContent="Không tải được thư viện quét (jsQR) — kiểm tra mạng, hoặc nhập mã phòng tay.";return;}
+    }
+    let stream;
+    try{
+        stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"},audio:false});
+    }catch(e){
+        $("scanMsg").textContent="Không mở được camera ("+(e&&e.name||"lỗi")+"). Camera cần HTTPS + cho phép quyền. Nhập mã phòng tay vẫn được.";
+        return;
+    }
+    scanStream=stream;
+    const v=$("scanVideo");v.srcObject=stream;
+    try{await v.play();}catch(e){}
+    $("scanMsg").textContent="Đưa mã QR của chủ phòng vào khung hình...";
+    const cv=$("scanCanvas"),ctx=cv.getContext("2d");
+    const loop=()=>{
+        if(!scanStream)return;
+        if(v.readyState===v.HAVE_ENOUGH_DATA&&window.jsQR){
+            cv.width=v.videoWidth;cv.height=v.videoHeight;
+            ctx.drawImage(v,0,0,cv.width,cv.height);
+            try{
+                const img=ctx.getImageData(0,0,cv.width,cv.height);
+                const code=window.jsQR(img.data,cv.width,cv.height);
+                if(code&&code.data){
+                    const m=code.data.match(/room=([A-Za-z]{3}-\d{4})/i)||code.data.match(/([A-Za-z]{3}-\d{4})/);
+                    if(m){stopScan();$("roomInput").value=m[1].toUpperCase();joinRoom(m[1]);return;}
+                    $("scanMsg").textContent="Quét được mã nhưng không phải mã phòng: "+code.data;
+                }
+            }catch(e){}
+        }
+        scanRAF=requestAnimationFrame(loop);
+    };
+    loop();
+}
+
+
+function updateUiLang(l){
+    const d=(l==="vi"||(l==="auto"&&navigator.language.startsWith("vi")))?i18n.vi:i18n.en;
+    if($("drop-label"))$("drop-label").textContent=d.drop;
+    if($("url-input"))$("url-input").placeholder=d.url;
+    $("settings-title-h1").textContent=d.title;
+    $("label-debug").textContent=d.debug;
+    $("label-cache").textContent=d.cache;
+    $("cache").textContent=d.clear;
+    $("label-lang").textContent=d.lang;
+    $("label-cdn").textContent=d.cdn;
+    $("label-pwa").textContent=d.pwa;
+    $("settings-close").textContent=d.close;
+    checkPwa();
+}
+
+function resetBox(){
+    $("box").innerHTML='<input type="file" id="input"><span id="drop-label"></span>';
+    updateUiLang(window.language||"auto");
+    $("input").onchange=()=>{const f=$("input").files[0];if(f)pickFile(f);};
+}
+
+function initSettings(){
+    const m=$("popup-settings"),p=new URLSearchParams(location.search);
+    $("settings").onclick=()=>{checkPwa();m.classList.add("show")};
+    $("settings-close").onclick=()=>m.classList.remove("show");
+    $("debug").checked=["1","true"].includes(p.get('debug'));
+    $("debug").onchange=()=>location.search=$("debug").checked?"?debug=1":"";
+
+    const s=$("language");
+    for(let l in langs)s.add(new Option(langs[l],l));
+    window.language=localStorage.getItem("language")||"auto";
+    s.value=window.language;
+    updateUiLang(window.language);
+    s.onchange=()=>{localStorage.setItem("language",window.language=s.value);updateUiLang(window.language)};
+
+    const c=$("customPath"),v=$("customPathValid"),sc=localStorage.getItem("custom_cdn");
+    if(sc)c.value=sc;
+    c.onchange=()=>{
+        const val=c.value.trim();
+        if(val&&/^https?:\/\/.+\/$/.test(val)){
+            localStorage.setItem("custom_cdn",val);
+            v.textContent="URL hợp lệ";v.style.color="#4caf50";
+        }else{
+            localStorage.removeItem("custom_cdn");
+            v.textContent=val?"URL không hợp lệ (cần đuôi /)":"";v.style.color="#f44336";
+        }
+    };
+
+    $("cache").onclick=()=>{
+        if(confirm("Xóa toàn bộ cache và dữ liệu lưu?")){
+            localStorage.clear();
+            indexedDB.databases().then(d=>d.forEach(b=>indexedDB.deleteDatabase(b.name)));
+            caches.keys().then(k=>k.forEach(c=>caches.delete(c)));
+            location.reload();
+        }
+    };
+}
+
+async function launch(src){
+    if(!src)return;
+    const urlParams=new URLSearchParams(location.search);
+    let fn=typeof src==="string"?decodeURIComponent(src.split("/").pop()):src.name,
+        ext=(fn.split('.').pop()||"").toLowerCase().split('?')[0].split('#')[0],
+        gameName=fn.substring(0,fn.lastIndexOf('.'))||fn,
+        core=urlParams.get('core')||extMap[ext];
+
+    if(!core){
+        $("box").classList.add("selecting-core");
+        core=await new Promise(res=>{
+            $("box").innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:260px;z-index:20"><span style="font-size:.95rem;font-weight:600">Chọn hệ máy cho ROM:</span><select id="core-picker" style="width:100%"></select><button id="core-submit" style="width:100%;background:var(--primary);color:#fff;border:none">Tải game</button></div>`;
+            const sel=$("core-picker");
+            for(let c in coreNames)sel.add(new Option(c,coreNames[c]));
+            $("core-submit").onclick=()=>{$("box").classList.remove("selecting-core");res(sel.value)};
+        });
+        resetBox();
+    }
+
+    const div=document.createElement("div"),sub=document.createElement("div"),sc=document.createElement("script");
+    sub.id="game";div.id="display";
+    if($("toolbar"))$("toolbar").style.display="none";
+    $("box").style.display="none";
+    div.appendChild(sub);document.body.appendChild(div);
+    if(window.onlineMode==="host"){const t=$("hostToggle");if(t)t.style.display="block";}
+
+    const cdn=localStorage.getItem("custom_cdn")||"https://cdn.emulatorjs.org/stable/data/";
+    const handleExit=()=>{
+        try{location.reload()}catch(e){}
+        setTimeout(()=>{
+            if($("display"))$("display").remove();
+            $("box").style.display="";
+            if($("toolbar"))$("toolbar").style.display="";
+            if($("input"))$("input").value="";
+            if($("url-input"))$("url-input").value="";
+        },50);
+    };
+
+    Object.assign(window,{
+        EJS_player:"#game",
+        EJS_gameName:gameName||"Game",
+        EJS_biosUrl:core=="arcade"||core=="mame2003_plus"?"https://longhai.github.io/bios/arcade.7z":"",
+        EJS_gameUrl:src,
+        EJS_core:core,
+        EJS_pathtodata:cdn,
+        EJS_startOnLoaded:!0,
+        EJS_DEBUG_XX:$("debug").checked,
+        EJS_onExit:handleExit
+    });
+    if(window.onlineMode==="host")window.EJS_onGameStart=()=>{
+        gameStarted=true;
+        setDrawerStatus("Game đã chạy — đang lấy hình để stream cho khách...");
+        tryStartStream();
+    };
+
+    if(urlParams.get('p'))window.EJS_gameParentUrl=urlParams.get('p');
+    if(urlParams.get('patch'))window.EJS_gamePatchUrl=urlParams.get('patch');
+
+    const cl=window.language||localStorage.getItem("language")||"auto";
+    if(cl&&cl!=="auto")window.EJS_language=ejsLangMap[cl]||cl;
+
+    const obs=new MutationObserver(()=>{
+        if(div.innerText?.includes("EmulatorJS has exited")){obs.disconnect();handleExit()}
+    });
+    obs.observe(div,{childList:!0,subtree:!0,characterData:!0});
+
+    if(["psp","dosbox_pure"].includes(core))window.EJS_threads=!0;
+    // Tùy chỉnh cụm nút cảm ứng:
+    // - PS1: giữ joystick, thêm nút vai L1/R1/L2/R2 (mặc định của EmulatorJS thiếu)
+    if(core==="psx")window.EJS_VirtualGamepadSettings=[
+        {type:"zone",id:"dpad",location:"left",left:"50%",top:"50%",joystickInput:!1,inputValues:[4,5,6,7]},
+        {type:"button",text:"L1",id:"l1",location:"left",left:3,top:-90,bold:!0,block:!0,input_value:10},
+        {type:"button",text:"R1",id:"r1",location:"right",right:3,top:-90,bold:!0,block:!0,input_value:11},
+        {type:"button",text:"L2",id:"l2",location:"left",left:3,top:-50,bold:!0,block:!0,input_value:12},
+        {type:"button",text:"R2",id:"r2",location:"right",right:3,top:-50,bold:!0,block:!0,input_value:13},
+        {type:"button",text:"Y",id:"y",location:"right",left:40,bold:!0,input_value:9},
+        {type:"button",text:"X",id:"x",location:"right",top:40,bold:!0,input_value:1},
+        {type:"button",text:"B",id:"b",location:"right",left:81,top:40,bold:!0,input_value:8},
+        {type:"button",text:"A",id:"a",location:"right",left:40,top:80,bold:!0,input_value:0},
+        {type:"button",text:"Start",id:"start",location:"center",left:60,fontSize:15,block:!0,input_value:3},
+        {type:"button",text:"Select",id:"select",location:"center",left:-5,fontSize:15,block:!0,input_value:2}
+    ];
+    // - NES: nút turbo TA/TB
+    //   + GIỮ trên màn hình cảm ứng: tự bắn liên tục, buông ra ngừng
+    //   + CHẠM NHANH vào TA/TB: bật/tắt turbo cho TAY CẦM VẬT LÝ (nút sáng vàng khi bật) —
+    //     khi bật, chỉ cần giữ nút vật lý là tự bắn liên tục
+    //   (EmulatorJS không có sẵn turbo nên: màn hình thì giả lập chạm lên nút A/B thật;
+    //    tay cầm thì bọc navigator.getGamepads để "lừa" EmulatorJS thấy nút nhấp nhả liên tục)
+    if(core==="nes"){
+        const T={a:{timer:null},b:{timer:null}};
+        const armState={a:false,b:false}; // turbo tay cầm vật lý đang bật cho nút nào
+        const physIdx={a:0,b:1}; // ánh xạ mặc định EmulatorJS: BUTTON_1->A(NES), BUTTON_2->B(NES)
+        const realBtn=k=>sub.querySelector(k==="a"?".b_a":".b_b");
+        const turboBtn=k=>sub.querySelector(k==="a"?".b_ta":".b_tb");
+        const fire=(k,down)=>{
+            const el=realBtn(k);
+            // bubbles:false để sự kiện không lan ra document làm ảnh hưởng chỗ khác
+            if(el)el.dispatchEvent(new Event(down?"touchstart":"touchend",{bubbles:false,cancelable:true}));
+        };
+        const startTurbo=k=>{
+            const s=T[k];
+            if(s.timer)return;
+            const t=turboBtn(k);
+            if(t)t.classList.add("ejs_virtualGamepad_button_down");
+            const tick=()=>{fire(k,true);setTimeout(()=>fire(k,false),55);};
+            tick();
+            s.timer=setInterval(tick,130);
+        };
+        const stopTurbo=k=>{
+            const s=T[k];
+            if(s.timer){clearInterval(s.timer);s.timer=null;}
+            const t=turboBtn(k);
+            if(t)t.classList.remove("ejs_virtualGamepad_button_down");
+            fire(k,false);
+        };
+        const toggleArm=k=>{
+            armState[k]=!armState[k];
+            const t=turboBtn(k);
+            if(t){
+                t.style.boxShadow=armState[k]?"0 0 10px 2px #ffeb3b":"";
+                t.style.borderColor=armState[k]?"#ffeb3b":"";
+            }
+        };
+        // Bọc getGamepads TRƯỚC khi EmulatorJS load: nút vật lý nào đang giữ mà đã bật
+        // turbo thì báo cáo nhấp/nhả theo nhịp ~8 lần/giây, còn lại báo cáo thật
+        try{
+            const realGetGamepads=navigator.getGamepads.bind(navigator);
+            const isPressed=b=>b===1||(typeof b==="object"&&b!==null&&!!b.pressed);
+            navigator.getGamepads=function(){
+                let pads;
+                try{pads=Array.from(realGetGamepads());}catch(e){return realGetGamepads();}
+                if(!armState.a&&!armState.b)return pads;
+                const phase=Math.floor(Date.now()/65)%2===0;
+                return pads.map(pad=>{
+                    if(!pad||!pad.connected||!pad.buttons)return pad;
+                    let changed=false;
+                    const btns=Array.from(pad.buttons,(b,i)=>{
+                        const k=i===physIdx.a?"a":i===physIdx.b?"b":null;
+                        if(k&&armState[k]&&isPressed(b)){
+                            changed=true;
+                            return{pressed:phase,touched:phase,value:phase?1:0};
+                        }
+                        return b;
+                    });
+                    if(!changed)return pad;
+                    return new Proxy(pad,{get(t,p){return p==="buttons"?btns:Reflect.get(t,p);}});
+                });
+            };
+        }catch(e){}
+        const injectTurbo=()=>{
+            const right=sub.querySelector(".ejs_virtualGamepad_right");
+            if(right&&right.querySelector(".b_ta"))return true; // đã chèn xong
+            if(!right||!realBtn("a"))return false; // gamepad chưa dựng xong, tiếp tục chờ
+            [["ta","TA","a","right:5px;top:8px;"],["tb","TB","b","right:75px;top:8px;"]].forEach(([id,label,k,pos])=>{
+                const d=document.createElement("div");
+                d.className="ejs_virtualGamepad_button cs_nes b_"+id;
+                d.style.cssText=pos+"font-weight:bold;font-size:22px;touch-action:none;user-select:none;-webkit-user-select:none;";
+                d.innerText=label;
+                d.oncontextmenu=e=>e.preventDefault();
+                let downT=0,cancelled=false;
+                d.addEventListener("pointerdown",e=>{e.preventDefault();downT=Date.now();cancelled=false;startTurbo(k);});
+                const endHold=()=>{stopTurbo(k);cancelled=true;};
+                d.addEventListener("pointercancel",endHold);
+                d.addEventListener("pointerleave",endHold);
+                d.addEventListener("pointerup",e=>{
+                    e.preventDefault();
+                    const quick=!cancelled&&Date.now()-downT<250;
+                    cancelled=true;
+                    stopTurbo(k);
+                    if(quick)toggleArm(k); // chạm nhanh = bật/tắt turbo tay cầm vật lý
+                });
+                right.appendChild(d);
+            });
+            return true;
+        };
+        if(!injectTurbo()){
+            const obs=new MutationObserver(()=>{if(injectTurbo())obs.disconnect();});
+            obs.observe(sub,{childList:true,subtree:true});
+            // lưới an toàn: thử lại mỗi 0.5s trong 10s đề phòng observer sót
+            let n=0;
+            const retry=setInterval(()=>{if(injectTurbo()||++n>20){clearInterval(retry);}},500);
+        }
+    }
+    sc.src=cdn+(cdn.endsWith("data/")?"loader.js":"data/loader.js");
+    document.body.appendChild(sc);
+}
+
+$("input").onchange=()=>{const f=$("input").files[0];if(f)pickFile(f);};
+$("url-input").onkeydown=e=>{if(e.key==="Enter"&&$("url-input").value.trim())pickUrl($("url-input").value.trim())};
+
+function checkPwa(){
+    const isVi=(window.language==="vi"||(window.language==="auto"&&navigator.language.startsWith("vi"))),
+          st=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone,
+          mk=localStorage.getItem("pwa_installed")==="true";
+    $("install").textContent=(st||(mk&&!installPrompt))?(isVi?i18n.vi.installed:i18n.en.installed):(isVi?i18n.vi.inst:i18n.en.inst);
+    $("install").disabled=st||(mk&&!installPrompt)||!installPrompt;
+}
+
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installPrompt=e;localStorage.removeItem("pwa_installed");checkPwa()});
+window.addEventListener("appinstalled",()=>{localStorage.setItem("pwa_installed","true");installPrompt=null;checkPwa()});
+
+(()=>{
+    try{
+        const m={name:"EmulatorJS Demo",short_name:"EmulatorJS",start_url:location.href,display:"standalone",background_color:"#0d0e12",theme_color:"#1AAFFF",icons:[{
+  src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><path fill='%231AAFFF' d='M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768zM768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256zM554.667 661.547c0-59.093 47.68-106.88 106.88-106.88h212.907c59.093 0 106.88 47.68 106.88 106.88v212.907c0 59.093-47.68 106.88-106.88 106.88h-212.907A106.731 106.731 0 0 1 554.667 874.453v-212.906zm85.333 0v212.906c0 12.032 9.536 21.547 21.547 21.547h212.907c12.032 0 21.547-9.536 21.547-21.547v-212.906c0-12.032-9.536-21.547-21.547-21.547h-212.907c-12.032 0-21.547 9.536-21.547 21.547zM183.829 109.888c36.118-61.163 108.246-61.248 144.427 0l126.208 213.653c35.733 60.523 3.52 124.437-66.816 124.437H124.437c-70.613 0-102.635-63.765-66.816-124.437L183.829 109.91zM133.653 362.667h244.8l-122.41-207.232-122.39 207.232z'/></svg>",
+  sizes:"192x192 512x512",
+  type:"image/svg+xml"
+}]
+},
+              l=document.createElement("link");
+        l.rel="manifest";l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:"application/json"}));
+        document.head.appendChild(l);
+        if('serviceWorker'in navigator&&location.protocol.startsWith('http')){
+            navigator.serviceWorker.register(URL.createObjectURL(new Blob(["self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>self.clients.claim());self.addEventListener('fetch',e=>e.respondWith(fetch(e.request)));"],{type:"application/javascript"}))).catch(()=>{});
+        }
+    }catch(e){}
+    checkPwa();
+})();
+
+$("install").onclick=async()=>{
+    if(installPrompt){
+        try{
+            installPrompt.prompt();
+            if((await installPrompt.userChoice)?.outcome==='accepted'){
+                localStorage.setItem("pwa_installed","true");installPrompt=null;checkPwa();
+            }
+        }catch(e){$("pwa-status-msg").textContent="Lỗi PWA: "+e.message}
+    }else{
+        $("pwa-status-msg").textContent=(window.language==="en"||(window.language==="auto"&&!navigator.language.startsWith("vi")))?"PWA requires HTTPS or localhost.":"PWA yêu cầu môi trường HTTPS/localhost.";
+    }
+};
+
+initSettings();
+
+/* ===== Wiring chế độ chơi online + QR ===== */
+$("modeSolo").onclick=()=>setMode("solo");
+$("modeHost").onclick=()=>setMode("host");
+$("modeGuest").onclick=()=>setMode("guest");
+$("joinBtn").onclick=()=>joinRoom($("roomInput").value);
+$("scanBtn").onclick=()=>startScan();
+$("scanClose").onclick=()=>stopScan();
+$("chatSend").onclick=sendChat;
+$("chatInput").addEventListener("keydown",e=>{if(e.key==="Enter")sendChat();});
+$("hostToggle").onclick=()=>openDrawer();
+$("drawerClose").onclick=()=>closeDrawer();
+$("guestChatBtn").onclick=()=>openDrawer();
+$("exitBtn2").onclick=()=>location.reload();
+$("guestExitBtn").onclick=()=>location.reload();
+$("copyCodeBtn").onclick=()=>{if(navigator.clipboard)navigator.clipboard.writeText($("roomCodeText").textContent);};
+$("copyLinkBtn").onclick=()=>{if(navigator.clipboard)navigator.clipboard.writeText(roomLink($("roomCodeText").textContent));};
+bindGuestPad();
+/* Mở link ?room=XXXX là vào thẳng chế độ khách */
+const qRoom=new URLSearchParams(location.search).get("room");
+if(qRoom){setMode("guest");$("roomInput").value=qRoom.toUpperCase();setTimeout(()=>joinRoom(qRoom),600);}
+
+
+// Tự động kích hoạt game nếu nhận tham số từ URL
+const autoRom = new URLSearchParams(location.search).get('rom');
+if(autoRom){if(window.onlineMode==="host")createRoom(autoRom);else launch(autoRom);}
+</script></body></html>
