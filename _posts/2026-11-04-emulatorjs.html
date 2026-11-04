@@ -563,13 +563,65 @@ function sendGuestInput(){
    (khách không có giả lập thật nên 2 nút đó không có tác dụng). */
 function bindGuestPad(){
     const mark=(keys,on)=>{keys.forEach(k=>{const el=document.querySelector('#guestPad [data-k="'+k+'"]');if(el){el.classList.toggle("on",on);el.classList.toggle("pressed",on);}});};
-    /* Núm giữa đĩa cần trượt theo hướng đang giữ — cảm giác "nút cử động" như EJS. */
+    /* Núm giữa đĩa cần trượt theo hướng đang giữ — cảm giác "nút cử động" như EJS.
+       Đo từ video COIN-OPX (khung f002: núm cam sáng lệch khỏi tâm đĩa ~68px,
+       đĩa bán kính ~135px): núm trượt ~50% bán kính đĩa, ~90% hành trình tối đa,
+       gần chạm mép đĩa — chứ không nhích 10px như trước. Núm BÁM THEO NGÓN TAY
+       như cần analog thật: chạm/kéo trên đĩa -> núm tới vị trí ngón (kẹp trong
+       đĩa), hướng suy từ góc ngón so với tâm; nhả -> về giữa. Kích thước đo
+       bằng getBoundingClientRect, có fallback theo tier khi #guestArea còn ẩn. */
+    const dpadEl=document.querySelector("#guestPad .dpad");
+    const knobEl=document.querySelector("#guestPad .dpad .knob");
+    const dpadSize=()=>{const w=dpadEl?dpadEl.getBoundingClientRect().width:0;if(w>0)return w;return window.innerHeight<=400?92:window.innerHeight<=520?124:150;};
+    const knobSize=()=>{const w=knobEl?knobEl.getBoundingClientRect().width:0;if(w>0)return w;const d=dpadSize();return d<=92?34:d<=124?44:52;};
+    const stickMax=()=>Math.max(10,dpadSize()/2-knobSize()/2-2);
+    const stickStep=()=>Math.round(dpadSize()*0.25); /* 50% bán kính đĩa, như COIN-OPX */
     const moveKnob=()=>{
-        const knob=document.querySelector("#guestPad .dpad .knob");if(!knob)return;
+        if(!knobEl)return;
         const dx=(guestInput.right?1:0)-(guestInput.left?1:0);
         const dy=(guestInput.down?1:0)-(guestInput.up?1:0);
-        knob.style.transform="translate("+(dx*10)+"px,"+(dy*10)+"px)";
+        if(!dx&&!dy){knobEl.style.transform="";return;}
+        let s=stickStep(),x=dx*s,y=dy*s;
+        if(dx&&dy){x*=0.7071;y*=0.7071;}
+        knobEl.style.transform="translate("+Math.round(x)+"px,"+Math.round(y)+"px)";
     };
+    const setDir=(k,on)=>{
+        const v=on?1:0;if(guestInput[k]===v)return false;guestInput[k]=v;
+        const el=document.querySelector('#guestPad [data-k="'+k+'"]');
+        if(el){el.classList.toggle("on",on);el.classList.toggle("pressed",on);}
+        return true;
+    };
+    let stickId=null;
+    const stickMove=e=>{
+        if(!dpadEl||!knobEl)return;
+        const r=dpadEl.getBoundingClientRect();
+        let vx=e.clientX-(r.left+r.width/2),vy=e.clientY-(r.top+r.height/2);
+        const max=stickMax(),len=Math.hypot(vx,vy);
+        if(len>max){vx*=max/len;vy*=max/len;}
+        knobEl.style.transition="none";
+        knobEl.style.transform="translate("+vx.toFixed(1)+"px,"+vy.toFixed(1)+"px)";
+        const dz=Math.max(6,r.width*0.06);
+        let ch=false;
+        ch=setDir("right",vx>dz)||ch;ch=setDir("left",vx<-dz)||ch;
+        ch=setDir("down",vy>dz)||ch;ch=setDir("up",vy<-dz)||ch;
+        if(ch)sendGuestInput();
+    };
+    const stickEnd=e=>{
+        if(stickId===null||e.pointerId!==stickId)return;
+        stickId=null;
+        if(knobEl)knobEl.style.transition="";
+        let ch=false;
+        ["up","down","left","right"].forEach(k=>{ch=setDir(k,false)||ch;});
+        moveKnob();if(ch)sendGuestInput();
+    };
+    if(dpadEl){
+        dpadEl.addEventListener("pointerdown",e=>{e.preventDefault();if(stickId!==null)return;stickId=e.pointerId;stickMove(e);});
+        dpadEl.addEventListener("pointermove",e=>{if(stickId!==null&&e.pointerId===stickId)stickMove(e);});
+        dpadEl.addEventListener("pointerup",stickEnd);
+        dpadEl.addEventListener("pointercancel",stickEnd);
+        dpadEl.addEventListener("pointerleave",e=>{if(stickId!==null&&e.pointerId===stickId)stickEnd(e);});
+        dpadEl.addEventListener("contextmenu",e=>e.preventDefault());
+    }
     document.querySelectorAll("#guestPad [data-k]").forEach(b=>{
         const k=b.dataset.k;
         const down=e=>{
