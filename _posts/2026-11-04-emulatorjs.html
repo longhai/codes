@@ -148,7 +148,9 @@ const PAD={a:0,b:8,c:1,d:9,coin:2,start:3,up:4,down:5,left:6,right:7};
 const PEER_ICE={config:{iceServers:[
     {urls:"stun:stun.l.google.com:19302"},
     {urls:"stun:stun1.l.google.com:19302"},
-    {urls:"stun:stun.cloudflare.com:3478"}]}};
+    {urls:"stun:stun.cloudflare.com:3478"},
+    {urls:"stun:stun.cloudflare.com:53"},
+    {urls:"stun:global.stun.twilio.com:3478"}]}};
 function peerOpts(){return Object.assign({},PEER_ICE,window.__PEER_OPTS||{});}
 let peer=null,dataConn=null,gameStream=null,pendingCall=null;
 let gameStarted=false,roomCode="",mySlot=0,lastGuestState={},lastRtt=null;
@@ -309,15 +311,18 @@ function createRoom(src){
     launch(src);
     loadPeerJS().then(()=>{
         let tries=0;      /* số lần sinh mã mới vì trùng ID */
-        let netTries=0;   /* số lần thử nối lại vì rớt mạng, giữ nguyên mã phòng */
+        let netTries=0;   /* TỔNG số lần thử nối lại vì rớt mạng — KHÔNG reset khi open nữa */
+        let wasDown=false;/* đã từng rớt mạng sau khi phòng mở (để báo "đã nối lại") */
+        let retryTimer=0; /* hẹn giờ thử lại đang chờ — tránh hẹn chồng nhau */
         let announced=false;
         const tryPeer=()=>{
             if(window.onlineMode!=="host"||!isRoomCode(roomCode))return;
+            clearTimeout(retryTimer);retryTimer=0;pendingCall=null;
             peer=new Peer("coinopx-play-"+roomCode.toLowerCase(),peerOpts());
             peer.on("open",()=>{
-                netTries=0;
                 setDrawerStatus("Phòng đã mở — chờ khách quét QR / nhập mã");
                 if(!announced){announced=true;chatAdd("Hệ thống","Phòng "+roomCode+" đã mở. Gửi mã hoặc QR cho bạn để vào.","sys");}
+                else if(wasDown){wasDown=false;chatAdd("Hệ thống","Đã nối lại với máy chủ — phòng "+roomCode+" vẫn mở, khách vào lại được.","sys");}
             });
             /* WebSocket rớt mà peer chưa chết: PeerJS tự nối lại. */
             peer.on("disconnected",()=>{try{peer.reconnect();}catch(e){}});
@@ -329,15 +334,20 @@ function createRoom(src){
                     $("roomCodeText").textContent=roomCode;
                     renderQR(roomLink(roomCode));
                     tryPeer();
-                }else if(err&&(err.type==="network"||err.type==="server-error"||err.type==="socket-error")&&netTries<5){
-                    /* Mạng chập chờn (điện thoại Hải chỉ 1–3 KB/s): tự thử lại với
-                       CÙNG mã phòng để link/QR khách đang cầm vẫn đúng. */
+                }else if(err&&(err.type==="network"||err.type==="server-error"||err.type==="socket-error")){
+                    /* Mạng chập chờn lâu (điện thoại Hải có lúc 0,00 KB/s): tự thử lại
+                       KHÔNG GIỚI HẠN với CÙNG mã phòng để link/QR khách đang cầm vẫn
+                       đúng, cho tới khi nối được hoặc Hải Thoát phòng. Trước đây hết
+                       5 lần là phòng chết hẳn dù mạng sau đó có lại — mà mỗi lần open
+                       lại reset đếm về 0 nên chat toàn dòng "lần 1/5" lặp lại. */
                     netTries++;
+                    wasDown=true;
                     const delay=Math.min(2000*Math.pow(2,netTries-1),16000);
-                    setDrawerStatus("Mất nối với máy chủ — đang thử nối lại (lần "+netTries+"/5)...");
-                    chatAdd("Hệ thống","Mất nối với máy chủ — đang thử nối lại (lần "+netTries+"/5)...","sys");
+                    setDrawerStatus("Mất nối với máy chủ — đang thử nối lại (lần "+netTries+")...");
+                    if(netTries===1||netTries%10===0)chatAdd("Hệ thống","Mất nối với máy chủ — đang thử nối lại (lần "+netTries+")...","sys");
                     try{peer.destroy();}catch(e){}
-                    setTimeout(()=>{if(window.onlineMode==="host"&&isRoomCode(roomCode))tryPeer();},delay);
+                    clearTimeout(retryTimer);
+                    retryTimer=setTimeout(()=>{if(window.onlineMode==="host"&&isRoomCode(roomCode))tryPeer();},delay);
                 }else{
                     setDrawerStatus("Lỗi tạo phòng");
                     chatAdd("Hệ thống","Không tạo được phòng: "+(err&&err.type||err)+" — kiểm tra mạng rồi bấm Tạo phòng lại.","sys");
@@ -361,36 +371,68 @@ function joinRoom(code){
     $("guestTitle").textContent="Khách (P2) — phòng "+code+" — đang xem stream";
     setDrawerStatus("Đang vào phòng...");
     loadPeerJS().then(()=>{
-        let guestPeerTries=0,guestOpened=false,guestAttempt=0,guestDone=false,guestTimer=0;
-        /* Tự thử nối lại tối đa 3 lần nếu 10s vẫn chưa nối được với chủ phòng
-           (chủ phòng có thể đang rớt mạng và nối lại cùng lúc) — thay vì im lặng. */
+        let guestPeerTries=0,guestOpened=false,guestAttempt=0,guestConnected=false,guestGen=0,guestPeerTimer=0,guestWatchdog=0,guestRetryTimer=0;
+        let curConn=null,curCall=null;
+        /* Thử nối lại KHÔNG GIỚI HẠN khi còn ở trong phòng: mạng chập chờn lâu
+           (điện thoại Hải có lúc 0,00 KB/s) thì cứ thử lại cho tới khi nối được
+           hoặc khách Thoát phòng. Trước đây hết 3 lần là khách ngồi màn đen mãi
+           dù chủ phòng đã nối lại được. "Nối được" = nhận được stream, không chỉ
+           mở được dataConn (phòng KOF-2210: dataConn mở, P2 đã vào, nhưng stream
+           không về). guestGen: số thế hệ của lần thử — handler của lần thử cũ
+           (close/error của conn/call đã đóng) không được kích hoạt thử lại thừa. */
+        const scheduleGuestRetry=(delay)=>{
+            if(window.onlineMode!=="guest"||guestConnected)return;
+            const gen=guestGen;
+            clearTimeout(guestRetryTimer);
+            guestRetryTimer=setTimeout(()=>{if(window.onlineMode==="guest"&&!guestConnected&&gen===guestGen)attemptConnect();},delay);
+        };
         const attemptConnect=()=>{
+            if(window.onlineMode!=="guest"||guestConnected)return;
+            clearTimeout(guestWatchdog);clearTimeout(guestRetryTimer);
+            const gen=++guestGen;
+            /* Dọn kết nối/cuộc gọi cũ trước khi thử cái mới. */
+            try{if(curConn)curConn.close();}catch(e){}
+            try{if(curCall)curCall.close();}catch(e){}
+            curConn=null;curCall=null;
+            if(!peer||peer.destroyed){scheduleGuestRetry(2000);return;}
             guestAttempt++;
-            const conn=peer.connect("coinopx-play-"+code.toLowerCase(),{reliable:true});
-            setupDataConn(conn);
-            /* PeerJS media call bắt buộc phải có 1 stream gửi đi — khách gửi 1 khung đen 2x2 vô hại. */
-            const dummy=document.createElement("canvas");dummy.width=2;dummy.height=2;
-            const call=peer.call("coinopx-play-"+code.toLowerCase(),dummy.captureStream());
+            setDrawerStatus(guestAttempt===1?"Đang vào phòng...":"Đang thử nối lại với chủ phòng (lần "+guestAttempt+")...");
+            let conn,call;
+            try{
+                conn=peer.connect("coinopx-play-"+code.toLowerCase(),{reliable:true});
+                curConn=conn;
+                setupDataConn(conn);
+                /* Chủ phòng destroy peer + tạo lại (nối lại cùng mã) thì dataConn
+                   của khách đứt: tự thử nối lại, không ngồi chờ. */
+                conn.on("close",()=>{
+                    if(gen!==guestGen||window.onlineMode!=="guest")return;
+                    if(guestConnected){guestConnected=false;const v=$("guestVideo");if(v)v.srcObject=null;setDrawerStatus("Mất nối với chủ phòng — đang thử nối lại...");chatAdd("Hệ thống","Mất nối với chủ phòng — đang thử nối lại...","sys");}
+                    scheduleGuestRetry(5000);
+                });
+                conn.on("error",()=>{if(gen===guestGen)scheduleGuestRetry(5000);});
+                /* PeerJS media call bắt buộc phải có 1 stream gửi đi — khách gửi 1 khung đen 2x2 vô hại. */
+                const dummy=document.createElement("canvas");dummy.width=2;dummy.height=2;
+                call=peer.call("coinopx-play-"+code.toLowerCase(),dummy.captureStream());
+                curCall=call;
+            }catch(e){scheduleGuestRetry(5000);return;}
             call.on("stream",s=>{
-                guestDone=true;
+                if(gen!==guestGen)return;
+                guestConnected=true;
+                clearTimeout(guestWatchdog);clearTimeout(guestRetryTimer);
                 $("guestVideo").srcObject=s;
                 $("streamState").textContent="Hình game: đang xem stream từ chủ phòng.";
                 setDrawerStatus("Đã kết nối");
+                if(guestAttempt>1)chatAdd("Hệ thống","Đã nối lại với chủ phòng.","sys");
+                /* Chủ phòng ngắt stream giữa chừng thì thử nối lại. */
+                try{s.getVideoTracks().forEach(t=>{t.onended=()=>{if(gen!==guestGen||!guestConnected)return;guestConnected=false;const v=$("guestVideo");if(v)v.srcObject=null;setDrawerStatus("Stream bị ngắt — đang thử nối lại...");chatAdd("Hệ thống","Stream bị ngắt — đang thử nối lại...","sys");scheduleGuestRetry(5000);};});}catch(e){}
             });
-            call.on("error",()=>{setDrawerStatus("Lỗi nhận hình");});
-            clearTimeout(guestTimer);
-            guestTimer=setTimeout(()=>{
-                if(guestDone||(dataConn&&dataConn.open)||$("guestVideo").srcObject)return;
-                if(guestAttempt<3){
-                    setDrawerStatus("Chưa nối được với chủ phòng — đang thử lại (lần "+guestAttempt+"/3)...");
-                    chatAdd("Hệ thống","Chưa nối được với chủ phòng — đang thử lại (lần "+guestAttempt+"/3)...","sys");
-                    try{conn.close();}catch(e){} try{call.close();}catch(e){}
-                    attemptConnect();
-                }else{
-                    setDrawerStatus("Không nối được với chủ phòng");
-                    chatAdd("Hệ thống","Không nối được với chủ phòng — có thể chủ phòng đã thoát hoặc đang rớt mạng, thử lại sau.","sys");
-                    $("streamState").textContent="Hình game: chưa nhận được stream — có thể chủ phòng đã thoát hoặc đang rớt mạng, thử lại sau.";
-                }
+            call.on("error",()=>{if(gen===guestGen)scheduleGuestRetry(5000);});
+            /* 10s chưa nhận được stream thì thử lại (không giới hạn lượt). */
+            clearTimeout(guestWatchdog);
+            guestWatchdog=setTimeout(()=>{
+                if(window.onlineMode!=="guest"||guestConnected||gen!==guestGen)return;
+                if($("guestVideo").srcObject){guestConnected=true;return;}
+                scheduleGuestRetry(1000);
             },10000);
         };
         const tryGuestPeer=()=>{
@@ -403,16 +445,20 @@ function joinRoom(code){
             });
             peer.on("disconnected",()=>{try{peer.reconnect();}catch(e){}});
             peer.on("error",err=>{
-                /* peer-unavailable: để vòng thử lại ở trên xử lý, đừng kết luận vội. */
-                if(err&&err.type==="peer-unavailable"&&guestAttempt<3&&!guestDone)return;
-                /* Máy chủ PeerJS chưa tới được (server-error/network) mà peer còn
-                   chưa mở: tạo peer mới thử lại, tối đa 3 lần. */
-                if(err&&(err.type==="server-error"||err.type==="network"||err.type==="socket-error")&&!guestOpened&&guestPeerTries<3){
+                /* peer-unavailable: chủ phòng chưa mở / chưa nối lại xong — để vòng
+                   thử lại của attemptConnect xử lý, đừng kết luận vội. */
+                if(err&&err.type==="peer-unavailable")return;
+                /* Máy chủ PeerJS chưa tới được (server-error/network) — tạo peer mới
+                   thử lại KHÔNG GIỚI HẠN, backoff 2s→16s, cho tới khi được hoặc thoát. */
+                if(err&&(err.type==="server-error"||err.type==="network"||err.type==="socket-error")){
+                    if(guestConnected)return; /* đang chơi ngon thì kệ, PeerJS tự nối lại socket */
                     guestPeerTries++;
-                    setDrawerStatus("Chưa nối được máy chủ — đang thử lại (lần "+guestPeerTries+"/3)...");
-                    chatAdd("Hệ thống","Chưa nối được máy chủ — đang thử lại (lần "+guestPeerTries+"/3)...","sys");
+                    const d=Math.min(2000*Math.pow(2,guestPeerTries-1),16000);
+                    setDrawerStatus("Chưa nối được máy chủ — đang thử nối lại (lần "+guestPeerTries+")...");
+                    if(guestPeerTries===1||guestPeerTries%10===0)chatAdd("Hệ thống","Chưa nối được máy chủ — đang thử nối lại (lần "+guestPeerTries+")...","sys");
                     try{peer.destroy();}catch(e){}
-                    setTimeout(tryGuestPeer,2000*guestPeerTries);
+                    clearTimeout(guestPeerTimer);
+                    guestPeerTimer=setTimeout(tryGuestPeer,d);
                     return;
                 }
                 setDrawerStatus("Không vào được phòng");
