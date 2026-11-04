@@ -30,31 +30,30 @@
 #guestTop{position:static;flex:0 0 auto;z-index:6;display:flex;gap:8px;align-items:center;padding:10px;background:linear-gradient(rgba(0,0,0,.75),transparent)}
 #guestTop span{flex:1;font-weight:700;font-size:14px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #guestTop button{background:rgba(34,44,63,.9);color:#fff;border:1px solid #556;border-radius:8px;padding:8px 12px}
-#guestVideo{position:static;flex:1 1 auto;min-height:0;width:100%;object-fit:contain;background:#000}
-/* Bộ nút cho KHÁCH kiểu arcade COIN-OPX (không có máy giả lập, nút là HTML
-   thường, gửi phím về chủ phòng). Chủ phòng/host vẫn dùng gamepad mặc định EJS. */
+#guestVideo{position:static;flex:1 1 0;min-height:0;width:100%;object-fit:contain;background:#000}
+/* Bộ nút cho KHÁCH kiểu mặc định EmulatorJS (giống hệt bên chủ phòng):
+   đĩa cần đỏ bán trong suốt bên trái, thoi Y/X/B/A bên phải, pill
+   Select/Start ở giữa dưới. Không có Fast/Slow (khách không có máy giả
+   lập thật). Select = Nhét Xu. Chủ phòng/host dùng gamepad EJS thật. */
 #guestPad{position:relative;flex:0 0 auto;height:220px;touch-action:none;user-select:none;-webkit-user-select:none;z-index:5}
-#guestPad .dpad{position:absolute;left:6px;top:20px;width:150px;height:150px;background:rgba(8,13,30,.88);border:2px solid rgba(255,255,255,.3);border-radius:50%}
-#guestPad .dpad .knob{position:absolute;left:49px;top:49px;width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);pointer-events:none;transition:transform .1s ease}
-#guestPad .dpad button{position:absolute;width:44px;height:44px;border-radius:10px;background:#8b95a7;color:#fff;border:1px solid rgba(255,255,255,.5);font-size:18px}
+#guestPad .dpad{position:absolute;left:6px;top:12px;width:150px;height:150px;background:rgba(239,68,68,.32);border:2px solid rgba(255,255,255,.35);border-radius:50%}
+#guestPad .dpad .knob{position:absolute;left:49px;top:49px;width:52px;height:52px;border-radius:50%;background:rgba(153,27,27,.65);border:1px solid rgba(255,255,255,.45);pointer-events:none;transition:transform .1s ease}
+#guestPad .dpad button{position:absolute;width:44px;height:44px;border-radius:10px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.25);font-size:18px}
 #guestPad .dpad .u{left:53px;top:3px}#guestPad .dpad .d{left:53px;bottom:3px}
 #guestPad .dpad .l{left:3px;top:53px}#guestPad .dpad .r{right:3px;top:53px}
-#guestPad .combo{position:absolute;right:6px;top:0;display:flex;gap:6px}
-#guestPad .combo button{padding:8px 12px;border-radius:14px;font-weight:700;font-size:12px;white-space:nowrap;border:1px solid rgba(255,255,255,.4);background:rgba(58,63,74,.9);color:#fff}
-#guestPad .ab{position:absolute;right:6px;top:36px;width:190px;height:150px}
-#guestPad .ab button{position:absolute;width:58px;height:58px;border-radius:50%;border:1px solid rgba(255,255,255,.6);color:#fff;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
+#guestPad .ab{position:absolute;right:6px;top:12px;width:190px;height:150px}
+#guestPad .ab button{position:absolute;width:58px;height:58px;border-radius:50%;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.16);color:#fff;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
 #guestPad .ab button .lt{font-size:22px}
-#guestPad .ab button .lb{font-size:8px;font-weight:700;white-space:nowrap;letter-spacing:-.2px}
-#guestPad .ab .c{left:66px;top:0;background:#2e9e5b;border-color:#a5d6a7}
-#guestPad .ab .d{left:0;top:44px;background:#1e88e5;border-color:#90caf9}
-#guestPad .ab .b{left:132px;top:44px;background:#f9a825;border-color:#ffe082;color:#3e2723}
-#guestPad .ab .a{left:66px;top:88px;background:#d32f2f;border-color:#ef9a9a}
-#guestPad .coinrow{position:absolute;right:6px;bottom:0;display:flex;gap:8px}
-#guestPad .coinrow button{padding:11px 14px;border-radius:20px;font-weight:700;white-space:nowrap;border:1px solid #888}
-#guestPad .coinrow .coin{background:#f59e0b;border-color:#fcd34d;color:#3a2503}
-#guestPad .coinrow .xustart{background:#22c55e;border-color:#86efac;color:#fff}
-#guestPad .coinrow .start{background:rgba(58,63,74,.85);border-color:#888;color:#fff}
-#guestPad button{transition:transform .1s ease,filter .1s ease,box-shadow .1s ease}
+#guestPad .ab button .lb{font-size:8px;font-weight:700;white-space:nowrap;letter-spacing:-.2px;color:rgba(255,255,255,.75)}
+#guestPad .ab .y{left:66px;top:0}
+#guestPad .ab .x{left:0;top:44px}
+#guestPad .ab .b{left:132px;top:44px}
+#guestPad .ab .a{left:66px;top:88px}
+#guestPad .selstart{position:absolute;left:0;right:0;bottom:6px;display:flex;justify-content:center;gap:12px}
+#guestPad .selstart button{padding:9px 20px;border-radius:16px;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.16);color:#fff;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
+#guestPad .selstart button .lt{font-size:13px}
+#guestPad .selstart button .lb{font-size:8px;font-weight:700;color:rgba(255,255,255,.75)}
+#guestPad button{transition:transform .1s ease,filter .1s ease,box-shadow .1s ease;text-shadow:0 1px 3px rgba(0,0,0,.65)}
 #guestPad button.on,#guestPad button.pressed{filter:brightness(.65);transform:scale(.92);box-shadow:inset 0 3px 8px rgba(0,0,0,.45)}
 /* Màn hình thấp (vd chia đôi màn hình trên điện thoại): thu nhỏ pad để video vẫn thấy được */
 @media (max-height:520px){
@@ -62,20 +61,49 @@
 #guestTop span{font-size:12px}
 #guestTop button{padding:6px 9px}
 #guestPad{height:176px}
-#guestPad .dpad{top:12px;width:124px;height:124px}
+#guestPad .dpad{top:8px;width:124px;height:124px}
 #guestPad .dpad .knob{left:40px;top:40px;width:44px;height:44px}
 #guestPad .dpad button{width:38px;height:38px}
 #guestPad .dpad .u{left:43px;top:3px}#guestPad .dpad .d{left:43px;bottom:3px}
 #guestPad .dpad .l{left:3px;top:43px}#guestPad .dpad .r{right:3px;top:43px}
-#guestPad .combo button{padding:6px 9px}
-#guestPad .ab{top:30px;width:170px;height:124px}
+#guestPad .ab{top:8px;width:170px;height:124px}
 #guestPad .ab button{width:50px;height:50px}
 #guestPad .ab button .lt{font-size:19px}
-#guestPad .ab .c{left:60px;top:0}
-#guestPad .ab .d{left:0;top:37px}
+#guestPad .ab .y{left:60px;top:0}
+#guestPad .ab .x{left:0;top:37px}
 #guestPad .ab .b{left:120px;top:37px}
 #guestPad .ab .a{left:60px;top:74px}
-#guestPad .coinrow button{padding:8px 11px}
+#guestPad .selstart button{padding:7px 16px}
+#guestPad .selstart button .lt{font-size:12px}
+}
+/* Màn hình RẤT thấp (chia đôi màn hình thật trên điện thoại, viewport chỉ
+   ~300px sau khi trừ thanh trình duyệt): pad siêu gọn 140px + tiêu đề 28px
+   để video còn ~130-190px cao, nội dung game không teo thành ảnh nhỏ nữa.
+   Tính toán với track 384x224 (tỉ lệ 1.714): 360px cao -> video 192px ->
+   nội dung 329px (91%); 300px cao -> video 132px -> nội dung 226px (63%,
+   giới hạn vật lý của layout tách rời, muốn hơn nữa chỉ có cách cho pad
+   đè lên video như kiểu COIN-OPX). */
+@media (max-height:400px){
+#guestTop{padding:3px 6px}
+#guestTop span{font-size:11px}
+#guestTop button{padding:4px 7px;font-size:11px}
+#guestPad{height:140px}
+#guestPad .dpad{top:6px;width:92px;height:92px}
+#guestPad .dpad .knob{left:29px;top:29px;width:34px;height:34px}
+#guestPad .dpad button{width:30px;height:30px;font-size:15px}
+#guestPad .dpad .u{left:31px;top:2px}#guestPad .dpad .d{left:31px;bottom:2px}
+#guestPad .dpad .l{left:2px;top:31px}#guestPad .dpad .r{right:2px;top:31px}
+#guestPad .ab{top:6px;width:158px;height:92px}
+#guestPad .ab button{width:42px;height:42px}
+#guestPad .ab button .lt{font-size:17px}
+#guestPad .ab button .lb{font-size:7px}
+#guestPad .ab .y{left:58px;top:0}
+#guestPad .ab .x{left:0;top:25px}
+#guestPad .ab .b{left:116px;top:25px}
+#guestPad .ab .a{left:58px;top:50px}
+#guestPad .selstart{bottom:2px}
+#guestPad .selstart button{padding:5px 14px}
+#guestPad .selstart button .lt{font-size:11px}
 }
 </style></head><body><div id="box"><input type="file" id="input"><span id="drop-label"></span></div><div id="toolbar"><input type="text" id="url-input"><button id="settings" title="Cài đặt"><svg viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg></button></div><div id="onlinePanel">
 <div id="modeRow">
@@ -123,19 +151,13 @@
 <button class="u" data-k="up">▲</button><button class="d" data-k="down">▼</button>
 <button class="l" data-k="left">◀</button><button class="r" data-k="right">▶</button>
 </div>
-<div class="combo">
-<button data-combo="a,b">AB Mạnh</button>
-<button data-combo="c,d">CD Vật/Né</button>
-<button data-combo="a,b,c">ABC Nổ nộ</button>
-<button data-combo="b,c,d">BCD Nhặt</button>
-</div>
 <div class="ab">
-<button class="c" data-k="c"><span class="lt">C</span><span class="lb">Chém mạnh</span></button>
-<button class="d" data-k="d"><span class="lt">D</span><span class="lb">Đá - Né</span></button>
+<button class="y" data-k="d"><span class="lt">Y</span><span class="lb">Đá - Né</span></button>
+<button class="x" data-k="c"><span class="lt">X</span><span class="lb">Chém mạnh</span></button>
 <button class="b" data-k="b"><span class="lt">B</span><span class="lb">Chém vừa</span></button>
 <button class="a" data-k="a"><span class="lt">A</span><span class="lb">Chém nhẹ</span></button>
 </div>
-<div class="coinrow"><button class="coin" data-k="coin">Nhét Xu</button><button class="xustart" data-xustart="1">⚡ Xu + Start</button><button class="start" data-k="start">Start</button></div>
+<div class="selstart"><button class="select" data-k="coin"><span class="lt">Select</span><span class="lb">Xu</span></button><button class="start" data-k="start"><span class="lt">Start</span></button></div>
 </div>
 </div>
 <script>
@@ -162,7 +184,7 @@ const PEER_CDN=["https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js","
 const QR_CDN=["https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js","https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"];
 const JSQR_CDN=["https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js","https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"];
 /* Nút mặc định của EmulatorJS cho arcade (RetroPad, đã xác minh): A=0, B=8, X=1, Y=9, Select(Xu)=2, Start=3, hướng=4-7 */
-/* Nút khách hiển thị kiểu arcade A/B/C/D (C gửi index 1, D gửi index 9 — đúng RetroPad X/Y cũ) */
+/* Nút khách hiển thị kiểu mặc định EJS Y/X/B/A (nút X gửi index 1, Y gửi index 9 — đúng RetroPad) */
 const PAD={a:0,b:8,c:1,d:9,coin:2,start:3,up:4,down:5,left:6,right:7};
 /* STUN dự phòng cho WebRTC (chỉ STUN công khai, không TURN có mật khẩu).
    PeerJS mặc định đã có STUN Google, thêm dự phòng để mạng chập chờn vẫn có
@@ -534,43 +556,20 @@ function joinRoom(code){
 function sendGuestInput(){
     if(dataConn&&dataConn.open){try{dataConn.send(JSON.stringify({t:"input",s:guestInput}));}catch(e){}}
 }
-/* Bộ nút khách #guestPad kiểu arcade COIN-OPX — CHỈ hiện cho khách (không có máy
-   giả lập). Solo/host dùng gamepad của EmulatorJS, không dùng pad này. Đa chạm được.
-   Combo: 1 nút gửi 2-3 phím cùng lúc; Xu+Start: gửi Xu rồi Start cách nhau 120ms. */
+/* Bộ nút khách #guestPad kiểu mặc định EmulatorJS (giống hệt bên chủ phòng) —
+   CHỈ hiện cho khách (không có máy giả lập). Solo/host dùng gamepad của
+   EmulatorJS, không dùng pad này. Đa chạm được: bấm 2 nút cùng lúc bằng
+   2 ngón như chơi thật. Select = Nhét Xu (gửi coin), không có Fast/Slow
+   (khách không có giả lập thật nên 2 nút đó không có tác dụng). */
 function bindGuestPad(){
     const mark=(keys,on)=>{keys.forEach(k=>{const el=document.querySelector('#guestPad [data-k="'+k+'"]');if(el){el.classList.toggle("on",on);el.classList.toggle("pressed",on);}});};
-    /* Núm giữa D-pad trượt theo hướng đang giữ — cảm giác "nút cử động" như COIN-OPX. */
+    /* Núm giữa đĩa cần trượt theo hướng đang giữ — cảm giác "nút cử động" như EJS. */
     const moveKnob=()=>{
         const knob=document.querySelector("#guestPad .dpad .knob");if(!knob)return;
         const dx=(guestInput.right?1:0)-(guestInput.left?1:0);
         const dy=(guestInput.down?1:0)-(guestInput.up?1:0);
         knob.style.transform="translate("+(dx*10)+"px,"+(dy*10)+"px)";
     };
-    document.querySelectorAll("#guestPad [data-combo]").forEach(b=>{
-        const keys=b.dataset.combo.split(",");
-        const down=e=>{e.preventDefault();b.classList.add("on","pressed");mark(keys,true);keys.forEach(k=>{guestInput[k]=1;});moveKnob();sendGuestInput();};
-        const up=e=>{e.preventDefault();b.classList.remove("on","pressed");mark(keys,false);keys.forEach(k=>{guestInput[k]=0;});moveKnob();sendGuestInput();};
-        b.addEventListener("pointerdown",down);
-        b.addEventListener("pointerup",up);
-        b.addEventListener("pointercancel",up);
-        b.addEventListener("pointerleave",up);
-        b.addEventListener("contextmenu",e=>e.preventDefault());
-    });
-    document.querySelectorAll("#guestPad [data-xustart]").forEach(b=>{
-        let timers=[];
-        const down=e=>{
-            e.preventDefault();b.classList.add("on","pressed");
-            guestInput.coin=1;sendGuestInput();
-            timers.push(setTimeout(()=>{guestInput.coin=0;guestInput.start=1;sendGuestInput();if(dataConn&&dataConn.open){try{dataConn.send(JSON.stringify({t:"start"}));}catch(e){}}},120));
-            timers.push(setTimeout(()=>{guestInput.start=0;sendGuestInput();},270));
-        };
-        const up=e=>{e.preventDefault();b.classList.remove("on","pressed");timers.forEach(clearTimeout);timers=[];guestInput.coin=0;guestInput.start=0;sendGuestInput();};
-        b.addEventListener("pointerdown",down);
-        b.addEventListener("pointerup",up);
-        b.addEventListener("pointercancel",up);
-        b.addEventListener("pointerleave",up);
-        b.addEventListener("contextmenu",e=>e.preventDefault());
-    });
     document.querySelectorAll("#guestPad [data-k]").forEach(b=>{
         const k=b.dataset.k;
         const down=e=>{
@@ -585,7 +584,8 @@ function bindGuestPad(){
         b.addEventListener("pointerleave",up);
         b.addEventListener("contextmenu",e=>e.preventDefault());
     });
-    /* Bàn phím chỉ xử lý cho khách (solo/host dùng phím mặc định của EmulatorJS). */
+    /* Bàn phím chỉ xử lý cho khách (solo/host dùng phím mặc định của EmulatorJS).
+       Phím C bấm nút X (data-k="c"), V bấm nút Y (data-k="d") — đúng tên hiển thị EJS. */
     const keyMap={ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right",z:"a",Z:"a",x:"b",X:"b",c:"c",C:"c",v:"d",V:"d"," ":"coin",Enter:"start"};
     document.addEventListener("keydown",e=>{
         if(window.onlineMode!=="guest")return;
