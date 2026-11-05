@@ -1,6 +1,39 @@
 <!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EmulatorJS</title><link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><path fill='%231AAFFF' d='M174.336 768l-119.168 119.168a42.667 42.667 0 0 0 60.331 60.331L234.667 828.33l119.168 119.168a42.667 42.667 0 0 0 60.331-60.331L295 768l119.168-119.168a42.667 42.667 0 0 0-60.331-60.331L234.667 707.669l-119.168-119.168a42.667 42.667 0 0 0-60.331 60.331L174.336 768zM768 469.333c-117.824 0-213.333-95.509-213.333-213.333S650.176 42.667 768 42.667s213.333 95.509 213.333 213.333-95.509 213.333-213.333 213.333zm0-85.333a128 128 0 1 0 0-256 128 128 0 0 0 0 256zM554.667 661.547c0-59.093 47.68-106.88 106.88-106.88h212.907c59.093 0 106.88 47.68 106.88 106.88v212.907c0 59.093-47.68 106.88-106.88 106.88h-212.907A106.731 106.731 0 0 1 554.667 874.453v-212.906zm85.333 0v212.906c0 12.032 9.536 21.547 21.547 21.547h212.907c12.032 0 21.547-9.536 21.547-21.547v-212.906c0-12.032-9.536-21.547-21.547-21.547h-212.907c-12.032 0-21.547 9.536-21.547 21.547zM183.829 109.888c36.118-61.163 108.246-61.248 144.427 0l126.208 213.653c35.733 60.523 3.52 124.437-66.816 124.437H124.437c-70.613 0-102.635-63.765-66.816-124.437L183.829 109.91zM133.653 362.667h244.8l-122.41-207.232-122.39 207.232z'/></svg>"><style>
-:root{--primary:#1AAFFF;--bg-color:#0d0e12;--card-bg:#333;--card-border:#555;--text-color:#f0f0f0;--text-sub:#a0a5b5;--modal-shadow:rgba(0,0,0,.5);--overlay-bg:rgba(0,0,0,.6)}@media(prefers-color-scheme:light){:root{--primary:#0088cc;--bg-color:#f4f6f9;--card-bg:#fff;--card-border:#d0d5dd;--text-color:#1a1d20;--text-sub:#667085;--modal-shadow:rgba(0,0,0,.15);--overlay-bg:rgba(0,0,0,.3)}}
-*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}body{background:var(--bg-color);color:var(--text-color);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:.3s}#box{position:relative;width:90%;max-width:500px;height:240px;border:2px solid var(--card-border);border-radius:12px;background:var(--card-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;cursor:pointer}#box:hover{border-color:var(--primary)}#box input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}#drop-label{font-size:1rem;color:var(--text-sub);pointer-events:none;line-height:1.5}#display{position:fixed;inset:0;background:#000;z-index:100}#game{width:100%;height:100%}#toolbar{margin-top:20px;display:flex;gap:10px;width:90%;max-width:500px}#url-input{flex:1;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:10px 14px;color:var(--text-color);outline:0;font-size:.9rem}#url-input:focus{border-color:var(--primary)}#settings{background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer}#settings svg{width:20px;height:20px;fill:var(--text-color)}button,select{background:var(--card-bg);border:1px solid var(--card-border);color:var(--text-color);padding:8px 14px;border-radius:6px;font-size:.9rem;cursor:pointer;outline:0}button:hover:not(:disabled){background:var(--primary);border-color:var(--primary);color:#fff}button:disabled{opacity:.5;cursor:not-allowed}.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;width:90%;max-width:420px;z-index:1000;opacity:0;visibility:hidden;transition:.3s;box-shadow:0 10px 25px var(--modal-shadow)}.popup.show{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}.popup-overlay{position:fixed;inset:0;background:var(--overlay-bg);backdrop-filter:blur(4px);z-index:999;opacity:0;visibility:hidden;transition:.3s}.popup.show+.popup-overlay{opacity:1;visibility:visible}.popup .content{padding:24px}.popup h1{font-size:1.25rem;margin-bottom:20px;border-bottom:1px solid var(--card-border);padding-bottom:10px}.buttonbox{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:.95rem}.buttonbox input[type="text"]{background:var(--bg-color);border:1px solid var(--card-border);color:var(--text-color);padding:6px 10px;border-radius:6px;width:55%;outline:0}#pwa-status-msg{font-size:12px;color:#f44336;margin-top:4px;text-align:right}.switch{position:relative;display:inline-block;width:44px;height:24px}.switch input{opacity:0;width:0;height:0}.slider{position:absolute;cursor:pointer;inset:0;background:var(--card-border);transition:.3s;border-radius:24px}.slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#fff;transition:.3s;border-radius:50%}input:checked+.slider{background:var(--primary)}input:checked+.slider:before{transform:translateX(20px)}
+:root{--primary:#1AAFFF;--bg-color:#0d0e12;--card-bg:#333;--card-border:#555;--text-color:#f0f0f0;--text-sub:#a0a5b5;--modal-shadow:rgba(0,0,0,.5);--overlay-bg:rgba(0,0,0,.6)}
+@media(prefers-color-scheme:light){
+:root{--primary:#0088cc;--bg-color:#f4f6f9;--card-bg:#fff;--card-border:#d0d5dd;--text-color:#1a1d20;--text-sub:#667085;--modal-shadow:rgba(0,0,0,.15);--overlay-bg:rgba(0,0,0,.3)}
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{background:var(--bg-color);color:var(--text-color);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;transition:.3s}
+#box{position:relative;width:90%;max-width:500px;height:240px;border:2px solid var(--card-border);border-radius:12px;background:var(--card-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;cursor:pointer}
+#box:hover{border-color:var(--primary)}
+#box input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
+#drop-label{font-size:1rem;color:var(--text-sub);pointer-events:none;line-height:1.5}
+#display{position:fixed;inset:0;background:#000;z-index:100}
+#game{width:100%;height:100%}
+#toolbar{margin-top:20px;display:flex;gap:10px;width:90%;max-width:500px}
+#url-input{flex:1;background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;padding:10px 14px;color:var(--text-color);outline:0;font-size:.9rem}
+#url-input:focus{border-color:var(--primary)}
+#settings{background:var(--card-bg);border:1px solid var(--card-border);border-radius:8px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#settings svg{width:20px;height:20px;fill:var(--text-color)}
+button,select{background:var(--card-bg);border:1px solid var(--card-border);color:var(--text-color);padding:8px 14px;border-radius:6px;font-size:.9rem;cursor:pointer;outline:0}
+button:hover:not(:disabled){background:var(--primary);border-color:var(--primary);color:#fff}
+button:disabled{opacity:.5;cursor:not-allowed}
+.popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.9);background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;width:90%;max-width:420px;z-index:1000;opacity:0;visibility:hidden;transition:.3s;box-shadow:0 10px 25px var(--modal-shadow)}
+.popup.show{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
+.popup-overlay{position:fixed;inset:0;background:var(--overlay-bg);backdrop-filter:blur(4px);z-index:999;opacity:0;visibility:hidden;transition:.3s}
+.popup.show+.popup-overlay{opacity:1;visibility:visible}
+.popup .content{padding:24px}
+.popup h1{font-size:1.25rem;margin-bottom:20px;border-bottom:1px solid var(--card-border);padding-bottom:10px}
+.buttonbox{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font-size:.95rem}
+.buttonbox input[type="text"]{background:var(--bg-color);border:1px solid var(--card-border);color:var(--text-color);padding:6px 10px;border-radius:6px;width:55%;outline:0}
+#pwa-status-msg{font-size:12px;color:#f44336;margin-top:4px;text-align:right}
+.switch{position:relative;display:inline-block;width:44px;height:24px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;inset:0;background:var(--card-border);transition:.3s;border-radius:24px}
+.slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:#fff;transition:.3s;border-radius:50%}
+input:checked+.slider{background:var(--primary)}
+input:checked+.slider:before{transform:translateX(20px)}
 /* ===== CHƠI ONLINE (PeerJS) + QR ===== */
 #onlinePanel{width:90%;max-width:500px;margin-top:14px}
 #modeRow{display:flex;gap:8px}
@@ -23,7 +56,9 @@
 #qrBox img,#qrBox canvas,#qrBox table{border:8px solid #fff;border-radius:8px;background:#fff}
 #qrNote{font-size:12px;color:var(--text-sub);text-align:center}
 #chatLog{height:110px;overflow-y:auto;background:var(--bg-color);border:1px solid var(--card-border);border-radius:8px;padding:8px;margin-top:8px;font-size:13px;line-height:1.6}
-#chatLog .p1 b{color:#7dd3fc}#chatLog .p2 b{color:#f9a825}#chatLog .sys{color:var(--text-sub);font-style:italic}
+#chatLog .p1 b{color:#7dd3fc}
+#chatLog .p2 b{color:#f9a825}
+#chatLog .sys{color:var(--text-sub);font-style:italic}
 #chatRow{display:flex;gap:8px;margin-top:8px}
 #chatRow input{flex:1;background:var(--bg-color);border:1px solid var(--card-border);border-radius:8px;padding:9px 10px;color:var(--text-color);outline:0;min-width:0}
 #guestArea{position:fixed;inset:0;background:#000;z-index:100;display:none;flex-direction:column}
@@ -33,7 +68,8 @@
 #guestVideo{position:static;flex:1 1 0;min-height:0;width:100%;object-fit:contain;background:#000}
 /* Bộ nút cho KHÁCH kiểu mặc định EmulatorJS (giống hệt bên chủ phòng):
    đĩa cần đỏ bán trong suốt bên trái, thoi Y/X/B/A bên phải, pill
-   Select/Start ở giữa dưới. Không có Fast/Slow (khách không có máy giả
+   Select/Start ở giữa dưới. Nút Y/X/B/A tô màu arcade (A đỏ, B vàng,
+   X xanh lá, Y xanh dương), nền bán trong suốt. Không có Fast/Slow (khách không có máy giả
    lập thật). Select = Nhét Xu. Chủ phòng/host dùng gamepad EJS thật.
    Hàng combo AB/CD/ABC/BCD ở trên cùng, kiểu COIN-OPX (pill màu, bán
    trong suốt; AB/CD/ABC có nhãn nhỏ, BCD chỉ có chữ). KÍCH THƯỚC LẤY
@@ -44,33 +80,69 @@
    (blockCSS trong src/emulator.js setVirtualGamepad) 50x31 chữ 15px
    bo 5px; nút combo lấy theo cỡ pill Select/Start đó. */
 #guestPad{position:relative;flex:0 0 auto;height:220px;touch-action:none;user-select:none;-webkit-user-select:none;z-index:5}
-#guestPad .combo{position:absolute;left:0;right:0;top:6px;display:flex;justify-content:center;gap:8px}
+#guestPad .combo{position:absolute;left:auto;right:8px;top:6px;display:flex;justify-content:flex-end;gap:8px}
+#hostPad .combo{position:absolute;left:auto;right:8px;top:6px;display:flex;justify-content:flex-end;gap:8px}
 #guestPad .combo button{width:50px;height:31px;border-radius:5px;font-size:15px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;background:rgba(10,12,18,.55)}
+#hostPad .combo button{width:50px;height:31px;border-radius:5px;font-size:15px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;background:rgba(10,12,18,.55)}
 #guestPad .combo button .lt{font-size:15px}
+#hostPad .combo button .lt{font-size:15px}
 #guestPad .combo button .lb{font-size:8px;font-weight:700;white-space:nowrap;color:rgba(255,255,255,.75)}
+#hostPad .combo button .lb{font-size:8px;font-weight:700;white-space:nowrap;color:rgba(255,255,255,.75)}
 #guestPad .combo .c-ab{border:1px solid #f9a825;color:#f9a825}
+#hostPad .combo .c-ab{border:1px solid #f9a825;color:#f9a825}
 #guestPad .combo .c-cd{border:1px solid #1e88e5;color:#1e88e5}
+#hostPad .combo .c-cd{border:1px solid #1e88e5;color:#1e88e5}
 #guestPad .combo .c-abc{border:1px solid #ef4444;color:#ef4444}
+#hostPad .combo .c-abc{border:1px solid #ef4444;color:#ef4444}
 #guestPad .combo .c-bcd{border:1px solid #22c55e;color:#22c55e}
+#hostPad .combo .c-bcd{border:1px solid #22c55e;color:#22c55e}
 #guestPad .dpad{position:absolute;left:6px;top:44px;width:125px;height:125px;background:rgba(239,68,68,.32);border:2px solid rgba(255,255,255,.35);border-radius:50%}
+#hostPad .dpad{position:absolute;left:6px;top:44px;width:125px;height:125px;background:rgba(239,68,68,.32);border:2px solid rgba(255,255,255,.35);border-radius:50%}
 #guestPad .dpad .knob{position:absolute;left:40px;top:40px;width:44px;height:44px;border-radius:50%;background:rgba(153,27,27,.65);border:1px solid rgba(255,255,255,.45);pointer-events:none;transition:transform .1s ease}
-#guestPad .dpad button{position:absolute;width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.25);font-size:18px}
-#guestPad .dpad .u{left:43px;top:3px}#guestPad .dpad .d{left:43px;bottom:3px}
-#guestPad .dpad .l{left:3px;top:43px}#guestPad .dpad .r{right:3px;top:43px}
-#guestPad .ab{position:absolute;right:6px;top:44px;width:130px;height:130px}
+#hostPad .dpad .knob{position:absolute;left:40px;top:40px;width:44px;height:44px;border-radius:50%;background:rgba(153,27,27,.65);border:1px solid rgba(255,255,255,.45);pointer-events:none;transition:transform .1s ease}
+/* Đĩa cần chỉ còn đĩa tròn + núm giữa, nhìn như cần gạt joystick thật:
+   KHÔNG còn nút mũi tên/chữ trên đĩa — vùng chạm 4 hướng + chéo nằm ngay
+   trên đĩa (pointerdown/pointermove trên .dpad, xem bindGuestPad), núm vẫn
+   bám theo ngón tay/trượt theo hướng. */
+#guestPad .ab{position:absolute;right:8px;top:44px;width:130px;height:130px}
+#hostPad .ab{position:absolute;right:8px;top:44px;width:130px;height:130px}
 #guestPad .ab button{position:absolute;width:50px;height:50px;border-radius:50%;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.16);color:#fff;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
+#hostPad .ab button{position:absolute;width:50px;height:50px;border-radius:50%;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.16);color:#fff;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
 #guestPad .ab button .lt{font-size:26px}
+#hostPad .ab button .lt{font-size:26px}
 #guestPad .ab button .lb{font-size:7px;font-weight:700;white-space:nowrap;letter-spacing:-.2px;color:rgba(255,255,255,.75)}
+#hostPad .ab button .lb{font-size:7px;font-weight:700;white-space:nowrap;letter-spacing:-.2px;color:rgba(255,255,255,.75)}
 #guestPad .ab .y{left:40px;top:0}
+#hostPad .ab .y{left:40px;top:0}
 #guestPad .ab .x{left:0;top:40px}
+#hostPad .ab .x{left:0;top:40px}
 #guestPad .ab .b{left:81px;top:40px}
+#hostPad .ab .b{left:81px;top:40px}
 #guestPad .ab .a{left:40px;top:80px}
-#guestPad .selstart{position:absolute;left:0;right:0;bottom:6px;display:flex;justify-content:center;gap:12px}
+#hostPad .ab .a{left:40px;top:80px}
+/* Nút Y/X/B/A tô màu arcade (như bản arcade cũ + COIN-OPX): A đỏ, B vàng,
+   X xanh lá, Y xanh dương — nền bán trong suốt alpha .65 như nút combo,
+   viền cùng màu; chữ trắng, nhãn nhỏ giữ nguyên. */
+#guestPad .ab .a{background:rgba(239,68,68,.65);border-color:#ef4444}
+#hostPad .ab .a{background:rgba(239,68,68,.65);border-color:#ef4444}
+#guestPad .ab .b{background:rgba(249,168,37,.65);border-color:#f9a825}
+#hostPad .ab .b{background:rgba(249,168,37,.65);border-color:#f9a825}
+#guestPad .ab .x{background:rgba(34,197,94,.65);border-color:#22c55e}
+#hostPad .ab .x{background:rgba(34,197,94,.65);border-color:#22c55e}
+#guestPad .ab .y{background:rgba(30,136,229,.65);border-color:#1e88e5}
+#hostPad .ab .y{background:rgba(30,136,229,.65);border-color:#1e88e5}
+#guestPad .selstart{position:absolute;left:auto;right:8px;bottom:6px;display:flex;justify-content:flex-end;gap:12px}
+#hostPad .selstart{position:absolute;left:auto;right:8px;bottom:6px;display:flex;justify-content:flex-end;gap:12px}
 #guestPad .selstart button{width:50px;height:31px;padding:0;border-radius:5px;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.16);color:#fff;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
+#hostPad .selstart button{width:50px;height:31px;padding:0;border-radius:5px;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.16);color:#fff;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
 #guestPad .selstart button .lt{font-size:15px}
+#hostPad .selstart button .lt{font-size:15px}
 #guestPad .selstart button .lb{font-size:8px;font-weight:700;color:rgba(255,255,255,.75)}
+#hostPad .selstart button .lb{font-size:8px;font-weight:700;color:rgba(255,255,255,.75)}
 #guestPad button{transition:transform .1s ease,filter .1s ease,box-shadow .1s ease;text-shadow:0 1px 3px rgba(0,0,0,.65)}
+#hostPad button{transition:transform .1s ease,filter .1s ease,box-shadow .1s ease;text-shadow:0 1px 3px rgba(0,0,0,.65)}
 #guestPad button.on,#guestPad button.pressed{filter:brightness(.65);transform:scale(.92);box-shadow:inset 0 3px 8px rgba(0,0,0,.45)}
+#hostPad button.on,#hostPad button.pressed{filter:brightness(.65);transform:scale(.92);box-shadow:inset 0 3px 8px rgba(0,0,0,.45)}
 /* Màn hình thấp (vd chia đôi màn hình trên điện thoại): thu nhỏ pad để video vẫn thấy được */
 @media (max-height:520px){
 #guestTop{padding:6px 8px}
@@ -78,25 +150,39 @@
 #guestTop button{padding:6px 9px}
 #guestPad{height:176px}
 #guestPad .combo{top:3px;gap:6px}
+#hostPad .combo{top:3px;gap:6px}
 #guestPad .combo button{width:50px;height:26px}
+#hostPad .combo button{width:50px;height:26px}
 #guestPad .combo button .lt{font-size:14px}
+#hostPad .combo button .lt{font-size:14px}
 #guestPad .combo button .lb{font-size:7px}
+#hostPad .combo button .lb{font-size:7px}
 #guestPad .dpad{top:32px;width:112px;height:112px}
+#hostPad .dpad{top:32px;width:112px;height:112px}
 #guestPad .dpad .knob{left:36px;top:36px;width:40px;height:40px}
-#guestPad .dpad button{width:34px;height:34px}
-#guestPad .dpad .u{left:39px;top:2px}#guestPad .dpad .d{left:39px;bottom:2px}
-#guestPad .dpad .l{left:2px;top:39px}#guestPad .dpad .r{right:2px;top:39px}
+#hostPad .dpad .knob{left:36px;top:36px;width:40px;height:40px}
 #guestPad .ab{top:32px;width:112px;height:112px}
+#hostPad .ab{top:32px;width:112px;height:112px}
 #guestPad .ab button{width:43px;height:43px}
+#hostPad .ab button{width:43px;height:43px}
 #guestPad .ab button .lt{font-size:24px}
+#hostPad .ab button .lt{font-size:24px}
 #guestPad .ab button .lb{font-size:7px}
+#hostPad .ab button .lb{font-size:7px}
 #guestPad .ab .y{left:34px;top:0}
+#hostPad .ab .y{left:34px;top:0}
 #guestPad .ab .x{left:0;top:34px}
+#hostPad .ab .x{left:0;top:34px}
 #guestPad .ab .b{left:69px;top:34px}
+#hostPad .ab .b{left:69px;top:34px}
 #guestPad .ab .a{left:34px;top:68px}
+#hostPad .ab .a{left:34px;top:68px}
 #guestPad .selstart{bottom:4px}
+#hostPad .selstart{bottom:4px}
 #guestPad .selstart button{width:50px;height:26px;padding:0;border-radius:5px}
+#hostPad .selstart button{width:50px;height:26px;padding:0;border-radius:5px}
 #guestPad .selstart button .lt{font-size:13px}
+#hostPad .selstart button .lt{font-size:13px}
 }
 /* Màn hình RẤT thấp (chia đôi màn hình thật trên điện thoại, viewport chỉ
    ~300px sau khi trừ thanh trình duyệt): pad siêu gọn 140px + tiêu đề 28px
@@ -111,25 +197,39 @@
 #guestTop button{padding:4px 7px;font-size:11px}
 #guestPad{height:140px}
 #guestPad .combo{top:2px;gap:6px}
+#hostPad .combo{top:2px;gap:6px}
 #guestPad .combo button{width:46px;height:22px;line-height:1.05}
+#hostPad .combo button{width:46px;height:22px;line-height:1.05}
 #guestPad .combo button .lt{font-size:12px}
+#hostPad .combo button .lt{font-size:12px}
 #guestPad .combo button .lb{font-size:7px}
+#hostPad .combo button .lb{font-size:7px}
 #guestPad .dpad{top:28px;width:80px;height:80px}
+#hostPad .dpad{top:28px;width:80px;height:80px}
 #guestPad .dpad .knob{left:26px;top:26px;width:28px;height:28px}
-#guestPad .dpad button{width:26px;height:26px;font-size:13px}
-#guestPad .dpad .u{left:27px;top:2px}#guestPad .dpad .d{left:27px;bottom:2px}
-#guestPad .dpad .l{left:2px;top:27px}#guestPad .dpad .r{right:2px;top:27px}
+#hostPad .dpad .knob{left:26px;top:26px;width:28px;height:28px}
 #guestPad .ab{top:28px;width:82px;height:82px}
+#hostPad .ab{top:28px;width:82px;height:82px}
 #guestPad .ab button{width:32px;height:32px}
+#hostPad .ab button{width:32px;height:32px}
 #guestPad .ab button .lt{font-size:18px}
+#hostPad .ab button .lt{font-size:18px}
 #guestPad .ab button .lb{font-size:6px}
+#hostPad .ab button .lb{font-size:6px}
 #guestPad .ab .y{left:25px;top:0}
+#hostPad .ab .y{left:25px;top:0}
 #guestPad .ab .x{left:0;top:25px}
+#hostPad .ab .x{left:0;top:25px}
 #guestPad .ab .b{left:50px;top:25px}
+#hostPad .ab .b{left:50px;top:25px}
 #guestPad .ab .a{left:25px;top:50px}
+#hostPad .ab .a{left:25px;top:50px}
 #guestPad .selstart{bottom:2px}
+#hostPad .selstart{bottom:2px}
 #guestPad .selstart button{width:50px;height:26px;padding:0;border-radius:5px}
+#hostPad .selstart button{width:50px;height:26px;padding:0;border-radius:5px}
 #guestPad .selstart button .lt{font-size:13px}
+#hostPad .selstart button .lt{font-size:13px}
 }
 /* NGANG (landscape): pad đè lên vùng video như COIN-OPX — video dùng hết
    chiều cao còn lại sau tiêu đề (không còn bị pad 140px chèn mất), cần bám
@@ -144,30 +244,70 @@
 #guestTop button{padding:5px 9px}
 #guestPad{position:absolute;left:0;right:0;top:0;bottom:0;height:auto;pointer-events:none}
 #guestPad button{pointer-events:auto}
+#hostPad button{pointer-events:auto}
 #guestPad .dpad{pointer-events:auto}
+#hostPad .dpad{pointer-events:auto}
 #guestPad .combo{left:auto;right:16px;top:auto;bottom:190px;width:224px;justify-content:flex-end;gap:6px}
+#hostPad .combo{left:auto;right:16px;top:auto;bottom:190px;width:224px;justify-content:flex-end;gap:6px}
 #guestPad .combo button{width:50px;height:31px}
+#hostPad .combo button{width:50px;height:31px}
 #guestPad .combo button .lt{font-size:15px}
+#hostPad .combo button .lt{font-size:15px}
 #guestPad .combo button .lb{font-size:8px}
+#hostPad .combo button .lb{font-size:8px}
 #guestPad .dpad{left:16px;top:auto;bottom:16px;width:140px;height:140px}
+#hostPad .dpad{left:16px;top:auto;bottom:16px;width:140px;height:140px}
 #guestPad .dpad .knob{left:46px;top:46px;width:48px;height:48px}
-#guestPad .dpad button{width:42px;height:42px;font-size:19px}
-#guestPad .dpad .u{left:49px;top:3px}
-#guestPad .dpad .d{left:49px;bottom:3px}
-#guestPad .dpad .l{left:3px;top:49px}
-#guestPad .dpad .r{right:3px;top:49px}
+#hostPad .dpad .knob{left:46px;top:46px;width:48px;height:48px}
 #guestPad .ab{right:16px;left:auto;top:auto;bottom:16px;width:156px;height:156px}
+#hostPad .ab{right:16px;left:auto;top:auto;bottom:16px;width:156px;height:156px}
 #guestPad .ab button{width:60px;height:60px}
+#hostPad .ab button{width:60px;height:60px}
 #guestPad .ab button .lt{font-size:30px}
+#hostPad .ab button .lt{font-size:30px}
 #guestPad .ab button .lb{font-size:8px}
+#hostPad .ab button .lb{font-size:8px}
 #guestPad .ab .y{left:48px;top:0}
+#hostPad .ab .y{left:48px;top:0}
 #guestPad .ab .x{left:0;top:48px}
+#hostPad .ab .x{left:0;top:48px}
 #guestPad .ab .b{left:96px;top:48px}
+#hostPad .ab .b{left:96px;top:48px}
 #guestPad .ab .a{left:48px;top:96px}
-#guestPad .selstart{bottom:16px}
+#hostPad .ab .a{left:48px;top:96px}
+#guestPad .selstart{left:0;right:0;justify-content:center;bottom:16px}
+#hostPad .selstart{left:0;right:0;justify-content:center;bottom:16px}
 #guestPad .selstart button{width:60px;height:36px}
+#hostPad .selstart button{width:60px;height:36px}
 #guestPad .selstart button .lt{font-size:16px}
+#hostPad .selstart button .lt{font-size:16px}
 #guestPad .selstart button .lb{font-size:8px}
+#hostPad .selstart button .lb{font-size:8px}
+}
+/* ===== BỘ NÚT P1 CHO CHỦ PHÒNG (#hostPad) =====
+   Chủ phòng (solo + host) dùng CHUNG bộ nút tự viết như bên khách: các rule
+   #hostPad ... bên trên được nhân bản y hệt từ #guestPad (cùng HTML, cùng
+   cỡ, cùng màu, cùng layout dọc lệch phải + ngang). Khác duy nhất: #hostPad
+   là thanh phủ ở cuối màn hình trên chính game (chủ phòng không có video
+   riêng như khách) — dọc: thanh 220px (176/140 ở tier thấp); ngang: phủ
+   toàn màn hình như layout ngang của khách. Chỉ hiện khi game đã chạy và
+   máy có cảm ứng (xem showHostPad). */
+/* Ẩn hẳn gamepad mặc định của EmulatorJS để không hiện 2 bộ nút chồng nhau.
+   !important để thắng cả style.display inline mà EJS tự đặt khi bấm toggle
+   trong menu cài đặt (EJS không có cấu hình tắt hẳn gamepad: mảng
+   VirtualGamepadSettings rỗng cũng rơi về mặc định). */
+#display .ejs_virtualGamepad_parent{display:none!important}
+#hostPad{position:fixed;left:0;right:0;bottom:0;height:220px;z-index:150;touch-action:none;user-select:none;-webkit-user-select:none;display:none;pointer-events:none;background:transparent}
+#hostPad button{pointer-events:auto}
+#hostPad .dpad{pointer-events:auto}
+@media (max-height:520px){
+#hostPad{height:176px}
+}
+@media (max-height:400px){
+#hostPad{height:140px}
+}
+@media (orientation:landscape){
+#hostPad{top:0;bottom:0;height:auto}
 }
 </style></head><body><div id="box"><input type="file" id="input"><span id="drop-label"></span></div><div id="toolbar"><input type="text" id="url-input"><button id="settings" title="Cài đặt"><svg viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg></button></div><div id="onlinePanel">
 <div id="modeRow">
@@ -218,8 +358,6 @@
 </div>
 <div class="dpad">
 <div class="knob"></div>
-<button class="u" data-k="up">▲</button><button class="d" data-k="down">▼</button>
-<button class="l" data-k="left">◀</button><button class="r" data-k="right">▶</button>
 </div>
 <div class="ab">
 <button class="y" data-k="d"><span class="lt">Y</span><span class="lb">Đá - Né</span></button>
@@ -229,6 +367,24 @@
 </div>
 <div class="selstart"><button class="select" data-k="coin"><span class="lt">Select</span><span class="lb">Xu</span></button><button class="start" data-k="start"><span class="lt">Start</span></button></div>
 </div>
+</div>
+<div id="hostPad">
+<div class="combo">
+<button class="c-ab" data-combo="ab"><span class="lt">AB</span><span class="lb">Mạnh</span></button>
+<button class="c-cd" data-combo="cd"><span class="lt">CD</span><span class="lb">Vật/Né</span></button>
+<button class="c-abc" data-combo="abc"><span class="lt">ABC</span><span class="lb">Nổ nộ</span></button>
+<button class="c-bcd" data-combo="bcd"><span class="lt">BCD</span></button>
+</div>
+<div class="dpad">
+<div class="knob"></div>
+</div>
+<div class="ab">
+<button class="y" data-k="d"><span class="lt">Y</span><span class="lb">Đá - Né</span></button>
+<button class="x" data-k="c"><span class="lt">X</span><span class="lb">Chém mạnh</span></button>
+<button class="b" data-k="b"><span class="lt">B</span><span class="lb">Chém vừa</span></button>
+<button class="a" data-k="a"><span class="lt">A</span><span class="lb">Chém nhẹ</span></button>
+</div>
+<div class="selstart"><button class="select" data-k="coin"><span class="lt">Select</span><span class="lb">Xu</span></button><button class="start" data-k="start"><span class="lt">Start</span></button></div>
 </div>
 <script>
 const $=i=>document.getElementById(i),
@@ -507,6 +663,7 @@ function joinRoom(code){
     if($("toolbar"))$("toolbar").style.display="none";
     $("onlinePanel").style.display="none";
     $("guestArea").style.display="flex";
+    maybeAutoFullscreen();armFsIfNeeded();
     $("guestTitle").textContent="Khách (P2) — phòng "+code+" — đang xem stream";
     setDrawerStatus("Đang vào phòng...");
     loadPeerJS().then(()=>{
@@ -626,16 +783,19 @@ function joinRoom(code){
 function sendGuestInput(){
     if(dataConn&&dataConn.open){try{dataConn.send(JSON.stringify({t:"input",s:guestInput}));}catch(e){}}
 }
-/* Bộ nút khách #guestPad kiểu mặc định EmulatorJS (giống hệt bên chủ phòng) —
-   CHỈ hiện cho khách (không có máy giả lập). Solo/host dùng gamepad của
-   EmulatorJS, không dùng pad này. Đa chạm được: bấm 2 nút cùng lúc bằng
-   2 ngón như chơi thật. Select = Nhét Xu (gửi coin), không có Fast/Slow
-   (khách không có giả lập thật nên 2 nút đó không có tác dụng). Hàng combo
-   AB/CD/ABC/BCD ở trên cùng, kiểu COIN-OPX: giữ gửi đồng thời các phím
-   thành phần. Kích thước nút lấy đúng mặc định EJS (nút tròn 50x50,
-   vùng cần 125x125, pill 50x31). */
-function bindGuestPad(){
-    const mark=(keys,on)=>{keys.forEach(k=>{const el=document.querySelector('#guestPad [data-k="'+k+'"]');if(el){el.classList.toggle("on",on);el.classList.toggle("pressed",on);}});};
+/* Bộ nút tự viết (dùng CHUNG cho khách #guestPad và chủ phòng #hostPad) kiểu
+   mặc định EmulatorJS — đĩa cần không mũi tên/chữ, thoi Y/X/B/A có màu,
+   hàng combo AB/CD/ABC/BCD ở trên cùng kiểu COIN-OPX, pill Select/Start.
+   Đa chạm được: bấm 2 nút cùng lúc bằng 2 ngón như chơi thật. Select =
+   Nhét Xu (gửi coin), không có Fast/Slow (khách không có giả lập thật nên
+   2 nút đó không có tác dụng). Kích thước nút lấy đúng mặc định EJS
+   (nút tròn 50x50, vùng cần 125x125, pill 50x31). Khác nhau duy nhất ở
+   đầu ra: khách gửi trạng thái phím về chủ phòng qua DataChannel (send),
+   chủ phòng chèn trực tiếp vào P1 (slot 0) qua simulateInput (xem
+   sendHostInput). Bàn phím vật lý: khách dùng keyMap dưới đây (withKeys),
+   P1 dùng phím mặc định của EmulatorJS. */
+function bindPad(rootSel,st,send,onStart,withKeys){
+    const mark=(keys,on)=>{keys.forEach(k=>{const el=document.querySelector(rootSel+' [data-k="'+k+'"]');if(el){el.classList.toggle("on",on);el.classList.toggle("pressed",on);}});};
     /* Nút combo AB/CD/ABC/BCD: giữ 1 nút gửi đồng thời các phím thành phần
        (AB=a+b, CD=c+d, ABC=a+b+c, BCD=b+c+d). Đếm giữ (refcount) để bấm xen
        kẽ nút đơn + combo không làm mất phím: phím chỉ tắt khi cả nút đơn
@@ -643,7 +803,7 @@ function bindGuestPad(){
     const COMBO={ab:["a","b"],cd:["c","d"],abc:["a","b","c"],bcd:["b","c","d"]};
     const directHeld=new Set(),heldCombos=new Set();
     const keyHeld=k=>directHeld.has(k)||[...heldCombos].some(id=>COMBO[id].includes(k));
-    const syncKeys=ks=>{ks.forEach(k=>{const on=keyHeld(k);guestInput[k]=on?1:0;mark([k],on);});};
+    const syncKeys=ks=>{ks.forEach(k=>{const on=keyHeld(k);st[k]=on?1:0;mark([k],on);});};
     /* Núm giữa đĩa cần trượt theo hướng đang giữ — cảm giác "nút cử động" như EJS.
        Đo từ video COIN-OPX (khung f002: núm cam sáng lệch khỏi tâm đĩa ~68px,
        đĩa bán kính ~135px): núm trượt ~50% bán kính đĩa, ~90% hành trình tối đa,
@@ -651,24 +811,24 @@ function bindGuestPad(){
        như cần analog thật: chạm/kéo trên đĩa -> núm tới vị trí ngón (kẹp trong
        đĩa), hướng suy từ góc ngón so với tâm; nhả -> về giữa. Kích thước đo
        bằng getBoundingClientRect, có fallback theo tier khi #guestArea còn ẩn. */
-    const dpadEl=document.querySelector("#guestPad .dpad");
-    const knobEl=document.querySelector("#guestPad .dpad .knob");
+    const dpadEl=document.querySelector(rootSel+" .dpad");
+    const knobEl=document.querySelector(rootSel+" .dpad .knob");
     const dpadSize=()=>{const w=dpadEl?dpadEl.getBoundingClientRect().width:0;if(w>0)return w;return window.innerHeight<=400?80:window.innerHeight<=520?112:125;};
     const knobSize=()=>{const w=knobEl?knobEl.getBoundingClientRect().width:0;if(w>0)return w;const d=dpadSize();return d<=80?28:d<=112?40:44;};
     const stickMax=()=>Math.max(10,dpadSize()/2-knobSize()/2-2);
     const stickStep=()=>Math.round(dpadSize()*0.25); /* 50% bán kính đĩa, như COIN-OPX */
     const moveKnob=()=>{
         if(!knobEl)return;
-        const dx=(guestInput.right?1:0)-(guestInput.left?1:0);
-        const dy=(guestInput.down?1:0)-(guestInput.up?1:0);
+        const dx=(st.right?1:0)-(st.left?1:0);
+        const dy=(st.down?1:0)-(st.up?1:0);
         if(!dx&&!dy){knobEl.style.transform="";return;}
         let s=stickStep(),x=dx*s,y=dy*s;
         if(dx&&dy){x*=0.7071;y*=0.7071;}
         knobEl.style.transform="translate("+Math.round(x)+"px,"+Math.round(y)+"px)";
     };
     const setDir=(k,on)=>{
-        const v=on?1:0;if(guestInput[k]===v)return false;guestInput[k]=v;
-        const el=document.querySelector('#guestPad [data-k="'+k+'"]');
+        const v=on?1:0;if(st[k]===v)return false;st[k]=v;
+        const el=document.querySelector(rootSel+' [data-k="'+k+'"]');
         if(el){el.classList.toggle("on",on);el.classList.toggle("pressed",on);}
         return true;
     };
@@ -685,7 +845,7 @@ function bindGuestPad(){
         let ch=false;
         ch=setDir("right",vx>dz)||ch;ch=setDir("left",vx<-dz)||ch;
         ch=setDir("down",vy>dz)||ch;ch=setDir("up",vy<-dz)||ch;
-        if(ch)sendGuestInput();
+        if(ch)send();
     };
     const stickEnd=e=>{
         if(stickId===null||e.pointerId!==stickId)return;
@@ -693,7 +853,7 @@ function bindGuestPad(){
         if(knobEl)knobEl.style.transition="";
         let ch=false;
         ["up","down","left","right"].forEach(k=>{ch=setDir(k,false)||ch;});
-        moveKnob();if(ch)sendGuestInput();
+        moveKnob();if(ch)send();
     };
     if(dpadEl){
         dpadEl.addEventListener("pointerdown",e=>{e.preventDefault();if(stickId!==null)return;stickId=e.pointerId;stickMove(e);});
@@ -703,14 +863,14 @@ function bindGuestPad(){
         dpadEl.addEventListener("pointerleave",e=>{if(stickId!==null&&e.pointerId===stickId)stickEnd(e);});
         dpadEl.addEventListener("contextmenu",e=>e.preventDefault());
     }
-    document.querySelectorAll("#guestPad [data-k]").forEach(b=>{
+    document.querySelectorAll(rootSel+" [data-k]").forEach(b=>{
         const k=b.dataset.k;
         const down=e=>{
             e.preventDefault();directHeld.add(k);syncKeys([k]);
-            moveKnob();sendGuestInput();
-            if(k==="start"&&dataConn&&dataConn.open){try{dataConn.send(JSON.stringify({t:"start"}));}catch(e){}}
+            moveKnob();send();
+            if(k==="start"&&onStart){try{onStart();}catch(e){}}
         };
-        const up=e=>{e.preventDefault();directHeld.delete(k);syncKeys([k]);moveKnob();sendGuestInput();};
+        const up=e=>{e.preventDefault();directHeld.delete(k);syncKeys([k]);moveKnob();send();};
         b.addEventListener("pointerdown",down);
         b.addEventListener("pointerup",up);
         b.addEventListener("pointercancel",up);
@@ -720,10 +880,10 @@ function bindGuestPad(){
     /* Nút combo AB/CD/ABC/BCD (hàng trên cùng, kiểu COIN-OPX): giữ thì gửi
        đồng thời các phím thành phần, các nút thành phần lún theo; nhả thì
        tắt (trừ phím nào vẫn đang giữ bằng nút đơn/bàn phím). */
-    document.querySelectorAll("#guestPad [data-combo]").forEach(b=>{
+    document.querySelectorAll(rootSel+" [data-combo]").forEach(b=>{
         const id=b.dataset.combo,keys=COMBO[id]||[];
-        const down=e=>{e.preventDefault();b.classList.add("on","pressed");heldCombos.add(id);syncKeys(keys);sendGuestInput();};
-        const up=e=>{e.preventDefault();b.classList.remove("on","pressed");heldCombos.delete(id);syncKeys(keys);sendGuestInput();};
+        const down=e=>{e.preventDefault();b.classList.add("on","pressed");heldCombos.add(id);syncKeys(keys);send();};
+        const up=e=>{e.preventDefault();b.classList.remove("on","pressed");heldCombos.delete(id);syncKeys(keys);send();};
         b.addEventListener("pointerdown",down);
         b.addEventListener("pointerup",up);
         b.addEventListener("pointercancel",up);
@@ -732,21 +892,100 @@ function bindGuestPad(){
     });
     /* Bàn phím chỉ xử lý cho khách (solo/host dùng phím mặc định của EmulatorJS).
        Phím C bấm nút X (data-k="c"), V bấm nút Y (data-k="d") — đúng tên hiển thị EJS. */
+    if(withKeys){
     const keyMap={ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right",z:"a",Z:"a",x:"b",X:"b",c:"c",C:"c",v:"d",V:"d"," ":"coin",Enter:"start"};
     document.addEventListener("keydown",e=>{
         if(window.onlineMode!=="guest")return;
         if(e.target&&(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA"))return;
         const k=keyMap[e.key];if(!k)return;e.preventDefault();
-        if(directHeld.has(k))return;directHeld.add(k);syncKeys([k]);moveKnob();sendGuestInput();
-        if(k==="start"&&dataConn&&dataConn.open){try{dataConn.send(JSON.stringify({t:"start"}));}catch(e){}}
+        if(directHeld.has(k))return;directHeld.add(k);syncKeys([k]);moveKnob();send();
+        if(k==="start"&&onStart){try{onStart();}catch(e){}}
     });
     document.addEventListener("keyup",e=>{
         if(window.onlineMode!=="guest")return;
         if(e.target&&(e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA"))return;
         const k=keyMap[e.key];if(!k)return;
-        directHeld.delete(k);syncKeys([k]);moveKnob();sendGuestInput();
+        directHeld.delete(k);syncKeys([k]);moveKnob();send();
     });
+    }
 }
+/* Bộ nút P1 cho chủ phòng (#hostPad) — dùng CHUNG bộ nút tự viết như bên khách
+   (bindPad), khác duy nhất ở đầu ra: khách gửi trạng thái phím về chủ phòng
+   qua DataChannel, còn chủ phòng chèn TRỰC TIẾP vào P1 (slot 0) bằng
+   EJS_emulator.gameManager.simulateInput(0, idx, 1/0) — cùng bảng PAD như P2
+   (A=0, B=8, X=1, Y=9, Select/Xu=2, Start=3, hướng=4-7). Solo/host đều dùng.
+   Bàn phím vật lý của P1 vẫn do EmulatorJS xử lý như cũ (không qua pad này). */
+const hostInput={up:0,down:0,left:0,right:0,a:0,b:0,c:0,d:0,coin:0,start:0};
+function sendHostInput(){
+    try{
+        const gm=window.EJS_emulator&&window.EJS_emulator.gameManager;
+        if(!gm||typeof gm.simulateInput!=="function")return;
+        for(const k in PAD)gm.simulateInput(0,PAD[k],hostInput[k]?1:0);
+    }catch(e){}
+}
+function bindGuestPad(){
+    bindPad("#guestPad",guestInput,sendGuestInput,()=>{if(dataConn&&dataConn.open){try{dataConn.send(JSON.stringify({t:"start"}));}catch(e){}}},true);
+}
+function bindHostPad(){
+    bindPad("#hostPad",hostInput,sendHostInput,null,false);
+}
+function showHostPad(){
+    const p=$("hostPad");if(!p)return;
+    if(!(("ontouchstart" in window)||(navigator.maxTouchPoints>0)))return; /* máy không cảm ứng thì dùng bàn phím như cũ, không hiện nút */
+    p.style.display="block";
+    maybeAutoFullscreen();armFsIfNeeded();
+}
+/* Xoay sang NGANG (landscape) thì tự vào fullscreen — chỉ màn khách.
+   Trình duyệt thường chỉ cho fullscreen sau 1 thao tác chạm nên nếu lần
+   thử lúc xoay chưa được (không có gesture) thì lần chạm tiếp theo sẽ
+   thử lại 1 lần duy nhất. Lỗi (vd đang chia đôi màn hình, trình duyệt
+   không cho) được bắt lặng lẽ, không báo gì, không chặn chơi. Nếu người
+   dùng tự thoát fullscreen thì không thử lại cho tới lần xoay sau (cờ
+   fsSuppress, chỉ xóa khi có orientationchange mới). KHÔNG tự thoát
+   fullscreen khi xoay về dọc — người dùng tự thoát. */
+var fsArmed=false, fsSuppress=false, fsWas=false;
+function guestFsEl(){return document.fullscreenElement||document.webkitFullscreenElement||null;}
+function tryGuestFullscreen(){
+    try{
+        if(guestFsEl())return false;
+        const el=document.documentElement;
+        let p=null;
+        if(el.requestFullscreen)p=el.requestFullscreen();
+        else if(el.webkitRequestFullscreen)p=el.webkitRequestFullscreen();
+        if(p&&p.catch)p.catch(()=>{});
+        return true;
+    }catch(e){return false;}
+}
+/* Màn khách đang mở HOẶC bộ nút P1 đang hiện thì mới tự fullscreen khi xoay ngang. */
+function autoFsActive(){
+    if(window.onlineMode==="guest"){
+        const ga=$("guestArea");
+        return !!(ga&&ga.style.display==="flex");
+    }
+    const hp=$("hostPad");
+    return !!(hp&&hp.style.display==="block");
+}
+function maybeAutoFullscreen(){
+    if(!autoFsActive())return;
+    if(!window.matchMedia||!matchMedia("(orientation: landscape)").matches)return;
+    if(fsSuppress)return;
+    tryGuestFullscreen();
+}
+function armFsIfNeeded(){if(!guestFsEl()&&!fsSuppress)fsArmed=true;}
+window.addEventListener("orientationchange",()=>{fsSuppress=false;setTimeout(()=>{maybeAutoFullscreen();armFsIfNeeded();},300);});
+window.addEventListener("resize",()=>{maybeAutoFullscreen();armFsIfNeeded();});
+function onFsChange(){
+    const now=!!guestFsEl();
+    if(fsWas&&!now){fsSuppress=true;fsArmed=false;}
+    fsWas=now;
+}
+document.addEventListener("fullscreenchange",onFsChange);
+document.addEventListener("webkitfullscreenchange",onFsChange);
+document.addEventListener("pointerdown",()=>{
+    if(!fsArmed)return;
+    fsArmed=false;
+    maybeAutoFullscreen();
+},{passive:true});
 /* ================= QUÉT MÃ QR (khách, jsQR qua CDN) ================= */
 function stopScan(){
     if(scanRAF)cancelAnimationFrame(scanRAF);scanRAF=0;
@@ -901,10 +1140,13 @@ async function launch(src){
         EJS_DEBUG_XX:$("debug").checked,
         EJS_onExit:handleExit
     });
-    if(window.onlineMode==="host")window.EJS_onGameStart=()=>{
+    window.EJS_onGameStart=()=>{
         gameStarted=true;
-        setDrawerStatus("Game đã chạy — đang lấy hình để stream cho khách...");
-        tryStartStream();
+        if(window.onlineMode==="host"){
+            setDrawerStatus("Game đã chạy — đang lấy hình để stream cho khách...");
+            tryStartStream();
+        }
+        showHostPad(); /* solo + host đều hiện bộ nút P1 tự viết khi game chạy */
     };
 
     if(urlParams.get('p'))window.EJS_gameParentUrl=urlParams.get('p');
@@ -1103,6 +1345,7 @@ $("guestExitBtn").onclick=()=>location.reload();
 $("copyCodeBtn").onclick=()=>{const c=$("roomCodeText").textContent.trim();if(!isRoomCode(c)){alert("Chưa có mã phòng — bấm Tạo phòng (P1) và chọn file game trước đã.");return;}if(navigator.clipboard)navigator.clipboard.writeText(c);};
 $("copyLinkBtn").onclick=()=>{const c=$("roomCodeText").textContent.trim();const l=roomLink(c);if(!l){if(!isRoomCode(c))alert("Chưa có mã phòng — bấm Tạo phòng (P1) và chọn file game trước đã.");else alert("Link phòng chỉ dùng được khi up file lên host HTTPS — bạn đang mở file xem trước (blob/file), link này gửi cho người khác không vào được. Hãy up file lên host rồi mở lại.");return;}if(navigator.clipboard)navigator.clipboard.writeText(l);};
 bindGuestPad();
+bindHostPad();
 /* Mở link ?room=XXXX là vào thẳng chế độ khách */
 const qRoom=new URLSearchParams(location.search).get("room");
 if(qRoom!==null&&qRoom!==""){
