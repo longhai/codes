@@ -144,6 +144,24 @@ input:checked+.slider:before{transform:translateX(20px)}
 #hostPad button{transition:transform .1s ease,filter .1s ease,box-shadow .1s ease;text-shadow:0 1px 3px rgba(0,0,0,.65)}
 #guestPad button.on,#guestPad button.pressed{filter:brightness(.65);transform:scale(.92);box-shadow:inset 0 3px 8px rgba(0,0,0,.45)}
 #hostPad button.on,#hostPad button.pressed{filter:brightness(.65);transform:scale(.92);box-shadow:inset 0 3px 8px rgba(0,0,0,.45)}
+/* Bộ nút NES/PS1 của chủ phòng (chỉ #hostPad): pill A+B chỉ hiện ở chế độ
+   NES, 4 nút vai chỉ hiện ở chế độ PS1 (xem setHostPadMode — data-mode trên
+   #hostPad). Hàng combo arcade ẩn đi ở 2 chế độ này. */
+#hostPad[data-mode="nes"] .combo{display:none}
+#hostPad[data-mode="psx"] .combo{display:none}
+#hostPad .nescombo{position:absolute;left:auto;right:8px;top:6px;display:none;justify-content:flex-end}
+#hostPad[data-mode="nes"] .nescombo{display:flex}
+#hostPad .nescombo button{width:50px;height:31px;border-radius:5px;font-size:15px;font-weight:800;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;background:rgba(10,12,18,.55);border:1px solid #f9a825;color:#f9a825}
+#hostPad .nescombo button .lt{font-size:15px}
+#hostPad .nescombo button .lb{font-size:8px;font-weight:700;white-space:nowrap;color:rgba(255,255,255,.75)}
+#hostPad .shoulders{position:absolute;display:none;gap:8px}
+#hostPad .sh-left{left:6px;top:6px}
+#hostPad .sh-right{right:8px;top:6px}
+#hostPad[data-mode="psx"] .shoulders{display:flex}
+#hostPad .shoulders button{width:50px;height:31px;padding:0;border-radius:5px;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.16);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
+#hostPad .shoulders button .lt{font-size:15px}
+#hostPad .shoulders .l2,#hostPad .shoulders .r2{width:44px;height:26px}
+#hostPad .shoulders .l2 .lt,#hostPad .shoulders .r2 .lt{font-size:13px}
 /* Màn hình thấp (vd chia đôi màn hình trên điện thoại): thu nhỏ pad để video vẫn thấy được */
 @media (max-height:520px){
 #guestTop{padding:6px 8px}
@@ -158,6 +176,15 @@ input:checked+.slider:before{transform:translateX(20px)}
 #hostPad .combo button .lt{font-size:14px}
 #guestPad .combo button .lb{font-size:7px}
 #hostPad .combo button .lb{font-size:7px}
+#hostPad .nescombo{top:3px}
+#hostPad .nescombo button{width:50px;height:26px}
+#hostPad .nescombo button .lt{font-size:14px}
+#hostPad .nescombo button .lb{font-size:7px}
+#hostPad .sh-left{top:3px}
+#hostPad .sh-right{top:3px}
+#hostPad .shoulders button{width:50px;height:26px}
+#hostPad .shoulders button .lt{font-size:13px}
+#hostPad .shoulders .l2,#hostPad .shoulders .r2{width:44px;height:26px}
 #guestPad .dpad{top:32px;width:112px;height:112px}
 #hostPad .dpad{top:32px;width:112px;height:112px}
 #guestPad .dpad .knob{left:36px;top:36px;width:40px;height:40px}
@@ -205,6 +232,16 @@ input:checked+.slider:before{transform:translateX(20px)}
 #hostPad .combo button .lt{font-size:12px}
 #guestPad .combo button .lb{font-size:7px}
 #hostPad .combo button .lb{font-size:7px}
+#hostPad .nescombo{top:2px}
+#hostPad .nescombo button{width:46px;height:22px;line-height:1.05}
+#hostPad .nescombo button .lt{font-size:12px}
+#hostPad .nescombo button .lb{font-size:7px}
+#hostPad .sh-left{top:2px}
+#hostPad .sh-right{top:2px}
+#hostPad .shoulders button{width:46px;height:22px}
+#hostPad .shoulders button .lt{font-size:12px}
+#hostPad .shoulders .l2,#hostPad .shoulders .r2{width:40px;height:20px}
+#hostPad .shoulders .l2 .lt,#hostPad .shoulders .r2 .lt{font-size:11px}
 #guestPad .dpad{top:28px;width:80px;height:80px}
 #hostPad .dpad{top:28px;width:80px;height:80px}
 #guestPad .dpad .knob{left:26px;top:26px;width:28px;height:28px}
@@ -256,6 +293,14 @@ input:checked+.slider:before{transform:translateX(20px)}
 #hostPad .combo button .lt{font-size:15px}
 #guestPad .combo button .lb{font-size:8px}
 #hostPad .combo button .lb{font-size:8px}
+#hostPad .nescombo{left:auto;right:16px;top:auto;bottom:190px;width:auto;justify-content:flex-end}
+#hostPad .nescombo button{width:50px;height:31px}
+#hostPad .nescombo button .lt{font-size:15px}
+#hostPad .nescombo button .lb{font-size:8px}
+#hostPad .sh-left{left:16px;top:auto;bottom:182px}
+#hostPad .sh-right{right:16px;top:auto;bottom:182px}
+#hostPad .shoulders button{width:50px;height:31px}
+#hostPad .shoulders button .lt{font-size:15px}
 #guestPad .dpad{left:16px;top:auto;bottom:16px;width:140px;height:140px}
 #hostPad .dpad{left:16px;top:auto;bottom:16px;width:140px;height:140px}
 #guestPad .dpad .knob{left:46px;top:46px;width:48px;height:48px}
@@ -293,11 +338,14 @@ input:checked+.slider:before{transform:translateX(20px)}
    riêng như khách) — dọc: thanh 220px (176/140 ở tier thấp); ngang: phủ
    toàn màn hình như layout ngang của khách. Chỉ hiện khi game đã chạy và
    máy có cảm ứng (xem showHostPad). */
-/* Ẩn hẳn gamepad mặc định của EmulatorJS để không hiện 2 bộ nút chồng nhau.
+/* Ẩn gamepad mặc định của EmulatorJS khi bộ nút tự viết đang hiện (arcade /
+   NES / PS1 — xem showHostPad): body có class custom-pad thì gamepad EJS bị
+   ẩn để không hiện 2 bộ nút chồng nhau; hệ khác (SNES, ...) thì gamepad EJS
+   hiện lại như cũ.
    !important để thắng cả style.display inline mà EJS tự đặt khi bấm toggle
    trong menu cài đặt (EJS không có cấu hình tắt hẳn gamepad: mảng
    VirtualGamepadSettings rỗng cũng rơi về mặc định). */
-#display .ejs_virtualGamepad_parent{display:none!important}
+body.custom-pad #display .ejs_virtualGamepad_parent{display:none!important}
 #hostPad{position:fixed;left:0;right:0;bottom:0;height:220px;z-index:150;touch-action:none;user-select:none;-webkit-user-select:none;display:none;pointer-events:none;background:transparent}
 #hostPad button{pointer-events:auto}
 #hostPad .dpad{pointer-events:auto}
@@ -376,6 +424,9 @@ input:checked+.slider:before{transform:translateX(20px)}
 <button class="c-abc" data-combo="abc"><span class="lt">ABC</span><span class="lb">Nổ nộ</span></button>
 <button class="c-bcd" data-combo="bcd"><span class="lt">BCD</span></button>
 </div>
+<div class="nescombo"><button data-combo="nesab"><span class="lt">A+B</span><span class="lb">Bắn + Nhảy</span></button></div>
+<div class="shoulders sh-left"><button class="l2" data-k="l2"><span class="lt">L2</span></button><button class="l1" data-k="l1"><span class="lt">L1</span></button></div>
+<div class="shoulders sh-right"><button class="r1" data-k="r1"><span class="lt">R1</span></button><button class="r2" data-k="r2"><span class="lt">R2</span></button></div>
 <div class="dpad">
 <div class="knob"></div>
 </div>
@@ -412,7 +463,7 @@ const QR_CDN=["https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js","https
 const JSQR_CDN=["https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js","https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"];
 /* Nút mặc định của EmulatorJS cho arcade (RetroPad, đã xác minh): A=0, B=8, C=1, D=9, Select(Xu)=2, Start=3, hướng=4-7 */
 /* Nút khách hiển thị kiểu arcade A/B/C/D (nút C gửi index 1, D gửi index 9 — đúng RetroPad) */
-const PAD={a:0,b:8,c:1,d:9,coin:2,start:3,up:4,down:5,left:6,right:7};
+const PAD={a:0,b:8,c:1,d:9,coin:2,start:3,up:4,down:5,left:6,right:7,l1:10,r1:11,l2:12,r2:13};
 /* STUN dự phòng cho WebRTC (chỉ STUN công khai, không TURN có mật khẩu).
    PeerJS mặc định đã có STUN Google, thêm dự phòng để mạng chập chờn vẫn có
    cơ hội nối được. window.__PEER_OPTS chỉ là móc test (server PeerJS local). */
@@ -795,16 +846,36 @@ function sendGuestInput(){
    chủ phòng chèn trực tiếp vào P1 (slot 0) qua simulateInput (xem
    sendHostInput). Bàn phím vật lý: khách dùng keyMap dưới đây (withKeys),
    P1 dùng phím mặc định của EmulatorJS. */
-function bindPad(rootSel,st,send,onStart,withKeys){
+function bindPad(rootSel,st,send,onStart,withKeys,getTurbo){
     const mark=(keys,on)=>{keys.forEach(k=>{const el=document.querySelector(rootSel+' [data-k="'+k+'"]');if(el){el.classList.toggle("on",on);el.classList.toggle("pressed",on);}});};
     /* Nút combo AB/CD/ABC/BCD: giữ 1 nút gửi đồng thời các phím thành phần
        (AB=a+b, CD=c+d, ABC=a+b+c, BCD=b+c+d). Đếm giữ (refcount) để bấm xen
        kẽ nút đơn + combo không làm mất phím: phím chỉ tắt khi cả nút đơn
        lẫn mọi combo chứa nó đều đã nhả. */
-    const COMBO={ab:["a","b"],cd:["c","d"],abc:["a","b","c"],bcd:["b","c","d"]};
-    const directHeld=new Set(),heldCombos=new Set();
-    const keyHeld=k=>directHeld.has(k)||[...heldCombos].some(id=>COMBO[id].includes(k));
+    const COMBO={ab:["a","b"],cd:["c","d"],abc:["a","b","c"],bcd:["b","c","d"],nesab:["a","b"]};
+    const directHeld=new Set(),heldCombos=new Set(),turboHeld=new Set(),turboTimers={};
+    const keyHeld=k=>directHeld.has(k)||turboHeld.has(k)||[...heldCombos].some(id=>COMBO[id].includes(k));
     const syncKeys=ks=>{ks.forEach(k=>{const on=keyHeld(k);st[k]=on?1:0;mark([k],on);});};
+    /* Turbo (chỉ bộ nút NES của chủ phòng, xem bindHostPad): giữ nút C/D thì
+       tự bấm-nhả nút A/B liên tục (~12 lần/giây, đổi trạng thái mỗi 40ms).
+       Turbo cũng là 1 "người giữ" trong refcount (turboHeld) nên đang giữ
+       nút A thật mà nhả Turbo A thì A vẫn =1, không bị tắt oan. */
+    const turboFor=k=>{const m=(typeof getTurbo==="function"?getTurbo():getTurbo)||null;return m?m[k]:null;};
+    const stopTurbo=k=>{
+        const rec=turboTimers[k];if(!rec)return;
+        clearInterval(rec.timer);delete turboTimers[k];
+        turboHeld.delete(rec.tk);syncKeys([rec.tk]);send();
+        const el=document.querySelector(rootSel+' [data-k="'+k+'"]');
+        if(el){el.classList.remove("on","pressed");}
+    };
+    const stopTurboAll=()=>{Object.keys(turboTimers).forEach(stopTurbo);};
+    const startTurbo=(k,tk)=>{
+        stopTurbo(k);
+        const el=document.querySelector(rootSel+' [data-k="'+k+'"]');
+        if(el){el.classList.add("on","pressed");}
+        turboHeld.add(tk);syncKeys([tk]);send();
+        turboTimers[k]={tk,timer:setInterval(()=>{if(turboHeld.has(tk))turboHeld.delete(tk);else turboHeld.add(tk);syncKeys([tk]);send();},40)};
+    };
     /* Núm giữa đĩa cần trượt theo hướng đang giữ — cảm giác "nút cử động" như EJS.
        Đo từ video COIN-OPX (khung f002: núm cam sáng lệch khỏi tâm đĩa ~68px,
        đĩa bán kính ~135px): núm trượt ~50% bán kính đĩa, ~90% hành trình tối đa,
@@ -867,11 +938,14 @@ function bindPad(rootSel,st,send,onStart,withKeys){
     document.querySelectorAll(rootSel+" [data-k]").forEach(b=>{
         const k=b.dataset.k;
         const down=e=>{
-            e.preventDefault();directHeld.add(k);syncKeys([k]);
+            e.preventDefault();
+            const tk=turboFor(k);
+            if(tk){startTurbo(k,tk);return;} /* nút Turbo NES: không bấm phím gốc, chỉ chạy interval */
+            directHeld.add(k);syncKeys([k]);
             moveKnob();send();
             if(k==="start"&&onStart){try{onStart();}catch(e){}}
         };
-        const up=e=>{e.preventDefault();directHeld.delete(k);syncKeys([k]);moveKnob();send();};
+        const up=e=>{e.preventDefault();if(turboTimers[k]){stopTurbo(k);return;}directHeld.delete(k);syncKeys([k]);moveKnob();send();};
         b.addEventListener("pointerdown",down);
         b.addEventListener("pointerup",up);
         b.addEventListener("pointercancel",up);
@@ -909,14 +983,16 @@ function bindPad(rootSel,st,send,onStart,withKeys){
         directHeld.delete(k);syncKeys([k]);moveKnob();send();
     });
     }
+    return {stopTurboAll};
 }
 /* Bộ nút P1 cho chủ phòng (#hostPad) — dùng CHUNG bộ nút tự viết như bên khách
    (bindPad), khác duy nhất ở đầu ra: khách gửi trạng thái phím về chủ phòng
    qua DataChannel, còn chủ phòng chèn TRỰC TIẾP vào P1 (slot 0) bằng
    EJS_emulator.gameManager.simulateInput(0, idx, 1/0) — cùng bảng PAD như P2
-   (A=0, B=8, C=1, D=9, Select/Xu=2, Start=3, hướng=4-7). Solo/host đều dùng.
-   Bàn phím vật lý của P1 vẫn do EmulatorJS xử lý như cũ (không qua pad này). */
-const hostInput={up:0,down:0,left:0,right:0,a:0,b:0,c:0,d:0,coin:0,start:0};
+   (A=0, B=8, C=1, D=9, Select/Xu=2, Start=3, hướng=4-7, vai PS1 L1=10, R1=11,
+   L2=12, R2=13). Solo/host đều dùng. Bàn phím vật lý của P1 vẫn do EmulatorJS
+   xử lý như cũ (không qua pad này). */
+const hostInput={up:0,down:0,left:0,right:0,a:0,b:0,c:0,d:0,coin:0,start:0,l1:0,r1:0,l2:0,r2:0};
 function sendHostInput(){
     try{
         const gm=window.EJS_emulator&&window.EJS_emulator.gameManager;
@@ -928,13 +1004,60 @@ function bindGuestPad(){
     bindPad("#guestPad",guestInput,sendGuestInput,()=>{if(dataConn&&dataConn.open){try{dataConn.send(JSON.stringify({t:"start"}));}catch(e){}}},true);
 }
 function bindHostPad(){
-    bindPad("#hostPad",hostInput,sendHostInput,null,false);
+    hostPadCtl=bindPad("#hostPad",hostInput,sendHostInput,null,false,
+        ()=>hostPadMode()==="nes"?{c:"a",d:"b"}:null);
+}
+/* Bộ nút P1 đổi theo hệ máy đang chơi — nhận biết bằng window.EJS_core
+   (được gán trong launch() trước khi game chạy, xem Object.assign):
+   - arcade / mame2003_plus → bộ nút arcade cũ (combo, thoi A/B/C/D).
+   - nes → bộ nút NES riêng (A Nhảy, B Bắn, C Turbo A, D Turbo B, pill A+B).
+   - psx → bộ nút PS1 riêng (thoi △/□/○/✕ + 4 nút vai L1/L2/R1/R2).
+   - hệ khác (snes, ...) → gamepad mặc định của EmulatorJS.
+   Core game thùng theo coreNames trong file + chỗ đặt EJS_biosUrl. */
+const ARCADE_CORES=["arcade","mame2003_plus"];
+let hostPadCtl=null;
+function hostPadMode(){
+    const c=window.EJS_core||"";
+    if(ARCADE_CORES.includes(c))return "arcade";
+    if(c==="nes")return "nes";
+    if(c==="psx")return "psx";
+    return "ejs";
+}
+/* Nhãn trên cụm nút thoi theo từng hệ (data-k: a=dưới, b=phải, c=trái, d=trên).
+   Arcade giữ nhãn cũ; NES đổi vai trò + nhãn; PS1 đổi chữ thành ký hiệu
+   PlayStation (trên △ xanh dương, trái □ xanh lá, phải ○ vàng, dưới ✕ đỏ),
+   nhãn nhỏ để trống. Màu/vị trí nút giữ nguyên như bộ arcade. */
+const PAD_LABELS={
+    arcade:{a:["A","Chém nhẹ"],b:["B","Chém vừa"],c:["C","Chém mạnh"],d:["D","Đá - Né"]},
+    nes:{a:["A","Nhảy"],b:["B","Bắn"],c:["C","Turbo A"],d:["D","Turbo B"]},
+    psx:{a:["✕",""],b:["○",""],c:["□",""],d:["△",""]}
+};
+function setHostPadMode(mode){
+    const p=$("hostPad");if(!p)return;
+    p.dataset.mode=mode;
+    const lb=PAD_LABELS[mode]||PAD_LABELS.arcade;
+    ["a","b","c","d"].forEach(k=>{
+        const b=p.querySelector('[data-k="'+k+'"]');
+        if(!b)return;
+        const lt=b.querySelector(".lt"),lbl=b.querySelector(".lb");
+        if(lt)lt.textContent=lb[k][0];
+        if(lbl)lbl.textContent=lb[k][1];
+    });
 }
 function showHostPad(){
     const p=$("hostPad");if(!p)return;
+    /* Chạy mỗi lần game bắt đầu (EJS_onGameStart) nên đổi ROM/core khác là
+       đổi nút theo: arcade/nes/psx → bộ nút tự viết theo hệ + body.custom-pad
+       (ẩn gamepad EJS); hệ khác → ẩn bộ nút tự viết, gamepad EJS hiện lại
+       như cũ. Đổi hệ thì dừng mọi turbo đang chạy (không rò rỉ interval). */
+    const mode=hostPadMode();
+    document.body.classList.toggle("custom-pad",mode!=="ejs");
+    if(hostPadCtl)hostPadCtl.stopTurboAll();
     if(!(("ontouchstart" in window)||(navigator.maxTouchPoints>0)))return; /* máy không cảm ứng thì dùng bàn phím như cũ, không hiện nút */
+    const fb=$("hostFsBtn");if(fb)fb.style.display="block"; /* nút ⛶ fullscreen dùng chung mọi hệ */
+    if(mode==="ejs"){p.style.display="none";return;}
+    setHostPadMode(mode);
     p.style.display="block";
-    const fb=$("hostFsBtn");if(fb)fb.style.display="block";
     maybeAutoFullscreen();armFsIfNeeded();
 }
 /* Xoay sang NGANG (landscape) thì tự vào fullscreen (khách + chủ phòng).
@@ -971,14 +1094,15 @@ function toggleFullscreen(){
     }
     tryGuestFullscreen();
 }
-/* Màn khách đang mở HOẶC bộ nút P1 đang hiện thì mới tự fullscreen khi xoay ngang. */
+/* Màn khách đang mở HOẶC game chủ phòng đang chạy thì mới tự fullscreen khi xoay ngang. */
 function autoFsActive(){
     if(window.onlineMode==="guest"){
         const ga=$("guestArea");
         return !!(ga&&ga.style.display==="flex");
     }
-    const hp=$("hostPad");
-    return !!(hp&&hp.style.display==="block");
+    /* Chủ phòng/solo: game đang chạy là đủ — bộ nút P1 có thể là bộ tự viết
+       (arcade/nes/psx) hay gamepad EJS (hệ khác), xem showHostPad. */
+    return gameStarted;
 }
 function maybeAutoFullscreen(){
     if(!autoFsActive())return;
@@ -1164,7 +1288,7 @@ async function launch(src){
             setDrawerStatus("Game đã chạy — đang lấy hình để stream cho khách...");
             tryStartStream();
         }
-        showHostPad(); /* solo + host đều hiện bộ nút P1 tự viết khi game chạy */
+        showHostPad(); /* solo + host: bộ nút P1 đổi theo hệ máy (arcade/nes/psx tự viết, hệ khác gamepad EJS) */
     };
 
     if(urlParams.get('p'))window.EJS_gameParentUrl=urlParams.get('p');
