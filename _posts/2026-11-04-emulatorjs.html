@@ -48,6 +48,7 @@ input:checked+.slider:before{transform:translateX(20px)}
 #scanMsg{font-size:.85rem;color:var(--text-sub);margin:6px 0;line-height:1.5}
 #onlineNote{font-size:12px;color:var(--text-sub);margin-top:10px;line-height:1.5}
 #hostToggle{position:fixed;top:10px;right:10px;z-index:301;background:#2e9e5b;border:none;color:#fff;font-weight:700;padding:10px 14px;border-radius:20px;display:none}
+#hostFsBtn{position:fixed;top:64px;right:10px;z-index:301;background:rgba(34,44,63,.9);color:#fff;border:1px solid #556;border-radius:8px;padding:8px 12px;display:none;font-size:16px;line-height:1}
 #roomDrawer{position:fixed;left:0;right:0;bottom:0;z-index:300;background:var(--card-bg);border-top:2px solid var(--primary);border-radius:14px 14px 0 0;padding:14px;max-height:74vh;overflow-y:auto;box-shadow:0 -8px 30px rgba(0,0,0,.5);display:none}
 #roomDrawer .code{font-size:26px;font-weight:800;letter-spacing:2px;color:#f9a825;text-align:center}
 #roomDrawer .line{margin:6px 0;font-size:13px;color:var(--text-sub)}
@@ -67,9 +68,9 @@ input:checked+.slider:before{transform:translateX(20px)}
 #guestTop button{background:rgba(34,44,63,.9);color:#fff;border:1px solid #556;border-radius:8px;padding:8px 12px}
 #guestVideo{position:static;flex:1 1 0;min-height:0;width:100%;object-fit:contain;background:#000}
 /* Bộ nút cho KHÁCH kiểu mặc định EmulatorJS (giống hệt bên chủ phòng):
-   đĩa cần đỏ bán trong suốt bên trái, thoi Y/X/B/A bên phải, pill
-   Select/Start ở giữa dưới. Nút Y/X/B/A tô màu arcade (A đỏ, B vàng,
-   X xanh lá, Y xanh dương), nền bán trong suốt. Không có Fast/Slow (khách không có máy giả
+   đĩa cần đỏ bán trong suốt bên trái, thoi A/B/C/D bên phải, pill
+   Select/Start ở giữa dưới. Nút A/B/C/D tô màu arcade (A đỏ, B vàng,
+   C xanh lá, D xanh dương), nền bán trong suốt. Không có Fast/Slow (khách không có máy giả
    lập thật). Select = Nhét Xu. Chủ phòng/host dùng gamepad EJS thật.
    Hàng combo AB/CD/ABC/BCD ở trên cùng, kiểu COIN-OPX (pill màu, bán
    trong suốt; AB/CD/ABC có nhãn nhỏ, BCD chỉ có chữ). KÍCH THƯỚC LẤY
@@ -120,8 +121,8 @@ input:checked+.slider:before{transform:translateX(20px)}
 #hostPad .ab .b{left:81px;top:40px}
 #guestPad .ab .a{left:40px;top:80px}
 #hostPad .ab .a{left:40px;top:80px}
-/* Nút Y/X/B/A tô màu arcade (như bản arcade cũ + COIN-OPX): A đỏ, B vàng,
-   X xanh lá, Y xanh dương — nền bán trong suốt alpha .65 như nút combo,
+/* Nút A/B/C/D tô màu arcade (như bản arcade cũ + COIN-OPX): A đỏ, B vàng,
+   C xanh lá, D xanh dương — nền bán trong suốt alpha .65 như nút combo,
    viền cùng màu; chữ trắng, nhãn nhỏ giữ nguyên. */
 #guestPad .ab .a{background:rgba(239,68,68,.65);border-color:#ef4444}
 #hostPad .ab .a{background:rgba(239,68,68,.65);border-color:#ef4444}
@@ -329,7 +330,7 @@ input:checked+.slider:before{transform:translateX(20px)}
 </div>
 <div id="onlineNote">⚠️ Chơi online cần mở trang qua <b>HTTPS</b> (up file lên host như mọi file HTML khác). Mở file trực tiếp (file://) chỉ chơi 1 mình được; camera quét QR cũng cần HTTPS + cho phép quyền camera.</div>
 </div>
-<div id="popup-settings" class="popup"><div class="content"><h1 id="settings-title-h1"></h1><div class="buttonbox"><span id="label-debug"></span><label class="switch"><input type="checkbox" id="debug"/><span class="slider"></span></label></div><div class="buttonbox"><span id="label-cache"></span><button id="cache"></button></div><div class="buttonbox"><span id="label-lang"></span><select id="language"></select></div><div class="buttonbox"><span id="label-cdn"></span><input type="text" id="customPath" placeholder="https://cdn.emulatorjs.org/stable/data/"/></div><div id="customPathValid" style="font-size:11px;text-align:right"></div><div class="buttonbox"><span id="label-pwa"></span><button id="install"></button></div><div id="pwa-status-msg"></div><div style="display:flex;justify-content:flex-end;margin-top:1.2em"><button id="settings-close" style="background:var(--primary);border:none;color:#fff"></button></div></div></div><div class="popup-overlay"></div><button id="hostToggle">👥 Phòng</button>
+<div id="popup-settings" class="popup"><div class="content"><h1 id="settings-title-h1"></h1><div class="buttonbox"><span id="label-debug"></span><label class="switch"><input type="checkbox" id="debug"/><span class="slider"></span></label></div><div class="buttonbox"><span id="label-cache"></span><button id="cache"></button></div><div class="buttonbox"><span id="label-lang"></span><select id="language"></select></div><div class="buttonbox"><span id="label-cdn"></span><input type="text" id="customPath" placeholder="https://cdn.emulatorjs.org/stable/data/"/></div><div id="customPathValid" style="font-size:11px;text-align:right"></div><div class="buttonbox"><span id="label-pwa"></span><button id="install"></button></div><div id="pwa-status-msg"></div><div style="display:flex;justify-content:flex-end;margin-top:1.2em"><button id="settings-close" style="background:var(--primary);border:none;color:#fff"></button></div></div></div><div class="popup-overlay"></div><button id="hostToggle">👥 Phòng</button><button id="hostFsBtn" title="Toàn màn hình">⛶</button>
 <div id="roomDrawer">
 <div id="roomInfo">
 <div style="text-align:center;font-size:13px;color:var(--text-sub)">Mã phòng — gửi cho bạn quét hoặc nhập:</div>
@@ -347,7 +348,7 @@ input:checked+.slider:before{transform:translateX(20px)}
 <div style="display:flex;gap:8px;margin-top:10px"><button id="drawerClose" style="flex:1">Đóng</button><button id="exitBtn2" style="flex:1;background:#7f1d1d;border-color:#7f1d1d;color:#fff">✕ Thoát phòng</button></div>
 </div>
 <div id="guestArea">
-<div id="guestTop"><span id="guestTitle">Khách (P2) — đang xem stream</span><button id="guestChatBtn">💬 Chat</button><button id="guestExitBtn">✕ Thoát</button></div>
+<div id="guestTop"><span id="guestTitle">Khách (P2) — đang xem stream</span><button id="guestFsBtn" title="Toàn màn hình">⛶</button><button id="guestChatBtn">💬 Chat</button><button id="guestExitBtn">✕ Thoát</button></div>
 <video id="guestVideo" autoplay playsinline muted></video>
 <div id="guestPad">
 <div class="combo">
@@ -360,8 +361,8 @@ input:checked+.slider:before{transform:translateX(20px)}
 <div class="knob"></div>
 </div>
 <div class="ab">
-<button class="y" data-k="d"><span class="lt">Y</span><span class="lb">Đá - Né</span></button>
-<button class="x" data-k="c"><span class="lt">X</span><span class="lb">Chém mạnh</span></button>
+<button class="y" data-k="d"><span class="lt">D</span><span class="lb">Đá - Né</span></button>
+<button class="x" data-k="c"><span class="lt">C</span><span class="lb">Chém mạnh</span></button>
 <button class="b" data-k="b"><span class="lt">B</span><span class="lb">Chém vừa</span></button>
 <button class="a" data-k="a"><span class="lt">A</span><span class="lb">Chém nhẹ</span></button>
 </div>
@@ -379,8 +380,8 @@ input:checked+.slider:before{transform:translateX(20px)}
 <div class="knob"></div>
 </div>
 <div class="ab">
-<button class="y" data-k="d"><span class="lt">Y</span><span class="lb">Đá - Né</span></button>
-<button class="x" data-k="c"><span class="lt">X</span><span class="lb">Chém mạnh</span></button>
+<button class="y" data-k="d"><span class="lt">D</span><span class="lb">Đá - Né</span></button>
+<button class="x" data-k="c"><span class="lt">C</span><span class="lb">Chém mạnh</span></button>
 <button class="b" data-k="b"><span class="lt">B</span><span class="lb">Chém vừa</span></button>
 <button class="a" data-k="a"><span class="lt">A</span><span class="lb">Chém nhẹ</span></button>
 </div>
@@ -409,8 +410,8 @@ window.onlineMode="solo";
 const PEER_CDN=["https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js","https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"];
 const QR_CDN=["https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js","https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"];
 const JSQR_CDN=["https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js","https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"];
-/* Nút mặc định của EmulatorJS cho arcade (RetroPad, đã xác minh): A=0, B=8, X=1, Y=9, Select(Xu)=2, Start=3, hướng=4-7 */
-/* Nút khách hiển thị kiểu mặc định EJS Y/X/B/A (nút X gửi index 1, Y gửi index 9 — đúng RetroPad) */
+/* Nút mặc định của EmulatorJS cho arcade (RetroPad, đã xác minh): A=0, B=8, C=1, D=9, Select(Xu)=2, Start=3, hướng=4-7 */
+/* Nút khách hiển thị kiểu arcade A/B/C/D (nút C gửi index 1, D gửi index 9 — đúng RetroPad) */
 const PAD={a:0,b:8,c:1,d:9,coin:2,start:3,up:4,down:5,left:6,right:7};
 /* STUN dự phòng cho WebRTC (chỉ STUN công khai, không TURN có mật khẩu).
    PeerJS mặc định đã có STUN Google, thêm dự phòng để mạng chập chờn vẫn có
@@ -784,7 +785,7 @@ function sendGuestInput(){
     if(dataConn&&dataConn.open){try{dataConn.send(JSON.stringify({t:"input",s:guestInput}));}catch(e){}}
 }
 /* Bộ nút tự viết (dùng CHUNG cho khách #guestPad và chủ phòng #hostPad) kiểu
-   mặc định EmulatorJS — đĩa cần không mũi tên/chữ, thoi Y/X/B/A có màu,
+   mặc định EmulatorJS — đĩa cần không mũi tên/chữ, thoi A/B/C/D có màu,
    hàng combo AB/CD/ABC/BCD ở trên cùng kiểu COIN-OPX, pill Select/Start.
    Đa chạm được: bấm 2 nút cùng lúc bằng 2 ngón như chơi thật. Select =
    Nhét Xu (gửi coin), không có Fast/Slow (khách không có giả lập thật nên
@@ -891,7 +892,7 @@ function bindPad(rootSel,st,send,onStart,withKeys){
         b.addEventListener("contextmenu",e=>e.preventDefault());
     });
     /* Bàn phím chỉ xử lý cho khách (solo/host dùng phím mặc định của EmulatorJS).
-       Phím C bấm nút X (data-k="c"), V bấm nút Y (data-k="d") — đúng tên hiển thị EJS. */
+       Phím C bấm nút C (data-k="c"), V bấm nút D (data-k="d"). */
     if(withKeys){
     const keyMap={ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right",z:"a",Z:"a",x:"b",X:"b",c:"c",C:"c",v:"d",V:"d"," ":"coin",Enter:"start"};
     document.addEventListener("keydown",e=>{
@@ -913,7 +914,7 @@ function bindPad(rootSel,st,send,onStart,withKeys){
    (bindPad), khác duy nhất ở đầu ra: khách gửi trạng thái phím về chủ phòng
    qua DataChannel, còn chủ phòng chèn TRỰC TIẾP vào P1 (slot 0) bằng
    EJS_emulator.gameManager.simulateInput(0, idx, 1/0) — cùng bảng PAD như P2
-   (A=0, B=8, X=1, Y=9, Select/Xu=2, Start=3, hướng=4-7). Solo/host đều dùng.
+   (A=0, B=8, C=1, D=9, Select/Xu=2, Start=3, hướng=4-7). Solo/host đều dùng.
    Bàn phím vật lý của P1 vẫn do EmulatorJS xử lý như cũ (không qua pad này). */
 const hostInput={up:0,down:0,left:0,right:0,a:0,b:0,c:0,d:0,coin:0,start:0};
 function sendHostInput(){
@@ -933,17 +934,23 @@ function showHostPad(){
     const p=$("hostPad");if(!p)return;
     if(!(("ontouchstart" in window)||(navigator.maxTouchPoints>0)))return; /* máy không cảm ứng thì dùng bàn phím như cũ, không hiện nút */
     p.style.display="block";
+    const fb=$("hostFsBtn");if(fb)fb.style.display="block";
     maybeAutoFullscreen();armFsIfNeeded();
 }
-/* Xoay sang NGANG (landscape) thì tự vào fullscreen — chỉ màn khách.
-   Trình duyệt thường chỉ cho fullscreen sau 1 thao tác chạm nên nếu lần
-   thử lúc xoay chưa được (không có gesture) thì lần chạm tiếp theo sẽ
-   thử lại 1 lần duy nhất. Lỗi (vd đang chia đôi màn hình, trình duyệt
-   không cho) được bắt lặng lẽ, không báo gì, không chặn chơi. Nếu người
-   dùng tự thoát fullscreen thì không thử lại cho tới lần xoay sau (cờ
-   fsSuppress, chỉ xóa khi có orientationchange mới). KHÔNG tự thoát
-   fullscreen khi xoay về dọc — người dùng tự thoát. */
-var fsArmed=false, fsSuppress=false, fsWas=false;
+/* Xoay sang NGANG (landscape) thì tự vào fullscreen (khách + chủ phòng).
+   Trình duyệt chỉ cho fullscreen sau 1 thao tác chạm nên lần thử lúc xoay
+   máy (không có gesture) thường bị từ chối — vì vậy MỖI lần chạm (pointerdown)
+   mà đang ngang + màn khách/chủ đang mở + chưa fullscreen + chưa bị chặn thì
+   thử lại, chống spam tối đa 1 lần mỗi 2 giây (kể cả lần thử bị từ chối cũng
+   tính vào 2 giây đó). Ngoài ra có nút ⛶ bấm tay
+   (#guestFsBtn trong thanh tiêu đề khách, #hostFsBtn nổi góc trên-phải khi
+   chủ phòng đang chơi): bấm trong handler click (đúng thao tác người dùng)
+   nên trình duyệt phải cho; bấm lần nữa thì thoát fullscreen. Lỗi (vd đang
+   chia đôi màn hình, trình duyệt không cho) được bắt lặng lẽ, không báo gì,
+   không chặn chơi. Nếu người dùng tự thoát fullscreen thì không tự thử lại
+   cho tới lần xoay sau (cờ fsSuppress, chỉ xóa khi có orientationchange mới).
+   KHÔNG tự thoát fullscreen khi xoay về dọc — người dùng tự thoát. */
+var fsSuppress=false, fsWas=false, lastFsTry=0;
 function guestFsEl(){return document.fullscreenElement||document.webkitFullscreenElement||null;}
 function tryGuestFullscreen(){
     try{
@@ -955,6 +962,14 @@ function tryGuestFullscreen(){
         if(p&&p.catch)p.catch(()=>{});
         return true;
     }catch(e){return false;}
+}
+function toggleFullscreen(){
+    if(guestFsEl()){
+        try{const p=document.exitFullscreen?document.exitFullscreen():null;if(p&&p.catch)p.catch(()=>{});}catch(e){}
+        try{if(document.webkitExitFullscreen)document.webkitExitFullscreen();}catch(e){}
+        return;
+    }
+    tryGuestFullscreen();
 }
 /* Màn khách đang mở HOẶC bộ nút P1 đang hiện thì mới tự fullscreen khi xoay ngang. */
 function autoFsActive(){
@@ -969,21 +984,24 @@ function maybeAutoFullscreen(){
     if(!autoFsActive())return;
     if(!window.matchMedia||!matchMedia("(orientation: landscape)").matches)return;
     if(fsSuppress)return;
+    if(guestFsEl())return;
+    const now=Date.now();
+    if(now-lastFsTry<2000)return;
+    lastFsTry=now;
     tryGuestFullscreen();
 }
-function armFsIfNeeded(){if(!guestFsEl()&&!fsSuppress)fsArmed=true;}
+function armFsIfNeeded(){/* giữ tên cũ cho các chỗ gọi sẵn; việc thử lại giờ dựa theo thời gian trong maybeAutoFullscreen */}
 window.addEventListener("orientationchange",()=>{fsSuppress=false;setTimeout(()=>{maybeAutoFullscreen();armFsIfNeeded();},300);});
 window.addEventListener("resize",()=>{maybeAutoFullscreen();armFsIfNeeded();});
 function onFsChange(){
     const now=!!guestFsEl();
-    if(fsWas&&!now){fsSuppress=true;fsArmed=false;}
+    if(fsWas&&!now){fsSuppress=true;}
     fsWas=now;
 }
 document.addEventListener("fullscreenchange",onFsChange);
 document.addEventListener("webkitfullscreenchange",onFsChange);
-document.addEventListener("pointerdown",()=>{
-    if(!fsArmed)return;
-    fsArmed=false;
+document.addEventListener("pointerdown",(e)=>{
+    if(e.target&&e.target.closest&&(e.target.closest("#guestFsBtn")||e.target.closest("#hostFsBtn")))return;
     maybeAutoFullscreen();
 },{passive:true});
 /* ================= QUÉT MÃ QR (khách, jsQR qua CDN) ================= */
@@ -1339,6 +1357,8 @@ $("chatSend").onclick=sendChat;
 $("chatInput").addEventListener("keydown",e=>{if(e.key==="Enter")sendChat();});
 $("hostToggle").onclick=()=>openDrawer();
 $("drawerClose").onclick=()=>closeDrawer();
+$("guestFsBtn").onclick=()=>toggleFullscreen();
+$("hostFsBtn").onclick=()=>toggleFullscreen();
 $("guestChatBtn").onclick=()=>openDrawer();
 $("exitBtn2").onclick=()=>location.reload();
 $("guestExitBtn").onclick=()=>location.reload();
