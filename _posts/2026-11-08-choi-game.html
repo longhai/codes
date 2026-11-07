@@ -184,7 +184,7 @@ async function detectCoreFromZip(file){
       var name=new TextDecoder().decode(new Uint8Array(cdBuf,pos+46,nameLen));
       var core=detectCore(extOf(name));
       if(core)cores.add(core);
-      if(!binCand&&(extOf(name)==="bin"||!/\.[a-z0-9]+$/i.test(name))){
+      if(!binCand&&(extOf(name)==="bin"||extOf(name)==="rom"||!/\.[a-z0-9]+$/i.test(name))){
         binCand={localOff:cv.getUint32(pos+42,true),method:cv.getUint16(pos+10,true),compSize:cv.getUint32(pos+20,true)};
       }
       pos+=46+nameLen+extraLen+commentLen;
@@ -196,6 +196,7 @@ async function detectCoreFromZip(file){
         if(head&&head.length>=0x104){
           var tag=new TextDecoder().decode(head.slice(0x100,0x104));
           if(tag==="SEGA")return "segaMD";
+          if(head.length>=4){var mg2=new TextDecoder().decode(head.slice(0,4));if(mg2==="NES\u001a"||mg2==="FDS\u001a"||mg2==="UNIF")return "nes";}
           if(head.length>=0x8006&&new TextDecoder().decode(head.slice(0x8001,0x8006))==="CD001")return "psx";
         }
       }
@@ -208,6 +209,7 @@ async function detectBinHead(file){
   try{
     var buf=await file.slice(0,0x8008).arrayBuffer();
     var u=new Uint8Array(buf);
+    if(u.length>=4){var mg=new TextDecoder().decode(u.slice(0,4));if(mg==="NES\u001a"||mg==="FDS\u001a"||mg==="UNIF")return "nes";}
     if(u.length>=0x104&&new TextDecoder().decode(u.slice(0x100,0x104))==="SEGA")return "segaMD";
     if(u.length>=0x8006&&new TextDecoder().decode(u.slice(0x8001,0x8006))==="CD001")return "psx";
     return null;
@@ -221,13 +223,16 @@ async function detectForFile(file){
     if(isArcadeSetName(baseName(file.name)))return "arcade";
     return null;
   }
-  if(ext==="bin"){
+  if(ext==="bin"||ext==="rom"||ext===""){
     var b=await detectBinHead(file);
     if(b)return b;
+    if(isArcadeSetName(baseName(file.name)))return "arcade";
     return null;
   }
   var c=detectCore(ext);
   if(c)return c;
+  var h=await detectBinHead(file);
+  if(h)return h;
   if(isArcadeSetName(baseName(file.name)))return "arcade";
   return null;
 }
