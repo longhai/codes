@@ -28,6 +28,7 @@ button.ghost{background:#333;color:#eee}
 #topbar button{padding:6px 9px;font-size:13px;white-space:nowrap;flex:none}
 #topbar .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
 #topbar .sys{color:#8bc34a;font-size:12px;white-space:nowrap;flex:none}
+#topbar select{background:#222;color:#8bc34a;border:1px solid #444;border-radius:6px;padding:5px;font-size:12px;max-width:118px;flex:none}
 #game{flex:1;min-height:0}
 #playerWrap.bar-hidden #topbar{display:none}
 #menuFab{position:fixed;top:8px;left:8px;z-index:60;padding:6px 10px;background:transparent;border:0;color:#fff;font-size:22px;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.8)}
@@ -72,7 +73,7 @@ button.ghost{background:#333;color:#eee}
   <div id="topbar">
     <button id="backBtn" class="ghost" type="button">‹ Đổi game</button>
     <span class="name" id="gameName"></span>
-    <span class="sys" id="gameSys"></span>
+    <select id="sysSel" title="Đổi hệ máy"></select>
     <button id="settingsBtn2" class="ghost" type="button">⚙️</button>
   </div>
   <div id="game"></div>
@@ -249,6 +250,8 @@ function setStatus(t){statusEl.textContent=t||"";}
   var keys=Object.keys(LABEL).sort(function(a,b){return LABEL[a].localeCompare(LABEL[b],"vi");});
   keys.forEach(function(k){var o=document.createElement("option");o.value=k;o.textContent=LABEL[k];coreSel.appendChild(o);});
   coreSel.value="nes";
+  var sysSel=document.getElementById("sysSel");
+  keys.forEach(function(k){var o=document.createElement("option");o.value=k;o.textContent=LABEL[k];sysSel.appendChild(o);});
 })();
 function showManual(){manualEl.style.display="block";}
 function hideManual(){manualEl.style.display="none";}
@@ -288,9 +291,9 @@ try{var _s=JSON.parse(localStorage.getItem(SET_KEY)||"null");if(_s){if(typeof _s
 function saveSettings(){try{localStorage.setItem(SET_KEY,JSON.stringify(settings));}catch(e){}}
 function maybeFullscreen(){if(settings.fullscreenOnLoad&&!document.fullscreenElement){try{var p=document.documentElement.requestFullscreen();if(p&&p.catch)p.catch(function(){});}catch(e){}}}
 var barTimer=null;
-function showTopbar(){var w=document.getElementById("playerWrap");w.classList.remove("bar-hidden");document.getElementById("menuFab").hidden=true;startBarTimer();}
+function showTopbar(){var w=document.getElementById("playerWrap");w.classList.remove("bar-hidden");document.getElementById("menuFab").hidden=true;startBarTimer(8000);}
 function hideTopbar(){var w=document.getElementById("playerWrap");w.classList.add("bar-hidden");document.getElementById("menuFab").hidden=false;}
-function startBarTimer(){clearTimeout(barTimer);barTimer=setTimeout(function(){if(!document.getElementById("playerWrap").hidden)hideTopbar();},3000);}
+function startBarTimer(ms){clearTimeout(barTimer);barTimer=setTimeout(function(){if(!document.getElementById("playerWrap").hidden)hideTopbar();},ms||3000);}
 function applyLiveSettings(){try{var fr=document.getElementById("game").querySelector("iframe");if(!fr||!fr.contentWindow)return;var em=fr.contentWindow.EJS_emulator;if(!em)return;var sh=settings.shader;if(sh){try{if(em.frontend&&em.frontend.changeSettingOption){em.frontend.changeSettingOption("shader",sh);}else if(em.enableShader)em.enableShader(sh);}catch(e){}}if(em.setVolume)em.setVolume(settings.volume);}catch(e){}}
 window.addEventListener("message",function(e){if(!e.data)return;if(e.data.ejs==="exit")backToMenu(true);if(e.data.ejs==="started")startBarTimer();});
 function play(source,system,name){
@@ -306,8 +309,10 @@ function play(source,system,name){
   var wrap=document.getElementById("playerWrap");
   wrap.hidden=false;
   document.getElementById("gameName").textContent=name||"";
-  document.getElementById("gameSys").textContent=LABEL[system]||system;
+  document.getElementById("sysSel").value=system;
   var box=document.getElementById("game");
+  var oldFr=box.querySelector("iframe");
+  if(oldFr&&oldFr._send)window.removeEventListener("message",oldFr._send);
   box.innerHTML="";
   var fr=document.createElement("iframe");
   fr.setAttribute("allow","autoplay; fullscreen; gamepad; cross-origin-isolated");
@@ -401,8 +406,23 @@ document.getElementById("manualBtn").addEventListener("click",function(){
   if(pending.kind==="file")play(pending.file,sys,pending.name);
   else play(pending.url,sys,pending.name);
 });
-document.getElementById("backBtn").addEventListener("click",function(){backToMenu(false);});
+document.getElementById("sysSel").addEventListener("change",function(){
+  if(!pending)return;
+  maybeFullscreen();
+  if(pending.kind==="file")play(pending.file,this.value,pending.name);
+  else play(pending.url,this.value,pending.name);
+});
+document.getElementById("backBtn").addEventListener("click",function(){
+  if(settings.askBeforeExit&&!confirm("Đổi game? Tiến trình chưa lưu sẽ mất."))return;
+  maybeFullscreen();
+  document.getElementById("fileInput").click();
+});
 document.getElementById("menuFab").addEventListener("click",showTopbar);
+document.getElementById("topbar").addEventListener("pointerdown",function(){clearTimeout(barTimer);});
+document.getElementById("topbar").addEventListener("focusin",function(){clearTimeout(barTimer);});
+document.getElementById("topbar").addEventListener("focusout",function(){if(!document.getElementById("playerWrap").hidden)startBarTimer();});
+document.getElementById("sysSel").addEventListener("focus",function(){clearTimeout(barTimer);});
+document.getElementById("sysSel").addEventListener("blur",function(){if(!document.getElementById("playerWrap").hidden)startBarTimer();});
 function syncSettingsControls(){document.getElementById("shaderSel").value=settings.shader;document.getElementById("volRange").value=Math.round(settings.volume*100);document.getElementById("volVal").textContent=Math.round(settings.volume*100)+"%";document.getElementById("rotSel").value=settings.videoRotation;document.getElementById("askExitChk").checked=settings.askBeforeExit;document.getElementById("fsChk").checked=settings.fullscreenOnLoad;}
 function openSettings(){clearTimeout(barTimer);syncSettingsControls();document.getElementById("settingsPanel").hidden=false;}
 function closeSettings(){document.getElementById("settingsPanel").hidden=true;if(!document.getElementById("playerWrap").hidden)startBarTimer();}
