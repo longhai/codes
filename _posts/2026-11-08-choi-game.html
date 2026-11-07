@@ -24,17 +24,33 @@ button.ghost{background:#333;color:#eee}
 .hint{margin-top:18px;font-size:13px;color:#999;line-height:1.7}
 .hint code{color:#ccc;background:#222;padding:1px 6px;border-radius:6px;word-break:break-all}
 #playerWrap{position:fixed;inset:0;background:#000;display:flex;flex-direction:column}
-#topbar{display:flex;gap:8px;align-items:center;padding:8px;background:#111;flex:none}
-#topbar .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
-#topbar .sys{color:#8bc34a;font-size:13px;white-space:nowrap}
+#topbar{display:flex;gap:6px;align-items:center;padding:4px 6px;background:#111;flex:none}
+#topbar button{padding:6px 9px;font-size:13px;white-space:nowrap;flex:none}
+#topbar .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+#topbar .sys{color:#8bc34a;font-size:12px;white-space:nowrap;flex:none}
 #game{flex:1;min-height:0}
+#playerWrap.bar-hidden #topbar{display:none}
+#menuFab{position:fixed;top:8px;left:8px;z-index:60;padding:8px 13px;border-radius:20px;background:rgba(0,0,0,.55);color:#eee;border:1px solid rgba(255,255,255,.3);font-size:14px}
 #game iframe{width:100%;height:100%;border:0;display:block;background:#000}
+.head{display:flex;align-items:center;gap:8px}
+.head h1{flex:1}
+.iconbtn{padding:9px 12px;font-size:14px}
+#settingsPanel{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:flex-start;justify-content:center;z-index:50;padding:20px 12px}
+#settingsBox{background:#1e1e1e;border:1px solid #444;border-radius:14px;max-width:480px;width:100%;padding:18px}
+#settingsBox h2{margin:0 0 12px;font-size:18px}
+.srow{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid #333}
+.srow span.lab{flex:1;font-size:15px}
+.srow select{padding:9px;border-radius:8px;background:#222;color:#eee;border:1px solid #444;font-size:14px;max-width:230px}
+.srow input[type=range]{flex:1;min-width:0}
+.srow input[type=checkbox]{width:22px;height:22px}
+.snote{color:#999;font-size:13px;line-height:1.6;margin-top:10px}
+#volVal{min-width:44px;text-align:right;font-size:14px}
 [hidden]{display:none!important}
 </style>
 </head>
 <body>
 <div id="menu">
-  <h1>🎮 Chơi game</h1>
+  <div class="head"><h1>🎮 Chơi game</h1><button id="settingsBtn" class="ghost iconbtn" type="button">⚙️ Cài đặt</button></div>
   <p class="sub">Chạm vào khung dưới để chọn game trong máy, hoặc dán link game rồi bấm Chơi. Hệ máy tự nhận từ trong file zip, không cần chọn tay.</p>
   <div id="drop" role="button" tabindex="0">
     <div class="big">📂 Chạm để chọn game từ máy</div>
@@ -57,9 +73,22 @@ button.ghost{background:#333;color:#eee}
     <button id="backBtn" class="ghost" type="button">‹ Đổi game</button>
     <span class="name" id="gameName"></span>
     <span class="sys" id="gameSys"></span>
-    <button id="copyBtn" class="ghost" type="button">🔗 Sao chép link</button>
+    <button id="settingsBtn2" class="ghost" type="button">⚙️</button>
   </div>
   <div id="game"></div>
+  <button id="menuFab" type="button" hidden>☰ Menu</button>
+</div>
+<div id="settingsPanel" hidden>
+  <div id="settingsBox">
+    <h2>⚙️ Cài đặt</h2>
+    <div class="srow"><span class="lab">Shader</span><select id="shaderSel"><option value="">Mặc định</option><option value="crt-mattias.glslp">CRT</option><option value="2xScaleHQ.glslp">2xScaleHQ</option><option value="sharp-bilinear-simple.glslp">Sharp Bilinear</option><option value="2xsal dotmask 4xsoft">2xsal dotmask 4xsoft</option><option value="2xsal dotmask 4xsoft lv1.5">2xsal dotmask 4xsoft lv1.5</option><option value="2xsal dotmask 4xsoft lv2">2xsal dotmask 4xsoft lv2</option><option value="xbr dotmask 4xsoft 2xsal lv1">xbr dotmask 4xsoft 2xsal lv1</option><option value="xbr dotmask 4xsoft 2xsal lv1.5">xbr dotmask 4xsoft 2xsal lv1.5</option><option value="xbr dotmask 4xsoft 2xsal lv2">xbr dotmask 4xsoft 2xsal lv2</option><option value="xbr">xbr</option></select></div>
+    <div class="srow"><span class="lab">Âm lượng</span><input id="volRange" type="range" min="0" max="100" step="5" value="100"><span id="volVal">100%</span></div>
+    <div class="srow"><span class="lab">Xoay màn hình</span><select id="rotSel"><option value="0">Không xoay</option><option value="1">90°</option><option value="2">180°</option><option value="3">270°</option></select></div>
+    <div class="srow"><span class="lab">Xác nhận trước khi thoát</span><input id="askExitChk" type="checkbox" checked></div>
+    <div class="srow"><span class="lab">Toàn màn hình khi tải</span><input id="fsChk" type="checkbox"></div>
+    <div class="snote">Shader và Âm lượng áp dụng ngay cả khi đang chơi. Xoay màn hình và Xác nhận thoát áp dụng từ lần chơi sau.</div>
+    <div style="text-align:right;margin-top:14px"><button id="settingsClose" type="button">Xong</button></div>
+  </div>
 </div>
 <input id="fileInput" type="file" hidden>
 <script>
@@ -233,6 +262,14 @@ function playerHTML(name,system,runtime,urlStr){
   if(urlStr){lines.push('EJS_gameUrl='+JSON.stringify(urlStr)+';');}
   lines.push('EJS_core='+JSON.stringify(runtime)+';');
   if(CONTROL_SCHEMES.has(system))lines.push('EJS_controlScheme='+JSON.stringify(system)+';');
+  lines.push('EJS_volume='+settings.volume+';');
+  lines.push('EJS_videoRotation='+(parseInt(settings.videoRotation,10)||0)+';');
+  lines.push('EJS_askBeforeExit='+(settings.askBeforeExit?"true":"false")+';');
+  lines.push('EJS_fullscreenOnLoaded='+(settings.fullscreenOnLoad?"true":"false")+';');
+  lines.push('EJS_onGameStart=function(){try{parent.postMessage({ejs:"started"},"*");}catch(e){}setTimeout(function(){try{var em=window.EJS_emulator;if(!em)return;var sh='+JSON.stringify(settings.shader||"")+';var vol='+settings.volume+';var applySh=function(){try{if(em.frontend&&em.frontend.changeSettingOption){em.frontend.changeSettingOption("shader",sh);return;}}catch(e){}try{if(em.enableShader)em.enableShader(sh);}catch(e){}};if(sh)applySh();if(em.setVolume)em.setVolume(vol);setTimeout(function(){try{if(sh)applySh();if(em.setVolume)em.setVolume(vol);}catch(e){}},1500);}catch(e){}},500);};');
+  lines.push('EJS_onExit=function(){try{parent.postMessage({ejs:"exit"},"*");}catch(e){}};');
+  lines.push('(function(){var n=0;var t=setInterval(function(){n++;if(window.EJS_emulator&&window.EJS_emulator.on){clearInterval(t);window.EJS_emulator.on("exit",function(){try{parent.postMessage({ejs:"exit"},"*");}catch(e){}});}else if(n>600)clearInterval(t);},200);})();');
+  if(!settings.askBeforeExit)lines.push('(function(){var done=false;var mo=null;function autoExit(){if(done)return;var hs=document.querySelectorAll("h2.ejs_cheat_heading");for(var i=0;i<hs.length;i++){var box=hs[i].parentElement;if(box)box=box.parentElement;if(!box)continue;var btns=box.querySelectorAll("footer button.ejs_popup_submit");if(btns.length){done=true;if(mo)mo.disconnect();btns[0].click();return;}}}mo=new MutationObserver(autoExit);mo.observe(document.documentElement,{childList:true,subtree:true});})();');
   lines.push('EJS_pathtodata='+JSON.stringify(DATA_URL)+';');
   lines.push('EJS_startOnLoaded=true;');
   lines.push('<\/script>');
@@ -245,7 +282,22 @@ function playerHTML(name,system,runtime,urlStr){
   return lines.join("\n");
 }
 var currentUrl=null;
+var SET_KEY="ejs-player-settings-v1";
+var settings={shader:"",volume:1,videoRotation:"0",askBeforeExit:true,fullscreenOnLoad:false};
+try{var _s=JSON.parse(localStorage.getItem(SET_KEY)||"null");if(_s){if(typeof _s.shader==="string")settings.shader=_s.shader;if(typeof _s.volume==="number")settings.volume=Math.min(1,Math.max(0,_s.volume));if(typeof _s.videoRotation==="string")settings.videoRotation=_s.videoRotation;if(typeof _s.askBeforeExit==="boolean")settings.askBeforeExit=_s.askBeforeExit;if(typeof _s.fullscreenOnLoad==="boolean")settings.fullscreenOnLoad=_s.fullscreenOnLoad;}}catch(e){}
+function saveSettings(){try{localStorage.setItem(SET_KEY,JSON.stringify(settings));}catch(e){}}
+function maybeFullscreen(){if(settings.fullscreenOnLoad&&!document.fullscreenElement){try{var p=document.documentElement.requestFullscreen();if(p&&p.catch)p.catch(function(){});}catch(e){}}}
+var barTimer=null;
+function showTopbar(){var w=document.getElementById("playerWrap");w.classList.remove("bar-hidden");document.getElementById("menuFab").hidden=true;startBarTimer();}
+function hideTopbar(){var w=document.getElementById("playerWrap");w.classList.add("bar-hidden");document.getElementById("menuFab").hidden=false;}
+function startBarTimer(){clearTimeout(barTimer);barTimer=setTimeout(function(){if(!document.getElementById("playerWrap").hidden)hideTopbar();},3000);}
+function applyLiveSettings(){try{var fr=document.getElementById("game").querySelector("iframe");if(!fr||!fr.contentWindow)return;var em=fr.contentWindow.EJS_emulator;if(!em)return;var sh=settings.shader;if(sh){try{if(em.frontend&&em.frontend.changeSettingOption){em.frontend.changeSettingOption("shader",sh);}else if(em.enableShader)em.enableShader(sh);}catch(e){}}if(em.setVolume)em.setVolume(settings.volume);}catch(e){}}
+window.addEventListener("message",function(e){if(!e.data)return;if(e.data.ejs==="exit")backToMenu(true);if(e.data.ejs==="started")startBarTimer();});
 function play(source,system,name){
+  maybeFullscreen();
+  clearTimeout(barTimer);
+  document.getElementById("playerWrap").classList.remove("bar-hidden");
+  document.getElementById("menuFab").hidden=true;
   var runtime=RUNTIME[system];
   if(!runtime){setStatus("Hệ máy không hỗ trợ: "+system);return;}
   hideManual();
@@ -277,7 +329,14 @@ function play(source,system,name){
     try{history.replaceState(null,"",location.pathname+"?url="+encodeURIComponent(currentUrl)+"&core="+system);}catch(e){}
   }
 }
-function backToMenu(){
+function backToMenu(skipConfirm){
+  if(!skipConfirm&&settings.askBeforeExit&&!document.getElementById("playerWrap").hidden){
+    if(!confirm("Thoát game? Tiến trình chưa lưu sẽ mất."))return;
+  }
+  try{if(document.fullscreenElement)document.exitFullscreen();}catch(e){}
+  clearTimeout(barTimer);
+  document.getElementById("playerWrap").classList.remove("bar-hidden");
+  document.getElementById("menuFab").hidden=true;
   var box=document.getElementById("game");
   var fr=box.querySelector("iframe");
   if(fr&&fr._send)window.removeEventListener("message",fr._send);
@@ -327,30 +386,35 @@ async function handleUrl(url,forceCore){
     else{setStatus("Không tải được link này (có thể host chặn đọc ngoài). Thử chọn tay hệ máy, hoặc tải file về máy rồi chọn từ máy.");showManual();}
   }
 }
-document.getElementById("drop").addEventListener("click",function(){document.getElementById("fileInput").click();});
-document.getElementById("drop").addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();document.getElementById("fileInput").click();}});
-document.getElementById("fileInput").addEventListener("change",function(){if(this.files&&this.files[0])handleFile(this.files[0]);this.value="";});
+document.getElementById("drop").addEventListener("click",function(){maybeFullscreen();document.getElementById("fileInput").click();});
+document.getElementById("drop").addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();maybeFullscreen();document.getElementById("fileInput").click();}});
+document.getElementById("fileInput").addEventListener("change",function(){maybeFullscreen();if(this.files&&this.files[0])handleFile(this.files[0]);this.value="";});
 document.getElementById("drop").addEventListener("dragover",function(e){e.preventDefault();this.classList.add("over");});
 document.getElementById("drop").addEventListener("dragleave",function(){this.classList.remove("over");});
-document.getElementById("drop").addEventListener("drop",function(e){e.preventDefault();this.classList.remove("over");if(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
-document.getElementById("urlBtn").addEventListener("click",function(){handleUrl(document.getElementById("urlInput").value,"");});
-document.getElementById("urlInput").addEventListener("keydown",function(e){if(e.key==="Enter")handleUrl(this.value,"");});
+document.getElementById("drop").addEventListener("drop",function(e){e.preventDefault();this.classList.remove("over");maybeFullscreen();if(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+document.getElementById("urlBtn").addEventListener("click",function(){maybeFullscreen();handleUrl(document.getElementById("urlInput").value,"");});
+document.getElementById("urlInput").addEventListener("keydown",function(e){if(e.key==="Enter"){maybeFullscreen();handleUrl(this.value,"");}});
 document.getElementById("manualBtn").addEventListener("click",function(){
+  maybeFullscreen();
   if(!pending)return;
   var sys=coreSel.value;
   if(pending.kind==="file")play(pending.file,sys,pending.name);
   else play(pending.url,sys,pending.name);
 });
-document.getElementById("backBtn").addEventListener("click",backToMenu);
-document.getElementById("copyBtn").addEventListener("click",async function(){
-  if(!currentUrl){setStatus("Game này chọn từ máy nên chưa có link chia sẻ. Up file lên host rồi dán link vào là có link.");return;}
-  try{await navigator.clipboard.writeText(location.href);setStatus("Đã sao chép link chơi game.");}
-  catch(e){
-    var t=document.createElement("textarea");t.value=location.href;document.body.appendChild(t);t.select();
-    try{document.execCommand("copy");setStatus("Đã sao chép link chơi game.");}catch(err){setStatus(location.href);}
-    t.remove();
-  }
-});
+document.getElementById("backBtn").addEventListener("click",function(){backToMenu(false);});
+document.getElementById("menuFab").addEventListener("click",showTopbar);
+function syncSettingsControls(){document.getElementById("shaderSel").value=settings.shader;document.getElementById("volRange").value=Math.round(settings.volume*100);document.getElementById("volVal").textContent=Math.round(settings.volume*100)+"%";document.getElementById("rotSel").value=settings.videoRotation;document.getElementById("askExitChk").checked=settings.askBeforeExit;document.getElementById("fsChk").checked=settings.fullscreenOnLoad;}
+function openSettings(){clearTimeout(barTimer);syncSettingsControls();document.getElementById("settingsPanel").hidden=false;}
+function closeSettings(){document.getElementById("settingsPanel").hidden=true;if(!document.getElementById("playerWrap").hidden)startBarTimer();}
+document.getElementById("settingsBtn").addEventListener("click",openSettings);
+document.getElementById("settingsBtn2").addEventListener("click",openSettings);
+document.getElementById("settingsClose").addEventListener("click",closeSettings);
+document.getElementById("settingsPanel").addEventListener("click",function(e){if(e.target===this)closeSettings();});
+document.getElementById("shaderSel").addEventListener("change",function(){settings.shader=this.value;saveSettings();applyLiveSettings();});
+document.getElementById("volRange").addEventListener("input",function(){settings.volume=Number(this.value)/100;document.getElementById("volVal").textContent=this.value+"%";saveSettings();applyLiveSettings();});
+document.getElementById("rotSel").addEventListener("change",function(){settings.videoRotation=this.value;saveSettings();});
+document.getElementById("askExitChk").addEventListener("change",function(){settings.askBeforeExit=this.checked;saveSettings();});
+document.getElementById("fsChk").addEventListener("change",function(){settings.fullscreenOnLoad=this.checked;saveSettings();if(this.checked)maybeFullscreen();});
 (function(){
   var q=new URLSearchParams(location.search);
   var h=location.hash||"";
