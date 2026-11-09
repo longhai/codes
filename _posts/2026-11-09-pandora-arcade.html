@@ -297,13 +297,14 @@ const EJS_DATA_URL = "https://longhai.github.io/emujs/",
 // mới nên loader chạy sạch, đổi game không cần tải lại trang Pandora.
 const EJS_RUNTIME = { nes: "fceumm", snes: "snes9x", gb: "gambatte", gbc: "gambatte", gba: "mgba", nds: "melonds", n64: "mupen64plus_next", "3ds": "azahar", psx: "pcsx_rearmed", psp: "ppsspp", segaMD: "genesis_plus_gx", segaMS: "smsplus", segaGG: "genesis_plus_gx", segaCD: "genesis_plus_gx", sega32x: "picodrive", segaSaturn: "yabause", arcade: "fbneo", mame: "mame2003_plus", atari2600: "stella2014", atari7800: "prosystem", atari5200: "a5200", lynx: "handy", jaguar: "virtualjaguar", pce: "mednafen_pce", pcfx: "mednafen_pcfx", ngp: "mednafen_ngp", ws: "mednafen_wswan", coleco: "gearcoleco", vb: "beetle_vb", c64: "vice_x64sc", amiga: "puae", "3do": "opera", dos: "dosbox_pure", doom: "prboom", intv: "freeintv", zxspectrum: "fuse", cpc: "cap32" };
 const EJS_CONTROL_SCHEMES = new Set(["gb", "nes", "snes", "n64", "gba", "nds", "vb", "segaMD", "segaCD", "sega32x", "segaMS", "segaGG", "segaSaturn", "3do", "atari2600", "atari7800", "lynx", "jaguar", "pce", "ngp", "ws", "coleco", "pcfx", "psp", "psx", "arcade", "mame", "fbneo"]);
+const EJS_DEFAULT_SHADER = "xbr dotmask 4xsoft 2xsal lv2";
 function getEjsSettings() {
-  const s = { shader: "", volume: 1, videoRotation: "0", askBeforeExit: true, fullscreenOnLoad: false };
+  const s = { shader: EJS_DEFAULT_SHADER, volume: 1, videoRotation: "0", askBeforeExit: true, fullscreenOnLoad: false };
   try {
     const saved = JSON.parse(lsGet("ejs-player-settings-v1") || "null");
     if (saved) Object.keys(s).forEach(k => { if (typeof saved[k] === typeof s[k]) s[k] = saved[k]; });
     s.volume = Math.min(1, Math.max(0, s.volume));
-    if (s.shader === "crt-mattias.glslp") s.shader = "";
+    if (!s.shader || s.shader === "crt-mattias.glslp") s.shader = EJS_DEFAULT_SHADER;
   } catch (e) {}
   return s;
 }
@@ -322,6 +323,7 @@ function buildPlayerHTML(gameName, system, core, gameUrl) {
     "EJS_fullscreenOnLoaded=" + s.fullscreenOnLoad + ";",
     "EJS_onGameStart=function(){try{parent.postMessage({ejs:\"started\"},\"*\");}catch(e){}setTimeout(function(){try{var em=window.EJS_emulator;if(!em)return;var sh=" + JSON.stringify(s.shader || "") + ";var vol=" + s.volume + ";var applySh=function(){try{if(em.frontend&&em.frontend.changeSettingOption){em.frontend.changeSettingOption(\"shader\",sh);return;}}catch(e){}try{if(em.enableShader)em.enableShader(sh);}catch(e){}};if(sh)applySh();if(em.setVolume)em.setVolume(vol);setTimeout(function(){try{if(sh)applySh();if(em.setVolume)em.setVolume(vol);}catch(e){}},1500);}catch(e){}},500);};",
     'EJS_onExit=function(){try{parent.postMessage({ejs:"exit"},"*");}catch(e){}};',
+    "window.addEventListener(\"keydown\",function(e){if(e.key===\"Escape\"){try{parent.postMessage({ejs:\"escape\"},\"*\");}catch(err){}}});",
     "(function(){var n=0;var t=setInterval(function(){n++;if(window.EJS_emulator&&window.EJS_emulator.on){clearInterval(t);window.EJS_emulator.on(\"exit\",function(){try{parent.postMessage({ejs:\"exit\"},\"*\");}catch(e){}});}else if(n>600)clearInterval(t);},200);})();",
     !s.askBeforeExit ? "(function(){var done=false;var mo=null;function autoExit(){if(done)return;var hs=document.querySelectorAll(\"h2.ejs_cheat_heading\");for(var i=0;i<hs.length;i++){var box=hs[i].parentElement;if(box)box=box.parentElement;if(!box)continue;var btns=box.querySelectorAll(\"footer button.ejs_popup_submit\");if(btns.length){done=true;if(mo)mo.disconnect();btns[0].click();return;}}}mo=new MutationObserver(autoExit);mo.observe(document.documentElement,{childList:true,subtree:true});})();" : "",
     "(function(){var M={b_pause:\"‖\",b_start:\"▶\",b_select:\"−\",b_reset:\"↺\",b_option:\"⚙\",b_speed_fast:\"▶▶\",b_speed_slow:\"½×\",b_speed_rewind:\"◀◀\"};function fix(){var b=document.querySelectorAll(\".ejs_virtualGamepad_button\");for(var i=0;i<b.length;i++){var e=b[i];if(e.dataset.ic)continue;for(var k in M)if(e.classList.contains(k)){e.textContent=M[k];e.style.fontSize=\"20px\";if(k===\"b_speed_fast\"||k===\"b_speed_rewind\")e.style.letterSpacing=\"-6px\";e.dataset.ic=\"1\";break;}}}fix();new MutationObserver(fix).observe(document.documentElement,{childList:true,subtree:true});})();",
@@ -331,14 +333,16 @@ function buildPlayerHTML(gameName, system, core, gameUrl) {
   return "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no\"><style>html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}#game{width:100%;height:100%}</style></head><body>\n<div id=\"game\"></div>\n<script>\n" + lines + "\n<" + "/script>\n<script src=\"" + EJS_DATA_URL + "loader.js\"><" + "/script>\n</body></html>";
 }
 // Tin nhắn từ iframe game: "started" -> ẩn toolbar sau 3s như cũ;
-// "exit" (nút thoát trong EmulatorJS) -> đóng thật về trang chính.
+// "exit" (nút thoát trong EmulatorJS) và "escape" (phím Esc bấm trong game)
+// -> đóng thật về trang chính. Esc phải chuyển tiếp từ trong iframe vì khi
+// game đang chạy thì focus nằm trong iframe, phím bấm không tới được trang cha.
 let ejsListenerOn = false;
 function registerEjsListener() {
   if (ejsListenerOn) return;
   ejsListenerOn = true;
   window.addEventListener("message", e => {
     if (!e.data || typeof e.data !== "object") return;
-    if (e.data.ejs === "exit") closeGamePlayer();
+    if (e.data.ejs === "exit" || e.data.ejs === "escape") closeGamePlayer();
     else if (e.data.ejs === "started") pokePlayerBar();
   });
 }
