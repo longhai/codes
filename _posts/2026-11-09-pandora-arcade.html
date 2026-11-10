@@ -308,12 +308,13 @@ function getEjsSettings() {
   } catch (e) {}
   return s;
 }
-function buildPlayerHTML(gameName, system, core, gameUrl) {
+function buildPlayerHTML(gameName, system, core, gameUrl, parentUrl) {
   const s = getEjsSettings();
   const lines = [
     'EJS_player="#game";',
     "EJS_gameName=" + JSON.stringify(gameName) + ";",
     "EJS_gameUrl=" + JSON.stringify(gameUrl) + ";",
+    "EJS_gameParentUrl=" + JSON.stringify(parentUrl || "") + ";",
     "EJS_core=" + JSON.stringify(core) + ";",
     "EJS_biosUrl=" + JSON.stringify(core === "fbneo" || core === "mame2003_plus" ? EJS_BIOS_URL : "") + ";",
     EJS_CONTROL_SCHEMES.has(system) ? "EJS_controlScheme=" + JSON.stringify(system) + ";" : "",
@@ -1411,6 +1412,24 @@ async function downloadCurrentGame() {
     window.open(g.romUrl, '_blank');
   }
 }
+// Game mod (clone): tra file .dat (state.datCloneMap, khóa cloneof) lấy tên
+// game gốc, rồi tìm file ROM gốc trong cùng hệ máy để đưa kèm qua
+// EJS_gameParentUrl — EmulatorJS tải cả 2 file, game mod lấy những file còn
+// thiếu từ file gốc. Không tìm thấy gốc (dat chưa tải / gốc không có trong
+// kho) thì trả null, game chạy như trước (mod sẽ báo thiếu file).
+function findParentGame(g) {
+  if (!g?.fullName) return null;
+  const rawKey = g.fullName.toLowerCase().trim().replace(/\.[^/.]+$/, '');
+  const clean = cleanTitle(g.fullName).toLowerCase().trim();
+  const parentKey = (state.datCloneMap[rawKey] || state.datCloneMap[clean] || "").replace(/\.[^/.]+$/, '');
+  if (!parentKey) return null;
+  const list = state.allGames || [];
+  return list.find(x => {
+    if (!x?.fullName || x === g) return false;
+    const k = x.fullName.split('/').pop().toLowerCase().trim().replace(/\.[^/.]+$/, '');
+    return k === parentKey;
+  }) || null;
+}
 function launchCurrentGame() {
   const g = state.filteredGames[state.selIdx], c = state.datList[state.currentDatIdx];
   if (!g?.fullName || g.fullName.startsWith('placeholder_')) return;
@@ -1419,7 +1438,11 @@ function launchCurrentGame() {
   const fileName = g.fullName.split('/').pop() || "game";
   const gameName = fileName.replace(/\.[^/.]+$/, "");
   const romUrl = g.romUrl || g.fullName;
-  $('player-title').textContent = `${g.name.toUpperCase()} [${c?.displayName || c?.name || ''}]`;
+  const parent = findParentGame(g);
+  const parentUrl = parent?.romUrl || "";
+  $('player-title').textContent = parent
+    ? `${g.name.toUpperCase()} [${c?.displayName || c?.name || ''} · GỐC ${parent.name.toUpperCase()}]`
+    : `${g.name.toUpperCase()} [${c?.displayName || c?.name || ''}]`;
   // Hiện modal TRƯỚC khi gán srcdoc: để iframe load với kích thước thật ngay từ đầu,
   // EmulatorJS mới tính đúng vị trí nút điều khiển (trước đây load lúc đang ẩn
   // nên vùng bấm bị lệch, phải xoay màn hình mới hết).
@@ -1427,7 +1450,7 @@ function launchCurrentGame() {
   $('game-player-modal').classList.add('active');
   const frame = $('game-frame');
   frame.removeAttribute('src');
-  frame.srcdoc = buildPlayerHTML(gameName, system, core, romUrl);
+  frame.srcdoc = buildPlayerHTML(gameName, system, core, romUrl, parentUrl);
   pokePlayerBar();
 }
 function relaunchCurrentGame() {
