@@ -256,7 +256,7 @@
         <button class="player-btn" onclick="closeGamePlayer()">✕ <span class="btn-lbl">Đóng</span></button>
       </div>
     </div>
-    <iframe id="game-frame" src="about:blank" allow="autoplay; fullscreen; gamepad; keyboard; cross-origin-isolated" allowfullscreen></iframe>
+    <iframe id="game-frame" src="about:blank" allow="autoplay; fullscreen; gamepad; cross-origin-isolated"></iframe>
     <div id="player-hotzone"></div>
   </div>
 
@@ -1471,8 +1471,7 @@ function resetGameFrame() {
   const f = document.createElement('iframe');
   f.id = 'game-frame';
   f.src = 'about:blank';
-  f.allow = 'autoplay; fullscreen; gamepad; keyboard; cross-origin-isolated';
-  f.allowFullscreen = true;
+  f.allow = 'autoplay; fullscreen; gamepad; cross-origin-isolated';
   old.replaceWith(f);
 }
 function relaunchCurrentGame() {
