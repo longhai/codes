@@ -285,6 +285,7 @@ let tokenClient = null, accessToken = null, driveFileId = null, currentUserProfi
 
 const EJS_DATA_URL = "https://longhai.github.io/emujs/",
   EJS_BIOS_URL = "https://longhai.github.io/emujs/bios/arcade.zip",
+  EJS_CHEAT_URL = "https://longhai.github.io/emujs/cheats/",
   ASSETS_BASE = "https://raw.githubusercontent.com/libretro/retroarch-assets/master/xmb/dot-art/png/",
   RAW_BASE = "https://raw.githubusercontent.com/longhai/emu/main/",
   EMPTY_GIF = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
@@ -329,6 +330,7 @@ function buildPlayerHTML(gameName, system, core, gameUrl, parentUrl) {
     !s.askBeforeExit ? "(function(){var done=false;var mo=null;function autoExit(){if(done)return;var hs=document.querySelectorAll(\"h2.ejs_cheat_heading\");for(var i=0;i<hs.length;i++){var box=hs[i].parentElement;if(box)box=box.parentElement;if(!box)continue;var btns=box.querySelectorAll(\"footer button.ejs_popup_submit\");if(btns.length){done=true;if(mo)mo.disconnect();btns[0].click();return;}}}mo=new MutationObserver(autoExit);mo.observe(document.documentElement,{childList:true,subtree:true});})();" : "",
     "(function(){var M={b_pause:\"‖\",b_start:\"▶\",b_select:\"−\",b_reset:\"↺\",b_option:\"⚙\",b_speed_fast:\"▶▶\",b_speed_slow:\"½×\",b_speed_rewind:\"◀◀\"};function fix(){var b=document.querySelectorAll(\".ejs_virtualGamepad_button\");for(var i=0;i<b.length;i++){var e=b[i];if(e.dataset.ic)continue;for(var k in M)if(e.classList.contains(k)){e.textContent=M[k];e.style.fontSize=\"20px\";if(k===\"b_speed_fast\"||k===\"b_speed_rewind\")e.style.letterSpacing=\"-6px\";e.dataset.ic=\"1\";break;}}}fix();new MutationObserver(fix).observe(document.documentElement,{childList:true,subtree:true});})();",
     "EJS_pathtodata=" + JSON.stringify(EJS_DATA_URL) + ";",
+    "EJS_cheatPath=" + JSON.stringify(EJS_CHEAT_URL) + ";",
     "EJS_startOnLoaded=true;"
   ].filter(Boolean).join("\n");
   return "<!doctype html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no\"><style>html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}#game{width:100%;height:100%}</style></head><body>\n<div id=\"game\"></div>\n<script>\n" + lines + "\n<" + "/script>\n<script src=\"" + EJS_DATA_URL + "loader.js\"><" + "/script>\n</body></html>";
