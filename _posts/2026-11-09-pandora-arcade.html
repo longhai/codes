@@ -455,7 +455,7 @@ const state = {
   datList: SYSTEM_PROFILES.map(([_, img, name, core, sys]) => ({ name, displayName: name, logo: ASSETS_BASE + encodeURIComponent(img), system: name, core, libretroSys: sys })),
   currentDatIdx: 0, gamesByCat: {},
   allGames: initialPlaceholderGames, filteredGames: initialPlaceholderGames,
-  selIdx: 0, topIdx: 0, slots: [], searchQuery: "", showFavOnly: false, afterExit: false,
+  selIdx: 0, topIdx: 0, slots: [], searchQuery: "", showFavOnly: false,
   showMainOnly: lsGet('pandora_show_main_only') === 'true',
   selectedGenre: 'all', availableGenres: [], hasUncategorized: false,
   datNameMap: {}, datOrderMap: {}, datCloneMap: {}, datGenreMap: {},
@@ -1212,7 +1212,7 @@ function drawSlots() {
       <text x="${(xl0 + xl1) / 2 + 18}" y="${y0 + 30}" class="tn" clip-path="url(#c${i})"></text>`;
     el.onclick = () => {
       if (state.topIdx + i < state.filteredGames.length) {
-        if (state.selIdx === state.topIdx + i || state.afterExit) { state.selIdx = state.topIdx + i; state.afterExit = false; launchCurrentGame(); }
+        if (state.selIdx === state.topIdx + i) { launchCurrentGame(); }
         else { state.selIdx = state.topIdx + i; render(); }
       }
     };
@@ -1484,9 +1484,6 @@ function closeGamePlayer() {
   resetGameFrame();
   $('game-player-modal').classList.remove('active', 'hide-bar');
   barSticky = false;
-  // Vừa thoát game: lần bấm game tiếp theo chơi luôn, khỏi bấm 2 lần
-  // (bình thường bấm 1 lần chỉ chọn game, bấm lần 2 mới chơi).
-  state.afterExit = true;
   clearTimeout(barTimer);
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   // Tay cầm: chờ 400ms rồi mới nhận lại nút ở trang chính, tránh nút Home
