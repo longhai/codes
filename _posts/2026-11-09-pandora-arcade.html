@@ -1439,14 +1439,7 @@ async function launchCurrentGame() {
   const fileName = g.fullName.split('/').pop() || "game";
   const gameName = fileName.replace(/\.[^/.]+$/, "");
   const romUrl = g.romUrl || g.fullName;
-  let parent = findParentGame(g);
-  // Game clone/mod mà chưa thấy file gốc: có thể dat trong máy đang là bản
-  // cache cũ (vd từng lưu {none:true} khi tải dat lỗi) → tải mới dat 1 lần
-  // rồi tra lại, để không phải bấm R tay.
-  if (!parent && isCloneGame(g)) {
-    try { await loadDatMap(c?.name, true); } catch (e) {}
-    parent = findParentGame(g);
-  }
+  const parent = findParentGame(g);
   const parentUrl = parent?.romUrl || "";
   const isClone = isCloneGame(g);
   $('player-title').textContent = parent
