@@ -519,7 +519,7 @@ async function refreshStorageStatus() {
     const cached = await idbRead(IDB_FULL_DB_KEY);
     if (cached?.datList?.length && cached?.gamesByCat) {
       const games = Object.values(cached.gamesByCat).reduce((n, a) => n + (Array.isArray(a) ? a.length : 0), 0);
-      el.textContent = `IndexedDB: Đã lưu • ${cached.datList.length} hệ máy • ${games.toLocaleString('vi-VN')} game`;
+      el.textContent = `IndexedDB: Đã lưu • ${cached.datList.length} hệ máy • ${games.toLocaleString('vi-VN')} game • bản ${PANDORA_BUILD}`;
     } else {
       const legacy = Storage.get(IDB_FULL_DB_KEY);
       el.textContent = legacy?.datList?.length ? 'IndexedDB chưa có dữ liệu; tìm thấy cache LocalStorage cũ.' : 'Chưa có cache danh sách game.';
@@ -1430,7 +1430,8 @@ function findParentGame(g) {
     return k === parentKey;
   }) || null;
 }
-function launchCurrentGame() {
+const PANDORA_BUILD = "2026-11-10-mod-fix1";
+async function launchCurrentGame() {
   const g = state.filteredGames[state.selIdx], c = state.datList[state.currentDatIdx];
   if (!g?.fullName || g.fullName.startsWith('placeholder_')) return;
   const system = g.core || c?.core || "arcade";
@@ -1438,11 +1439,23 @@ function launchCurrentGame() {
   const fileName = g.fullName.split('/').pop() || "game";
   const gameName = fileName.replace(/\.[^/.]+$/, "");
   const romUrl = g.romUrl || g.fullName;
-  const parent = findParentGame(g);
+  let parent = findParentGame(g);
+  // Game clone/mod mà chưa thấy file gốc: có thể dat trong máy đang là bản
+  // cache cũ (vd từng lưu {none:true} khi tải dat lỗi) → tải mới dat 1 lần
+  // rồi tra lại, để không phải bấm R tay.
+  if (!parent && isCloneGame(g)) {
+    try { await loadDatMap(c?.name, true); } catch (e) {}
+    parent = findParentGame(g);
+  }
   const parentUrl = parent?.romUrl || "";
+  const isClone = isCloneGame(g);
   $('player-title').textContent = parent
     ? `${g.name.toUpperCase()} [${c?.displayName || c?.name || ''} · GỐC ${parent.name.toUpperCase()}]`
-    : `${g.name.toUpperCase()} [${c?.displayName || c?.name || ''}]`;
+    : isClone
+      ? `${g.name.toUpperCase()} [${c?.displayName || c?.name || ''} · KHÔNG TÌM THẤY GỐC]`
+      : `${g.name.toUpperCase()} [${c?.displayName || c?.name || ''}]`;
+  // Game clone mà không có gốc thì giữ thanh tiêu đề luôn hiện để thấy rõ lý do.
+  barSticky = isClone && !parent;
   // Hiện modal TRƯỚC khi gán srcdoc: để iframe load với kích thước thật ngay từ đầu,
   // EmulatorJS mới tính đúng vị trí nút điều khiển (trước đây load lúc đang ẩn
   // nên vùng bấm bị lệch, phải xoay màn hình mới hết).
@@ -1468,6 +1481,7 @@ function closeGamePlayer() {
   const frame = $('game-frame');
   if (frame) { frame.removeAttribute('srcdoc'); frame.srcdoc = ""; frame.src = "about:blank"; }
   $('game-player-modal').classList.remove('active', 'hide-bar');
+  barSticky = false;
   clearTimeout(barTimer);
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   // Tay cầm: chờ 400ms rồi mới nhận lại nút ở trang chính, tránh nút Home
@@ -1483,13 +1497,14 @@ function toggleFullscreen() {
 }
 // Tự ẩn thanh toolbar khi chơi game: vào game hiện 3s rồi ẩn;
 // chạm hoặc di vào vùng trên cùng thì hiện lại 3s rồi ẩn tiếp (dùng được cả mobile)
-let barTimer = 0, barShownAt = 0;
+let barTimer = 0, barShownAt = 0, barSticky = false;
 function pokePlayerBar() {
   const m = $('game-player-modal');
   if (!m || !m.classList.contains('active')) return;
   if (m.classList.contains('hide-bar')) barShownAt = performance.now();
   m.classList.remove('hide-bar');
   clearTimeout(barTimer);
+  if (barSticky) return; // game clone thiếu gốc: giữ thanh hiện để thấy rõ lý do
   barTimer = setTimeout(() => m.classList.add('hide-bar'), 3000);
 }
 
