@@ -1459,20 +1459,27 @@ async function launchCurrentGame() {
   frame.srcdoc = buildPlayerHTML(gameName, system, core, romUrl, parentUrl);
   pokePlayerBar();
 }
+// Thoát THẬT: thay luôn thẻ iframe bằng thẻ mới thay vì gán about:blank
+// trên cùng thẻ cũ — trang game cũ (WASM + tiếng) mất vài giây mới unload
+// xong, mà gán srcdoc mới trong lúc đó thì lần chạy mới bị kẹt theo,
+// bấm bao nhiêu lần cũng không vào. Thẻ mới chạy độc lập, không chờ thẻ cũ.
+function resetGameFrame() {
+  const old = $('game-frame');
+  if (!old) return;
+  const f = document.createElement('iframe');
+  f.id = 'game-frame';
+  f.src = 'about:blank';
+  f.allow = 'autoplay; fullscreen; gamepad; keyboard; cross-origin-isolated';
+  f.allowFullscreen = true;
+  old.replaceWith(f);
+}
 function relaunchCurrentGame() {
   if (!$('game-player-modal').classList.contains('active')) return;
-  const frame = $('game-frame');
-  frame.removeAttribute('srcdoc');
-  frame.srcdoc = "";
-  frame.src = "about:blank";
+  resetGameFrame();
   setTimeout(launchCurrentGame, 50);
 }
 function closeGamePlayer() {
-  // Thoát THẬT: srcdoc thắng src nên chỉ gán src="about:blank" thì game vẫn
-  // chạy ngầm (còn tiếng, còn giữ tay cầm). Phải xóa srcdoc trước rồi mới
-  // gán about:blank thì iframe mới unload hẳn.
-  const frame = $('game-frame');
-  if (frame) { frame.removeAttribute('srcdoc'); frame.srcdoc = ""; frame.src = "about:blank"; }
+  resetGameFrame();
   $('game-player-modal').classList.remove('active', 'hide-bar');
   barSticky = false;
   // Vừa thoát game: lần bấm game tiếp theo chơi luôn, khỏi bấm 2 lần
