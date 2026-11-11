@@ -74,6 +74,9 @@
     .settings-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(30,41,59,.72);padding:12px;border-radius:8px}
     .settings-row strong{color:#fff;display:block}.settings-row small{display:block;color:#94a3b8;margin-top:3px}
     .settings-switch{width:20px;height:20px;accent-color:var(--ca);flex-shrink:0}
+    .clone-seg{display:flex;gap:4px;flex-shrink:0}
+    .clone-seg button{background:rgba(15,23,42,.9);color:#94a3b8;border:1px solid #475569;border-radius:8px;padding:6px 10px;font:700 12px 'Rajdhani',sans-serif;cursor:pointer;white-space:nowrap}
+    .clone-seg button.active{background:rgba(251,191,36,.2);color:#fbbf24;border-color:var(--a)}
     .settings-actions{display:flex;flex-wrap:wrap;gap:8px}
     .settings-action{background:#1e293b;border:1px solid var(--ca);border-radius:7px;padding:9px 12px;color:#fff;font:700 12px 'Rajdhani',sans-serif;cursor:pointer}
     .settings-action:hover{background:var(--p);border-color:var(--p)}
@@ -148,7 +151,7 @@
         </div>
         <div id="auth-menu-item" class="menu-item" onclick="handleAuthClick()"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg><span id="auth-btn-text">Đăng nhập Google</span></div>
         <div id="fav-menu-item" class="menu-item" onclick="toggleFavFilter();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg><span id="fav-menu-text">Lọc Game Yêu Thích</span></div>
-        <div id="clone-menu-item" class="menu-item" onclick="toggleMainOnlyFilter();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm2 5h12v2H6zm3 5h6v2H9z"/></svg><span id="clone-menu-text">Chỉ Xem Game Chính</span></div>
+        <div id="clone-menu-item" class="menu-item" onclick="cycleCloneFilter();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm2 5h12v2H6zm3 5h6v2H9z"/></svg><span id="clone-menu-text">Chế Độ: Tất Cả Game</span></div>
         <div id="layout-menu-item" class="menu-item" onclick="toggleLayoutMode();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M3 5v14h18V5H3zm16 12H5V7h14v10z"/></svg><span id="layout-menu-text">Chuyển Giao Diện</span></div>
         <div id="pwa-install-item" class="menu-item" onclick="installPWA();closeUserMenu()" style="display:none"><svg viewBox="0 0 24 24"><path d="M18 15v3H6v-3H4v3c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-3h-2zm-1-4-1.41-1.41L13 12.17V4h-2v8.17L8.41 9.59 7 11l5 5 5-5z"/></svg><span id="pwa-btn-text">Cài đặt Ứng dụng (PWA)</span></div>
         <div class="menu-item" onclick="reloadDatabase();closeUserMenu()"><svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg><span>Cập Nhật Dữ Liệu</span></div>
@@ -198,7 +201,7 @@
             <div class="help-item"><span>Vào Game</span><span class="help-key">Enter</span></div>
             <div class="help-item"><span>Yêu Thích</span><span class="help-key">F</span></div>
             <div class="help-item"><span>Lọc Yêu Thích</span><span class="help-key">V</span></div>
-            <div class="help-item"><span>Lọc Game Chính</span><span class="help-key">C</span></div>
+            <div class="help-item"><span>Chế Độ Game (Tất Cả / Chính / Con)</span><span class="help-key">C</span></div>
             <div class="help-item"><span>Tìm Kiếm</span><span class="help-key">/</span></div>
             <div class="help-item"><span>Cập Nhật Dữ Liệu</span><span class="help-key">R</span></div>
           </div>
@@ -214,7 +217,7 @@
             <div class="help-item"><span>Vào Game / Chọn</span><span class="help-key">A / Start</span></div>
             <div class="help-item"><span>Đánh Dấu Yêu Thích</span><span class="help-key">Nút Y</span></div>
             <div class="help-item"><span>Lọc Yêu Thích</span><span class="help-key">Nút X</span></div>
-            <div class="help-item"><span>Lọc Game Chính</span><span class="help-key">Nút Select</span></div>
+            <div class="help-item"><span>Chế Độ Game (Tất Cả / Chính / Con)</span><span class="help-key">Nút Select</span></div>
             <div class="help-item"><span>Thoát Game Đang Chơi</span><span class="help-key">Nút Home</span></div>
           </div>
         </div>
@@ -224,7 +227,7 @@
             <p>• <b>Lưu trữ dữ liệu Vĩnh Viễn:</b> Danh sách game và thông tin DAT được lưu vĩnh viễn trên trình duyệt giúp tải tức thì. Chỉ cập nhật khi bấm "Cập Nhật Dữ Liệu". Nếu hết lượt API GitHub, trình duyệt sẽ tự khôi phục dữ liệu đã lưu.</p>
             <p>• <b>Lọc theo Thể Loại:</b> Trích xuất thẻ &lt;genre&gt; từ file .DAT, hiển thị menu với biểu tượng hình ảnh từ thư mục genre.</p>
             <p>• <b>Game Chưa Phân Loại:</b> Hỗ trợ gom nhóm riêng các game không gắn thẻ thể loại trong file .DAT để bạn dễ kiểm tra.</p>
-            <p>• <b>Game Chính vs Game Con (Clone):</b> Sử dụng dữ liệu .DAT để lọc bớt các bản game clone, hack, giúp danh sách gọn gàng hơn.</p>
+            <p>• <b>Game Chính vs Game Con (Clone):</b> Sử dụng dữ liệu .DAT để nhận diện bản clone, hack. Một nút xoay vòng 3 chế độ: <b>Tất Cả</b> — hiện mọi game; <b>Game Chính</b> — ẩn clone/hack/bản phụ cho gọn; <b>Game Con</b> — chỉ hiện clone/hack/bản phụ.</p>
             <p>• <b>Đồng bộ Google Drive:</b> Đăng nhập Google để sao lưu danh sách Game Yêu Thích lên đám mây, tự động đồng bộ giữa các thiết bị.</p>
           </div>
         </div>
@@ -236,7 +239,7 @@
       <div class="help-header"><div class="help-title">⚙️ CÀI ĐẶT PANDORA</div><button class="close-modal-btn" onclick="closeSettingsModal()">✕</button></div>
       <div class="settings-body">
         <label class="settings-row"><span><strong>Giao diện cong Arcade</strong><small>Bật/tắt kiểu danh sách cong.</small></span><input id="setting-curved" class="settings-switch" type="checkbox" onchange="setCurvedSetting(this.checked)"></label>
-        <label class="settings-row"><span><strong>Chỉ hiển thị game chính</strong><small>Ẩn các bản clone, hack và bản phụ khi có dữ liệu nhận diện.</small></span><input id="setting-main-only" class="settings-switch" type="checkbox" onchange="setMainOnlySetting(this.checked)"></label>
+        <div class="settings-row"><span><strong>Chế độ game</strong><small>Tất cả: hiện mọi game. Game chính: ẩn clone, hack và bản phụ. Game con: chỉ hiện clone, hack và bản phụ.</small></span><div class="clone-seg" id="setting-clone-seg"><button data-mode="all" onclick="setCloneFilter('all')">Tất cả</button><button data-mode="main" onclick="setCloneFilter('main')">Game chính</button><button data-mode="clone" onclick="setCloneFilter('clone')">Game con</button></div></div>
         <div class="settings-row"><span><strong>Bộ nhớ dữ liệu</strong><small>Danh sách game được lưu bằng IndexedDB; chỉ lưu địa chỉ ảnh, không lưu dữ liệu ảnh lâu dài.</small><div id="storage-status">Đang kiểm tra bộ nhớ...</div></span></div>
         <div class="settings-actions">
           <button class="settings-action" onclick="refreshStorageStatus()">🔄 Kiểm tra bộ nhớ</button>
@@ -296,7 +299,7 @@ const EJS_DATA_URL = "https://longhai.github.io/emujs/",
 // Iframe game-frame nhận srcdoc do Pandora tự sinh (y hệt trang player đã chạy
 // được tối nay): EJS_* + loader.js từ repo emujs tự host. Mỗi game là 1 srcdoc
 // mới nên loader chạy sạch, đổi game không cần tải lại trang Pandora.
-const EJS_RUNTIME = { nes: "fceumm", snes: "snes9x", gb: "gambatte", gbc: "gambatte", gba: "mgba", nds: "melonds", n64: "mupen64plus_next", "3ds": "azahar", psx: "pcsx_rearmed", psp: "ppsspp", segaMD: "genesis_plus_gx", segaMS: "smsplus", segaGG: "genesis_plus_gx", segaCD: "genesis_plus_gx", sega32x: "picodrive", segaSaturn: "yabause", arcade: "fbneo", mame: "mame2003_plus", atari2600: "stella2014", atari7800: "prosystem", atari5200: "a5200", lynx: "handy", jaguar: "virtualjaguar", pce: "mednafen_pce", pcfx: "mednafen_pcfx", ngp: "mednafen_ngp", ws: "mednafen_wswan", coleco: "gearcoleco", vb: "beetle_vb", c64: "vice_x64sc", amiga: "puae", "3do": "opera", dos: "dosbox_pure", doom: "prboom", intv: "freeintv", zxspectrum: "fuse", cpc: "cap32" };
+const EJS_RUNTIME = { nes: "nestopia", snes: "snes9x", gb: "gambatte", gbc: "gambatte", gba: "mgba", nds: "melonds", n64: "mupen64plus_next", "3ds": "azahar", psx: "pcsx_rearmed", psp: "ppsspp", segaMD: "genesis_plus_gx", segaMS: "smsplus", segaGG: "genesis_plus_gx", segaCD: "genesis_plus_gx", sega32x: "picodrive", segaSaturn: "yabause", arcade: "fbneo", mame: "mame2003_plus", atari2600: "stella2014", atari7800: "prosystem", atari5200: "a5200", lynx: "handy", jaguar: "virtualjaguar", pce: "mednafen_pce", pcfx: "mednafen_pcfx", ngp: "mednafen_ngp", ws: "mednafen_wswan", coleco: "gearcoleco", vb: "beetle_vb", c64: "vice_x64sc", amiga: "puae", "3do": "opera", dos: "dosbox_pure", doom: "prboom", intv: "freeintv", zxspectrum: "fuse", cpc: "cap32" };
 const EJS_CONTROL_SCHEMES = new Set(["gb", "nes", "snes", "n64", "gba", "nds", "vb", "segaMD", "segaCD", "sega32x", "segaMS", "segaGG", "segaSaturn", "3do", "atari2600", "atari7800", "lynx", "jaguar", "pce", "ngp", "ws", "coleco", "pcfx", "psp", "psx", "arcade", "mame", "fbneo"]);
 const EJS_DEFAULT_SHADER = "xbr dotmask 4xsoft 2xsal lv2";
 function getEjsSettings() {
@@ -456,13 +459,16 @@ const state = {
   currentDatIdx: 0, gamesByCat: {},
   allGames: initialPlaceholderGames, filteredGames: initialPlaceholderGames,
   selIdx: 0, topIdx: 0, slots: [], searchQuery: "", showFavOnly: false,
-  showMainOnly: lsGet('pandora_show_main_only') === 'true',
+  cloneFilter: (() => { const v = lsGet('pandora_clone_filter'); if (v === 'main' || v === 'clone' || v === 'all') return v; return lsGet('pandora_show_main_only') === 'true' ? 'main' : 'all'; })(),
   selectedGenre: 'all', availableGenres: [], hasUncategorized: false,
   datNameMap: {}, datOrderMap: {}, datCloneMap: {}, datGenreMap: {},
   favorites: (() => { try { const v = JSON.parse(lsGet('pandora_favs') || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; } })(),
   isCurved: lsGet('pandora_curved') !== null ? lsGet('pandora_curved') === 'true' : !(window.innerWidth < 820 || window.innerHeight > window.innerWidth),
   numSlots: 5, gamepadConnected: false, gpLastTime: 0, lastGpBtn: {}, resizeTimer: null, gpMenuIdx: 0
 };
+const CLONE_MODES = ['all', 'main', 'clone'];
+const CLONE_MODE_TEXT = { all: 'Chế Độ: Tất Cả Game', main: 'Chế Độ: Chỉ Game Chính', clone: 'Chế Độ: Chỉ Game Con' };
+const CLONE_MODE_LABEL = { all: 'GAME', main: 'GAME CHÍNH', clone: 'GAME CON' };
 const getGenreItems = () => [
   { name: 'Tất Cả Thể Loại', value: 'all' },
   ...state.availableGenres.map(g => ({ name: g, value: g })),
@@ -497,7 +503,8 @@ function toggleUserMenu(e) {
   $('logout-btn').style.display = currentUserProfile ? 'flex' : 'none';
   $('auth-menu-item').style.display = currentUserProfile ? 'none' : 'flex';
   setMenuToggle('fav-menu-item', 'fav-menu-text', state.showFavOnly, 'Hiện Tất Cả Game', 'Chỉ Xem Yêu Thích');
-  setMenuToggle('clone-menu-item', 'clone-menu-text', state.showMainOnly, 'Chế Độ: Chỉ Game Chính', 'Chế Độ: Tất Cả Game');
+  $('clone-menu-item').classList.toggle('active-glow', state.cloneFilter !== 'all');
+  $('clone-menu-text').textContent = CLONE_MODE_TEXT[state.cloneFilter];
   setMenuToggle('layout-menu-item', 'layout-menu-text', state.isCurved, 'Giao Diện: Cong Arcade', 'Giao Diện: Màn Phẳng');
   posMenu(menu, $('hdr-avatar-btn'), true);
   menu.classList.add('active');
@@ -507,13 +514,19 @@ const openHelpModal = () => $('help-modal').classList.add('active'), closeHelpMo
 
 function openSettingsModal() {
   $('setting-curved').checked = !!state.isCurved;
-  $('setting-main-only').checked = !!state.showMainOnly;
+  document.querySelectorAll('#setting-clone-seg button').forEach(b => b.classList.toggle('active', b.dataset.mode === state.cloneFilter));
   $('settings-modal').classList.add('active');
   refreshStorageStatus();
 }
 function closeSettingsModal() { $('settings-modal').classList.remove('active'); }
 function setCurvedSetting(v) { state.isCurved = !!v; lsSet('pandora_curved', state.isCurved); drawAll(); }
-function setMainOnlySetting(v) { state.showMainOnly = !!v; lsSet('pandora_show_main_only', state.showMainOnly); filterGames(false); drawAll(); }
+function setCloneFilter(mode) {
+  if (mode !== 'main' && mode !== 'clone') mode = 'all';
+  state.cloneFilter = mode; lsSet('pandora_clone_filter', mode);
+  document.querySelectorAll('#setting-clone-seg button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  filterGames(true); drawAll();
+}
+function cycleCloneFilter() { setCloneFilter(CLONE_MODES[(CLONE_MODES.indexOf(state.cloneFilter) + 1) % CLONE_MODES.length]); }
 async function refreshStorageStatus() {
   const el = $('storage-status');
   if (!el) return;
@@ -1019,14 +1032,14 @@ function flipFilter(key, lsKey) {
   filterGames(true); drawAll();
 }
 function toggleFavFilter() { flipFilter('showFavOnly'); }
-function toggleMainOnlyFilter() { flipFilter('showMainOnly', 'pandora_show_main_only'); }
 
 function filterGames(preserve = true) {
   const current = state.filteredGames[state.selIdx], q = state.searchQuery.toLowerCase().trim();
   let list = state.allGames;
   if (q) list = list.filter(g => g.name.toLowerCase().includes(q) || g.fullName.toLowerCase().includes(q));
   if (state.showFavOnly) list = list.filter(g => isFav(g));
-  if (state.showMainOnly) list = list.filter(g => !isCloneGame(g));
+  if (state.cloneFilter === 'main') list = list.filter(g => !isCloneGame(g));
+  else if (state.cloneFilter === 'clone') list = list.filter(g => isCloneGame(g));
   if (state.selectedGenre && state.selectedGenre !== 'all') {
     list = state.selectedGenre === 'uncategorized'
       ? list.filter(g => !g.genre)
@@ -1111,7 +1124,7 @@ function drawAll() { updateSvgViewBox(); drawHeader(); drawSlots(); render(); }
 function drawHeader() {
   const p = getGeom(), xl0 = getX(6, p), xl1 = getX(54, p), xlMid = getX(30, p);
   const isPlaceholder = state.filteredGames.length && state.filteredGames[0]?.fullName?.startsWith('placeholder_');
-  const label = state.showFavOnly ? 'YÊU THÍCH' : (state.showMainOnly ? 'GAME CHÍNH' : 'GAME');
+  const label = state.showFavOnly ? 'YÊU THÍCH' : CLONE_MODE_LABEL[state.cloneFilter];
   const cntText = isPlaceholder ? 'ĐANG TẢI DỮ LIỆU...' : (state.filteredGames.length ? `${label}: ${state.selIdx + 1} / ${state.filteredGames.length}` : (state.datList.length ? 'GAME: 0 / 0' : 'ĐANG TẢI...'));
   $('hg').innerHTML = `
     <polygon points="${xl0.toFixed(1)},6 ${(xl0 + p.W).toFixed(1)},6 ${(xl1 + p.W).toFixed(1)},54 ${xl1.toFixed(1)},54" fill="url(#gh)" stroke="#475569" stroke-width="1.5"/>
@@ -1432,7 +1445,7 @@ function findParentGame(g) {
     return k === parentKey;
   }) || null;
 }
-const PANDORA_BUILD = "2026-11-10-mod-fix1";
+const PANDORA_BUILD = "2026-11-11-clone-3mode";
 async function launchCurrentGame() {
   const g = state.filteredGames[state.selIdx], c = state.datList[state.currentDatIdx];
   if (!g?.fullName || g.fullName.startsWith('placeholder_')) return;
@@ -1516,7 +1529,7 @@ function onSearchInput(val) {
 }
 function render() {
   const isPlaceholder = state.filteredGames.length && state.filteredGames[0]?.fullName?.startsWith('placeholder_');
-  const label = state.showFavOnly ? 'YÊU THÍCH' : (state.showMainOnly ? 'GAME CHÍNH' : 'GAME');
+  const label = state.showFavOnly ? 'YÊU THÍCH' : CLONE_MODE_LABEL[state.cloneFilter];
   if (!state.filteredGames.length) {
     if ($('cnt-txt')) $('cnt-txt').textContent = `${label}: 0 / 0`;
     state.slots.forEach(s => s.g.style.display = "none");
@@ -1650,7 +1663,7 @@ function bindEvents() {
       ArrowRight: () => state.datList.length && switchCat((state.currentDatIdx + 1) % state.datList.length),
       Home: () => state.filteredGames.length && (state.selIdx = 0, render()),
       f: toggleCurrentFav, F: toggleCurrentFav, v: toggleFavFilter, V: toggleFavFilter,
-      c: toggleMainOnlyFilter, C: toggleMainOnlyFilter, g: toggleGenreMenu, G: toggleGenreMenu,
+      c: cycleCloneFilter, C: cycleCloneFilter, g: toggleGenreMenu, G: toggleGenreMenu,
       r: reloadDatabase, R: reloadDatabase, Enter: launchCurrentGame, '/': toggleInlineSearch
     };
     if (kMap[e.key]) { e.preventDefault(); kMap[e.key](); }
@@ -1704,7 +1717,7 @@ function pollGamepad() {
           gpEdge('home', gpBtn(gp, 16), () => { if (state.filteredGames.length) { state.selIdx = 0; render(); } });
           gpEdge('favY', gpBtn(gp, 3), toggleCurrentFav);
           gpEdge('favX', gpBtn(gp, 2), toggleFavFilter);
-          gpEdge('cloneSelect', gpBtn(gp, 8), toggleMainOnlyFilter);
+          gpEdge('cloneSelect', gpBtn(gp, 8), cycleCloneFilter);
           gpEdge('confirmA', gpBtn(gp, 0), launchCurrentGame);
           gpEdge('confirmStart', gpBtn(gp, 9), launchCurrentGame);
         }
